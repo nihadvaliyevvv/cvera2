@@ -1,0 +1,236 @@
+/* A4 Preview CSS Summary - CVera Professional Resume Template */
+
+/* Main A4 Container */
+.a4-preview-container {
+  /* Fixed A4 dimensions at 96 DPI */
+  width: 794px;
+  height: 1123px;
+  
+  /* Professional styling */
+  background: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  
+  /* Print-safe - no shadow/border when printing */
+  @media print {
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+  }
+}
+
+/* Responsive Container */
+.a4-preview-wrapper {
+  /* Centers the A4 container and allows scrolling */
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  background: #f9fafb;
+  padding: 1rem;
+}
+
+/* Professional Sidebar Layout */
+.sidebar-layout {
+  display: flex;
+  height: 100%;
+}
+
+.sidebar {
+  width: 277px; /* 35% of 794px */
+  background: #334155; /* slate-700 */
+  color: white;
+  padding: 2rem;
+  height: 100%;
+}
+
+.main-content {
+  width: 517px; /* 65% of 794px */
+  padding: 2rem;
+  background: white;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Professional Typography */
+.sidebar h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+}
+
+.sidebar h2 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #64748b;
+}
+
+.main-content h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #cbd5e1;
+  color: #1e293b;
+}
+
+/* Timeline Design */
+.timeline-item {
+  position: relative;
+  padding-left: 2rem;
+  margin-bottom: 2rem;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: 0;
+  top: 0.25rem;
+  width: 1rem;
+  height: 1rem;
+  background: #3b82f6;
+  border-radius: 50%;
+  border: 4px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.timeline-line {
+  position: absolute;
+  left: 0.5rem;
+  top: 1.25rem;
+  width: 2px;
+  height: 4rem;
+  background: #cbd5e1;
+}
+
+/* Contact Info Styling */
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #cbd5e1;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.contact-icon {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+/* Skills Display */
+.skill-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #e2e8f0;
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+}
+
+.skill-bullet {
+  width: 0.5rem;
+  height: 0.5rem;
+  background: #60a5fa;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Project Cards */
+.project-card {
+  border-left: 4px solid #60a5fa;
+  padding-left: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.project-tech-tag {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background: #dbeafe;
+  color: #1e40af;
+  font-size: 0.75rem;
+  border-radius: 9999px;
+  margin-right: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Professional Colors */
+:root {
+  --primary-dark: #334155;    /* slate-700 */
+  --primary-light: #cbd5e1;   /* slate-300 */
+  --accent-blue: #3b82f6;     /* blue-500 */
+  --accent-blue-light: #60a5fa; /* blue-400 */
+  --text-dark: #1e293b;       /* slate-800 */
+  --text-medium: #475569;     /* slate-600 */
+  --text-light: #64748b;      /* slate-500 */
+  --bg-gray: #f8fafc;         /* slate-50 */
+}
+
+/* Print Optimization */
+@media print {
+  .a4-preview-wrapper {
+    background: white;
+    padding: 0;
+    min-height: auto;
+  }
+  
+  .a4-preview-container {
+    width: 100%;
+    height: auto;
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+  }
+  
+  .main-content {
+    overflow-y: visible;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 850px) {
+  .a4-preview-wrapper {
+    padding: 0.5rem;
+  }
+  
+  .a4-preview-container {
+    /* On mobile, allow slight scaling while maintaining aspect ratio */
+    transform: scale(0.9);
+    transform-origin: top center;
+  }
+}
+
+/* Loading State */
+.a4-loading {
+  width: 794px;
+  height: 1123px;
+  background: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 4px solid #f3f4f6;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

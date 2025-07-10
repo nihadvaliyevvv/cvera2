@@ -1,0 +1,621 @@
+/* Three-section page layout: Left Ad | Editor | Right Ad */
+.pageLayout {
+  display: flex;
+  min-height: 100vh;
+  background: transparent; /* Use global background */
+}
+
+/* Left and Right Ad Spaces - Wider for proper advertising */
+.leftAdSpace,
+.rightAdSpace {
+  width: 160px; /* Standard banner width */
+  background-color: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px 10px;
+  position: fixed;
+  top: 80px; /* Account for header height */
+  height: calc(100vh - 80px);
+  z-index: 10;
+  overflow-y: auto;
+}
+
+.leftAdSpace {
+  left: 0;
+}
+
+.rightAdSpace {
+  right: 0;
+  border-right: none;
+  border-left: 1px solid #e5e7eb;
+}
+
+.adPlaceholder {
+  width: 140px; /* Standard banner width */
+  height: 600px; /* Taller for better ad space */
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: sticky;
+  top: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Main Editor Container - Centered with margins for wider ads */
+.editorContainer {
+  flex: 1;
+  margin: 0 160px; /* Space for wider ads */
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 80px); /* Account for header */
+  background: transparent; /* Use global background */
+  padding-top: 80px; /* Account for fixed header */
+}
+
+/* Horizontal Editor Section - Top Part */
+.editorSection {
+  display: flex;
+  min-height: 60vh;
+  background-color: #ffffff;
+  border-radius: 12px;
+  margin: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+/* Left Sidebar Navigation */
+.sidebar {
+  width: 300px;
+  background-color: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Dynamic Form Panel - Right of Sidebar */
+.formPanel {
+  flex: 1;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+/* A4 Preview Section - Full Width Below Editor */
+.previewSection {
+  width: 100%;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  margin: 0 20px 20px 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+/* A4 Preview Panel Header */
+.previewHeader {
+  padding: 16px 24px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* A4 Preview Content Container */
+.previewContent {
+  padding: 24px;
+  background-color: #f8fafc;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  border-radius: 0 0 12px 12px;
+}
+
+/* A4 Preview Container - Fixed Dimensions with Internal Scroll */
+.previewContainer {
+  width: 794px;
+  height: 1123px;
+  background: white;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  overflow-y: auto;
+  margin: 0 auto;
+  padding: 40px;
+  font-family: 'Times New Roman', serif;
+  font-size: 11pt;
+  line-height: 1.4;
+  border: 1px solid #e5e7eb;
+  transition: box-shadow 0.3s ease;
+}
+
+.previewContainer:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Empty state for preview */
+.previewEmptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #6b7280;
+  text-align: center;
+}
+
+.previewEmptyIcon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  color: #d1d5db;
+}
+
+/* Export disclaimer */
+.exportDisclaimer {
+  padding: 16px 24px;
+  background-color: #fef3c7;
+  border-top: 1px solid #fbbf24;
+  border-radius: 0 0 12px 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.exportDisclaimerIcon {
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+.exportDisclaimerText {
+  font-size: 14px;
+  color: #92400e;
+  line-height: 1.5;
+}
+
+/* Responsive design */
+@media (max-width: 1600px) {
+  .leftAdSpace,
+  .rightAdSpace {
+    width: 140px;
+  }
+  
+  .editorContainer {
+    margin: 0 140px;
+  }
+  
+  .adPlaceholder {
+    width: 120px;
+    height: 500px;
+  }
+}
+
+@media (max-width: 1400px) {
+  .leftAdSpace,
+  .rightAdSpace {
+    width: 120px;
+  }
+  
+  .editorContainer {
+    margin: 0 120px;
+  }
+  
+  .sidebar {
+    width: 260px;
+  }
+  
+  .adPlaceholder {
+    width: 100px;
+    height: 400px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .leftAdSpace,
+  .rightAdSpace {
+    display: none;
+  }
+  
+  .editorContainer {
+    margin: 0;
+  }
+  
+  .previewContainer {
+    transform: scale(0.8);
+    transform-origin: top center;
+  }
+}
+
+@media (max-width: 768px) {
+  .editorSection {
+    flex-direction: column;
+    min-height: auto;
+  }
+  
+  .sidebar {
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .formPanel {
+    max-height: 50vh;
+  }
+  
+  .previewContainer {
+    transform: scale(0.6);
+    width: 100%;
+    max-width: 476px;
+  }
+}
+
+/* Responsive design for the new layout */
+@media (max-width: 1600px) {
+  .previewContainer {
+    transform: scale(0.9);
+    transform-origin: top center;
+  }
+}
+
+@media (max-width: 1400px) {
+  .leftAdSpace,
+  .rightAdSpace {
+    width: 60px;
+  }
+  
+  .editorContainer {
+    margin: 0 60px;
+  }
+  
+  .sidebar {
+    width: 260px;
+  }
+  
+  .previewContainer {
+    transform: scale(0.8);
+    transform-origin: top center;
+  }
+}
+
+@media (max-width: 1200px) {
+  .leftAdSpace,
+  .rightAdSpace {
+    display: none;
+  }
+  
+  .editorContainer {
+    margin: 0;
+  }
+  
+  .sidebar {
+    width: 250px;
+  }
+  
+  .previewContainer {
+    transform: scale(0.7);
+    transform-origin: top center;
+  }
+}
+
+@media (max-width: 768px) {
+  .editorSection {
+    flex-direction: column;
+    min-height: auto;
+  }
+  
+  .sidebar {
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .formPanel {
+    max-height: 50vh;
+  }
+  
+  .previewContainer {
+    transform: scale(0.5);
+    transform-origin: top center;
+  }
+}
+
+/* CV Preview Typography and Styling */
+.cv-preview-container h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+  line-height: 1.2;
+}
+
+.cv-preview-container h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 1rem;
+  margin-top: 2rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.cv-preview-container h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 0.5rem;
+}
+
+.cv-preview-container h4 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.cv-preview-container p {
+  margin-bottom: 1rem;
+  color: #4b5563;
+}
+
+.cv-preview-container ul {
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.cv-preview-container li {
+  margin-bottom: 0.25rem;
+  color: #4b5563;
+}
+
+/* Contact Information */
+.cv-contact-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 0.5rem;
+}
+
+.cv-contact-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+/* Section Layouts */
+.cv-section {
+  margin-bottom: 2rem;
+}
+
+.cv-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cv-section-icon {
+  font-size: 1.25rem;
+}
+
+.cv-section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Experience Items */
+.cv-experience-item {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border-left: 3px solid #3b82f6;
+  background: #f8fafc;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.cv-experience-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.cv-experience-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.cv-experience-company {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #3b82f6;
+  margin-bottom: 0.25rem;
+}
+
+.cv-experience-date {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.cv-experience-location {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.cv-experience-description {
+  color: #4b5563;
+  line-height: 1.6;
+  margin-top: 0.5rem;
+}
+
+/* Education Items */
+.cv-education-item {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border-left: 3px solid #10b981;
+  background: #f0fdf4;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.cv-education-degree {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.cv-education-institution {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #10b981;
+  margin-bottom: 0.25rem;
+}
+
+/* Skills Grid */
+.cv-skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.cv-skill-category {
+  background: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.cv-skill-category-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.cv-skill-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cv-skill-item:last-child {
+  border-bottom: none;
+}
+
+.cv-skill-name {
+  font-weight: 500;
+  color: #374151;
+}
+
+.cv-skill-level {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Languages */
+.cv-languages-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.cv-language-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f3f4f6;
+  border-radius: 0.5rem;
+}
+
+/* Projects */
+.cv-project-item {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: #fafafa;
+}
+
+.cv-project-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.cv-project-description {
+  color: #4b5563;
+  margin-bottom: 0.75rem;
+}
+
+.cv-project-technologies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.cv-project-tech {
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Certifications */
+.cv-certification-item {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-left: 3px solid #f59e0b;
+  background: #fffbeb;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.cv-certification-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.cv-certification-issuer {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #f59e0b;
+  margin-bottom: 0.25rem;
+}
+
+.cv-certification-date {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Print Styles */
+@media print {
+  .previewContainer {
+    width: 210mm;
+    min-height: 297mm;
+    box-shadow: none;
+    transform: none;
+  }
+}

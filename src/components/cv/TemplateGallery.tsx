@@ -1,0 +1,240 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { apiClient } from '@/lib/api';
+
+interface Template {
+  id: string;
+  name: string;
+  tier: 'Free' | 'Medium' | 'Premium';
+  preview_url: string;
+  description?: string;
+}
+
+interface TemplateGalleryProps {
+  onTemplateSelect: (template: Template) => void;
+  onClose: () => void;
+}
+
+export default function TemplateGallery({ onTemplateSelect, onClose }: TemplateGalleryProps) {
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [selectedTier, setSelectedTier] = useState<'all' | 'Free' | 'Medium' | 'Premium'>('all');
+
+  useEffect(() => {
+    loadTemplates();
+  }, []);
+
+  const loadTemplates = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const result = await apiClient.getTemplates();
+      setTemplates(result);
+    } catch (err) {
+      console.error('Template loading error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Şablonlar yüklənərkən xəta baş verdi.';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredTemplates = templates.filter(template => 
+    selectedTier === 'all' || template.tier === selectedTier
+  );
+
+  const tierColors = {
+    Free: 'bg-green-100 text-green-800 border-green-200',
+    Medium: 'bg-blue-100 text-blue-800 border-blue-200',
+    Premium: 'bg-purple-100 text-purple-800 border-purple-200'
+  };
+
+  const tierLabels = {
+    Free: 'Pulsuz',
+    Medium: 'Orta',
+    Premium: 'Premium'
+  };
+
+  const tierDescriptions = {
+    Free: 'Əsas şablonlar - hamı üçün əlçatan',
+    Medium: 'Daha professional görünüş və xüsusiyyətlər',
+    Premium: 'Ən yaxşı şablonlar və ekskluziv dizaynlar'
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Şablon Qalereya</h2>
+              <p className="text-blue-100 mt-1">
+                CV-niz üçün ən uyğun şablonu seçin
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white hover:text-gray-200 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+          {/* Filter Tabs */}
+          <div className="flex items-center gap-2 mb-6 border-b border-gray-200">
+            <button
+              onClick={() => setSelectedTier('all')}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                selectedTier === 'all'
+                  ? 'border-b-2 border-blue-500 text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Hamısı ({templates.length})
+            </button>
+            {['Free', 'Medium', 'Premium'].map((tier) => (
+              <button
+                key={tier}
+                onClick={() => setSelectedTier(tier as typeof selectedTier)}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  selectedTier === tier
+                    ? 'border-b-2 border-blue-500 text-blue-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                {tierLabels[tier as keyof typeof tierLabels]} ({templates.filter(t => t.tier === tier).length})
+              </button>
+            ))}
+          </div>
+
+          {/* Current Tier Info */}
+          {selectedTier !== 'all' && (
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <h3 className="font-medium text-gray-900 mb-2">
+                {tierLabels[selectedTier]}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {tierDescriptions[selectedTier]}
+              </p>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="bg-gray-200 rounded-lg h-64 mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <div className="text-red-600 mb-4">
+                <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-lg font-medium">Xəta baş verdi</p>
+                <p className="text-sm">{error}</p>
+              </div>
+              <button
+                onClick={loadTemplates}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Yenidən cəhd et
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTemplates.map((template) => (
+                <div key={template.id} className="group cursor-pointer">
+                  <div 
+                    onClick={() => onTemplateSelect(template)}
+                    className="bg-white rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-200 overflow-hidden"
+                  >
+                    <div className="aspect-[3/4] bg-gray-100 relative overflow-hidden">
+                      {template.preview_url ? (
+                        <Image
+                          src={template.preview_url}
+                          alt={`${template.name} preview`}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-200"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-gray-400">
+                          <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      )}
+                      
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity duration-200 flex items-center justify-center">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <div className="bg-white text-gray-900 px-4 py-2 rounded-lg font-medium">
+                            Seç
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">{template.name}</h3>
+                        <span className={`px-2 py-1 text-xs rounded border ${tierColors[template.tier]}`}>
+                          {tierLabels[template.tier]}
+                        </span>
+                      </div>
+                      
+                      {template.description && (
+                        <p className="text-sm text-gray-600 mb-3">{template.description}</p>
+                      )}
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs text-gray-500">
+                          {template.tier === 'Free' && '🆓 Pulsuz'}
+                          {template.tier === 'Medium' && '💎 Orta abunəlik'}
+                          {template.tier === 'Premium' && '⭐ Premium abunəlik'}
+                        </div>
+                        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                          Seç →
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!loading && !error && filteredTemplates.length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-lg">Bu kateqoriyada şablon tapılmadı</p>
+              <p className="text-sm mt-2">Başqa kateqoriyaya baxın</p>
+            </div>
+          )}
+        </div>
+
+        {/* Subscription Info */}
+        <div className="bg-gray-50 border-t border-gray-200 p-4">
+          <div className="flex items-center justify-between text-sm">
+            <div className="text-gray-600">
+              Daha çox şablon istəyirsiniz?
+            </div>
+            <button className="text-blue-600 hover:text-blue-800 font-medium">
+              Abunəliyi yüksəldin →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,64 @@
+
+> lastcvera@0.1.0 dev
+> next dev --turbopack
+
+ ⚠ Port 3000 is in use, using available port 3003 instead.
+   ▲ Next.js 15.3.5 (Turbopack)
+   - Local:        http://localhost:3003
+   - Network:      http://192.168.0.140:3003
+   - Environments: .env.local, .env
+
+ ✓ Starting...
+ ○ Compiling middleware ...
+ ✓ Compiled middleware in 830ms
+ ✓ Ready in 2.6s
+   Reload env: .env.local
+   Reload env: .env.local
+ ○ Compiling /api/cvs ...
+ OPTIONS /api/cvs 204 in 12780ms
+ OPTIONS /api/cvs 204 in 12808ms
+ OPTIONS /api/cvs 204 in 210ms
+ OPTIONS /api/cvs 204 in 296ms
+ ✓ Compiled /api/cvs in 19.6s
+ GET / 200 in 220ms
+ ○ Compiling /favicon.ico ...
+ ✓ Compiled /favicon.ico in 3.8s
+ GET /api/users/me 401 in 3695ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 4045ms
+ ○ Compiling /api/auth/login ...
+ ✓ Compiled /api/auth/login in 2s
+ POST /api/auth/login 200 in 2763ms
+ GET /api/users/me 200 in 150ms
+ GET /api/cvs 200 in 136ms
+ GET /api/cvs 200 in 119ms
+ ○ Compiling /cv/create ...
+ ✓ Compiled /cv/create in 4.9s
+ GET /cv/create 200 in 1720ms
+ GET /api/users/me 200 in 174ms
+ GET /cv/create 200 in 783ms
+ GET /api/users/me 200 in 305ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 559ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ✓ Compiled in 1411ms
+ GET /cv/create 200 in 692ms
+ GET /api/users/me 200 in 341ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 638ms
+ ✓ Compiled in 1205ms
+   Reload env: .env.local
+ ✓ Compiled in 281ms
+ GET /cv/create 200 in 1281ms
+ GET /cv/create 200 in 1347ms
+ GET / 200 in 547ms
+   Reload env: .env.local
+   Reload env: .env.local
+ ✓ Compiled in 1576ms
+ ✓ Compiled in 2.5s
+   Reload env: .env.local
+   Reload env: .env.local
+   Reload env: .env.local
+   Reload env: .env.local
+   Reload env: .env.local
+   Reload env: .env.local
+   Reload env: .env
+   Reload env: .env.local
+[?25h

@@ -1,0 +1,113 @@
+// Prisma schema for CVera
+// Database: MySQL (locally), PostgreSQL (Azure production)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String   @id @default(uuid())
+  name             String
+  email            String   @unique
+  password         String
+  status           String   @default("active") // active, suspended, deactivated
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  lastLogin        DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  cvs              CV[]
+  subscriptions    Subscription[]
+  payments         Payment[]
+}
+
+model CV {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  title      String
+  cv_data    Json
+  templateId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  fileJobs   FileGenerationJob[]
+}
+
+model Template {
+  id          String   @id @default(uuid())
+  name        String
+  tier        String   // Free, Medium, Premium
+  previewUrl  String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Subscription {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  tier           String   // Free, Medium, Premium
+  status         String   // active, cancelled, etc.
+  provider       String   // epointaz
+  providerRef    String?  @unique // epoint.az transaction/subscription id
+  startedAt      DateTime @default(now())
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Admin {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("admin") // admin, superadmin
+  active    Boolean  @default(true)
+  lastLogin DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ApiKey {
+  id          String   @id @default(uuid())
+  name        String   // Label for the key (e.g., "LinkedIn API Key 1")
+  key         String   @unique
+  service     String   @default("linkedin") // linkedin, future services
+  active      Boolean  @default(true)
+  priority    Int      @default(0) // For ordering keys
+  usageCount  Int      @default(0)
+  lastUsed    DateTime?
+  lastResult  String?  // success, failure, error message
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model FileGenerationJob {
+  id         String   @id @default(uuid())
+  cvId       String
+  cv         CV       @relation(fields: [cvId], references: [id])
+  format     String   // pdf, docx
+  status     String   // pending, processing, done, failed
+  fileUrl    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  tier          String   // free, medium, premium
+  amount        Float
+  status        String   // pending, completed, failed, cancelled
+  provider      String   // epointaz, system
+  transactionId String   @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

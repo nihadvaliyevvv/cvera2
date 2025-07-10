@@ -1,0 +1,230 @@
+Project Specification: CVERA Professional CV Platform
+Version: 1.0
+
+Date: July 7, 2025
+
+1. Project Overview
+1.1. Introduction
+CVERA is a sophisticated web platform designed to empower users to create, manage, and export professional CVs (resumes) with ease. The platform will offer a dual-creation workflow: a seamless import from a user's public LinkedIn profile and a comprehensive manual CV builder. The final output can be customized by selecting from a tiered library of templates and downloaded in both PDF and DOCX formats.
+
+1.2. Core Objectives
+Simplicity: To provide an intuitive, user-friendly interface that streamlines the CV creation process.
+
+Flexibility: To offer multiple creation methods and a wide range of professional templates catering to different industries and career levels.
+
+Quality: To generate high-quality, pixel-perfect PDF and DOCX documents that are ready for professional use.
+
+Security: To ensure all user data is handled securely, with robust authentication and data protection mechanisms.
+
+2. System Architecture & Technology Stack
+2.1. High-Level Architecture
+The system will be built on a modern, serverless architecture, leveraging Vercel for both frontend hosting and backend API functions.
+
+Client (Browser): A Next.js application provides the user interface.
+
+Web Server / API Gateway (Vercel): Vercel serves the Next.js frontend and hosts the backend API as serverless functions.
+
+Backend Services (Serverless Functions): Node.js functions handle business logic, authentication, database interactions, and calls to external services.
+
+Database: An Azure PostgreSQL instance acts as the persistent data store.
+
+External Services: RapidAPI is used for LinkedIn data scraping, and Stripe is used for payment processing.
+
+2.2. Technology Stack
+Frontend: React (Next.js) for its performance, SSR capabilities, and seamless integration with Vercel.
+
+Backend: Node.js (Express.js or Next.js API Routes) deployed as serverless functions.
+
+Database: Azure PostgreSQL.
+
+Deployment: Vercel.
+
+Authentication: JSON Web Tokens (JWT). Tokens must be stored in secure, httpOnly cookies to mitigate XSS attacks. A refresh token mechanism should be implemented for persistent sessions.
+
+External APIs:
+
+LinkedIn Import: RapidAPI.
+
+Payments: Stripe for subscription management.
+
+File Generation:
+
+PDF: Puppeteer (running in a serverless function) is recommended for high-fidelity HTML-to-PDF conversion.
+
+DOCX: docx library for generating DOCX files from structured JSON data.
+
+3. Detailed Functional Requirements
+3.1. User Authentication & Account Management
+Registration: Secure sign-up with Name, Email, and Password. Passwords must be hashed using bcrypt.
+
+Login: Secure sign-in with email and password. Implement rate limiting to prevent brute-force attacks.
+
+JWT Strategy:
+
+On login, issue a short-lived access token and a long-lived refresh token.
+
+The access token is used for API authorization.
+
+The refresh token is stored securely in an httpOnly cookie and used to obtain a new access token without requiring the user to log in again.
+
+Profile Management: A dedicated user dashboard page to update personal information and change passwords.
+
+Password Reset: A "Forgot Password" flow that sends a secure, single-use, time-limited link to the user's email.
+
+3.2. Main Dashboard
+This is the central hub for logged-in users.
+
+Displays a grid or list of all CVs created by the user.
+
+Each CV card will feature action buttons: Edit, Preview, Download (with PDF/DOCX options), and Delete (with a confirmation modal).
+
+A prominent "Create New CV" call-to-action button.
+
+3.3. CV Creation & Editing Workflow
+Step 1: Choose Method: A dedicated page where the user selects either "Import from LinkedIn" or "Create Manually".
+
+Step 2a: LinkedIn Import Logic:
+
+The user provides their public LinkedIn profile URL.
+
+API Key Rotation Algorithm:
+
+The backend retrieves the list of 5 active RapidAPI keys from the database (or environment variables).
+
+It attempts the API call with the first key.
+
+On failure (specifically a quota-exceeded error like HTTP 429), it logs the failure for that key and silently retries with the next key in the sequence.
+
+This continues until a successful call is made or all keys have failed.
+
+If all keys fail, a user-friendly error message is returned to the client: "We are currently experiencing high demand. Please try again in a few moments or choose the 'Create Manually' option."
+
+Data Mapping: The scraped data is parsed and mapped to the cv_data JSON structure (see section 4.1).
+
+The user is then redirected to the CV editor with all forms pre-filled.
+
+Step 2b: Manual Creation:
+
+The user is presented with a clean, multi-section form.
+
+The form must be dynamic, allowing users to add, remove, and reorder entries (e.g., multiple jobs in Work Experience).
+
+CV Data Structure (cv_data JSONB field):
+
+{
+  "personal_info": { "full_name": "", "email": "", "phone": "", "address": "", "photo_url": "", "website": "" },
+  "summary": "",
+  "experience": [ { "title": "", "company": "", "location": "", "start_date": "", "end_date": "", "description": "" } ],
+  "education": [ { "degree": "", "institution": "", "end_date": "", "description": "" } ],
+  "skills": [ "Skill 1", "Skill 2" ],
+  "languages": [ { "name": "", "proficiency": "" } ],
+  "certifications": [ { "name": "", "issuer": "", "date": "" } ]
+}
+
+Step 3: CV Editor & Live Preview:
+
+A two-panel interface: data entry forms on the left, and a real-time preview of the CV on the right.
+
+The preview updates instantly as the user types or selects a template.
+
+Template Gallery: A modal or sidebar displays available templates, filtered by the user's subscription tier. Locked templates for higher tiers are shown with a "Premium" badge to encourage upgrades.
+
+3.4. Subscription & Payments
+Tiers: Free, Medium, and Premium, each unlocking a different set of templates.
+
+Billing Cycles: Weekly, Monthly, and Annual options for paid tiers.
+
+Payment Integration: Stripe will be used to handle all subscription logic, including recurring payments, upgrades, and cancellations. Webhooks from Stripe will be used to update the subscriptions table in the database.
+
+3.5. File Generation
+This process must be asynchronous to avoid long waiting times and server timeouts.
+
+Flow:
+
+User clicks "Download as PDF/DOCX".
+
+The API receives the request, validates permissions, and returns an immediate 202 Accepted response.
+
+A background job is triggered (e.g., a separate serverless function).
+
+This job fetches the CV data, applies the HTML template, generates the file using Puppeteer or docx, and saves it to temporary storage.
+
+The client polls an endpoint for job status or receives a notification (e.g., via WebSockets or a toast message) when the file is ready for download.
+
+4. API Endpoint Specification (RESTful)
+Auth:
+
+POST /api/auth/register
+
+POST /api/auth/login
+
+POST /api/auth/logout
+
+POST /api/auth/refresh-token
+
+Users:
+
+GET /api/users/me (Get current user's profile and subscription status)
+
+PUT /api/users/me (Update user profile)
+
+CVs:
+
+GET /api/cvs (List all CVs for the current user)
+
+POST /api/cvs (Create a new CV)
+
+GET /api/cvs/{id} (Get a single CV's data)
+
+PUT /api/cvs/{id} (Update a CV)
+
+DELETE /api/cvs/{id} (Delete a CV)
+
+Templates:
+
+GET /api/templates (List all available templates)
+
+Import:
+
+POST /api/import/linkedin (Body: { "url": "..." })
+
+Downloads:
+
+POST /api/cvs/{id}/download (Initiates the file generation job. Body: { "format": "pdf" | "docx" })
+
+GET /api/jobs/{jobId}/status (Poll for file generation status)
+
+GET /api/jobs/{jobId}/result (Download the generated file)
+
+Payments (Stripe Webhooks):
+
+POST /api/webhooks/stripe (Receives events from Stripe to update subscription status)
+
+5. Non-Functional Requirements
+Security:
+
+Adherence to OWASP Top 10 security practices.
+
+Proper CORS configuration on Vercel to allow requests only from the frontend domain.
+
+All secrets (DB connection strings, API keys, JWT secret) must be managed via Vercel Environment Variables.
+
+Regular dependency scanning for security vulnerabilities.
+
+Performance:
+
+Database queries must be optimized, and indexes must be used on all foreign keys and frequently queried columns (see DB schema).
+
+Frontend assets should be optimized (image compression, code splitting) by Next.js.
+
+API response times should be under 200ms for typical requests.
+
+Scalability:
+
+The serverless architecture provides inherent scalability for the API.
+
+The database on Azure can be scaled up as needed.
+
+For very high traffic, the async file generation could be moved to a dedicated job queue system (e.g., AWS SQS).
+
+Responsiveness: The application must be fully responsive and provide an optimal user experience on desktop, tablet, and mobile devices.
