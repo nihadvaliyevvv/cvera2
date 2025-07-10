@@ -167,11 +167,55 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const userId = getUserIdFromRequest(req);
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const { id } = await params;
+    const userId = getUserIdFromRequest(req);
+    
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if CV exists and belongs to user
+    const existingCV = await prisma.cV.findFirst({
+      where: { id, userId }
+    });
+
+    if (!existingCV) {
+      return NextResponse.json({ error: "CV not found" }, { status: 404 });
+    }
+
+    console.log('Deleting CV and related records:', id);
+
+    // Use transaction to ensure all deletions succeed or fail together
+    await prisma.$transaction(async (tx) => {
+      // Delete FileGenerationJob records first
+      await tx.fileGenerationJob.deleteMany({
+        where: { cvId: id }
+      });
+
+      // Delete the CV
+      await tx.cV.delete({ 
+        where: { id, userId } 
+      });
+    });
+
+    console.log('CV deleted successfully:', id);
+    return NextResponse.json({ message: "CV deleted successfully" });
+    
+  } catch (error) {
+    console.error('CV deletion error:', error);
+    
+    // Log detailed error information for debugging
+    if (error instanceof Error) {
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      
+      return NextResponse.json({ 
+        error: "Failed to delete CV", 
+        details: error.message 
+      }, { status: 500 });
+    }
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-  await prisma.cV.delete({ where: { id, userId } });
-  return NextResponse.json({ message: "CV deleted" });
 }
