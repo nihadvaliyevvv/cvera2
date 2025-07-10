@@ -23,6 +23,7 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
   const [cvs, setCvs] = useState<CV[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [downloadingCV, setDownloadingCV] = useState<{cvId: string, format: string} | null>(null);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [currentUser, setCurrentUser] = useState<User>({ 
     id: user.id, 
@@ -58,19 +59,74 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
     if (!window.confirm('CV-ni silmək istədiyinizə əminsiniz?')) return;
     
     try {
-      await apiClient.deleteCV(cvId);
+      setError(''); // Clear any previous errors
+      const result = await apiClient.deleteCV(cvId);
+      console.log('CV silindi:', result);
+      
+      // Remove CV from local state
       setCvs(prev => prev.filter(cv => cv.id !== cvId));
+      
+      // Show success message (optional)
+      // You could add a success notification here
+      
     } catch (err) {
-      setError('CV silinərkən xəta baş verdi.');
+      console.error('CV silmə xətası:', err);
+      
+      // More detailed error message
+      let errorMessage = 'CV silinərkən xəta baş verdi.';
+      if (err instanceof Error) {
+        errorMessage += ' ' + err.message;
+      }
+      
+      setError(errorMessage);
     }
   };
 
   const handleDownloadCV = async (cvId: string, format: 'pdf' | 'docx') => {
     try {
-      await apiClient.downloadCV(cvId, format);
-      // Handle download result
+      setError(''); // Clear any previous errors
+      setDownloadingCV({ cvId, format });
+      
+      console.log(`Starting ${format.toUpperCase()} download for CV:`, cvId);
+      
+      const response = await fetch(`/api/cvs/${cvId}/download`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+        body: JSON.stringify({ format }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Download failed: ${response.status} ${response.statusText}`);
+      }
+
+      // Handle direct download response
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      // Get CV title for filename
+      const cv = cvs.find(c => c.id === cvId);
+      const filename = `${cv?.title || 'CV'}.${format}`;
+      a.download = filename;
+      
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+      console.log(`${format.toUpperCase()} file downloaded successfully`);
+      
     } catch (err) {
-      setError('Fayl yüklənərkən xəta baş verdi.');
+      console.error(`${format.toUpperCase()} download error:`, err);
+      const errorMessage = err instanceof Error ? err.message : 'Naməlum xəta baş verdi';
+      setError(`${format.toUpperCase()} yükləmə xətası: ${errorMessage}`);
+    } finally {
+      setDownloadingCV(null);
     }
   };
 
@@ -246,15 +302,37 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
                           </button>
                           <button
                             onClick={() => handleDownloadCV(cv.id, 'pdf')}
-                            className="px-3 py-1 text-sm text-green-600 hover:text-green-800 transition-colors"
+                            disabled={downloadingCV?.cvId === cv.id && downloadingCV?.format === 'pdf'}
+                            className="px-3 py-1 text-sm text-green-600 hover:text-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            PDF
+                            {downloadingCV?.cvId === cv.id && downloadingCV?.format === 'pdf' ? (
+                              <span className="flex items-center">
+                                <svg className="animate-spin -ml-1 mr-1 h-3 w-3 text-green-600" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Yüklənir...
+                              </span>
+                            ) : (
+                              'PDF'
+                            )}
                           </button>
                           <button
                             onClick={() => handleDownloadCV(cv.id, 'docx')}
-                            className="px-3 py-1 text-sm text-purple-600 hover:text-purple-800 transition-colors"
+                            disabled={downloadingCV?.cvId === cv.id && downloadingCV?.format === 'docx'}
+                            className="px-3 py-1 text-sm text-purple-600 hover:text-purple-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            DOCX
+                            {downloadingCV?.cvId === cv.id && downloadingCV?.format === 'docx' ? (
+                              <span className="flex items-center">
+                                <svg className="animate-spin -ml-1 mr-1 h-3 w-3 text-purple-600" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Yüklənir...
+                              </span>
+                            ) : (
+                              'DOCX'
+                            )}
                           </button>
                           <button
                             onClick={() => handleDeleteCV(cv.id)}
