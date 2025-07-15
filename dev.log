@@ -2,63 +2,692 @@
 > lastcvera@0.1.0 dev
 > next dev --turbopack
 
- ⚠ Port 3000 is in use, using available port 3003 instead.
    ▲ Next.js 15.3.5 (Turbopack)
-   - Local:        http://localhost:3003
-   - Network:      http://192.168.0.140:3003
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.140:3000
    - Environments: .env.local, .env
 
  ✓ Starting...
- ○ Compiling middleware ...
- ✓ Compiled middleware in 830ms
- ✓ Ready in 2.6s
-   Reload env: .env.local
-   Reload env: .env.local
- ○ Compiling /api/cvs ...
- OPTIONS /api/cvs 204 in 12780ms
- OPTIONS /api/cvs 204 in 12808ms
- OPTIONS /api/cvs 204 in 210ms
- OPTIONS /api/cvs 204 in 296ms
- ✓ Compiled /api/cvs in 19.6s
- GET / 200 in 220ms
- ○ Compiling /favicon.ico ...
- ✓ Compiled /favicon.ico in 3.8s
- GET /api/users/me 401 in 3695ms
- GET /favicon.ico?favicon.45db1c09.ico 200 in 4045ms
- ○ Compiling /api/auth/login ...
- ✓ Compiled /api/auth/login in 2s
- POST /api/auth/login 200 in 2763ms
- GET /api/users/me 200 in 150ms
- GET /api/cvs 200 in 136ms
- GET /api/cvs 200 in 119ms
+ ✓ Compiled middleware in 368ms
+ ✓ Ready in 1293ms
  ○ Compiling /cv/create ...
- ✓ Compiled /cv/create in 4.9s
- GET /cv/create 200 in 1720ms
- GET /api/users/me 200 in 174ms
- GET /cv/create 200 in 783ms
- GET /api/users/me 200 in 305ms
- GET /favicon.ico?favicon.45db1c09.ico 200 in 559ms
- ⚠ Fast Refresh had to perform a full reload due to a runtime error.
- ✓ Compiled in 1411ms
- GET /cv/create 200 in 692ms
- GET /api/users/me 200 in 341ms
- GET /favicon.ico?favicon.45db1c09.ico 200 in 638ms
- ✓ Compiled in 1205ms
-   Reload env: .env.local
- ✓ Compiled in 281ms
- GET /cv/create 200 in 1281ms
- GET /cv/create 200 in 1347ms
- GET / 200 in 547ms
-   Reload env: .env.local
-   Reload env: .env.local
- ✓ Compiled in 1576ms
- ✓ Compiled in 2.5s
-   Reload env: .env.local
-   Reload env: .env.local
-   Reload env: .env.local
-   Reload env: .env.local
-   Reload env: .env.local
-   Reload env: .env.local
-   Reload env: .env
-   Reload env: .env.local
-[?25h
+ ✓ Compiled /cv/create in 2.7s
+ GET /cv/create?id=8689f99e-e67d-4aff-9d73-fb193cae20d4&vscodeBrowserReqId=1752602557589 200 in 2953ms
+ ○ Compiling /api/users/me ...
+ ✓ Compiled /api/users/me in 747ms
+ GET /api/users/me 200 in 853ms
+ ○ Compiling /api/import/linkedin ...
+ ✓ Compiled /api/import/linkedin in 695ms
+Original URL: https://linkedin.com/in/emil-karimov-x
+Cleaned URL: https://linkedin.com/in/emil-karimov-x
+Extracted username: emil-karimov-x
+Starting API key rotation for LinkedIn import...
+Available API keys: { dbKeys: 7, host: 'fresh-linkedin-profile-data.p.rapidapi.com' }
+Trying 7 API keys...
+Trying API key: f5a660ce3f...
+Original URL: https://linkedin.com/in/emil-karimov-x...
+Cleaned URL: https://linkedin.com/in/emil-karimov-x
+API key f5a660ce3f... works! Status: 200
+Successfully used API key: f5a660ce3f... for LinkedIn profile: https://linkedin.com/in/emil-karimov-x
+LinkedIn API response status: 200
+LinkedIn API response data keys: [ 'data', 'message' ]
+RAW LINKEDIN API RESPONSE: {
+  "data": {
+    "about": "Hi, I’m Emil, born in Baku in 2005. Passionate about technology and coding, I’ve successfully transitioned my interests into a career. I have experience in Java, Spring Boot, Spring Data, Spring Security, and Docker. Notably, I was a finalist in Pasha Hackathon V3.0. Dedicated to continuous improvement, I stay updated with the latest industry trends.",
+    "certifications": [
+      {
+        "authority": "TEKNOFEST",
+        "issued": "Sep 2024",
+        "name": "Teknofest Antalya | Finalist",
+        "url": null
+      },
+      {
+        "authority": "Matrix Academy",
+        "issued": "Jan 2024",
+        "name": "Java Development",
+        "url": "https://drive.google.com/file/d/1VdiSOM06YhP8eQsvFM8vSNJoD4DT6c5t/view?usp=share_link"
+      },
+      {
+        "authority": "\"PASHA Holding\" LLC",
+        "issued": "Oct 2023",
+        "name": "PASHA Hackathon 3.0",
+        "url": "https://drive.google.com/file/d/1v6gjeAQPfa-FlVA7fR9IYABaa9nf4hXM/view"
+      },
+      {
+        "authority": "HackerRank",
+        "issued": "Feb 2023",
+        "name": "Java (Basic)",
+        "url": "https://www.hackerrank.com/certificates/6010d116f1c4"
+      },
+      {
+        "authority": "HackerRank",
+        "issued": "Dec 2022",
+        "name": "CSS",
+        "url": "https://www.hackerrank.com/certificates/a1241cad5fc6"
+      },
+      {
+        "authority": "\"PASHA Holding\" LLC",
+        "issued": "Oct 2022",
+        "name": "PASHA Hackathon 2.0",
+        "url": "https://drive.google.com/file/d/159E69dHecVZ-vTpjhvXnLLGqosOABHuj/view"
+      },
+      {
+        "authority": "Brain Centers",
+        "issued": "Sep 2022",
+        "name": "Basics of Cyber Security",
+        "url": "https://drive.google.com/file/d/1dGd-KgOMchG-f3_o0A-556l55nxLgdUV/view?usp=drivesdk"
+      },
+      {
+        "authority": "TEKNOFEST",
+        "issued": "Aug 2022",
+        "name": "Travel Hackathon",
+        "url": "https://drive.google.com/file/d/1IfAHVrxTA0U1V3C587fLwjQ6LTRAS1kD/view?usp=drivesdk"
+      },
+      {
+        "authority": "LinkedIn",
+        "issued": "Jul 2022",
+        "name": "User Experience for Web Design",
+        "url": "https://drive.google.com/file/d/1_uDNBYqEmSYyInaIbWb_9r84U4cabzrs/view?usp=drivesdk"
+      }
+    ],
+    "city": "Baku City",
+    "company": "Veezet",
+    "company_description": "Yeni nəsil smart vizit kartlarla tanış olun! Smart kartlarla şəxsi məlumatlarınızı, sosial media hesablarınızı, məhsullarınızı və xidmətlərinizi təqdim edə bilərsiniz.",
+    "company_domain": "",
+    "company_employee_count": 3,
+    "company_employee_range": "2-10",
+    "company_industry": "Retail",
+    "company_linkedin_url": "https://www.linkedin.com/company/veezetcom",
+    "company_logo_url": "https://media.licdn.com/dms/image/v2/D4E0BAQH-HHsirU_19w/company-logo_400_400/company-logo_400_400/0/1689239794220?e=1755734400&v=beta&t=0W1OGQzDd7eHFSS3EDnGvICZaDqlIm0Be24q1QBYKtk",
+    "company_website": "",
+    "company_year_founded": 2023,
+    "connection_count": 818,
+    "country": "Azerbaijan",
+    "current_company_join_month": 5,
+    "current_company_join_year": 2023,
+    "current_job_duration": "2 yrs 3 mos",
+    "educations": [
+      {
+        "activities": "",
+        "date_range": "2022 - 2026",
+        "degree": "Bachelor's degree",
+        "end_month": "",
+        "end_year": 2026,
+        "field_of_study": "Graphic Design",
+        "school": "Azerbaijan State University of Economics • UNEC",
+        "school_id": "15134462",
+        "school_linkedin_url": "https://www.linkedin.com/company/15134462/",
+        "school_logo_url": "https://media.licdn.com/dms/image/v2/D4E0BAQHIVBD4mgIJ9A/company-logo_200_200/company-logo_200_200/0/1729359006574/azerbaijan_state_university_of_economics_logo?e=1755734400&v=beta&t=QOvOtKg6IV8i_WxQgS7_L1iKPVT6nO1EdtjCJwi8qM4",
+        "start_month": "",
+        "start_year": 2022
+      },
+      {
+        "activities": "",
+        "date_range": "May 2023 - Jan 2024",
+        "degree": "Java Development",
+        "end_month": "Jan",
+        "end_year": 2024,
+        "field_of_study": "",
+        "school": "Matrix Academy",
+        "school_id": "86952136",
+        "school_linkedin_url": "https://www.linkedin.com/company/86952136/",
+        "school_logo_url": "https://media.licdn.com/dms/image/v2/D4D0BAQGsTqBsm4Vp0A/company-logo_200_200/company-logo_200_200/0/1694613811231?e=1755734400&v=beta&t=fnzfBEq8wbWdBkiy6lcob7ZoC5gZbsYlecd_JTwnThY",
+        "start_month": "May",
+        "start_year": 2023
+      }
+    ],
+    "email": "",
+    "experiences": [
+      {
+        "company": "Career Break",
+        "company_id": "",
+        "company_linkedin_url": "",
+        "company_logo_url": "",
+        "date_range": "Dec 2024 - Present",
+        "description": "",
+        "duration": "8 mos",
+        "end_month": "",
+        "end_year": "",
+        "is_current": true,
+        "job_type": "",
+        "location": "",
+        "skills": "",
+        "start_month": 12,
+        "start_year": 2024,
+        "title": "Professional development"
+      },
+      {
+        "company": "Veezet",
+        "company_id": "96229230",
+        "company_linkedin_url": "https://www.linkedin.com/company/96229230",
+        "company_logo_url": "https://media.licdn.com/dms/image/v2/D4E0BAQH-HHsirU_19w/company-logo_200_200/company-logo_200_200/0/1689239794220?e=1755734400&v=beta&t=OuXqvgfazDy_iHhhuxbTbOcqOo38Y4LIIeGlmVHLDns",
+        "date_range": "May 2023 - Present",
+        "description": "Developed and maintained company website using HTML, CSS, JavaScript, and PHP.\n\nUtilized PHP to create an efficient admin panel for streamlined content management.\n\nImplemented client-specific profile editing sections, empowering users to personalize their profile.",
+        "duration": "2 yrs 3 mos",
+        "end_month": "",
+        "end_year": "",
+        "is_current": true,
+        "job_type": "Self-employed",
+        "location": "Azerbaijan · Remote",
+        "skills": "HTML5 · JavaScript · CSS3 · SCSS · PHP · Project Management",
+        "start_month": 5,
+        "start_year": 2023,
+        "title": "Founder & CEO"
+      },
+      {
+        "company": "4SİM Azərbaycan / C4IR Azerbaijan",
+        "company_id": "79356592",
+        "company_linkedin_url": "https://www.linkedin.com/company/79356592",
+        "company_logo_url": "https://media.licdn.com/dms/image/v2/C4E0BAQFi8McL7brksg/company-logo_200_200/company-logo_200_200/0/1645796498743/4simgovaz_logo?e=1755734400&v=beta&t=KlkAqD5a3X6amRj0OlBtFv0WxMk8SxKDGc19XQrM0b8",
+        "date_range": "Mar 2024 - Apr 2024",
+        "description": "Skills: Java · Spring Boot · Spring Data JPA · Spring Security",
+        "duration": "2 mos",
+        "end_month": 4,
+        "end_year": 2024,
+        "is_current": false,
+        "job_type": "Internship",
+        "location": "Baku, Contiguous Azerbaijan, Azerbaijan · Hybrid",
+        "skills": "Java · Spring Boot · Spring Data JPA · Spring Security",
+        "start_month": 3,
+        "start_year": 2024,
+        "title": "Software Engineer"
+      },
+      {
+        "company": "UNEC Digital Volunteers Organization",
+        "company_id": "",
+        "company_linkedin_url": "",
+        "company_logo_url": "",
+        "date_range": "Dec 2023 - Apr 2024",
+        "description": "",
+        "duration": "5 mos",
+        "end_month": 4,
+        "end_year": 2024,
+        "is_current": false,
+        "job_type": "Freelance",
+        "location": "",
+        "skills": "",
+        "start_month": 12,
+        "start_year": 2023,
+        "title": "Chairman of the Design School Faculty"
+      }
+    ],
+    "first_name": "Emil",
+    "follower_count": 863,
+    "full_name": "Emil Karimov",
+    "headline": "Software Engineer  | B.Des @ University of Economics",
+    "honors_and_awards": [
+      {
+        "associated": null,
+        "date": "Oct 2023",
+        "description": null,
+        "issuer": "Pasha Holding | Umico",
+        "title": "PASHA Hackathon 3.0"
+      },
+      {
+        "associated": null,
+        "date": "Oct 2022",
+        "description": null,
+        "issuer": "Pasha Holding | Pasha Life",
+        "title": "PASHA Hackathon 2.0"
+      },
+      {
+        "associated": null,
+        "date": "Jun 2022",
+        "description": null,
+        "issuer": "Teknofest",
+        "title": "Travel Hackathon"
+      }
+    ],
+    "hq_city": "Baku",
+    "hq_country": "AZ",
+    "hq_region": "",
+    "is_creator": true,
+    "is_influencer": false,
+    "is_premium": false,
+    "is_verified": true,
+    "job_title": "Founder & CEO",
+    "languages": [],
+    "last_name": "Karimov",
+    "linkedin_url": "https://www.linkedin.com/in/emil-karimov-x/",
+    "location": "Baku City, Baku Ekonomic Zone, Azerbaijan",
+    "phone": "",
+    "profile_id": "1018805325",
+    "profile_image_url": "https://media.licdn.com/dms/image/v2/D4E03AQHmKhlr1zcvrA/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1714037421844?e=1758153600&v=beta&t=VTDXeYaK3UvglgMySMFxtbsGkiRp8gNYeL3AQbD6pZM",
+    "projects": [
+      {
+        "associated": null,
+        "date_range": "May 2023 - Present",
+        "description": "Skills: HTML5 · SCSS · JavaScript · PHP",
+        "link": null,
+        "name": "Veezet"
+      },
+      {
+        "associated": null,
+        "date_range": "Sep 2023 - Oct 2023",
+        "description": "Skills: React.js · SCSS",
+        "link": null,
+        "name": "UmicoConnect"
+      },
+      {
+        "associated": null,
+        "date_range": "Aug 2022 - Aug 2022",
+        "description": "Skills: HTML5 · CSS3 · JavaScript · jQuery",
+        "link": null,
+        "name": "Travel Hackathon - Turkish Airlines"
+      }
+    ],
+    "public_id": "emil-karimov-x",
+    "publications": [],
+    "school": "Azerbaijan State University of Economics • UNEC",
+    "skills": "HTML|Java|Spring Boot|Spring Data JPA|Spring Security|Spring Framework|Elastic Stack (ELK)|Elasticsearch|Docker|Logstash|PostgreSQL|React.js|Linux|RDBMS|SQL|Representational State Transfer (REST)|jQuery|Model-View-Controller (MVC)|Jakarta Persistence|Java Database Connectivity (JDBC)|Core Java|Jave EE|SCSS|Project Management|Cybersecurity Basics|Linux Basics|Bootstrap|Responsive Web Design|HTML5|CSS3|JavaScript|PHP|Canva",
+    "state": "Baku Ekonomic Zone",
+    "urn": "ACoAADy5vE0BIeyPe0UyTj_2U9yfhTWE0XEPz8g"
+  },
+  "message": "ok"
+}
+LinkedIn API - Languages: 0
+LinkedIn API - Certifications: 9
+LinkedIn API - Projects: 3
+LinkedIn API - Volunteer: 0
+LinkedIn API - Volunteer Experience: 0
+LinkedIn API - Volunteering: 0
+LinkedIn API - Volunteer Work: 0
+All available keys in LinkedIn data: [
+  'about',
+  'certifications',
+  'city',
+  'company',
+  'company_description',
+  'company_domain',
+  'company_employee_count',
+  'company_employee_range',
+  'company_industry',
+  'company_linkedin_url',
+  'company_logo_url',
+  'company_website',
+  'company_year_founded',
+  'connection_count',
+  'country',
+  'current_company_join_month',
+  'current_company_join_year',
+  'current_job_duration',
+  'educations',
+  'email',
+  'experiences',
+  'first_name',
+  'follower_count',
+  'full_name',
+  'headline',
+  'honors_and_awards',
+  'hq_city',
+  'hq_country',
+  'hq_region',
+  'is_creator',
+  'is_influencer',
+  'is_premium',
+  'is_verified',
+  'job_title',
+  'languages',
+  'last_name',
+  'linkedin_url',
+  'location',
+  'phone',
+  'profile_id',
+  'profile_image_url',
+  'projects',
+  'public_id',
+  'publications',
+  'school',
+  'skills',
+  'state',
+  'urn'
+]
+Mapping LinkedIn data structure...
+Raw certifications data from LinkedIn: [
+  {
+    "authority": "TEKNOFEST",
+    "issued": "Sep 2024",
+    "name": "Teknofest Antalya | Finalist",
+    "url": null
+  },
+  {
+    "authority": "Matrix Academy",
+    "issued": "Jan 2024",
+    "name": "Java Development",
+    "url": "https://drive.google.com/file/d/1VdiSOM06YhP8eQsvFM8vSNJoD4DT6c5t/view?usp=share_link"
+  },
+  {
+    "authority": "\"PASHA Holding\" LLC",
+    "issued": "Oct 2023",
+    "name": "PASHA Hackathon 3.0",
+    "url": "https://drive.google.com/file/d/1v6gjeAQPfa-FlVA7fR9IYABaa9nf4hXM/view"
+  },
+  {
+    "authority": "HackerRank",
+    "issued": "Feb 2023",
+    "name": "Java (Basic)",
+    "url": "https://www.hackerrank.com/certificates/6010d116f1c4"
+  },
+  {
+    "authority": "HackerRank",
+    "issued": "Dec 2022",
+    "name": "CSS",
+    "url": "https://www.hackerrank.com/certificates/a1241cad5fc6"
+  },
+  {
+    "authority": "\"PASHA Holding\" LLC",
+    "issued": "Oct 2022",
+    "name": "PASHA Hackathon 2.0",
+    "url": "https://drive.google.com/file/d/159E69dHecVZ-vTpjhvXnLLGqosOABHuj/view"
+  },
+  {
+    "authority": "Brain Centers",
+    "issued": "Sep 2022",
+    "name": "Basics of Cyber Security",
+    "url": "https://drive.google.com/file/d/1dGd-KgOMchG-f3_o0A-556l55nxLgdUV/view?usp=drivesdk"
+  },
+  {
+    "authority": "TEKNOFEST",
+    "issued": "Aug 2022",
+    "name": "Travel Hackathon",
+    "url": "https://drive.google.com/file/d/1IfAHVrxTA0U1V3C587fLwjQ6LTRAS1kD/view?usp=drivesdk"
+  },
+  {
+    "authority": "LinkedIn",
+    "issued": "Jul 2022",
+    "name": "User Experience for Web Design",
+    "url": "https://drive.google.com/file/d/1_uDNBYqEmSYyInaIbWb_9r84U4cabzrs/view?usp=drivesdk"
+  }
+]
+Raw volunteer data from LinkedIn: []
+Raw volunteer_experience data from LinkedIn: []
+Total volunteer entries found: 0
+Final mapped CV data languages: []
+Final mapped CV data certifications: [
+  {
+    "name": "Teknofest Antalya | Finalist",
+    "issuer": "TEKNOFEST",
+    "date": " - ",
+    "url": "",
+    "license_number": ""
+  },
+  {
+    "name": "Java Development",
+    "issuer": "Matrix Academy",
+    "date": " - ",
+    "url": "https://drive.google.com/file/d/1VdiSOM06YhP8eQsvFM8vSNJoD4DT6c5t/view?usp=share_link",
+    "license_number": ""
+  },
+  {
+    "name": "PASHA Hackathon 3.0",
+    "issuer": "\"PASHA Holding\" LLC",
+    "date": " - ",
+    "url": "https://drive.google.com/file/d/1v6gjeAQPfa-FlVA7fR9IYABaa9nf4hXM/view",
+    "license_number": ""
+  },
+  {
+    "name": "Java (Basic)",
+    "issuer": "HackerRank",
+    "date": " - ",
+    "url": "https://www.hackerrank.com/certificates/6010d116f1c4",
+    "license_number": ""
+  },
+  {
+    "name": "CSS",
+    "issuer": "HackerRank",
+    "date": " - ",
+    "url": "https://www.hackerrank.com/certificates/a1241cad5fc6",
+    "license_number": ""
+  },
+  {
+    "name": "PASHA Hackathon 2.0",
+    "issuer": "\"PASHA Holding\" LLC",
+    "date": " - ",
+    "url": "https://drive.google.com/file/d/159E69dHecVZ-vTpjhvXnLLGqosOABHuj/view",
+    "license_number": ""
+  },
+  {
+    "name": "Basics of Cyber Security",
+    "issuer": "Brain Centers",
+    "date": " - ",
+    "url": "https://drive.google.com/file/d/1dGd-KgOMchG-f3_o0A-556l55nxLgdUV/view?usp=drivesdk",
+    "license_number": ""
+  },
+  {
+    "name": "Travel Hackathon",
+    "issuer": "TEKNOFEST",
+    "date": " - ",
+    "url": "https://drive.google.com/file/d/1IfAHVrxTA0U1V3C587fLwjQ6LTRAS1kD/view?usp=drivesdk",
+    "license_number": ""
+  },
+  {
+    "name": "User Experience for Web Design",
+    "issuer": "LinkedIn",
+    "date": " - ",
+    "url": "https://drive.google.com/file/d/1_uDNBYqEmSYyInaIbWb_9r84U4cabzrs/view?usp=drivesdk",
+    "license_number": ""
+  }
+]
+Final mapped CV data projects: [
+  {
+    "name": "Veezet",
+    "description": "Skills: HTML5 · SCSS · JavaScript · PHP",
+    "url": "",
+    "date": " - "
+  },
+  {
+    "name": "UmicoConnect",
+    "description": "Skills: React.js · SCSS",
+    "url": "",
+    "date": " - "
+  },
+  {
+    "name": "Travel Hackathon - Turkish Airlines",
+    "description": "Skills: HTML5 · CSS3 · JavaScript · jQuery",
+    "url": "",
+    "date": " - "
+  }
+]
+Final mapped CV data volunteer_experience: []
+Final CV data being sent: {
+  "personal_info": {
+    "full_name": "Emil Karimov",
+    "email": "",
+    "phone": "",
+    "address": "Baku City, Baku Ekonomic Zone, Azerbaijan",
+    "photo_url": "https://media.licdn.com/dms/image/v2/D4E03AQHmKhlr1zcvrA/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1714037421844?e=1758153600&v=beta&t=VTDXeYaK3UvglgMySMFxtbsGkiRp8gNYeL3AQbD6pZM",
+    "website": "",
+    "linkedin_url": "https://www.linkedin.com/in/emil-karimov-x/",
+    "headline": "Software Engineer  | B.Des @ University of Economics"
+  },
+  "summary": "Hi, I’m Emil, born in Baku in 2005. Passionate about technology and coding, I’ve successfully transitioned my interests into a career. I have experience in Java, Spring Boot, Spring Data, Spring Security, and Docker. Notably, I was a finalist in Pasha Hackathon V3.0. Dedicated to continuous improvement, I stay updated with the latest industry trends.",
+  "experience": [
+    {
+      "title": "Professional development",
+      "company": "Career Break",
+      "location": "",
+      "start_date": "2024-12",
+      "end_date": "",
+      "description": "",
+      "is_current": true,
+      "job_type": "",
+      "skills": ""
+    },
+    {
+      "title": "Founder & CEO",
+      "company": "Veezet",
+      "location": "Azerbaijan · Remote",
+      "start_date": "2023-05",
+      "end_date": "",
+      "description": "Developed and maintained company website using HTML, CSS, JavaScript, and PHP.\n\nUtilized PHP to create an efficient admin panel for streamlined content management.\n\nImplemented client-specific profile editing sections, empowering users to personalize their profile.",
+      "is_current": true,
+      "job_type": "Self-employed",
+      "skills": "HTML5 · JavaScript · CSS3 · SCSS · PHP · Project Management"
+    },
+    {
+      "title": "Software Engineer",
+      "company": "4SİM Azərbaycan / C4IR Azerbaijan",
+      "location": "Baku, Contiguous Azerbaijan, Azerbaijan · Hybrid",
+      "start_date": "2024-03",
+      "end_date": "2024-04",
+      "description": "Skills: Java · Spring Boot · Spring Data JPA · Spring Security",
+      "is_current": false,
+      "job_type": "Internship",
+      "skills": "Java · Spring Boot · Spring Data JPA · Spring Security"
+    },
+    {
+      "title": "Chairman of the Design School Faculty",
+      "company": "UNEC Digital Volunteers Organization",
+      "location": "",
+      "start_date": "2023-12",
+      "end_date": "2024-04",
+      "description": "",
+      "is_current": false,
+      "job_type": "Freelance",
+      "skills": ""
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor's degree",
+      "institution": "Azerbaijan State University of Economics • UNEC",
+      "field_of_study": "Graphic Design",
+      "start_date": "2022-09",
+      "end_date": "2026-06",
+      "description": "",
+      "activities": "",
+      "grade": ""
+    },
+    {
+      "degree": "Java Development",
+      "institution": "Matrix Academy",
+      "field_of_study": "",
+      "start_date": "2023-May",
+      "end_date": "2024-Jan",
+      "description": "",
+      "activities": "",
+      "grade": ""
+    }
+  ],
+  "skills": [
+    "HTML5",
+    "JavaScript",
+    "CSS3",
+    "SCSS",
+    "PHP",
+    "Project Management",
+    "Java",
+    "Spring Boot",
+    "Spring Data JPA",
+    "Spring Security"
+  ],
+  "languages": [],
+  "certifications": [
+    {
+      "name": "Teknofest Antalya | Finalist",
+      "issuer": "TEKNOFEST",
+      "date": " - ",
+      "url": "",
+      "license_number": ""
+    },
+    {
+      "name": "Java Development",
+      "issuer": "Matrix Academy",
+      "date": " - ",
+      "url": "https://drive.google.com/file/d/1VdiSOM06YhP8eQsvFM8vSNJoD4DT6c5t/view?usp=share_link",
+      "license_number": ""
+    },
+    {
+      "name": "PASHA Hackathon 3.0",
+      "issuer": "\"PASHA Holding\" LLC",
+      "date": " - ",
+      "url": "https://drive.google.com/file/d/1v6gjeAQPfa-FlVA7fR9IYABaa9nf4hXM/view",
+      "license_number": ""
+    },
+    {
+      "name": "Java (Basic)",
+      "issuer": "HackerRank",
+      "date": " - ",
+      "url": "https://www.hackerrank.com/certificates/6010d116f1c4",
+      "license_number": ""
+    },
+    {
+      "name": "CSS",
+      "issuer": "HackerRank",
+      "date": " - ",
+      "url": "https://www.hackerrank.com/certificates/a1241cad5fc6",
+      "license_number": ""
+    },
+    {
+      "name": "PASHA Hackathon 2.0",
+      "issuer": "\"PASHA Holding\" LLC",
+      "date": " - ",
+      "url": "https://drive.google.com/file/d/159E69dHecVZ-vTpjhvXnLLGqosOABHuj/view",
+      "license_number": ""
+    },
+    {
+      "name": "Basics of Cyber Security",
+      "issuer": "Brain Centers",
+      "date": " - ",
+      "url": "https://drive.google.com/file/d/1dGd-KgOMchG-f3_o0A-556l55nxLgdUV/view?usp=drivesdk",
+      "license_number": ""
+    },
+    {
+      "name": "Travel Hackathon",
+      "issuer": "TEKNOFEST",
+      "date": " - ",
+      "url": "https://drive.google.com/file/d/1IfAHVrxTA0U1V3C587fLwjQ6LTRAS1kD/view?usp=drivesdk",
+      "license_number": ""
+    },
+    {
+      "name": "User Experience for Web Design",
+      "issuer": "LinkedIn",
+      "date": " - ",
+      "url": "https://drive.google.com/file/d/1_uDNBYqEmSYyInaIbWb_9r84U4cabzrs/view?usp=drivesdk",
+      "license_number": ""
+    }
+  ],
+  "projects": [
+    {
+      "name": "Veezet",
+      "description": "Skills: HTML5 · SCSS · JavaScript · PHP",
+      "url": "",
+      "date": " - "
+    },
+    {
+      "name": "UmicoConnect",
+      "description": "Skills: React.js · SCSS",
+      "url": "",
+      "date": " - "
+    },
+    {
+      "name": "Travel Hackathon - Turkish Airlines",
+      "description": "Skills: HTML5 · CSS3 · JavaScript · jQuery",
+      "url": "",
+      "date": " - "
+    }
+  ],
+  "volunteer_experience": [],
+  "connections_count": 818,
+  "followers_count": 863,
+  "is_premium": false,
+  "is_verified": true
+}
+Creating import session for user: 26bfce48-19e0-40c0-9eeb-bdcf229bf827
+Session data size: 4609
+Import session created successfully: c2904915-4fb2-43ae-98a6-d5fdd8fdaf06
+ POST /api/import/linkedin 200 in 4459ms
+ ○ Compiling /cv/edit/[id] ...
+ ✓ Compiled /cv/edit/[id] in 1107ms
+Edit page debug: {
+  importType: null,
+  sessionId: 'c2904915-4fb2-43ae-98a6-d5fdd8fdaf06',
+  hasSessionData: false,
+  linkedInData: 'null',
+  sessionImportData: 'null'
+}
+ GET /cv/edit/new?session=c2904915-4fb2-43ae-98a6-d5fdd8fdaf06 200 in 1497ms
+ GET /api/users/me 200 in 81ms
+ ○ Compiling /api/import/session ...
+ ✓ Compiled /api/import/session in 605ms
+ GET /api/import/session?session=c2904915-4fb2-43ae-98a6-d5fdd8fdaf06 200 in 650ms

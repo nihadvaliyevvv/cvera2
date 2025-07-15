@@ -1,0 +1,40 @@
+/* A4 Preview Scroll Styles */
+.a4PreviewContent {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+  scroll-behavior: smooth;
+  box-sizing: border-box;
+}
+
+.a4PreviewContent::-webkit-scrollbar {
+  width: 12px;
+}
+
+.a4PreviewContent::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+  margin: 4px 0;
+}
+
+.a4PreviewContent::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+  border: 2px solid #f1f5f9;
+  background-clip: padding-box;
+}
+
+.a4PreviewContent::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.a4PreviewContent::-webkit-scrollbar-thumb:active {
+  background: #64748b;
+}
+
+.a4PreviewContent::-webkit-scrollbar-corner {
+  background: #f1f5f9;
+}

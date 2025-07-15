@@ -30,8 +30,13 @@ export default function CreateCVPage() {
   }
 
   const handleLinkedInImport = (data: any) => {
-    // CV yaradıb LinkedIn məlumatları ilə doldur
-    router.push(`/cv/edit/new?import=linkedin&data=${encodeURIComponent(JSON.stringify(data))}`);
+    // Check if data contains sessionId (new approach)
+    if (data && data.sessionId) {
+      router.push(`/cv/edit/new?session=${data.sessionId}`);
+    } else {
+      // Fallback to old approach if needed
+      router.push(`/cv/edit/new?import=linkedin&data=${encodeURIComponent(JSON.stringify(data))}`);
+    }
   };
 
   const handleManualCreate = () => {

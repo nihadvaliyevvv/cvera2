@@ -13,6 +13,7 @@ interface ApiKey {
   usageCount: number;
   lastUsed: string | null;
   lastResult: string | null;
+  deactivatedAt: string | null;
   createdAt: string;
 }
 
@@ -134,7 +135,31 @@ export default function AdminApiKeys() {
   const getResultColor = (result: string | null) => {
     if (!result) return 'text-gray-500';
     if (result === 'success') return 'text-green-600';
-    return 'text-red-600';
+    if (result.includes('deactivated')) return 'text-red-600';
+    if (result === 'reactivated') return 'text-blue-600';
+    return 'text-yellow-600';
+  };
+
+  const getResultText = (result: string | null) => {
+    if (!result) return 'Not used';
+    if (result === 'success') return 'Success';
+    if (result === 'error') return 'Error';
+    if (result === 'deactivated_auth_error') return 'Deactivated (Auth Error)';
+    if (result === 'deactivated_server_error') return 'Deactivated (Server Error)';
+    if (result === 'deactivated_network_error') return 'Deactivated (Network Error)';
+    if (result === 'reactivated') return 'Reactivated';
+    if (result === 'auto_reactivated_after_30_days') return 'Auto-reactivated (30 days)';
+    return result;
+  };
+
+  const getDaysUntilReactivation = (deactivatedAt: string | null) => {
+    if (!deactivatedAt) return null;
+    const deactivationDate = new Date(deactivatedAt);
+    const reactivationDate = new Date(deactivationDate);
+    reactivationDate.setMonth(reactivationDate.getMonth() + 1);
+    const today = new Date();
+    const daysLeft = Math.ceil((reactivationDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    return daysLeft > 0 ? daysLeft : 0;
   };
 
   return (
@@ -288,6 +313,23 @@ export default function AdminApiKeys() {
                       }`}>
                         {apiKey.active ? 'Active' : 'Inactive'}
                       </span>
+                      
+                      {!apiKey.active && apiKey.deactivatedAt && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {(() => {
+                            const daysLeft = getDaysUntilReactivation(apiKey.deactivatedAt);
+                            if (daysLeft === null) {
+                              return 'Deactivated';
+                            } else if (daysLeft === 0) {
+                              return 'Eligible for reactivation';
+                            } else if (daysLeft > 0) {
+                              return `Reactivates in ${daysLeft} days`;
+                            } else {
+                              return 'Deactivated';
+                            }
+                          })()}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <input
@@ -300,7 +342,7 @@ export default function AdminApiKeys() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{apiKey.usageCount}</div>
                       <div className={`text-sm ${getResultColor(apiKey.lastResult)}`}>
-                        {apiKey.lastResult || 'Not used'}
+                        {getResultText(apiKey.lastResult)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -318,6 +360,16 @@ export default function AdminApiKeys() {
                         >
                           {apiKey.active ? 'Disable' : 'Enable'}
                         </button>
+                        
+                        {!apiKey.active && apiKey.lastResult?.includes('deactivated') && (
+                          <button
+                            onClick={() => handleUpdateKey(apiKey.id, { active: true, lastResult: 'reactivated' })}
+                            className="px-3 py-1 bg-blue-100 text-blue-800 hover:bg-blue-200 rounded text-xs"
+                          >
+                            Reactivate
+                          </button>
+                        )}
+                        
                         <button
                           onClick={() => handleDeleteKey(apiKey.id)}
                           className="px-3 py-1 bg-red-100 text-red-800 hover:bg-red-200 rounded text-xs"

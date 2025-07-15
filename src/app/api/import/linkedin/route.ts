@@ -71,7 +71,26 @@ async function tryApiKeysSequentially(url: string): Promise<{ apiKey: string; re
       const response = await axios.get(
         `https://${process.env.RAPIDAPI_HOST}/get-linkedin-profile`,
         {
-          params: { linkedin_url: finalUrl },
+          params: { 
+            linkedin_url: finalUrl,
+            include_experiences: 'true',
+            include_educations: 'true',
+            include_skills: 'true',
+            include_languages: 'true',
+            include_certifications: 'true',
+            include_projects: 'true',
+            include_volunteer_experience: 'true',
+            include_volunteers: 'true',
+            include_volunteering: 'true',
+            include_volunteer_work: 'true',
+            include_accomplishments: 'true',
+            include_publications: 'true',
+            include_honors: 'true',
+            include_awards: 'true',
+            include_honors_awards: 'true',
+            include_achievements: 'true',
+            include_causes: 'true'
+          },
           headers: {
             "X-RapidAPI-Key": keyRecord.key,
             "X-RapidAPI-Host": process.env.RAPIDAPI_HOST,
@@ -83,6 +102,16 @@ async function tryApiKeysSequentially(url: string): Promise<{ apiKey: string; re
       
       console.log(`API key ${keyRecord.key.substring(0, 10)}... works! Status: ${response.status}`);
       
+      // Update API key usage statistics on success
+      await prisma.apiKey.update({
+        where: { id: keyRecord.id },
+        data: {
+          usageCount: { increment: 1 },
+          lastUsed: new Date(),
+          lastResult: 'success'
+        }
+      });
+      
       return { apiKey: keyRecord.key, response };
     } catch (error: any) {
       const statusCode = error.response?.status;
@@ -93,6 +122,33 @@ async function tryApiKeysSequentially(url: string): Promise<{ apiKey: string; re
         message: errorMessage,
         code: error.code
       });
+      
+      // Update API key usage statistics on failure
+      await prisma.apiKey.update({
+        where: { id: keyRecord.id },
+        data: {
+          usageCount: { increment: 1 },
+          lastUsed: new Date(),
+          lastResult: 'error'
+        }
+      });
+      
+      // Auto-deactivate API key on authentication errors
+      if (statusCode === 401 || statusCode === 403) {
+        console.log(`🔒 Authentication error for key ${keyRecord.key.substring(0, 10)}... - DEACTIVATING KEY`);
+        
+        await prisma.apiKey.update({
+          where: { id: keyRecord.id },
+          data: {
+            active: false,
+            deactivatedAt: new Date(),
+            lastResult: 'deactivated_auth_error'
+          }
+        });
+        
+        console.log(`✅ API key ${keyRecord.key.substring(0, 10)}... has been deactivated due to auth error`);
+        continue;
+      }
       
       // Handle 431 Request Header Fields Too Large
       if (statusCode === 431) {
@@ -106,21 +162,43 @@ async function tryApiKeysSequentially(url: string): Promise<{ apiKey: string; re
         continue;
       }
       
-      // If it's a different error, still try next key but log it
-      if (statusCode === 401 || statusCode === 403) {
-        console.log(`Authentication error for key ${keyRecord.key.substring(0, 10)}..., trying next key`);
-        continue;
-      }
-      
       // For other errors, we might want to return the error instead of trying more keys
       if (statusCode === 404) {
         console.log(`Profile not found - no point trying other keys`);
         throw error; // Profile not found - no point trying other keys
       }
       
-      // Network errors
-      if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-        console.log(`Network error for key ${keyRecord.key.substring(0, 10)}...:`, error.code);
+      // Auto-deactivate API key on server errors (5xx)
+      if (statusCode >= 500) {
+        console.log(`🔒 Server error ${statusCode} for key ${keyRecord.key.substring(0, 10)}... - DEACTIVATING KEY`);
+        
+        await prisma.apiKey.update({
+          where: { id: keyRecord.id },
+          data: {
+            active: false,
+            deactivatedAt: new Date(),
+            lastResult: 'deactivated_server_error'
+          }
+        });
+        
+        console.log(`✅ API key ${keyRecord.key.substring(0, 10)}... has been deactivated due to server error`);
+        continue;
+      }
+      
+      // Network errors - also deactivate after multiple failures
+      if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND' || error.code === 'ETIMEDOUT') {
+        console.log(`🔒 Network error ${error.code} for key ${keyRecord.key.substring(0, 10)}... - DEACTIVATING KEY`);
+        
+        await prisma.apiKey.update({
+          where: { id: keyRecord.id },
+          data: {
+            active: false,
+            deactivatedAt: new Date(),
+            lastResult: 'deactivated_network_error'
+          }
+        });
+        
+        console.log(`✅ API key ${keyRecord.key.substring(0, 10)}... has been deactivated due to network error`);
         continue;
       }
       
@@ -172,10 +250,12 @@ function mapLinkedInToCVData(linkedinData: any) {
   
   // Extract certifications if available
   const extractCertifications = (data: any) => {
+    console.log('Raw certifications data from LinkedIn:', JSON.stringify(data.certifications || [], null, 2));
+    
     return (data.certifications || []).map((cert: any) => ({
       name: cert.name || cert.title || "",
       issuer: cert.authority || cert.issuer || cert.organization || "",
-      date: cert.date || `${cert.start_date || ""} - ${cert.end_date || ""}`,
+      date: cert.issued || cert.date || cert.issue_date || `${cert.start_date || ""} - ${cert.end_date || ""}`,
       url: cert.url || "",
       license_number: cert.license_number || cert.credential_id || "",
     }));
@@ -183,17 +263,90 @@ function mapLinkedInToCVData(linkedinData: any) {
   
   // Extract volunteer experience if available
   const extractVolunteer = (data: any) => {
-    return (data.volunteer || data.volunteer_experience || []).map((vol: any) => ({
-      organization: vol.organization || vol.company || "",
+    console.log('Raw volunteer data from LinkedIn:', JSON.stringify(data.volunteer || [], null, 2));
+    console.log('Raw volunteers data from LinkedIn:', JSON.stringify(data.volunteers || [], null, 2));
+    console.log('Raw volunteer_experience data from LinkedIn:', JSON.stringify(data.volunteer_experience || [], null, 2));
+    console.log('Raw volunteering data from LinkedIn:', JSON.stringify(data.volunteering || [], null, 2));
+    console.log('Raw volunteer_work data from LinkedIn:', JSON.stringify(data.volunteer_work || [], null, 2));
+    
+    const volunteers = [];
+    
+    // Check both volunteer and volunteer_experience fields
+    if (data.volunteer && Array.isArray(data.volunteer)) {
+      volunteers.push(...data.volunteer);
+    }
+    
+    if (data.volunteers && Array.isArray(data.volunteers)) {
+      volunteers.push(...data.volunteers);
+    }
+    
+    if (data.volunteer_experience && Array.isArray(data.volunteer_experience)) {
+      volunteers.push(...data.volunteer_experience);
+    }
+    
+    // Also check if it's under different field names
+    if (data.volunteering && Array.isArray(data.volunteering)) {
+      volunteers.push(...data.volunteering);
+    }
+    
+    if (data.volunteer_work && Array.isArray(data.volunteer_work)) {
+      volunteers.push(...data.volunteer_work);
+    }
+    
+    console.log('Total volunteer entries found:', volunteers.length);
+    
+    return volunteers.map((vol: any) => ({
+      organization: vol.organization || vol.company || vol.org || "",
       role: vol.role || vol.title || vol.position || "",
       description: vol.description || "",
-      start_date: vol.start_date || "",
-      end_date: vol.end_date || "",
-      cause: vol.cause || "",
+      start_date: vol.start_date || vol.startDate || "",
+      end_date: vol.end_date || vol.endDate || "",
+      date: vol.date || `${vol.start_date || vol.startDate || ""} - ${vol.end_date || vol.endDate || ""}`,
+      cause: vol.cause || vol.category || "",
+    }));
+  };
+
+  // Extract honors & awards if available
+  const extractHonorsAwards = (data: any) => {
+    console.log('Raw honors data from LinkedIn:', JSON.stringify(data.honors || [], null, 2));
+    console.log('Raw awards data from LinkedIn:', JSON.stringify(data.awards || [], null, 2));
+    console.log('Raw accomplishments data from LinkedIn:', JSON.stringify(data.accomplishments || [], null, 2));
+    
+    const honors = [];
+    
+    // Check multiple possible field names for honors/awards
+    if (data.honors && Array.isArray(data.honors)) {
+      honors.push(...data.honors);
+    }
+    
+    if (data.awards && Array.isArray(data.awards)) {
+      honors.push(...data.awards);
+    }
+    
+    if (data.accomplishments && Array.isArray(data.accomplishments)) {
+      honors.push(...data.accomplishments);
+    }
+    
+    if (data.honors_awards && Array.isArray(data.honors_awards)) {
+      honors.push(...data.honors_awards);
+    }
+    
+    if (data.achievements && Array.isArray(data.achievements)) {
+      honors.push(...data.achievements);
+    }
+    
+    console.log('Total honors/awards entries found:', honors.length);
+    
+    return honors.map((honor: any) => ({
+      title: honor.title || honor.name || "",
+      issuer: honor.issuer || honor.authority || honor.organization || "",
+      date: honor.date || honor.issued || `${honor.start_date || ""} - ${honor.end_date || ""}`,
+      description: honor.description || "",
+      url: honor.url || "",
     }));
   };
   
-  return {
+  const mappedData = {
     personal_info: {
       full_name: linkedinData.full_name || "",
       email: linkedinData.email || "",
@@ -234,12 +387,22 @@ function mapLinkedInToCVData(linkedinData: any) {
     certifications: extractCertifications(linkedinData),
     projects: extractProjects(linkedinData),
     volunteer_experience: extractVolunteer(linkedinData),
+    honors_awards: extractHonorsAwards(linkedinData),
     // Additional metadata
     connections_count: linkedinData.connection_count || 0,
     followers_count: linkedinData.follower_count || 0,
     is_premium: linkedinData.is_premium || false,
     is_verified: linkedinData.is_verified || false,
   };
+  
+  // Log the final mapped data
+  console.log('Final mapped CV data languages:', JSON.stringify(mappedData.languages, null, 2));
+  console.log('Final mapped CV data certifications:', JSON.stringify(mappedData.certifications, null, 2));
+  console.log('Final mapped CV data projects:', JSON.stringify(mappedData.projects, null, 2)); 
+  console.log('Final mapped CV data volunteer_experience:', JSON.stringify(mappedData.volunteer_experience, null, 2));
+  console.log('Final mapped CV data honors_awards:', JSON.stringify(mappedData.honors_awards, null, 2));
+  
+  return mappedData;
 }
 
 // POST /api/import/linkedin - Import LinkedIn profile
@@ -298,6 +461,24 @@ export async function POST(req: NextRequest) {
 
     // Log the full raw LinkedIn API response for debugging
     console.log('RAW LINKEDIN API RESPONSE:', JSON.stringify(response.data, null, 2));
+    
+    // Log specific sections we're interested in
+    const data = response.data.data || {};
+    console.log('LinkedIn API - Languages:', data.languages ? data.languages.length : 0);
+    console.log('LinkedIn API - Certifications:', data.certifications ? data.certifications.length : 0);
+    console.log('LinkedIn API - Projects:', data.projects ? data.projects.length : 0);
+    console.log('LinkedIn API - Volunteer:', data.volunteer ? data.volunteer.length : 0);
+    console.log('LinkedIn API - Volunteer Experience:', data.volunteer_experience ? data.volunteer_experience.length : 0);
+    console.log('LinkedIn API - Volunteering:', data.volunteering ? data.volunteering.length : 0);
+    console.log('LinkedIn API - Volunteer Work:', data.volunteer_work ? data.volunteer_work.length : 0);
+    console.log('LinkedIn API - Honors:', data.honors ? data.honors.length : 0);
+    console.log('LinkedIn API - Awards:', data.awards ? data.awards.length : 0);
+    console.log('LinkedIn API - Accomplishments:', data.accomplishments ? data.accomplishments.length : 0);
+    console.log('LinkedIn API - Honors Awards:', data.honors_awards ? data.honors_awards.length : 0);
+    console.log('LinkedIn API - Achievements:', data.achievements ? data.achievements.length : 0);
+    
+    // Log all available keys to see what volunteer-related fields exist
+    console.log('All available keys in LinkedIn data:', Object.keys(data));
 
     if (!response.data || !response.data.data) {
       return NextResponse.json({ 
@@ -305,12 +486,32 @@ export async function POST(req: NextRequest) {
       }, { status: 404 });
     }
 
+    // Ensure all required fields exist with default empty arrays
+    const linkedinData = {
+      ...response.data.data,
+      languages: response.data.data.languages || [],
+      certifications: response.data.data.certifications || [],
+      projects: response.data.data.projects || [],
+      volunteer: response.data.data.volunteer || [],
+      volunteer_experience: response.data.data.volunteer_experience || [],
+      volunteering: response.data.data.volunteering || [],
+      volunteer_work: response.data.data.volunteer_work || [],
+      honors: response.data.data.honors || [],
+      awards: response.data.data.awards || [],
+      accomplishments: response.data.data.accomplishments || [],
+      honors_awards: response.data.data.honors_awards || [],
+      achievements: response.data.data.achievements || []
+    };
+
     // Map LinkedIn data to CV structure
-    const cvData = mapLinkedInToCVData(response.data.data);
+    const cvData = mapLinkedInToCVData(linkedinData);
     console.log('Final CV data being sent:', JSON.stringify(cvData, null, 2));
 
     // Store import data temporarily and return short URL
     try {
+      console.log('Creating import session for user:', userId);
+      console.log('Session data size:', JSON.stringify(cvData).length);
+      
       const importSession = await prisma.importSession.create({
         data: {
           userId,
@@ -320,10 +521,12 @@ export async function POST(req: NextRequest) {
         }
       });
 
+      console.log('Import session created successfully:', importSession.id);
+
       return NextResponse.json({
         success: true,
         sessionId: importSession.id,
-        redirectUrl: `/cv/edit/new?import=linkedin&session=${importSession.id}`,
+        redirectUrl: `/cv/edit/new?session=${importSession.id}`,
         message: "LinkedIn profili uğurla import edildi"
       });
     } catch (storeError) {

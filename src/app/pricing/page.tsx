@@ -73,7 +73,16 @@ export default function PricingPage() {
 
       if (response.ok) {
         const userData = await response.json();
-        setUserTier(userData.subscriptions?.[0]?.tier || 'Free');
+        console.log('User data from API:', userData); // Debug log
+        
+        // Get active subscription tier, default to 'Free' if no active subscription
+        const activeSubscription = userData.subscriptions?.[0];
+        const tier = activeSubscription?.tier || 'Free';
+        
+        console.log('Active subscription:', activeSubscription); // Debug log
+        console.log('Setting userTier to:', tier); // Debug log
+        
+        setUserTier(tier);
       }
     } catch (error) {
       console.error('Error loading user info:', error);
@@ -164,6 +173,8 @@ export default function PricingPage() {
             const isCurrentPlan = userTier === plan.name;
             const isDowngrade = planLevel < currentTierLevel;
             
+            console.log(`Plan: ${plan.name}, Level: ${planLevel}, Current: ${currentTierLevel}, IsCurrentPlan: ${isCurrentPlan}, IsDowngrade: ${isDowngrade}`); // Debug log
+            
             return (
               <div
                 key={plan.id}
@@ -230,7 +241,7 @@ export default function PricingPage() {
                     ) : plan.price === 0 ? (
                       'Pulsuz Başla'
                     ) : (
-                      'Yüksəlt'
+                      userTier === 'Free' ? 'Yüksəlt' : 'Planı Dəyiş'
                     )}
                   </button>
                 </div>

@@ -27,11 +27,14 @@ function PaymentSuccessContent() {
     // Verify payment and activate subscription
     const verifyPayment = async () => {
       try {
+        const token = localStorage.getItem('accessToken');
+        
         // Call demo success API to activate subscription
         const response = await fetch('/api/payments/demo-success', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : ''
           },
           body: JSON.stringify({
             transactionId,

@@ -639,6 +639,7 @@
   font-size: clamp(8px, 1.5vw, 11pt);
   line-height: 1.4;
   transform-origin: top left;
+  min-height: 100%;
 }
 
 /* Scroll bar styles for A4 preview */
@@ -659,6 +660,11 @@
 
 .responsivePreview::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Ensure CV content takes full height */
+.responsivePreview > div {
+  min-height: 100%;
 }
 
 .responsivePreview h1 {

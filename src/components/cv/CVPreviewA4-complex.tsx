@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
 import { CVData as CVDataType } from '@/types/cv';
+import styles from './CVPreviewA4-complex.module.css';
 
 interface CVData {
   id?: string;
@@ -234,50 +235,63 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
   }
 
   return (
-    <div style={pdfStyles.page}>
-      {/* Header Section */}
-      <div style={pdfStyles.header}>
-        <h1 style={pdfStyles.name}>
-          {cv.data.personalInfo.fullName || 'Ad Soyad'}
-        </h1>
-        <div style={pdfStyles.contactInfo}>
-          {cv.data.personalInfo.email && (
-            <div style={pdfStyles.contactItem}>
-              <span>Email:</span>
-              <span>{cv.data.personalInfo.email}</span>
-            </div>
-          )}
-          {cv.data.personalInfo.phone && (
-            <div style={pdfStyles.contactItem}>
-              <span>Tel:</span>
-              <span>{cv.data.personalInfo.phone}</span>
-            </div>
-          )}
-          {cv.data.personalInfo.location && (
-            <div style={pdfStyles.contactItem}>
-              <span>Yer:</span>
-              <span>{cv.data.personalInfo.location}</span>
-            </div>
-          )}
-          {cv.data.personalInfo.linkedin && (
-            <div style={pdfStyles.contactItem}>
-              <span>LinkedIn:</span>
-              <span>LinkedIn</span>
-            </div>
-          )}
-          {cv.data.personalInfo.website && (
-            <div style={pdfStyles.contactItem}>
-              <span>Website:</span>
-              <span>Website</span>
-            </div>
-          )}
+    <div style={{
+      ...pdfStyles.page,
+      height: '100%',
+      overflow: 'hidden',
+      margin: 0,
+      padding: 0
+    }}>
+      {/* Scrollable content wrapper */}
+      <div className={styles.a4PreviewContent} style={{
+        height: '100%',
+        overflowY: 'auto',
+        padding: '20px',
+        boxSizing: 'border-box'
+      }}>
+        {/* Header Section */}
+        <div style={pdfStyles.header}>
+          <h1 style={pdfStyles.name}>
+            {cv.data.personalInfo.fullName || 'Ad Soyad'}
+          </h1>
+          <div style={pdfStyles.contactInfo}>
+            {cv.data.personalInfo.email && (
+              <div style={pdfStyles.contactItem}>
+                <span>Email:</span>
+                <span>{cv.data.personalInfo.email}</span>
+              </div>
+            )}
+            {cv.data.personalInfo.phone && (
+              <div style={pdfStyles.contactItem}>
+                <span>Tel:</span>
+                <span>{cv.data.personalInfo.phone}</span>
+              </div>
+            )}
+            {cv.data.personalInfo.location && (
+              <div style={pdfStyles.contactItem}>
+                <span>Yer:</span>
+                <span>{cv.data.personalInfo.location}</span>
+              </div>
+            )}
+            {cv.data.personalInfo.linkedin && (
+              <div style={pdfStyles.contactItem}>
+                <span>LinkedIn:</span>
+                <span>LinkedIn</span>
+              </div>
+            )}
+            {cv.data.personalInfo.website && (
+              <div style={pdfStyles.contactItem}>
+                <span>Website:</span>
+                <span>Website</span>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Summary */}
-      {cv.data.personalInfo.summary && (
-        <div style={pdfStyles.section}>
-          <div style={pdfStyles.sectionHeader}>
+        {/* Summary */}
+        {cv.data.personalInfo.summary && (
+          <div style={pdfStyles.section}>
+            <div style={pdfStyles.sectionHeader}>
             <h2 style={pdfStyles.sectionTitle}>Özet</h2>
           </div>
           <p style={pdfStyles.summary}>{cv.data.personalInfo.summary}</p>
@@ -404,6 +418,7 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

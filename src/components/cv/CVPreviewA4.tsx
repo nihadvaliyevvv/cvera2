@@ -111,13 +111,22 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
         background: 'white',
         width: '100%',
         height: '100%',
-        padding: '20px',
         overflow: 'hidden'
       }}>
-        {/* Header - Bold style */}
-        <div style={{ textAlign: 'left', marginBottom: '30px' }}>
-          <div style={{ 
-            fontSize: '36pt', 
+      <div style={{
+        height: '100%',
+        overflowY: 'auto',
+        padding: '20px',
+        scrollbarWidth: 'thin',
+        scrollbarColor: '#cbd5e1 #f1f5f9',
+        width: '794px', // Exact A4 width
+        fontSize: '11pt', // Exact PDF font size
+        lineHeight: '1.4' // Exact PDF line height
+      }}>
+          {/* Header - Bold style */}
+          <div style={{ textAlign: 'left', marginBottom: '30px' }}>
+            <div style={{ 
+              fontSize: '36pt', 
             fontWeight: 'bold', 
             color: '#000', 
             marginBottom: '5px',
@@ -413,6 +422,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
             ))}
           </div>
         )}
+        </div>
       </div>
     );
   }
@@ -422,18 +432,24 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
     <div style={{
       fontFamily: 'Times New Roman, serif',
       fontSize: '11pt',
-      lineHeight: '1.4',
+      lineHeight: '1.5',
       color: '#333',
       background: 'white',
       width: '100%',
       height: '100%',
-      padding: '15px 20px 20px 20px',
       overflow: 'hidden'
     }}>
-      {/* Header Section */}
-      <div style={{ marginBottom: '0.8rem', pageBreakInside: 'avoid', minHeight: '40px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '0.8rem' }}>
-          <h1 style={{ 
+      <div style={{
+        height: '100%',
+        overflowY: 'auto',
+        padding: '20px',
+        scrollbarWidth: 'thin',
+        scrollbarColor: '#cbd5e1 #f1f5f9'
+      }}>
+        {/* Header Section */}
+        <div style={{ marginBottom: '0.8rem', pageBreakInside: 'avoid', minHeight: '40px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '0.8rem' }}>
+            <h1 style={{ 
             fontSize: '2.5rem', 
             fontWeight: '700', 
             color: '#1f2937', 
@@ -1069,6 +1085,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };

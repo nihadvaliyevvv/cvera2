@@ -27,6 +27,9 @@ export async function GET(req: NextRequest) {
       createdAt: true,
       updatedAt: true,
       subscriptions: {
+        where: { 
+          status: "active" 
+        },
         orderBy: { startedAt: "desc" },
         take: 1,
         select: {

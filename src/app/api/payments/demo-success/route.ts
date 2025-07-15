@@ -16,6 +16,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Try to get user ID from token if available
+    let userIdFromToken = null;
+    try {
+      const authHeader = req.headers.get('authorization');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.replace('Bearer ', '');
+        const payload = verifyJWT(token);
+        userIdFromToken = payload?.userId;
+      }
+    } catch (error) {
+      console.log('Token verification failed, proceeding without user ID');
+    }
+
     // Find payment by transaction ID or order ID
     const payment = await prisma.payment.findFirst({
       where: {
@@ -33,6 +46,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { message: 'Payment not found' },
         { status: 404 }
+      );
+    }
+
+    // Ensure user matches if token is provided
+    if (userIdFromToken && payment.userId !== userIdFromToken) {
+      return NextResponse.json(
+        { message: 'Unauthorized' },
+        { status: 403 }
       );
     }
 

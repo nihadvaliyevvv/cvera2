@@ -75,11 +75,11 @@ export class FileGenerationService {
         }
         body {
             font-family: 'Times New Roman', serif;
-            font-size: 12pt;
-            line-height: 1.5;
+            font-size: 10pt;
+            line-height: 1.3;
             color: #333;
             background: white;
-            padding: 20px;
+            padding: 15px;
         }
         .container {
             max-width: 800px;
@@ -90,21 +90,21 @@ export class FileGenerationService {
         /* Header - Bold style */
         .header {
             text-align: left;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         
         .name {
-            font-size: 36pt;
+            font-size: 24pt;
             font-weight: bold;
             color: #000;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
             text-transform: uppercase;
         }
         
         .title {
-            font-size: 14pt;
+            font-size: 12pt;
             color: #666;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             font-style: italic;
         }
         
@@ -112,13 +112,13 @@ export class FileGenerationService {
         .contact-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         
         .contact-table td {
-            padding: 5px 10px;
+            padding: 3px 8px;
             border: 1px solid #ddd;
-            font-size: 11pt;
+            font-size: 9pt;
         }
         
         .contact-table td:first-child {
@@ -129,18 +129,18 @@ export class FileGenerationService {
         
         /* Section Headers - Bold uppercase */
         .section-header {
-            font-size: 14pt;
+            font-size: 12pt;
             font-weight: bold;
             color: #000;
             text-transform: uppercase;
-            margin: 25px 0 15px 0;
+            margin: 15px 0 10px 0;
             border-bottom: 2px solid #000;
-            padding-bottom: 5px;
+            padding-bottom: 3px;
         }
         
         /* Experience Items */
         .experience-item {
-            margin-bottom: 20px;
+            margin-bottom: 12px;
             page-break-inside: avoid;
         }
         
@@ -148,106 +148,106 @@ export class FileGenerationService {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
         
         .company-name {
-            font-size: 14pt;
+            font-size: 11pt;
             font-weight: bold;
             color: #000;
         }
         
         .position-title {
-            font-size: 12pt;
+            font-size: 10pt;
             font-style: italic;
             color: #333;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
         
         .date-range {
-            font-size: 11pt;
+            font-size: 9pt;
             color: #666;
             font-style: italic;
         }
         
         .description {
-            margin-top: 10px;
-            font-size: 11pt;
-            line-height: 1.4;
+            margin-top: 5px;
+            font-size: 9pt;
+            line-height: 1.3;
         }
         
         .description ul {
-            margin-left: 20px;
-            margin-top: 5px;
+            margin-left: 15px;
+            margin-top: 3px;
         }
         
         .description li {
-            margin-bottom: 3px;
+            margin-bottom: 2px;
         }
         
         /* Education */
         .education-item {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             page-break-inside: avoid;
         }
         
         .institution-name {
-            font-size: 13pt;
+            font-size: 11pt;
             font-weight: bold;
             color: #000;
         }
         
         .degree-title {
-            font-size: 12pt;
+            font-size: 10pt;
             color: #333;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
         
         /* Skills */
         .skills-content {
-            font-size: 11pt;
-            line-height: 1.6;
+            font-size: 9pt;
+            line-height: 1.4;
         }
         
         /* Languages */
         .languages-content {
-            font-size: 11pt;
-            line-height: 1.6;
+            font-size: 9pt;
+            line-height: 1.4;
         }
         
         /* Projects */
         .project-item {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             page-break-inside: avoid;
         }
         
         .project-name {
-            font-size: 13pt;
+            font-size: 11pt;
             font-weight: bold;
             color: #000;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
         
         .project-description {
-            font-size: 11pt;
-            line-height: 1.4;
-            margin-bottom: 5px;
+            font-size: 9pt;
+            line-height: 1.3;
+            margin-bottom: 3px;
         }
         
         .project-technologies {
-            font-size: 10pt;
+            font-size: 8pt;
             color: #666;
             font-style: italic;
         }
         
         /* Certifications */
         .certification-item {
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             page-break-inside: avoid;
         }
         
         .certification-name {
-            font-size: 12pt;
+            font-size: 10pt;
             font-weight: bold;
             color: #000;
         }
@@ -453,8 +453,8 @@ export class FileGenerationService {
         }
         body {
             font-family: 'Times New Roman', serif;
-            font-size: 11pt;
-            line-height: 1.4;
+            font-size: 9pt;
+            line-height: 1.3;
             color: #333;
             background: white;
         }
@@ -462,15 +462,15 @@ export class FileGenerationService {
             width: 794px;
             min-height: 1123px;
             margin: 0 auto;
-            padding: 15px 20px 20px 20px;
+            padding: 12px 16px 16px 16px;
             background: white;
         }
         
         .cv-section {
-            margin-bottom: 0.8rem;
+            margin-bottom: 0.4rem;
             page-break-inside: avoid;
             break-inside: avoid;
-            min-height: 40px;
+            min-height: 25px;
         }
         
         .text-center {
@@ -478,180 +478,184 @@ export class FileGenerationService {
         }
         
         .mb-8 {
-            margin-bottom: 0.8rem;
+            margin-bottom: 0.4rem;
         }
         
         h1 {
-            font-size: 2.5rem;
+            font-size: 1.8rem;
             font-weight: 700;
             color: #1f2937;
-            margin-bottom: 0.3rem;
-            line-height: 1.2;
+            margin-bottom: 0.2rem;
+            line-height: 1.1;
         }
         
         h2 {
-            font-size: 1.5rem;
+            font-size: 1.1rem;
             font-weight: 600;
             color: #374151;
-            margin-bottom: 0.3rem;
-            margin-top: 0.8rem;
-            padding-bottom: 0.2rem;
-            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 0.15rem;
+            margin-top: 0.4rem;
+            padding-bottom: 0.1rem;
+            border-bottom: 1px solid #e5e7eb;
         }
         
         p {
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.3rem;
             color: #4b5563;
+            font-size: 9pt;
         }
         
         .cv-contact-info {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.8rem;
-            margin-bottom: 0.8rem;
-            padding: 0.8rem;
+            gap: 0.6rem;
+            margin-bottom: 0.6rem;
+            padding: 0.6rem;
             background: #f9fafb;
-            border-radius: 0.5rem;
+            border-radius: 0.3rem;
             justify-content: center;
         }
         
         .cv-contact-item {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            color: #6b7280;
-            font-size: 0.875rem;
+            gap: 0.3rem;
+            color: #4b5563;
+            font-size: 8pt;
+            font-weight: 500;
             white-space: nowrap;
         }
         
         .cv-section-header {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-            padding-bottom: 0.3rem;
+            gap: 0.3rem;
+            margin-bottom: 0.3rem;
+            padding-bottom: 0.2rem;
             page-break-after: avoid;
             break-after: avoid;
             border-bottom: 1px solid #e5e7eb;
         }
         
         .cv-section-title {
-            font-size: 1.375rem;
+            font-size: 1rem;
             font-weight: 700;
             color: #1f2937;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
         
         .cv-experience-item {
-            margin-bottom: 0.8rem;
-            padding: 0.8rem;
-            border-left: 3px solid #3b82f6;
+            margin-bottom: 0.4rem;
+            padding: 0.4rem;
+            border-left: 2px solid #3b82f6;
             background: #f8fafc;
-            border-radius: 0 0.5rem 0.5rem 0;
+            border-radius: 0 0.3rem 0.3rem 0;
             page-break-inside: avoid;
             break-inside: avoid;
-            min-height: 60px;
+            min-height: 40px;
         }
         
         .cv-experience-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 0.5rem;
-            gap: 1rem;
+            margin-bottom: 0.25rem;
+            gap: 0.6rem;
         }
         
         .cv-experience-title {
-            font-size: 1.125rem;
-            font-weight: 600;
+            font-size: 10pt;
+            font-weight: 700;
             color: #1f2937;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.2rem;
         }
         
         .cv-experience-company {
-            font-size: 1rem;
-            font-weight: 500;
+            font-size: 9pt;
+            font-weight: 600;
             color: #3b82f6;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.2rem;
         }
         
         .cv-experience-date {
-            font-size: 0.875rem;
+            font-size: 8pt;
             color: #6b7280;
-            font-weight: 500;
+            font-weight: 600;
         }
         
         .cv-experience-location {
-            font-size: 0.875rem;
+            font-size: 8pt;
             color: #6b7280;
+            font-weight: 500;
             font-style: italic;
         }
         
         .cv-experience-description {
             color: #4b5563;
-            line-height: 1.6;
-            margin-top: 0.3rem;
-            min-height: 30px;
-            padding-top: 0.3rem;
+            line-height: 1.4;
+            margin-top: 0.2rem;
+            min-height: 20px;
+            padding-top: 0.2rem;
             border-top: 1px solid #e5e7eb;
+            font-size: 9pt;
         }
         
         .cv-education-item {
-            margin-bottom: 0.8rem;
-            padding: 0.8rem;
-            border-left: 3px solid #10b981;
+            margin-bottom: 0.4rem;
+            padding: 0.4rem;
+            border-left: 2px solid #10b981;
             background: #f0fdf4;
-            border-radius: 0 0.5rem 0.5rem 0;
+            border-radius: 0 0.3rem 0.3rem 0;
             page-break-inside: avoid;
             break-inside: avoid;
-            min-height: 60px;
+            min-height: 40px;
         }
         
         .cv-education-degree {
-            font-size: 1.125rem;
-            font-weight: 600;
+            font-size: 10pt;
+            font-weight: 700;
             color: #1f2937;
         }
         
         .cv-education-institution {
-            font-size: 1rem;
-            font-weight: 500;
+            font-size: 9pt;
+            font-weight: 600;
             color: #10b981;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.2rem;
         }
         
         .cv-skills-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 0.8rem;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.6rem;
             width: 100%;
-            margin-top: 0.5rem;
+            margin-top: 0.3rem;
         }
         
         .cv-skill-category {
             background: #f3f4f6;
-            padding: 0.8rem;
-            border-radius: 0.5rem;
+            padding: 0.4rem;
+            border-radius: 0.3rem;
             page-break-inside: avoid;
             break-inside: avoid;
-            min-height: 60px;
+            min-height: 40px;
         }
         
         .cv-skill-category-title {
-            font-size: 1rem;
-            font-weight: 600;
+            font-size: 9pt;
+            font-weight: 700;
             color: #1f2937;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
         }
         
         .cv-skill-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.5rem 0;
+            padding: 0.25rem 0;
             border-bottom: 1px solid #e5e7eb;
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.15rem;
         }
         
         .cv-skill-item:last-child {
@@ -659,20 +663,21 @@ export class FileGenerationService {
         }
         
         .cv-skill-name {
-            font-weight: 500;
+            font-weight: 600;
             color: #374151;
+            font-size: 8pt;
         }
         
         .cv-skill-level {
-            font-size: 0.875rem;
+            font-size: 8pt;
             color: #6b7280;
-            font-weight: 500;
+            font-weight: 600;
         }
         
         .cv-languages-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 0.8rem;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.6rem;
             width: 100%;
         }
         
@@ -680,77 +685,91 @@ export class FileGenerationService {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.8rem;
+            padding: 0.4rem;
             background: #f3f4f6;
-            border-radius: 0.5rem;
-            margin-bottom: 0.3rem;
+            border-radius: 0.3rem;
+            margin-bottom: 0.15rem;
+        }
+        
+        .cv-language-name {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 8pt;
+        }
+        
+        .cv-language-level {
+            font-size: 8pt;
+            color: #6b7280;
+            font-weight: 500;
         }
         
         .cv-project-item {
-            margin-bottom: 0.8rem;
-            padding: 0.8rem;
+            margin-bottom: 0.4rem;
+            padding: 0.4rem;
             border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
+            border-radius: 0.3rem;
             background: #fafafa;
             page-break-inside: avoid;
             break-inside: avoid;
-            min-height: 60px;
+            min-height: 40px;
         }
         
         .cv-project-title {
-            font-size: 1.125rem;
-            font-weight: 600;
+            font-size: 10pt;
+            font-weight: 700;
             color: #1f2937;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.3rem;
         }
         
         .cv-project-description {
             color: #4b5563;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
+            font-size: 9pt;
         }
         
         .cv-project-technologies {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
+            gap: 0.3rem;
+            margin-bottom: 0.3rem;
         }
         
         .cv-project-tech {
             background: #dbeafe;
             color: #1e40af;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.875rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.2rem;
+            font-size: 8pt;
             font-weight: 500;
         }
         
         .cv-certification-item {
-            margin-bottom: 0.8rem;
-            padding: 0.8rem;
-            border-left: 3px solid #f59e0b;
+            margin-bottom: 0.4rem;
+            padding: 0.4rem;
+            border-left: 2px solid #f59e0b;
             background: #fffbeb;
-            border-radius: 0 0.5rem 0.5rem 0;
+            border-radius: 0 0.3rem 0.3rem 0;
             page-break-inside: avoid;
             break-inside: avoid;
         }
         
         .cv-certification-name {
-            font-size: 1rem;
-            font-weight: 600;
+            font-size: 9pt;
+            font-weight: 700;
             color: #1f2937;
         }
         
         .cv-certification-issuer {
-            font-size: 0.875rem;
-            font-weight: 500;
+            font-size: 8pt;
+            font-weight: 600;
             color: #f59e0b;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.2rem;
         }
         
         .cv-certification-date {
-            font-size: 0.875rem;
+            font-size: 8pt;
             color: #6b7280;
+            font-weight: 500;
         }
     </style>
 </head>
@@ -862,8 +881,8 @@ export class FileGenerationService {
                 <div class="cv-languages-grid">
                     ${languages.map((lang: any) => `
                         <div class="cv-language-item">
-                            <span>${lang.language || lang.name || ''}</span>
-                            <span class="cv-skill-level">${lang.level || ''}</span>
+                            <span class="cv-language-name">${lang.language || lang.name || ''}</span>
+                            <span class="cv-language-level">${lang.level || ''}</span>
                         </div>
                     `).join('')}
                 </div>

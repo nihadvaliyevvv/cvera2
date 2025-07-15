@@ -257,10 +257,13 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
   }, [cvId]);
 
   useEffect(() => {
+    console.log('CVEditor useEffect:', { cvId, hasInitialData: !!initialData, initialData });
     if (cvId) {
       loadCV();
     } else if (initialData) {
+      console.log('CVEditor: Transforming LinkedIn data to CV data');
       const transformedData = transformLinkedInDataToCVData(initialData);
+      console.log('CVEditor: Transformed data:', transformedData);
       setCv(transformedData);
     }
   }, [cvId, loadCV, initialData]);
@@ -404,11 +407,6 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
     { id: 'projects', label: 'Layihələr', icon: '🚀' },
     { id: 'certifications', label: 'Sertifikatlar', icon: '🏆' },
     { id: 'volunteer', label: 'Könüllü Təcrübə', icon: '❤️' },
-    { id: 'publications', label: 'Nəşrlər', icon: '📚' },
-    { id: 'honors', label: 'Mükafatlar', icon: '🏅' },
-    { id: 'testScores', label: 'Test Nəticələri', icon: '📊' },
-    { id: 'recommendations', label: 'Tövsiyələr', icon: '💬' },
-    { id: 'courses', label: 'Kurslar', icon: '📖' },
     { id: 'template', label: 'Şablon Seçimi', icon: '🎨' }
   ];
 
@@ -426,7 +424,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+      <div className="sticky top-0 z-[60] bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
@@ -513,16 +511,16 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col xl:flex-row gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+        <div className="flex flex-col xl:flex-row gap-5">
           {/* Left Panel - Form */}
-          <div className="flex-1 xl:max-w-2xl">
+          <div className="flex-1 xl:max-w-xl">
             {/* Mobile Section Selector */}
-            <div className="xl:hidden mb-6">
+            <div className="xl:hidden mb-5 relative z-40">
               <select
                 value={activeSection}
                 onChange={(e) => setActiveSection(e.target.value)}
-                className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-3 text-base font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-3 text-base font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 relative z-40"
               >
                 {sections.map((section) => (
                   <option key={section.id} value={section.id}>
@@ -533,14 +531,14 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
             </div>
 
             {/* Desktop Section Navigation */}
-            <div className="hidden xl:block mb-6">
-              <nav className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-                <div className="grid grid-cols-2 gap-2">
+            <div className="hidden xl:block mb-5">
+              <nav className="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5">
+                <div className="grid grid-cols-2 gap-1">
                   {sections.map((section) => (
                     <button
                       key={section.id}
                       onClick={() => setActiveSection(section.id)}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-md text-left transition-all text-sm ${
+                      className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-all text-xs ${
                         activeSection === section.id
                           ? 'bg-blue-600 text-white'
                           : 'hover:bg-gray-50 text-gray-700'
@@ -556,47 +554,47 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
 
             {/* Form Content */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="p-6">
+              <div className="p-5">
                 {/* Messages */}
                 {error && (
-                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                     <div className="flex items-center gap-2 text-red-700">
-                      <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                       </svg>
-                      <span>{error}</span>
+                      <span className="text-sm">{error}</span>
                     </div>
                   </div>
                 )}
                 
                 {success && (
-                  <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                     <div className="flex items-center gap-2 text-green-700">
-                      <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M5 13l4 4L19 7" />
                       </svg>
-                      <span>{success}</span>
+                      <span className="text-sm">{success}</span>
                     </div>
                   </div>
                 )}
 
                 {/* LinkedIn Import Info */}
                 {initialData && (
-                  <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
-                      <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                       </svg>
-                      <span className="font-medium text-green-800">LinkedIn məlumatları import edildi</span>
+                      <span className="font-medium text-green-800 text-sm">LinkedIn məlumatları import edildi</span>
                     </div>
-                    <p className="text-sm text-green-700">
+                    <p className="text-xs text-green-700">
                       Məlumatlar uğurla yükləndi və CV-yə əlavə edildi.
                     </p>
                   </div>
                 )}
                 
                 {/* Dynamic Section Content */}
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {activeSection === 'personal' && (
                     <PersonalInfoSection
                       data={{
@@ -706,8 +704,8 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
             </div>
 
             {/* Mobile Export Buttons */}
-            <div className="sm:hidden mt-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <div className="grid grid-cols-2 gap-3">
+            <div className="sm:hidden mt-5 bg-white rounded-lg shadow-sm border border-gray-200 p-3.5">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => handleExport('pdf')}
                   disabled={!cv.id || exporting !== null}
@@ -751,38 +749,53 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
           </div>
 
           {/* Right Panel - Preview */}
-          <div className="flex-1 xl:max-w-3xl">
-            <div className="sticky top-24">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                  <div className="px-6 py-4 border-b border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-semibold text-gray-800">Canlı Önizləmə</h3>
-                      <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full font-medium">
-                        A4 Format
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-600 flex items-center gap-2">
-                      <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                      <span className="hidden sm:inline">Canlı güncəllənir</span>
-                    </div>
+          <div className="flex-1 xl:max-w-5xl">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div className="px-5 py-3.5 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-semibold text-gray-800">Canlı Önizləmə</h3>
+                    <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full font-medium">
+                      A4 Format
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-600 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                    <span className="hidden sm:inline text-xs">Canlı güncəllənir</span>
                   </div>
                 </div>
+              </div>
                 
-                <div className="p-3 sm:p-6 bg-gray-50">
-                  <div className="mx-auto max-w-full">
+                <div className="bg-gray-50" style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  minHeight: '95vh',
+                  width: '100%',
+                  padding: '25px'
+                }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    width: '100%',
+                    height: '100%'
+                  }}>
                     {cv.templateId ? (
-                      <div className="mx-auto shadow-lg bg-white rounded-lg overflow-hidden" style={{ 
-                        width: '100%',
-                        maxWidth: '900px',
-                        aspectRatio: '794/1123', // A4 oranı: 794px x 1123px
-                        border: '1px solid #e5e7eb'
+                      <div className="shadow-lg bg-white rounded-lg overflow-hidden" style={{ 
+                        width: '794px', // Exact A4 width at 96 DPI
+                        height: '95vh',
+                        minHeight: '900px',
+                        maxHeight: '1600px',
+                        border: '1px solid #e5e7eb',
+                        aspectRatio: '794/1123', // Real A4 aspect ratio
+                        margin: '0 auto'
                       }}>
-                        <div className={`w-full h-full overflow-y-auto ${styles.responsivePreview}`} style={{
-                          padding: '1.3% 2.5% 2.5% 2.5%', // PDF ile eyni nisbətdə: 10px/794px = 1.3%, 20px/794px = 2.5%
-                          maxHeight: '100%',
+                        <div className={`w-full h-full ${styles.responsivePreview}`} style={{
                           scrollbarWidth: 'thin',
-                          scrollbarColor: '#cbd5e1 #f1f5f9'
+                          scrollbarColor: '#cbd5e1 #f1f5f9',
+                          minHeight: '100%',
+                          boxSizing: 'border-box'
                         }}>
                           <CVPreviewA4 cv={{
                             ...cv,
@@ -797,11 +810,13 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                         </div>
                       </div>
                     ) : (
-                      <div className="mx-auto shadow-lg bg-white rounded-lg flex items-center justify-center text-center" style={{ 
-                        width: '100%',
-                        maxWidth: '600px',
-                        aspectRatio: '794/1123', // A4 oranı
-                        border: '1px solid #e5e7eb'
+                      <div className="shadow-lg bg-white rounded-lg flex items-center justify-center text-center" style={{ 
+                        width: '794px', // Match A4 width
+                        height: '95vh', // Match the preview height
+                        minHeight: '900px',
+                        maxHeight: '1600px',
+                        border: '1px solid #e5e7eb',
+                        margin: '0 auto'
                       }}>
                         <div>
                           <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
@@ -819,21 +834,19 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                         </div>
                       </div>
                     )}
-                  </div>
-                </div>
-                
-                {/* Export disclaimer */}
-                {cv.id && (
-                  <div className="px-6 py-3 bg-yellow-50 border-t border-yellow-200">
-                    <div className="flex items-start gap-2">
-                      <span className="text-yellow-600 flex-shrink-0">💡</span>
-                      <div className="text-sm text-yellow-800">
-                        <strong>Qeyd:</strong> Önizləmə tam hazır olmaya bilər, ancaq export edilən faylda bütün məlumatlarınız düzgün görünəcək.
-                      </div>
+                  </div>              </div>
+              
+              {/* Export disclaimer */}
+              {cv.id && (
+                <div className="px-5 py-2.5 bg-yellow-50 border-t border-yellow-200">
+                  <div className="flex items-start gap-2">
+                    <span className="text-yellow-600 flex-shrink-0">💡</span>
+                    <div className="text-xs text-yellow-800">
+                      <strong>Qeyd:</strong> Önizləmə tam hazır olmaya bilər, ancaq export edilən faylda bütün məlumatlarınız düzgün görünəcək.
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

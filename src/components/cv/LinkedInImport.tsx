@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { apiClient } from '@/lib/api';
 
 interface LinkedInData {
-  personalInfo: {
+  sessionId?: string;
+  redirectUrl?: string;
+  personalInfo?: {
     name: string;
     email: string;
     phone?: string;
@@ -14,7 +16,7 @@ interface LinkedInData {
     website?: string;
     headline?: string;
   };
-  experience: Array<{
+  experience?: Array<{
     company: string;
     position: string;
     startDate: string;
@@ -25,7 +27,7 @@ interface LinkedInData {
     jobType?: string;
     skills?: string;
   }>;
-  education: Array<{
+  education?: Array<{
     institution: string;
     degree: string;
     field: string;
@@ -36,34 +38,41 @@ interface LinkedInData {
     activities?: string;
     grade?: string;
   }>;
-  skills: Array<{
+  skills?: Array<{
     name: string;
     level: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
   }>;
-  languages: Array<{
+  languages?: Array<{
     name: string;
     proficiency: string;
   }>;
-  certifications: Array<{
+  certifications?: Array<{
     name: string;
     issuer: string;
     date: string;
     url?: string;
     licenseNumber?: string;
   }>;
-  projects: Array<{
+  projects?: Array<{
     name: string;
     description: string;
     url?: string;
     date?: string;
   }>;
-  volunteerExperience: Array<{
+  volunteerExperience?: Array<{
     organization: string;
     role: string;
     description: string;
     startDate: string;
     endDate?: string;
+    date?: string;
     cause?: string;
+  }>;
+  honorsAwards?: Array<{
+    title: string;
+    issuer: string;
+    date: string;
+    description?: string;
   }>;
 }
 
@@ -97,6 +106,15 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
       const apiResult = await apiClient.importLinkedIn(url);
       console.log('LinkedIn import API result:', apiResult);
       
+      // Check if the API returns a sessionId and redirectUrl (new approach)
+      if (apiResult && apiResult.sessionId && apiResult.redirectUrl) {
+        console.log('Using session-based import with sessionId:', apiResult.sessionId);
+        // Directly navigate to the session URL
+        window.location.href = apiResult.redirectUrl;
+        return;
+      }
+      
+      // Fallback to old approach if no sessionId
       const transformedData = transformApiResponse(apiResult);
       console.log('Transformed LinkedIn data:', transformedData);
       
@@ -213,7 +231,14 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
         description: vol.description || '',
         startDate: vol.start_date || '',
         endDate: vol.end_date || '',
+        date: vol.date || '',
         cause: vol.cause || ''
+      })),
+      honorsAwards: (apiData.honors_awards || []).map((award: any) => ({
+        title: award.title || '',
+        issuer: award.issuer || '',
+        date: award.date || '',
+        description: award.description || ''
       }))
     };
   };
@@ -378,72 +403,122 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                 )}
 
                 {/* Certifications */}
-                {importedData.certifications.length > 0 && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-3">🏆 Sertifikatlar</h4>
-                    <div className="space-y-2 text-sm">
-                      {importedData.certifications.slice(0, 3).map((cert, i) => (
-                        <div key={i} className="border-l-2 border-yellow-200 pl-2">
-                          <div className="font-medium">{cert.name}</div>
-                          <div className="text-gray-600">{cert.issuer}</div>
-                          {cert.date && (
-                            <div className="text-xs text-gray-500">{cert.date}</div>
-                          )}
-                        </div>
-                      ))}
-                      {importedData.certifications.length > 3 && (
-                        <div className="text-gray-500">
-                          +{importedData.certifications.length - 3} daha çox
-                        </div>
-                      )}
-                    </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-3">🏆 Sertifikatlar</h4>
+                  <div className="space-y-2 text-sm">
+                    {importedData.certifications && importedData.certifications.length > 0 ? (
+                      <>
+                        {importedData.certifications.slice(0, 3).map((cert, i) => (
+                          <div key={i} className="border-l-2 border-yellow-200 pl-2">
+                            <div className="font-medium">{cert.name}</div>
+                            <div className="text-gray-600">{cert.issuer}</div>
+                            {cert.date && (
+                              <div className="text-xs text-gray-500">{cert.date}</div>
+                            )}
+                          </div>
+                        ))}
+                        {importedData.certifications.length > 3 && (
+                          <div className="text-gray-500">
+                            +{importedData.certifications.length - 3} daha çox
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-gray-500 text-center py-4">
+                        Sertifikat məlumatı tapılmadı
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
 
                 {/* Projects */}
-                {importedData.projects.length > 0 && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-3">🚀 Layihələr</h4>
-                    <div className="space-y-2 text-sm">
-                      {importedData.projects.slice(0, 3).map((project, i) => (
-                        <div key={i} className="border-l-2 border-purple-200 pl-2">
-                          <div className="font-medium">{project.name}</div>
-                          {project.description && (
-                            <div className="text-gray-600 text-xs">{project.description.substring(0, 80)}...</div>
-                          )}
-                        </div>
-                      ))}
-                      {importedData.projects.length > 3 && (
-                        <div className="text-gray-500">
-                          +{importedData.projects.length - 3} daha çox
-                        </div>
-                      )}
-                    </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-3">🚀 Layihələr</h4>
+                  <div className="space-y-2 text-sm">
+                    {importedData.projects && importedData.projects.length > 0 ? (
+                      <>
+                        {importedData.projects.slice(0, 3).map((project, i) => (
+                          <div key={i} className="border-l-2 border-purple-200 pl-2">
+                            <div className="font-medium">{project.name}</div>
+                            {project.description && (
+                              <div className="text-gray-600 text-xs">{project.description.substring(0, 80)}...</div>
+                            )}
+                          </div>
+                        ))}
+                        {importedData.projects.length > 3 && (
+                          <div className="text-gray-500">
+                            +{importedData.projects.length - 3} daha çox
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-gray-500 text-center py-4">
+                        Layihə məlumatı tapılmadı
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
 
                 {/* Volunteer Experience */}
-                {importedData.volunteerExperience.length > 0 && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-3">❤️ Könüllü təcrübə</h4>
-                    <div className="space-y-2 text-sm">
-                      {importedData.volunteerExperience.slice(0, 2).map((vol, i) => (
-                        <div key={i} className="border-l-2 border-red-200 pl-2">
-                          <div className="font-medium">{vol.role}</div>
-                          <div className="text-gray-600">{vol.organization}</div>
-                          {vol.cause && (
-                            <div className="text-xs text-gray-500">{vol.cause}</div>
-                          )}
-                        </div>
-                      ))}
-                      {importedData.volunteerExperience.length > 2 && (
-                        <div className="text-gray-500">
-                          +{importedData.volunteerExperience.length - 2} daha çox
-                        </div>
-                      )}
-                    </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-3">❤️ Könüllü təcrübə</h4>
+                  <div className="space-y-2 text-sm">
+                    {importedData.volunteerExperience && importedData.volunteerExperience.length > 0 ? (
+                      <>
+                        {importedData.volunteerExperience.slice(0, 2).map((vol, i) => (
+                          <div key={i} className="border-l-2 border-red-200 pl-2">
+                            <div className="font-medium">{vol.role}</div>
+                            <div className="text-gray-600">{vol.organization}</div>
+                            {vol.date && (
+                              <div className="text-xs text-gray-500">{vol.date}</div>
+                            )}
+                            {vol.cause && (
+                              <div className="text-xs text-gray-500">{vol.cause}</div>
+                            )}
+                          </div>
+                        ))}
+                        {importedData.volunteerExperience.length > 2 && (
+                          <div className="text-gray-500">
+                            +{importedData.volunteerExperience.length - 2} daha çox
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-gray-500 text-center py-4">
+                        Könüllü təcrübə məlumatı tapılmadı
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+
+                {/* Honors & Awards */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 mb-3">🏅 Mükafat və təqdirdirmələr</h4>
+                  <div className="space-y-2 text-sm">
+                    {importedData.honorsAwards && importedData.honorsAwards.length > 0 ? (
+                      <>
+                        {importedData.honorsAwards.slice(0, 3).map((award, i) => (
+                          <div key={i} className="border-l-2 border-purple-200 pl-2">
+                            <div className="font-medium">{award.title}</div>
+                            <div className="text-gray-600">{award.issuer}</div>
+                            {award.date && (
+                              <div className="text-xs text-gray-500">{award.date}</div>
+                            )}
+                          </div>
+                        ))}
+                        {importedData.honorsAwards.length > 3 && (
+                          <div className="text-gray-500">
+                            +{importedData.honorsAwards.length - 3} daha çox
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-gray-500 text-center py-4">
+                        Mükafat və təqdirdirmə məlumatı tapılmadı
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

@@ -24,10 +24,17 @@ export default function EditCVPage() {
   // State for session-based import data
   const [sessionImportData, setSessionImportData] = useState(null);
   
-  // Process LinkedIn imported data - only from session
-  const linkedInData = importType === 'linkedin' && sessionImportData 
-    ? sessionImportData 
-    : null;
+  // Process imported data from session
+  const linkedInData = sessionImportData ? sessionImportData : null;
+
+  // Debug logging
+  console.log('Edit page debug:', {
+    importType,
+    sessionId,
+    hasSessionData: !!sessionImportData,
+    linkedInData: linkedInData ? 'present' : 'null',
+    sessionImportData: sessionImportData ? JSON.stringify(sessionImportData).substring(0, 200) : 'null'
+  });
 
   useEffect(() => {
     console.log('Edit page useEffect:', { 
@@ -58,9 +65,10 @@ export default function EditCVPage() {
 
   // Load session import data if sessionId is provided
   useEffect(() => {
-    if (sessionId && importType === 'linkedin') {
+    if (sessionId) {
       const loadSessionData = async () => {
         try {
+          console.log('Loading session data for sessionId:', sessionId);
           const token = localStorage.getItem('accessToken');
           const response = await fetch(`/api/import/session?session=${sessionId}`, {
             headers: {
@@ -71,9 +79,17 @@ export default function EditCVPage() {
           
           if (response.ok) {
             const result = await response.json();
+            console.log('Session API response:', result);
             if (result.success && result.data) {
+              console.log('Session data loaded successfully:', result.data);
               setSessionImportData(result.data);
+            } else {
+              console.error('Session data load failed:', result.error);
+              setError('Import məlumatları yüklənərkən xəta baş verdi');
             }
+          } else {
+            console.error('Session response not ok:', response.status);
+            setError('Import məlumatları yüklənərkən xəta baş verdi');
           }
         } catch (error) {
           console.error('Failed to load session import data:', error);
@@ -83,7 +99,7 @@ export default function EditCVPage() {
       
       loadSessionData();
     }
-  }, [sessionId, importType]);
+  }, [sessionId]);
 
   const handleSave = async (cvData: any) => {
     try {
