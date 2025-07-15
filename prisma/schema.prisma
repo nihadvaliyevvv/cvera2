@@ -15,6 +15,7 @@ model User {
   name             String
   email            String   @unique
   password         String
+  role             String   @default("USER") // USER, ADMIN
   status           String   @default("active") // active, suspended, deactivated
   resetToken       String?
   resetTokenExpiry DateTime?
@@ -24,6 +25,7 @@ model User {
   cvs              CV[]
   subscriptions    Subscription[]
   payments         Payment[]
+  importSessions   ImportSession[]
 }
 
 model CV {
@@ -103,11 +105,24 @@ model Payment {
   id            String   @id @default(uuid())
   userId        String
   user          User     @relation(fields: [userId], references: [id])
-  tier          String   // free, medium, premium
-  amount        Float
-  status        String   // pending, completed, failed, cancelled
-  provider      String   // epointaz, system
+  orderId       String   @unique
   transactionId String   @unique
+  amount        Float
+  currency      String   @default("AZN")
+  planType      String   // Medium, Premium
+  status        String   // pending, completed, failed, cancelled
+  paymentMethod String   // epoint, system
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model ImportSession {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String   // linkedin, etc.
+  data      String   @db.Text // JSON data
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

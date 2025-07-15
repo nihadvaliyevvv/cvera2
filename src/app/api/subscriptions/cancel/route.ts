@@ -6,10 +6,13 @@ const prisma = new PrismaClient();
 
 function getUserIdFromRequest(req: NextRequest): string | null {
   const auth = req.headers.get("authorization");
+  console.log('Authorization header:', auth);
   if (!auth || !auth.startsWith("Bearer ")) return null;
   const token = auth.replace("Bearer ", "");
   
+  console.log('Token:', token.substring(0, 20) + '...');
   const payload = verifyJWT(token);
+  console.log('JWT payload:', payload);
   return payload?.userId || null;
 }
 

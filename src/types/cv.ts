@@ -31,8 +31,7 @@ export interface Education {
 
 export interface Skill {
   id: string;
-  category: string;
-  items: string[];
+  name: string;
 }
 
 export interface Language {
@@ -60,6 +59,63 @@ export interface Certification {
   url?: string;
 }
 
+export interface VolunteerExperience {
+  id: string;
+  organization: string;
+  role: string;
+  startDate: string;
+  endDate?: string;
+  current: boolean;
+  description?: string;
+  cause?: string;
+}
+
+export interface Publication {
+  id: string;
+  title: string;
+  description?: string;
+  url?: string;
+  date?: string;
+  publisher?: string;
+  authors?: string[];
+}
+
+export interface HonorAward {
+  id: string;
+  title: string;
+  description?: string;
+  date?: string;
+  issuer?: string;
+  url?: string;
+}
+
+export interface TestScore {
+  id: string;
+  testName: string;
+  score: string;
+  date?: string;
+  description?: string;
+}
+
+export interface Recommendation {
+  id: string;
+  recommenderName: string;
+  recommenderTitle?: string;
+  recommenderCompany?: string;
+  text: string;
+  date?: string;
+}
+
+export interface Course {
+  id: string;
+  name: string;
+  institution: string;
+  description?: string;
+  completionDate?: string;
+  certificate?: boolean;
+  url?: string;
+}
+
 export interface CVData {
   personalInfo: PersonalInfo;
   experience?: Experience[];
@@ -68,6 +124,12 @@ export interface CVData {
   languages?: Language[];
   projects?: Project[];
   certifications?: Certification[];
+  volunteerExperience?: VolunteerExperience[];
+  publications?: Publication[];
+  honorsAwards?: HonorAward[];
+  testScores?: TestScore[];
+  recommendations?: Recommendation[];
+  courses?: Course[];
 }
 
 export interface CV {

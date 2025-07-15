@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { User } from '@/lib/auth';
 import ProfileEditor from '@/components/profile/ProfileEditor';
-import SubscriptionManagement from '@/components/subscription/SubscriptionManagement';
 
 interface CV {
   id: string;
@@ -20,6 +20,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps) {
+  const router = useRouter();
   const [cvs, setCvs] = useState<CV[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -38,6 +39,54 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
 
   const handleUserUpdate = (updatedUser: User) => {
     setCurrentUser(updatedUser);
+  };
+
+  const handleSubscriptionTab = () => {
+    router.push('/pricing');
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!window.confirm('Abunəlikdən imtina etmək istədiyinizə əminsiniz? Bu halda hesabınız Free plana keçəcək.')) return;
+    
+    try {
+      setError('');
+      const token = localStorage.getItem('accessToken');
+      
+      const response = await fetch('/api/subscriptions/cancel', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Abunəlik ləğv edilərkən xəta baş verdi');
+      }
+
+      const result = await response.json();
+      
+      // Update user subscription to Free
+      setCurrentUser(prev => ({
+        ...prev,
+        subscriptions: prev.subscriptions?.map(sub => 
+          sub.status === 'active' ? { ...sub, status: 'cancelled' } : sub
+        ).concat([{
+          id: Date.now().toString(),
+          tier: 'Free',
+          status: 'active',
+          provider: 'system',
+          startedAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        }])
+      }));
+      
+      alert('Abunəlik uğurla ləğv edildi. Hesabınız Free plana keçdi.');
+      
+    } catch (err) {
+      console.error('Subscription cancellation error:', err);
+      setError('Abunəlik ləğv edilərkən xəta baş verdi.');
+    }
   };
 
   useEffect(() => {
@@ -159,7 +208,7 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
                 Profil
               </button>
               <button
-                onClick={() => setActiveTab('subscription')}
+                onClick={handleSubscriptionTab}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'subscription'
                     ? 'border-blue-500 text-blue-600'
@@ -196,20 +245,46 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
               </div>
 
               <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="ml-5 w-0 flex-1">
+                      <dl>
+                        <dt className="text-sm font-medium text-gray-500 truncate">Abunəlik</dt>
+                        <dd className="text-lg font-medium text-gray-900">{userTier}</dd>
+                      </dl>
                     </div>
                   </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Abunəlik</dt>
-                      <dd className="text-lg font-medium text-gray-900">{userTier}</dd>
-                    </dl>
-                  </div>
+                  {userTier !== 'Free' && (
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={handleSubscriptionTab}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        Yenilə
+                      </button>
+                      <button
+                        onClick={handleCancelSubscription}
+                        className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
+                      >
+                        Ləğv Et
+                      </button>
+                    </div>
+                  )}
+                  {userTier === 'Free' && (
+                    <button
+                      onClick={handleSubscriptionTab}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                    >
+                      Yüksəlt
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -391,10 +466,7 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
           </div>
         )}
 
-        {/* Subscription Tab */}
-        {activeTab === 'subscription' && (
-          <SubscriptionManagement user={currentUser} onUserUpdate={handleUserUpdate} />
-        )}
+        {/* Subscription Tab - Redirects to pricing page */}
       </div>
 
       {/* Profile Editor Modal */}

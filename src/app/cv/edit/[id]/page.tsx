@@ -19,10 +19,15 @@ export default function EditCVPage() {
   const cvId = params.id as string;
   const isNewCV = cvId === 'new';
   const importType = searchParams.get('import');
-  const importData = searchParams.get('data');
+  const sessionId = searchParams.get('session');
   
-  // Process LinkedIn imported data
-  const linkedInData = importType === 'linkedin' && importData ? JSON.parse(decodeURIComponent(importData)) : null;
+  // State for session-based import data
+  const [sessionImportData, setSessionImportData] = useState(null);
+  
+  // Process LinkedIn imported data - only from session
+  const linkedInData = importType === 'linkedin' && sessionImportData 
+    ? sessionImportData 
+    : null;
 
   useEffect(() => {
     console.log('Edit page useEffect:', { 
@@ -50,6 +55,35 @@ export default function EditCVPage() {
       setLoading(false);
     }
   }, [user, authLoading, router, isNewCV, cvId]);
+
+  // Load session import data if sessionId is provided
+  useEffect(() => {
+    if (sessionId && importType === 'linkedin') {
+      const loadSessionData = async () => {
+        try {
+          const token = localStorage.getItem('accessToken');
+          const response = await fetch(`/api/import/session?session=${sessionId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.data) {
+              setSessionImportData(result.data);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load session import data:', error);
+          setError('Import məlumatları yüklənərkən xəta baş verdi');
+        }
+      };
+      
+      loadSessionData();
+    }
+  }, [sessionId, importType]);
 
   const handleSave = async (cvData: any) => {
     try {

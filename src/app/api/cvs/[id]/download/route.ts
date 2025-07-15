@@ -63,6 +63,7 @@ export async function POST(
       const fileBuffer = await FileGenerationService.generateFile({
         format: format as 'pdf' | 'docx',
         cvData,
+        templateId: cv.templateId || undefined, // Template ID əlavə edildi
       });
 
       // Update job status to done (without storing the file content)

@@ -57,20 +57,35 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // For paid tiers, you would typically redirect to payment
-    // For now, we'll just return success for Free tier
-    if (tier === 'Free') {
-      return NextResponse.json({ success: true });
-    }
+    // For paid tiers, create payment via epoint.az
+    if (tier !== 'Free') {
+      // Import epoint service
+      const EpointService = (await import('@/lib/epoint')).default;
+      
+      const amount = tier === 'Medium' ? 9.99 : 19.99;
+      const orderId = `cvera_upgrade_${tier.toLowerCase()}_${Date.now()}`;
+      
+      const paymentResult = await EpointService.createPayment({
+        amount: amount,
+        currency: 'AZN',
+        orderId: orderId,
+        description: `CVera ${tier} Abunəlik Yeniləmə`,
+        successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/success`,
+        failUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/fail`,
+        customerEmail: '', // You might want to get this from user
+        customerName: ''
+      });
 
-    // For paid tiers, return payment URL (implement epoint.az integration)
-    const paymentUrl = `/payments/create?tier=${tier}&amount=${tier === 'Medium' ? 999 : 1999}`;
-    
-    return NextResponse.json({ 
-      success: true, 
-      paymentUrl: paymentUrl,
-      message: 'Ödəniş üçün yönləndirilirsiniz...' 
-    });
+      if (paymentResult.success) {
+        return NextResponse.json({ 
+          success: true, 
+          paymentUrl: paymentResult.paymentUrl,
+          message: 'Ödəniş üçün yönləndirilirsiniz...' 
+        });
+      } else {
+        return NextResponse.json({ error: paymentResult.message }, { status: 400 });
+      }
+    }
 
   } catch (error) {
     console.error('Subscription upgrade error:', error);

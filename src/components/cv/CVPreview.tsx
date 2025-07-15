@@ -41,7 +41,6 @@ interface CVData {
     skills: Array<{
       id: string;
       name: string;
-      level: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
       category?: string;
     }>;
     languages: Array<{
@@ -120,16 +119,6 @@ export default function CVPreview({ cv }: CVPreviewProps) {
       return `${start} - ${formatDate(endDate)}`;
     }
     return start;
-  };
-
-  const skillLevelWidth = (level: string) => {
-    switch (level) {
-      case 'Beginner': return '25%';
-      case 'Intermediate': return '50%';
-      case 'Advanced': return '75%';
-      case 'Expert': return '100%';
-      default: return '50%';
-    }
   };
 
   const languageLevelWidth = (level: string) => {
@@ -267,20 +256,11 @@ export default function CVPreview({ cv }: CVPreviewProps) {
             <h2 className="text-lg font-semibold text-gray-900 mb-3 border-b border-gray-200 pb-1">
               Bacarıqlar
             </h2>
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {cv.data.skills.map((skill) => (
-                <div key={skill.id} className="flex items-center justify-between">
+                <div key={skill.id} className="flex items-center">
                   <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-gray-900">{skill.name}</span>
-                      <span className="text-xs text-gray-500">{skill.level}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1.5">
-                      <div 
-                        className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
-                        style={{ width: skillLevelWidth(skill.level) }}
-                      ></div>
-                    </div>
+                    <span className="text-sm font-medium text-gray-900">{skill.name}</span>
                   </div>
                 </div>
               ))}

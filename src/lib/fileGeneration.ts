@@ -6,12 +6,12 @@ import path from 'path';
 
 interface FileGenerationOptions {
   format: 'pdf' | 'docx';
-  cvData: CVData;
+  cvData: any;
   templateId?: string;
 }
 
 export class FileGenerationService {
-  private static async generatePDF(cvData: CVData, templateId?: string): Promise<Buffer> {
+  private static async generatePDF(cvData: any, templateId?: string): Promise<Buffer> {
     const browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -32,10 +32,10 @@ export class FileGenerationService {
         format: 'A4',
         printBackground: true,
         margin: {
-          top: '0.5in',
-          bottom: '0.5in',
-          left: '0.5in',
-          right: '0.5in',
+          top: '0.25in',
+          bottom: '0.25in',
+          left: '0.25in',
+          right: '0.25in',
         },
       });
 
@@ -45,8 +45,21 @@ export class FileGenerationService {
     }
   }
 
-  private static generateHTMLContent(cvData: CVData, templateId?: string): string {
-    const { personalInfo, experience, education, skills, languages, projects, certifications } = cvData;
+  private static generateHTMLContent(cvData: any, templateId?: string): string {
+    const { personalInfo, experience, education, skills, languages, projects, certifications, volunteerExperience, publications } = cvData;
+    
+    // Check if it's Bold template
+    const isBoldTemplate = templateId === 'resumonk-bold' || templateId === 'Bold';
+    
+    if (isBoldTemplate) {
+      return this.generateBoldTemplate(cvData);
+    }
+    
+    return this.generateBasicTemplate(cvData);
+  }
+
+  private static generateBoldTemplate(cvData: any): string {
+    const { personalInfo, experience, education, skills, languages, projects, certifications, volunteerExperience, publications } = cvData;
     
     return `
 <!DOCTYPE html>
@@ -61,237 +74,361 @@ export class FileGenerationService {
             box-sizing: border-box;
         }
         body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
             color: #333;
             background: white;
+            padding: 20px;
         }
         .container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
+            background: white;
         }
+        
+        /* Header - Bold style */
         .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #3b82f6;
-        }
-        .header h1 {
-            font-size: 2.5rem;
-            color: #1e40af;
-            margin-bottom: 10px;
-        }
-        .contact-info {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        .contact-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.9rem;
-        }
-        .section {
+            text-align: left;
             margin-bottom: 30px;
         }
-        .section h2 {
-            color: #1e40af;
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .experience-item, .education-item, .project-item, .cert-item {
-            margin-bottom: 20px;
-            padding-left: 20px;
-            border-left: 3px solid #3b82f6;
-        }
-        .experience-item h3, .education-item h3, .project-item h3, .cert-item h3 {
-            color: #1f2937;
+        
+        .name {
+            font-size: 36pt;
+            font-weight: bold;
+            color: #000;
             margin-bottom: 5px;
+            text-transform: uppercase;
         }
-        .experience-item .company, .education-item .institution, .cert-item .issuer {
-            font-weight: 600;
-            color: #6b7280;
+        
+        .title {
+            font-size: 14pt;
+            color: #666;
+            margin-bottom: 20px;
+            font-style: italic;
         }
-        .experience-item .duration, .education-item .duration, .cert-item .date {
-            color: #6b7280;
-            font-size: 0.9rem;
+        
+        /* Contact Info - Table style like Resumonk */
+        .contact-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
         }
-        .experience-item .description, .project-item .description {
-            margin-top: 10px;
-            color: #374151;
+        
+        .contact-table td {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            font-size: 11pt;
         }
-        .skills-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+        
+        .contact-table td:first-child {
+            font-weight: bold;
+            background: #f8f8f8;
+            width: 20%;
         }
-        .skill-category h4 {
-            color: #1f2937;
-            margin-bottom: 10px;
+        
+        /* Section Headers - Bold uppercase */
+        .section-header {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #000;
+            text-transform: uppercase;
+            margin: 25px 0 15px 0;
+            border-bottom: 2px solid #000;
+            padding-bottom: 5px;
         }
-        .skill-list {
-            list-style: none;
+        
+        /* Experience Items */
+        .experience-item {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
         }
-        .skill-list li {
-            padding: 3px 0;
-            color: #374151;
-        }
-        .languages-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-        }
-        .language-item {
+        
+        .experience-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            background: #f3f4f6;
-            border-radius: 6px;
+            align-items: flex-start;
+            margin-bottom: 5px;
         }
-        .language-level {
-            font-weight: 600;
-            color: #3b82f6;
+        
+        .company-name {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #000;
         }
-        .projects-grid {
-            display: grid;
-            gap: 20px;
+        
+        .position-title {
+            font-size: 12pt;
+            font-style: italic;
+            color: #333;
+            margin-bottom: 5px;
         }
-        .project-item {
-            background: #f9fafb;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #3b82f6;
+        
+        .date-range {
+            font-size: 11pt;
+            color: #666;
+            font-style: italic;
         }
-        .project-item .tech-stack {
+        
+        .description {
             margin-top: 10px;
-            font-size: 0.9rem;
-            color: #6b7280;
+            font-size: 11pt;
+            line-height: 1.4;
         }
-        .project-item .tech-stack strong {
-            color: #374151;
+        
+        .description ul {
+            margin-left: 20px;
+            margin-top: 5px;
+        }
+        
+        .description li {
+            margin-bottom: 3px;
+        }
+        
+        /* Education */
+        .education-item {
+            margin-bottom: 15px;
+            page-break-inside: avoid;
+        }
+        
+        .institution-name {
+            font-size: 13pt;
+            font-weight: bold;
+            color: #000;
+        }
+        
+        .degree-title {
+            font-size: 12pt;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        /* Skills */
+        .skills-content {
+            font-size: 11pt;
+            line-height: 1.6;
+        }
+        
+        /* Languages */
+        .languages-content {
+            font-size: 11pt;
+            line-height: 1.6;
+        }
+        
+        /* Projects */
+        .project-item {
+            margin-bottom: 15px;
+            page-break-inside: avoid;
+        }
+        
+        .project-name {
+            font-size: 13pt;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 5px;
+        }
+        
+        .project-description {
+            font-size: 11pt;
+            line-height: 1.4;
+            margin-bottom: 5px;
+        }
+        
+        .project-technologies {
+            font-size: 10pt;
+            color: #666;
+            font-style: italic;
+        }
+        
+        /* Certifications */
+        .certification-item {
+            margin-bottom: 10px;
+            page-break-inside: avoid;
+        }
+        
+        .certification-name {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #000;
+        }
+        
+        .certification-issuer {
+            font-size: 11pt;
+            color: #666;
+        }
+        
+        /* Summary */
+        .summary {
+            font-size: 11pt;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            text-align: justify;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Header -->
         <div class="header">
-            <h1>${personalInfo.fullName}</h1>
-            <div class="contact-info">
-                <div class="contact-item">
-                    <span>📧</span>
-                    <span>${personalInfo.email}</span>
-                </div>
-                <div class="contact-item">
-                    <span>📱</span>
-                    <span>${personalInfo.phone}</span>
-                </div>
-                <div class="contact-item">
-                    <span>📍</span>
-                    <span>${personalInfo.location}</span>
-                </div>
-            </div>
+            <div class="name">${personalInfo.fullName || ''}</div>
+            <div class="title">${personalInfo.title || 'Professional'}</div>
         </div>
 
+        <!-- Contact Information Table -->
+        <table class="contact-table">
+            ${personalInfo.phone ? `
+                <tr>
+                    <td>Phone:</td>
+                    <td>${personalInfo.phone}</td>
+                </tr>
+            ` : ''}
+            ${personalInfo.email ? `
+                <tr>
+                    <td>Email:</td>
+                    <td>${personalInfo.email}</td>
+                </tr>
+            ` : ''}
+            ${personalInfo.website ? `
+                <tr>
+                    <td>Website:</td>
+                    <td>${personalInfo.website}</td>
+                </tr>
+            ` : ''}
+            ${personalInfo.linkedin ? `
+                <tr>
+                    <td>LinkedIn:</td>
+                    <td>${personalInfo.linkedin}</td>
+                </tr>
+            ` : ''}
+            ${personalInfo.location ? `
+                <tr>
+                    <td>Location:</td>
+                    <td>${personalInfo.location}</td>
+                </tr>
+            ` : ''}
+        </table>
+
+        <!-- Summary -->
         ${personalInfo.summary ? `
-        <div class="section">
-            <h2>Haqqımda</h2>
-            <p>${personalInfo.summary}</p>
-        </div>
+            <div class="summary">
+                ${personalInfo.summary}
+            </div>
         ` : ''}
 
+        <!-- Experience -->
         ${experience && experience.length > 0 ? `
-        <div class="section">
-            <h2>Təcrübə</h2>
-            ${experience.map(exp => `
+            <div class="section-header">EXPERIENCE</div>
+            ${experience.map((exp: any) => `
                 <div class="experience-item">
-                    <h3>${exp.position}</h3>
-                    <div class="company">${exp.company}</div>
-                    <div class="duration">${exp.startDate} - ${exp.endDate || 'Hazırda'}</div>
-                    ${exp.description ? `<div class="description">${exp.description}</div>` : ''}
+                    <div class="experience-header">
+                        <div>
+                            <div class="company-name">${exp.company || ''}</div>
+                            <div class="position-title">${exp.position || ''}</div>
+                        </div>
+                        <div class="date-range">
+                            ${exp.startDate || ''} - ${exp.endDate ? exp.endDate : (exp.current ? 'Present' : '')}
+                        </div>
+                    </div>
+                    ${exp.description ? `
+                        <div class="description">
+                            ${exp.description.split('\n').map((line: string) => 
+                                line.trim().startsWith('•') || line.trim().startsWith('-') ? 
+                                `<li>${line.replace(/^[•-]\s*/, '')}</li>` : 
+                                line.trim() ? `<p>${line}</p>` : ''
+                            ).join('')}
+                        </div>
+                    ` : ''}
                 </div>
             `).join('')}
-        </div>
         ` : ''}
 
+        <!-- Education -->
         ${education && education.length > 0 ? `
-        <div class="section">
-            <h2>Təhsil</h2>
-            ${education.map(edu => `
+            <div class="section-header">EDUCATION</div>
+            ${education.map((edu: any) => `
                 <div class="education-item">
-                    <h3>${edu.degree}</h3>
-                    <div class="institution">${edu.institution}</div>
-                    <div class="duration">${edu.startDate} - ${edu.endDate || 'Hazırda'}</div>
+                    <div class="institution-name">${edu.institution || ''}</div>
+                    <div class="degree-title">${edu.degree || ''}</div>
+                    <div class="date-range">
+                        ${edu.startDate || ''} - ${edu.endDate ? edu.endDate : (edu.current ? 'Present' : '')}
+                    </div>
+                    ${edu.gpa ? `<div class="date-range">GPA: ${edu.gpa}</div>` : ''}
+                    ${edu.description ? `<div class="description">${edu.description}</div>` : ''}
                 </div>
             `).join('')}
-        </div>
         ` : ''}
 
+        <!-- Skills -->
         ${skills && skills.length > 0 ? `
-        <div class="section">
-            <h2>Bacarıqlar</h2>
-            <div class="skills-grid">
-                ${skills.map(skill => `
-                    <div class="skill-category">
-                        <h4>${skill.category}</h4>
-                        <ul class="skill-list">
-                            ${skill.items.map(item => `<li>${item}</li>`).join('')}
-                        </ul>
-                    </div>
-                `).join('')}
+            <div class="section-header">SKILLS</div>
+            <div class="skills-content">
+                ${skills.map((skill: any) => skill.name || skill.skill || '').join(', ')}
             </div>
-        </div>
         ` : ''}
 
+        <!-- Languages -->
         ${languages && languages.length > 0 ? `
-        <div class="section">
-            <h2>Dillər</h2>
-            <div class="languages-grid">
-                ${languages.map(lang => `
-                    <div class="language-item">
-                        <span>${lang.language}</span>
-                        <span class="language-level">${lang.level}</span>
-                    </div>
-                `).join('')}
+            <div class="section-header">LANGUAGES</div>
+            <div class="languages-content">
+                ${languages.map((lang: any) => `${lang.language || lang.name || ''}: ${lang.level || ''}`).join(', ')}
             </div>
-        </div>
         ` : ''}
 
+        <!-- Projects -->
         ${projects && projects.length > 0 ? `
-        <div class="section">
-            <h2>Layihələr</h2>
-            <div class="projects-grid">
-                ${projects.map(project => `
-                    <div class="project-item">
-                        <h3>${project.name}</h3>
-                        ${project.description ? `<div class="description">${project.description}</div>` : ''}
-                        ${project.technologies && project.technologies.length > 0 ? `
-                            <div class="tech-stack">
-                                <strong>Texnologiyalar:</strong> ${project.technologies.join(', ')}
-                            </div>
-                        ` : ''}
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-        ` : ''}
-
-        ${certifications && certifications.length > 0 ? `
-        <div class="section">
-            <h2>Sertifikatlar</h2>
-            ${certifications.map(cert => `
-                <div class="cert-item">
-                    <h3>${cert.name}</h3>
-                    <div class="issuer">${cert.issuer}</div>
-                    <div class="date">${cert.date}</div>
+            <div class="section-header">PROJECTS</div>
+            ${projects.map((project: any) => `
+                <div class="project-item">
+                    <div class="project-name">${project.name || ''}</div>
+                    ${project.description ? `<div class="project-description">${project.description}</div>` : ''}
+                    ${project.technologies && Array.isArray(project.technologies) && project.technologies.length > 0 ? `
+                        <div class="project-technologies">Technologies: ${project.technologies.join(', ')}</div>
+                    ` : ''}
                 </div>
             `).join('')}
-        </div>
+        ` : ''}
+
+        <!-- Certifications -->
+        ${certifications && certifications.length > 0 ? `
+            <div class="section-header">CERTIFICATIONS</div>
+            ${certifications.map((cert: any) => `
+                <div class="certification-item">
+                    <div class="certification-name">${cert.name || ''}</div>
+                    <div class="certification-issuer">${cert.issuer || ''} | ${cert.date || ''}</div>
+                </div>
+            `).join('')}
+        ` : ''}
+
+        <!-- Volunteer Experience -->
+        ${volunteerExperience && volunteerExperience.length > 0 ? `
+            <div class="section-header">VOLUNTEER EXPERIENCE</div>
+            ${volunteerExperience.map((vol: any) => `
+                <div class="experience-item">
+                    <div class="experience-header">
+                        <div>
+                            <div class="company-name">${vol.organization || ''}</div>
+                            <div class="position-title">${vol.role || ''}</div>
+                        </div>
+                        <div class="date-range">
+                            ${vol.startDate || ''} - ${vol.current ? 'Present' : vol.endDate || ''}
+                        </div>
+                    </div>
+                    ${vol.description ? `<div class="description">${vol.description}</div>` : ''}
+                </div>
+            `).join('')}
+        ` : ''}
+
+        <!-- Publications -->
+        ${publications && publications.length > 0 ? `
+            <div class="section-header">PUBLICATIONS</div>
+            ${publications.map((pub: any) => `
+                <div class="project-item">
+                    <div class="project-name">${pub.title || ''}</div>
+                    ${pub.publisher ? `<div class="certification-issuer">${pub.publisher} | ${pub.date || ''}</div>` : ''}
+                    ${pub.description ? `<div class="project-description">${pub.description}</div>` : ''}
+                    ${pub.url ? `<div class="project-technologies">URL: ${pub.url}</div>` : ''}
+                </div>
+            `).join('')}
         ` : ''}
     </div>
 </body>
@@ -299,7 +436,531 @@ export class FileGenerationService {
     `;
   }
 
-  private static async generateDOCX(cvData: CVData): Promise<Buffer> {
+  private static generateBasicTemplate(cvData: any): string {
+    const { personalInfo, experience, education, skills, languages, projects, certifications, volunteerExperience, publications } = cvData;
+    
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>CV - ${personalInfo.fullName}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            color: #333;
+            background: white;
+        }
+        .container {
+            width: 794px;
+            min-height: 1123px;
+            margin: 0 auto;
+            padding: 15px 20px 20px 20px;
+            background: white;
+        }
+        
+        .cv-section {
+            margin-bottom: 0.8rem;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            min-height: 40px;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .mb-8 {
+            margin-bottom: 0.8rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.3rem;
+            line-height: 1.2;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.3rem;
+            margin-top: 0.8rem;
+            padding-bottom: 0.2rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        p {
+            margin-bottom: 0.5rem;
+            color: #4b5563;
+        }
+        
+        .cv-contact-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+            padding: 0.8rem;
+            background: #f9fafb;
+            border-radius: 0.5rem;
+            justify-content: center;
+        }
+        
+        .cv-contact-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6b7280;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+        
+        .cv-section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.3rem;
+            page-break-after: avoid;
+            break-after: avoid;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .cv-section-title {
+            font-size: 1.375rem;
+            font-weight: 700;
+            color: #1f2937;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .cv-experience-item {
+            margin-bottom: 0.8rem;
+            padding: 0.8rem;
+            border-left: 3px solid #3b82f6;
+            background: #f8fafc;
+            border-radius: 0 0.5rem 0.5rem 0;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            min-height: 60px;
+        }
+        
+        .cv-experience-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+            gap: 1rem;
+        }
+        
+        .cv-experience-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.25rem;
+        }
+        
+        .cv-experience-company {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #3b82f6;
+            margin-bottom: 0.25rem;
+        }
+        
+        .cv-experience-date {
+            font-size: 0.875rem;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        
+        .cv-experience-location {
+            font-size: 0.875rem;
+            color: #6b7280;
+            font-style: italic;
+        }
+        
+        .cv-experience-description {
+            color: #4b5563;
+            line-height: 1.6;
+            margin-top: 0.3rem;
+            min-height: 30px;
+            padding-top: 0.3rem;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .cv-education-item {
+            margin-bottom: 0.8rem;
+            padding: 0.8rem;
+            border-left: 3px solid #10b981;
+            background: #f0fdf4;
+            border-radius: 0 0.5rem 0.5rem 0;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            min-height: 60px;
+        }
+        
+        .cv-education-degree {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .cv-education-institution {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #10b981;
+            margin-bottom: 0.25rem;
+        }
+        
+        .cv-skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.8rem;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+        
+        .cv-skill-category {
+            background: #f3f4f6;
+            padding: 0.8rem;
+            border-radius: 0.5rem;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            min-height: 60px;
+        }
+        
+        .cv-skill-category-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        
+        .cv-skill-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 0.3rem;
+        }
+        
+        .cv-skill-item:last-child {
+            border-bottom: none;
+        }
+        
+        .cv-skill-name {
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .cv-skill-level {
+            font-size: 0.875rem;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        
+        .cv-languages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.8rem;
+            width: 100%;
+        }
+        
+        .cv-language-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            background: #f3f4f6;
+            border-radius: 0.5rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .cv-project-item {
+            margin-bottom: 0.8rem;
+            padding: 0.8rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            background: #fafafa;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            min-height: 60px;
+        }
+        
+        .cv-project-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        
+        .cv-project-description {
+            color: #4b5563;
+            margin-bottom: 0.75rem;
+        }
+        
+        .cv-project-technologies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .cv-project-tech {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .cv-certification-item {
+            margin-bottom: 0.8rem;
+            padding: 0.8rem;
+            border-left: 3px solid #f59e0b;
+            background: #fffbeb;
+            border-radius: 0 0.5rem 0.5rem 0;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        
+        .cv-certification-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .cv-certification-issuer {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #f59e0b;
+            margin-bottom: 0.25rem;
+        }
+        
+        .cv-certification-date {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <div class="cv-section">
+            <div class="text-center mb-8">
+                <h1>${personalInfo.fullName || ''}</h1>
+                <div class="cv-contact-info">
+                    ${personalInfo.email ? `
+                        <div class="cv-contact-item">
+                            <span>${personalInfo.email}</span>
+                        </div>
+                    ` : ''}
+                    ${personalInfo.phone ? `
+                        <div class="cv-contact-item">
+                            <span>${personalInfo.phone}</span>
+                        </div>
+                    ` : ''}
+                    ${personalInfo.location ? `
+                        <div class="cv-contact-item">
+                            <span>${personalInfo.location}</span>
+                        </div>
+                    ` : ''}
+                    ${personalInfo.linkedin ? `
+                        <div class="cv-contact-item">
+                            <span>LinkedIn: ${personalInfo.linkedin}</span>
+                        </div>
+                    ` : ''}
+                    ${personalInfo.website ? `
+                        <div class="cv-contact-item">
+                            <span>Website: ${personalInfo.website}</span>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+            
+            ${personalInfo.summary ? `
+                <div class="cv-section">
+                    <div class="cv-section-header">
+                        <h2 class="cv-section-title">Summary</h2>
+                    </div>
+                    <p>${personalInfo.summary}</p>
+                </div>
+            ` : ''}
+        </div>
+
+        ${experience && experience.length > 0 ? `
+            <div class="cv-section">
+                <div class="cv-section-header">
+                    <h2 class="cv-section-title">Work Experience</h2>
+                </div>
+                ${experience.map((exp: any) => `
+                    <div class="cv-experience-item">
+                        <div class="cv-experience-header">
+                            <div>
+                                <div class="cv-experience-title">${exp.position || ''}</div>
+                                <div class="cv-experience-company">${exp.company || ''}</div>
+                                ${exp.location ? `<div class="cv-experience-location">${exp.location}</div>` : ''}
+                            </div>
+                            <div class="cv-experience-date">
+                                ${exp.startDate || ''} - ${exp.endDate ? exp.endDate : (exp.current ? 'Present' : '')}
+                            </div>
+                        </div>
+                        ${exp.description ? `<div class="cv-experience-description">${exp.description}</div>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        ` : ''}
+
+        ${education && education.length > 0 ? `
+            <div class="cv-section">
+                <div class="cv-section-header">
+                    <h2 class="cv-section-title">Education</h2>
+                </div>
+                ${education.map((edu: any) => `
+                    <div class="cv-education-item">
+                        <div class="cv-education-degree">${edu.degree || ''}</div>
+                        <div class="cv-education-institution">${edu.institution || ''}</div>
+                        <div class="cv-experience-date">
+                            ${edu.startDate || ''} - ${edu.endDate ? edu.endDate : (edu.current ? 'Present' : '')}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        ` : ''}
+
+        ${skills && skills.length > 0 ? `
+            <div class="cv-section">
+                <div class="cv-section-header">
+                    <h2 class="cv-section-title">Skills</h2>
+                </div>
+                <div class="cv-skills-grid">
+                    ${skills.map((skill: any) => `
+                        <div class="cv-skill-item">
+                            <span class="cv-skill-name">${skill.name || skill.skill || ''}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        ` : ''}
+
+        ${languages && languages.length > 0 ? `
+            <div class="cv-section">
+                <div class="cv-section-header">
+                    <h2 class="cv-section-title">Languages</h2>
+                </div>
+                <div class="cv-languages-grid">
+                    ${languages.map((lang: any) => `
+                        <div class="cv-language-item">
+                            <span>${lang.language || lang.name || ''}</span>
+                            <span class="cv-skill-level">${lang.level || ''}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        ` : ''}
+
+        ${projects && projects.length > 0 ? `
+            <div class="cv-section">
+                <div class="cv-section-header">
+                    <h2 class="cv-section-title">Projects</h2>
+                </div>
+                ${projects.map((project: any) => `
+                    <div class="cv-project-item">
+                        <div class="cv-project-title">${project.name || ''}</div>
+                        ${project.description ? `<div class="cv-project-description">${project.description}</div>` : ''}
+                        ${project.technologies && Array.isArray(project.technologies) && project.technologies.length > 0 ? `
+                            <div class="cv-project-technologies">
+                                ${project.technologies.map((tech: any) => `<span class="cv-project-tech">${tech || ''}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        ` : ''}
+
+        ${certifications && certifications.length > 0 ? `
+            <div class="cv-section">
+                <div class="cv-section-header">
+                    <h2 class="cv-section-title">Certifications</h2>
+                </div>
+                ${certifications.map((cert: any) => `
+                    <div class="cv-certification-item">
+                        <div class="cv-certification-name">${cert.name || ''}</div>
+                        <div class="cv-certification-issuer">${cert.issuer || ''}</div>
+                        <div class="cv-certification-date">${cert.date || ''}</div>
+                    </div>
+                `).join('')}
+            </div>
+        ` : ''}
+
+        ${volunteerExperience && volunteerExperience.length > 0 ? `
+            <div class="cv-section">
+                <div class="cv-section-header">
+                    <h2 class="cv-section-title">Volunteer Experience</h2>
+                </div>
+                ${volunteerExperience.map((vol: any) => `
+                    <div class="cv-experience-item">
+                        <div class="cv-experience-header">
+                            <div>
+                                <div class="cv-experience-title">${vol.role || ''}</div>
+                                <div class="cv-experience-company">${vol.organization || ''}</div>
+                                ${vol.cause ? `<div class="cv-experience-location">${vol.cause}</div>` : ''}
+                            </div>
+                            <div class="cv-experience-date">
+                                ${vol.startDate || ''} - ${vol.current ? 'Present' : vol.endDate || ''}
+                            </div>
+                        </div>
+                        ${vol.description ? `<div class="cv-experience-description">${vol.description}</div>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        ` : ''}
+
+        ${publications && publications.length > 0 ? `
+            <div class="cv-section">
+                <div class="cv-section-header">
+                    <h2 class="cv-section-title">Publications</h2>
+                </div>
+                ${publications.map((pub: any) => `
+                    <div class="cv-experience-item">
+                        <div class="cv-experience-header">
+                            <div>
+                                <div class="cv-experience-title">${pub.title || ''}</div>
+                                ${pub.publisher ? `<div class="cv-experience-company">${pub.publisher}</div>` : ''}
+                                ${pub.authors && pub.authors.length > 0 ? `
+                                    <div class="cv-experience-location">Authors: ${pub.authors.join(', ')}</div>
+                                ` : ''}
+                            </div>
+                            ${pub.date ? `<div class="cv-experience-date">${pub.date}</div>` : ''}
+                        </div>
+                        ${pub.description ? `<div class="cv-experience-description">${pub.description}</div>` : ''}
+                        ${pub.url ? `
+                            <div class="cv-experience-location">
+                                <a href="${pub.url}" target="_blank" rel="noopener noreferrer">${pub.url}</a>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        ` : ''}
+    </div>
+</body>
+</html>
+    `;
+  }
+
+  private static async generateDOCX(cvData: any, templateId?: string): Promise<Buffer> {
     const { personalInfo, experience, education, skills, languages, projects, certifications } = cvData;
     
     const doc = new Document({
@@ -312,86 +973,75 @@ export class FileGenerationService {
               children: [
                 new TextRun({
                   text: personalInfo.fullName,
-                  size: 32,
                   bold: true,
-                  color: '1e40af',
+                  size: 36,
                 }),
               ],
               alignment: AlignmentType.CENTER,
-              spacing: { after: 200 },
             }),
             
-            // Contact Info
+            // Contact info
             new Paragraph({
               children: [
                 new TextRun({
-                  text: `📧 ${personalInfo.email} | 📱 ${personalInfo.phone} | 📍 ${personalInfo.location}`,
-                  size: 22,
+                  text: `${personalInfo.email} | ${personalInfo.phone} | ${personalInfo.location}`,
+                  size: 20,
                 }),
               ],
               alignment: AlignmentType.CENTER,
-              spacing: { after: 400 },
             }),
-
+            
             // Summary
             ...(personalInfo.summary ? [
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: 'Haqqımda',
-                    size: 24,
+                    text: "SUMMARY",
                     bold: true,
-                    color: '1e40af',
+                    size: 24,
                   }),
                 ],
                 heading: HeadingLevel.HEADING_2,
-                spacing: { before: 200, after: 100 },
               }),
               new Paragraph({
                 children: [
                   new TextRun({
                     text: personalInfo.summary,
-                    size: 22,
+                    size: 20,
                   }),
                 ],
-                spacing: { after: 200 },
               }),
             ] : []),
-
+            
             // Experience
             ...(experience && experience.length > 0 ? [
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: 'Təcrübə',
-                    size: 24,
+                    text: "WORK EXPERIENCE",
                     bold: true,
-                    color: '1e40af',
+                    size: 24,
                   }),
                 ],
                 heading: HeadingLevel.HEADING_2,
-                spacing: { before: 200, after: 100 },
               }),
-              ...experience.flatMap(exp => [
+              ...experience.flatMap((exp: any) => [
                 new Paragraph({
                   children: [
                     new TextRun({
                       text: exp.position,
-                      size: 22,
                       bold: true,
+                      size: 22,
                     }),
                   ],
-                  spacing: { before: 100, after: 50 },
                 }),
                 new Paragraph({
                   children: [
                     new TextRun({
-                      text: `${exp.company} | ${exp.startDate} - ${exp.endDate || 'Hazırda'}`,
+                      text: `${exp.company} | ${exp.startDate} - ${exp.endDate ? exp.endDate : (exp.current ? 'Present' : '')}`,
                       size: 20,
-                      italics: true,
                     }),
                   ],
-                  spacing: { after: 50 },
                 }),
                 ...(exp.description ? [
                   new Paragraph({
@@ -401,83 +1051,164 @@ export class FileGenerationService {
                         size: 20,
                       }),
                     ],
-                    spacing: { after: 100 },
                   }),
                 ] : []),
               ]),
             ] : []),
-
+            
             // Education
             ...(education && education.length > 0 ? [
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: 'Təhsil',
-                    size: 24,
+                    text: "EDUCATION",
                     bold: true,
-                    color: '1e40af',
+                    size: 24,
                   }),
                 ],
                 heading: HeadingLevel.HEADING_2,
-                spacing: { before: 200, after: 100 },
               }),
-              ...education.flatMap(edu => [
+              ...education.flatMap((edu: any) => [
                 new Paragraph({
                   children: [
                     new TextRun({
                       text: edu.degree,
-                      size: 22,
                       bold: true,
+                      size: 22,
                     }),
                   ],
-                  spacing: { before: 100, after: 50 },
                 }),
                 new Paragraph({
                   children: [
                     new TextRun({
-                      text: `${edu.institution} | ${edu.startDate} - ${edu.endDate || 'Hazırda'}`,
+                      text: `${edu.institution} | ${edu.startDate} - ${edu.endDate ? edu.endDate : (edu.current ? 'Present' : '')}`,
                       size: 20,
-                      italics: true,
                     }),
                   ],
-                  spacing: { after: 100 },
                 }),
               ]),
             ] : []),
-
+            
             // Skills
             ...(skills && skills.length > 0 ? [
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: 'Bacarıqlar',
-                    size: 24,
+                    text: "SKILLS",
                     bold: true,
-                    color: '1e40af',
+                    size: 24,
                   }),
                 ],
                 heading: HeadingLevel.HEADING_2,
-                spacing: { before: 200, after: 100 },
               }),
-              ...skills.flatMap(skill => [
+              ...skills.flatMap((skill: any) => [
                 new Paragraph({
                   children: [
                     new TextRun({
-                      text: skill.category,
-                      size: 22,
-                      bold: true,
+                      text: skill.name || skill.skill || '',
+                      size: 20,
                     }),
                   ],
-                  spacing: { before: 100, after: 50 },
+                }),
+              ]),
+            ] : []),
+            
+            // Languages
+            ...(languages && languages.length > 0 ? [
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "LANGUAGES",
+                    bold: true,
+                    size: 24,
+                  }),
+                ],
+                heading: HeadingLevel.HEADING_2,
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: languages.map((lang: any) => `${lang.language || lang.name}: ${lang.level}`).join(', '),
+                    size: 20,
+                  }),
+                ],
+              }),
+            ] : []),
+            
+            // Projects
+            ...(projects && projects.length > 0 ? [
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "PROJECTS",
+                    bold: true,
+                    size: 24,
+                  }),
+                ],
+                heading: HeadingLevel.HEADING_2,
+              }),
+              ...projects.flatMap((project: any) => [
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: project.name,
+                      bold: true,
+                      size: 22,
+                    }),
+                  ],
+                }),
+                ...(project.description ? [
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: project.description,
+                        size: 20,
+                      }),
+                    ],
+                  }),
+                ] : []),
+                ...(project.technologies && project.technologies.length > 0 ? [
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: `Technologies: ${project.technologies.join(', ')}`,
+                        size: 18,
+                      }),
+                    ],
+                  }),
+                ] : []),
+              ]),
+            ] : []),
+            
+            // Certifications
+            ...(certifications && certifications.length > 0 ? [
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "CERTIFICATIONS",
+                    bold: true,
+                    size: 24,
+                  }),
+                ],
+                heading: HeadingLevel.HEADING_2,
+              }),
+              ...certifications.flatMap((cert: any) => [
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: cert.name,
+                      bold: true,
+                      size: 22,
+                    }),
+                  ],
                 }),
                 new Paragraph({
                   children: [
                     new TextRun({
-                      text: skill.items.join(', '),
+                      text: `${cert.issuer} | ${cert.date}`,
                       size: 20,
                     }),
                   ],
-                  spacing: { after: 100 },
                 }),
               ]),
             ] : []),
@@ -486,18 +1217,19 @@ export class FileGenerationService {
       ],
     });
 
-    return Buffer.from(await Packer.toBuffer(doc));
+    return await Packer.toBuffer(doc);
   }
 
   static async generateFile(options: FileGenerationOptions): Promise<Buffer> {
-    const { format, cvData } = options;
+    const { format, cvData, templateId } = options;
     
-    if (format === 'pdf') {
-      return await this.generatePDF(cvData, options.templateId);
-    } else if (format === 'docx') {
-      return await this.generateDOCX(cvData);
-    } else {
-      throw new Error('Unsupported format');
+    switch (format) {
+      case 'pdf':
+        return await this.generatePDF(cvData, templateId);
+      case 'docx':
+        return await this.generateDOCX(cvData, templateId);
+      default:
+        throw new Error(`Unsupported format: ${format}`);
     }
   }
 }

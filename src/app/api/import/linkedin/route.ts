@@ -47,15 +47,36 @@ async function tryApiKeysSequentially(url: string): Promise<{ apiKey: string; re
     try {
       console.log(`Trying API key: ${keyRecord.key.substring(0, 10)}...`);
       
+      // Ensure URL is not too long to prevent 431 errors - aggressive cleaning  
+      const cleanUrl = url.trim()
+        .replace(/\?.*$/, '') // Remove all query parameters
+        .replace(/#.*$/, '') // Remove hash fragments  
+        .replace(/\/$/, '') // Remove trailing slash
+        .replace(/\/+$/, '') // Remove multiple trailing slashes
+        .split('/').slice(0, 5).join('/'); // Keep only first 5 path segments
+      
+      // Additional URL length check
+      if (cleanUrl.length > 100) {
+        console.log(`URL too long after cleaning: ${cleanUrl.length} characters, truncating...`);
+        const baseUrl = cleanUrl.split('/').slice(0, 4).join('/'); // More aggressive truncation
+        var finalUrl = baseUrl.length > 80 ? cleanUrl.substring(0, 80) : baseUrl;
+      } else {
+        var finalUrl = cleanUrl;
+      }
+      
+      console.log(`Original URL: ${url.substring(0, 100)}...`);
+      console.log(`Cleaned URL: ${finalUrl}`);
+      
       const response = await axios.get(
         `https://${process.env.RAPIDAPI_HOST}/get-linkedin-profile`,
         {
-          params: { linkedin_url: url },
+          params: { linkedin_url: finalUrl },
           headers: {
             "X-RapidAPI-Key": keyRecord.key,
             "X-RapidAPI-Host": process.env.RAPIDAPI_HOST,
           },
-          timeout: 30000,
+          timeout: 25000, // Reduced timeout
+          maxRedirects: 3, // Reduced redirects
         }
       );
       
@@ -71,6 +92,12 @@ async function tryApiKeysSequentially(url: string): Promise<{ apiKey: string; re
         message: errorMessage,
         code: error.code
       });
+      
+      // Handle 431 Request Header Fields Too Large
+      if (statusCode === 431) {
+        console.log(`Header too large error for key ${keyRecord.key.substring(0, 10)}..., trying next key`);
+        continue;
+      }
       
       // If it's a rate limit error (429), try next key
       if (statusCode === 429) {
@@ -227,17 +254,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "LinkedIn URL is required" }, { status: 400 });
     }
 
-    // API Key Rotation Logic - Try all keys until one works
-    const result = await tryApiKeysSequentially(url);
-    if (!result) {
-      return NextResponse.json({ 
-        error: "Bütün API açarları limit aşıb və ya əlçatamazdır. Zəhmət olmasa bir neçə dəqiqə sonra yenidən cəhd edin." 
-      }, { status: 503 });
-    }
-
-    const { apiKey, response } = result;
-    console.log(`Successfully used API key: ${apiKey.substring(0, 10)}... for LinkedIn profile: ${url}`);
-
     // Validate LinkedIn URL format
     if (!url.includes('linkedin.com/in/')) {
       return NextResponse.json({ 
@@ -245,10 +261,42 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log(`Successfully used API key: ${apiKey.substring(0, 10)}... for LinkedIn profile: ${url}`);
+    // Clean and shorten URL to prevent 431 Header Fields Too Large error
+    const cleanUrl = url.trim()
+      .replace(/\?.*$/, '') // Remove query parameters
+      .replace(/#.*$/, '') // Remove hash fragments
+      .replace(/\/$/, ''); // Remove trailing slash
+
+    console.log('Original URL:', url);
+    console.log('Cleaned URL:', cleanUrl);
+
+    // Extract username from URL for additional validation
+    const urlMatch = cleanUrl.match(/linkedin\.com\/in\/([^\/\?]+)/);
+    if (!urlMatch) {
+      return NextResponse.json({ 
+        error: "LinkedIn URL formatı yanlışdır. Düzgün format: https://linkedin.com/in/username" 
+      }, { status: 400 });
+    }
+
+    const username = urlMatch[1];
+    console.log('Extracted username:', username);
+
+    // Use cleaned URL for API call
+    const result = await tryApiKeysSequentially(cleanUrl);
+    if (!result) {
+      return NextResponse.json({ 
+        error: "Bütün API açarları limit aşıb və ya əlçatamazdır. Zəhmət olmasa bir neçə dəqiqə sonra yenidən cəhd edin." 
+      }, { status: 503 });
+    }
+
+    const { apiKey, response } = result;
+    console.log(`Successfully used API key: ${apiKey.substring(0, 10)}... for LinkedIn profile: ${cleanUrl}`);
 
     console.log('LinkedIn API response status:', response.status);
     console.log('LinkedIn API response data keys:', Object.keys(response.data || {}));
+
+    // Log the full raw LinkedIn API response for debugging
+    console.log('RAW LINKEDIN API RESPONSE:', JSON.stringify(response.data, null, 2));
 
     if (!response.data || !response.data.data) {
       return NextResponse.json({ 
@@ -260,7 +308,30 @@ export async function POST(req: NextRequest) {
     const cvData = mapLinkedInToCVData(response.data.data);
     console.log('Final CV data being sent:', JSON.stringify(cvData, null, 2));
 
-    return NextResponse.json(cvData);
+    // Store import data temporarily and return short URL
+    try {
+      const importSession = await prisma.importSession.create({
+        data: {
+          userId,
+          data: JSON.stringify(cvData),
+          type: 'linkedin',
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
+        }
+      });
+
+      return NextResponse.json({
+        success: true,
+        sessionId: importSession.id,
+        redirectUrl: `/cv/edit/new?import=linkedin&session=${importSession.id}`,
+        message: "LinkedIn profili uğurla import edildi"
+      });
+    } catch (storeError) {
+      console.error('Failed to store import session:', storeError);
+      // Return error instead of falling back to URL data
+      return NextResponse.json({ 
+        error: "Import məlumatları saxlanılarkən xəta baş verdi. Zəhmət olmasa yenidən cəhd edin." 
+      }, { status: 500 });
+    }
   } catch (error: unknown) {
     console.error("LinkedIn import error:", error);
     
@@ -269,7 +340,11 @@ export async function POST(req: NextRequest) {
       const axiosError = error as { response?: { status?: number; data?: any } };
       const status = axiosError.response?.status;
       
-      if (status === 429) {
+      if (status === 431) {
+        return NextResponse.json({ 
+          error: "Request header çox böyükdür. Zəhmət olmasa qısa LinkedIn URL istifadə edin." 
+        }, { status: 431 });
+      } else if (status === 429) {
         return NextResponse.json({ 
           error: "Çox sayda sorğu göndərildiği üçün xidmət müvəqqəti olaraq məhdudlaşdırılıb. Zəhmət olmasa bir neçə dəqiqə sonra yenidən cəhd edin." 
         }, { status: 429 });

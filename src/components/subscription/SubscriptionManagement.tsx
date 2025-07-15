@@ -70,6 +70,12 @@ export default function SubscriptionManagement({ user, onUserUpdate }: Subscript
   const currentTier = currentSubscription?.tier || 'Free';
 
   const handleUpgrade = async (newTier: string) => {
+    // If upgrading to a paid tier, redirect to pricing page
+    if (newTier !== 'Free') {
+      window.location.href = '/pricing';
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -91,11 +97,8 @@ export default function SubscriptionManagement({ user, onUserUpdate }: Subscript
 
       const result = await response.json();
       
-      // Redirect to payment if needed
-      if (result.paymentUrl) {
-        window.location.href = result.paymentUrl;
-      } else {
-        // Update user data
+      // For Free tier, update user data immediately
+      if (newTier === 'Free') {
         const updatedUser = { ...user };
         if (updatedUser.subscriptions) {
           updatedUser.subscriptions = updatedUser.subscriptions.map(sub => 
