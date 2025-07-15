@@ -1,4 +1,6 @@
 import puppeteer from 'puppeteer';
+import puppeteerCore from 'puppeteer-core';
+import chromium from '@sparticuz/chromium';
 import { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer } from 'docx';
 import { CVData, Experience, Education, Skill, Language, Project, Certification } from '@/types/cv';
 import fs from 'fs';
@@ -12,12 +14,26 @@ interface FileGenerationOptions {
 
 export class FileGenerationService {
   private static async generatePDF(cvData: any, templateId?: string): Promise<Buffer> {
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
-
+    // Vercel üçün xüsusi Puppeteer konfiqurasiyası
+    const isVercel = process.env.VERCEL || process.env.VERCEL_ENV;
+    
+    let browser;
     try {
+      if (isVercel) {
+        // Vercel-də @sparticuz/chromium istifadə et
+        browser = await puppeteerCore.launch({
+          args: chromium.args,
+          executablePath: await chromium.executablePath(),
+          headless: true,
+        });
+      } else {
+        // Local development üçün standart konfiqurasiya
+        browser = await puppeteer.launch({
+          headless: true,
+          args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        });
+      }
+
       const page = await browser.newPage();
       
       // Generate HTML content for CV
@@ -40,8 +56,13 @@ export class FileGenerationService {
       });
 
       return Buffer.from(pdf);
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      throw new Error('PDF yaradılarkən xəta baş verdi');
     } finally {
-      await browser.close();
+      if (browser) {
+        await browser.close();
+      }
     }
   }
 

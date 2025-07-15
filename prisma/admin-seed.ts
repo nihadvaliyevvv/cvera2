@@ -25,24 +25,38 @@ async function main() {
   const apiKeys = [
     {
       name: 'LinkedIn API Key 1',
-      key: 'cb32882898msh7025ca432cb5588p1bfb73jsn86ca5a83c21b',
+      key: 'e69773e8c2msh50ce2f81e481a35p1888abjsn83f1b967cbe4',
       service: 'linkedin',
       priority: 0,
       active: true,
     },
     {
       name: 'LinkedIn API Key 2',
-      key: 'cb32882898msh7025ca432cb5588p1bfb73jsn86ca5a83c21c',
+      key: '75cb08f9a5mshb09ff64b9fb4646p1b98a8jsnc533bdee4c87',
       service: 'linkedin',
       priority: 1,
       active: true,
     },
     {
       name: 'LinkedIn API Key 3',
-      key: 'cb32882898msh7025ca432cb5588p1bfb73jsn86ca5a83c21d',
+      key: 'e5784e5bd5msh824674fccf1cdd7p1c3067jsn4d38281849b1',
       service: 'linkedin',
       priority: 2,
-      active: false,
+      active: true,
+    },
+    {
+      name: 'LinkedIn API Key 4',
+      key: 'c606ec5754mshad43ac7b61cf986p1ff797jsne57f78153b99',
+      service: 'linkedin',
+      priority: 3,
+      active: true,
+    },
+    {
+      name: 'LinkedIn API Key 5',
+      key: '736369eb1bmshb2163613ca60219p19ddacjsn320a0db65e0d',
+      service: 'linkedin',
+      priority: 4,
+      active: true,
     },
   ];
 
@@ -55,36 +69,6 @@ async function main() {
     console.log('Created API key:', apiKey.name);
   }
 
-  // Create sample templates
-  const templates = [
-    {
-      name: 'Modern',
-      tier: 'Free',
-      previewUrl: '/templates/modern-preview.jpg',
-    },
-    {
-      name: 'Classic',
-      tier: 'Free',
-      previewUrl: '/templates/classic-preview.jpg',
-    },
-    {
-      name: 'Professional',
-      tier: 'Medium',
-      previewUrl: '/templates/professional-preview.jpg',
-    },
-    {
-      name: 'Executive',
-      tier: 'Premium',
-      previewUrl: '/templates/executive-preview.jpg',
-    },
-  ];
-
-  for (const templateData of templates) {
-    const template = await prisma.template.create({
-      data: templateData,
-    });
-    console.log('Created template:', template.name);
-  }
 
   console.log('Seeding completed successfully!');
 }
