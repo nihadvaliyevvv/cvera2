@@ -36,7 +36,7 @@ model CV {
   user       User                @relation("UserCVs", fields: [userId], references: [id])
   fileJobs   FileGenerationJob[] @relation("CVFileJobs")
 
-  @@index([userId], map: "CV_userId_idx")
+  @@index([userId])
 }
 
 model Template {
@@ -62,7 +62,7 @@ model Subscription {
   updatedAt   DateTime @updatedAt
   user        User     @relation("UserSubscriptions", fields: [userId], references: [id])
 
-  @@index([userId], map: "Subscription_userId_idx")
+  @@index([userId])
 }
 
 model Admin {
@@ -102,7 +102,7 @@ model FileGenerationJob {
   updatedAt DateTime @updatedAt
   cv        CV       @relation("CVFileJobs", fields: [cvId], references: [id])
 
-  @@index([cvId], map: "FileGenerationJob_cvId_idx")
+  @@index([cvId])
 }
 
 model Payment {
@@ -119,18 +119,18 @@ model Payment {
   planType      String
   user          User     @relation("UserPayments", fields: [userId], references: [id])
 
-  @@index([userId], map: "Payment_userId_idx")
+  @@index([userId])
 }
 
 model ImportSession {
   id        String   @id @default(uuid())
   userId    String
   type      String
-  data      String   @db.Text
+  data      String
   expiresAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation("UserImportSessions", fields: [userId], references: [id])
 
-  @@index([userId], map: "ImportSession_userId_idx")
+  @@index([userId])
 }

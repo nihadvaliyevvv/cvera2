@@ -4,7 +4,16 @@ export class ApiClient {
   private accessToken: string | null = null;
 
   constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    // Use dynamic base URL detection for Vercel deployment
+    if (typeof window !== 'undefined') {
+      // Client-side: use current origin
+      this.baseUrl = window.location.origin;
+    } else {
+      // Server-side: use environment variable or default
+      this.baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+                    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
+                    'http://localhost:3000';
+    }
   }
 
   setAccessToken(token: string) {
@@ -12,7 +21,9 @@ export class ApiClient {
   }
 
   private async request(endpoint: string, options: RequestInit = {}) {
-    const url = `${this.baseUrl}${endpoint}`;
+    // Handle absolute URLs
+    const url = endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint}`;
+    
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> || {}),
@@ -29,6 +40,8 @@ export class ApiClient {
 
     try {
       console.log('Making API request to:', url);
+      console.log('Base URL:', this.baseUrl);
+      console.log('Endpoint:', endpoint);
       console.log('Request options:', { 
         ...options, 
         headers,
@@ -66,8 +79,17 @@ export class ApiClient {
       return data;
     } catch (error) {
       console.error('API request failed:', error);
+      console.error('Request URL:', url);
+      console.error('Base URL:', this.baseUrl);
+      
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        throw new Error('Network error: Unable to connect to server. Please check your internet connection.');
+        // This usually means network connectivity issues or CORS problems
+        throw new Error(`Network error: Unable to connect to ${this.baseUrl}. Please check your internet connection or try again later.`);
+      }
+      
+      // For other fetch errors, provide more context
+      if (error instanceof Error) {
+        throw new Error(`Request failed: ${error.message}`);
       }
       throw error;
     }
