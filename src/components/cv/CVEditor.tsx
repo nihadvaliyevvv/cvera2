@@ -779,7 +779,10 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                         border: '1px solid #e5e7eb'
                       }}>
                         <div className={`w-full h-full overflow-y-auto ${styles.responsivePreview}`} style={{
-                          padding: '1.3% 2.5% 2.5% 2.5%' // PDF ile eyni nisbətdə: 10px/794px = 1.3%, 20px/794px = 2.5%
+                          padding: '1.3% 2.5% 2.5% 2.5%', // PDF ile eyni nisbətdə: 10px/794px = 1.3%, 20px/794px = 2.5%
+                          maxHeight: '100%',
+                          scrollbarWidth: 'thin',
+                          scrollbarColor: '#cbd5e1 #f1f5f9'
                         }}>
                           <CVPreviewA4 cv={{
                             ...cv,
