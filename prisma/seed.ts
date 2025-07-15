@@ -3,44 +3,23 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  // Create sample templates
+  // Create sample templates (including original MySQL templates)
   const templates = [
+    // Original MySQL templates - əsas 2 template
     {
-      id: 'template-1',
-      name: 'Classic Professional',
+      id: 'basic',
+      name: 'Basic Template',
       tier: 'Free',
-      previewUrl: '/templates/classic-professional.png',
+      previewUrl: '/templates/basic.png',
     },
     {
-      id: 'template-2',
-      name: 'Modern Creative',
+      id: 'resumonk-bold',
+      name: 'Resumonk Bold',
       tier: 'Free',
-      previewUrl: '/templates/modern-creative.png',
+      previewUrl: '/templates/resumonk-bold.png',
     },
-    {
-      id: 'template-3',
-      name: 'Executive Premium',
-      tier: 'Medium',
-      previewUrl: '/templates/executive-premium.png',
-    },
-    {
-      id: 'template-4',
-      name: 'Tech Professional',
-      tier: 'Medium',
-      previewUrl: '/templates/tech-professional.png',
-    },
-    {
-      id: 'template-5',
-      name: 'Luxury Executive',
-      tier: 'Premium',
-      previewUrl: '/templates/luxury-executive.png',
-    },
-    {
-      id: 'template-6',
-      name: 'Designer Pro',
-      tier: 'Premium',
-      previewUrl: '/templates/designer-pro.png',
-    },
+    // Additional templates
+   
   ];
 
   for (const template of templates) {

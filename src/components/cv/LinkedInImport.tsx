@@ -311,14 +311,14 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                 <div className="bg-gray-50 rounded-lg p-4">
                   <h4 className="font-medium text-gray-900 mb-3">👤 Şəxsi məlumatlar</h4>
                   <div className="space-y-2 text-sm">
-                    <div><strong>Ad:</strong> {importedData.personalInfo.name}</div>
-                    <div><strong>Email:</strong> {importedData.personalInfo.email}</div>
-                    <div><strong>Yer:</strong> {importedData.personalInfo.location}</div>
-                    {importedData.personalInfo.headline && (
+                    <div><strong>Ad:</strong> {importedData.personalInfo?.name || 'N/A'}</div>
+                    <div><strong>Email:</strong> {importedData.personalInfo?.email || 'N/A'}</div>
+                    <div><strong>Yer:</strong> {importedData.personalInfo?.location || 'N/A'}</div>
+                    {importedData.personalInfo?.headline && (
                       <div><strong>Başlıq:</strong> {importedData.personalInfo.headline}</div>
                     )}
-                    {importedData.personalInfo.summary && (
-                      <div><strong>Özət:</strong> {importedData.personalInfo.summary.substring(0, 100)}...</div>
+                    {importedData.personalInfo?.summary && (
+                      <div><strong>Özet:</strong> {importedData.personalInfo.summary.substring(0, 100)}...</div>
                     )}
                   </div>
                 </div>
@@ -327,7 +327,7 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                 <div className="bg-gray-50 rounded-lg p-4">
                   <h4 className="font-medium text-gray-900 mb-3">💼 İş təcrübəsi</h4>
                   <div className="space-y-2 text-sm">
-                    {importedData.experience.slice(0, 3).map((exp, i) => (
+                    {importedData.experience?.slice(0, 3).map((exp, i) => (
                       <div key={i} className="border-l-2 border-blue-200 pl-2">
                         <div className="font-medium">{exp.position}</div>
                         <div className="text-gray-600">{exp.company}</div>
@@ -336,7 +336,7 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                         )}
                       </div>
                     ))}
-                    {importedData.experience.length > 3 && (
+                    {importedData.experience && importedData.experience.length > 3 && (
                       <div className="text-gray-500">
                         ... və {importedData.experience.length - 3} daha çox
                       </div>
@@ -348,7 +348,7 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                 <div className="bg-gray-50 rounded-lg p-4">
                   <h4 className="font-medium text-gray-900 mb-3">🎓 Təhsil</h4>
                   <div className="space-y-2 text-sm">
-                    {importedData.education.slice(0, 2).map((edu, i) => (
+                    {importedData.education?.slice(0, 2).map((edu, i) => (
                       <div key={i} className="border-l-2 border-green-200 pl-2">
                         <div className="font-medium">{edu.degree}</div>
                         <div className="text-gray-600">{edu.institution}</div>
@@ -357,7 +357,7 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                         )}
                       </div>
                     ))}
-                    {importedData.education.length > 2 && (
+                    {importedData.education && importedData.education.length > 2 && (
                       <div className="text-gray-500">
                         ... və {importedData.education.length - 2} daha çox
                       </div>
@@ -369,12 +369,12 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                 <div className="bg-gray-50 rounded-lg p-4">
                   <h4 className="font-medium text-gray-900 mb-3">🛠️ Bacarıqlar</h4>
                   <div className="flex flex-wrap gap-1">
-                    {importedData.skills.slice(0, 8).map((skill, i) => (
+                    {importedData.skills?.slice(0, 8).map((skill, i) => (
                       <span key={i} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
                         {skill.name}
                       </span>
                     ))}
-                    {importedData.skills.length > 8 && (
+                    {importedData.skills && importedData.skills.length > 8 && (
                       <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
                         +{importedData.skills.length - 8} daha çox
                       </span>
@@ -383,7 +383,7 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                 </div>
 
                 {/* Languages */}
-                {importedData.languages.length > 0 && (
+                {importedData.languages && importedData.languages.length > 0 && (
                   <div className="bg-gray-50 rounded-lg p-4">
                     <h4 className="font-medium text-gray-900 mb-3">🌍 Dillər</h4>
                     <div className="space-y-1 text-sm">
