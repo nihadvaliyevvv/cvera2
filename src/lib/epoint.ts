@@ -168,4 +168,5 @@ export class EpointService {
   }
 }
 
-export default new EpointService();
+const epointService = new EpointService();
+export default epointService;

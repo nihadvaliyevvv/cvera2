@@ -56,12 +56,13 @@ async function tryApiKeysSequentially(url: string): Promise<{ apiKey: string; re
         .split('/').slice(0, 5).join('/'); // Keep only first 5 path segments
       
       // Additional URL length check
+      let finalUrl: string;
       if (cleanUrl.length > 100) {
         console.log(`URL too long after cleaning: ${cleanUrl.length} characters, truncating...`);
         const baseUrl = cleanUrl.split('/').slice(0, 4).join('/'); // More aggressive truncation
-        var finalUrl = baseUrl.length > 80 ? cleanUrl.substring(0, 80) : baseUrl;
+        finalUrl = baseUrl.length > 80 ? cleanUrl.substring(0, 80) : baseUrl;
       } else {
-        var finalUrl = cleanUrl;
+        finalUrl = cleanUrl;
       }
       
       console.log(`Original URL: ${url.substring(0, 100)}...`);

@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function DemoPaymentPage() {
+function DemoPaymentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'success' | 'failed'>('pending');
@@ -158,5 +158,13 @@ export default function DemoPaymentPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DemoPaymentPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DemoPaymentContent />
+    </Suspense>
   );
 }

@@ -78,9 +78,6 @@ const pdfStyles = {
     color: '#1f2937',
     margin: '0',
   },
-  sectionIcon: {
-    fontSize: '12pt',
-  },
   summary: {
     fontSize: '11pt',
     lineHeight: '1.5',
@@ -246,31 +243,31 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
         <div style={pdfStyles.contactInfo}>
           {cv.data.personalInfo.email && (
             <div style={pdfStyles.contactItem}>
-              <span>📧</span>
+              <span>Email:</span>
               <span>{cv.data.personalInfo.email}</span>
             </div>
           )}
           {cv.data.personalInfo.phone && (
             <div style={pdfStyles.contactItem}>
-              <span>📞</span>
+              <span>Tel:</span>
               <span>{cv.data.personalInfo.phone}</span>
             </div>
           )}
           {cv.data.personalInfo.location && (
             <div style={pdfStyles.contactItem}>
-              <span>📍</span>
+              <span>Yer:</span>
               <span>{cv.data.personalInfo.location}</span>
             </div>
           )}
           {cv.data.personalInfo.linkedin && (
             <div style={pdfStyles.contactItem}>
-              <span>💼</span>
+              <span>LinkedIn:</span>
               <span>LinkedIn</span>
             </div>
           )}
           {cv.data.personalInfo.website && (
             <div style={pdfStyles.contactItem}>
-              <span>🌐</span>
+              <span>Website:</span>
               <span>Website</span>
             </div>
           )}
@@ -281,7 +278,6 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
       {cv.data.personalInfo.summary && (
         <div style={pdfStyles.section}>
           <div style={pdfStyles.sectionHeader}>
-            <div style={pdfStyles.sectionIcon}>📝</div>
             <h2 style={pdfStyles.sectionTitle}>Özet</h2>
           </div>
           <p style={pdfStyles.summary}>{cv.data.personalInfo.summary}</p>
@@ -292,7 +288,6 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
       {cv.data.experience && cv.data.experience.length > 0 && (
         <div style={pdfStyles.section}>
           <div style={pdfStyles.sectionHeader}>
-            <div style={pdfStyles.sectionIcon}>💼</div>
             <h2 style={pdfStyles.sectionTitle}>İş Təcrübəsi</h2>
           </div>
           {cv.data.experience.map((exp, index) => (
@@ -306,7 +301,7 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
                   )}
                 </div>
                 <div style={pdfStyles.experienceDate}>
-                  {exp.startDate} - {exp.current ? 'Hazırda' : exp.endDate}
+                  {exp.startDate} - {exp.endDate || 'Hazırda'}
                 </div>
               </div>
               {exp.description && (
@@ -321,16 +316,14 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
       {cv.data.education && cv.data.education.length > 0 && (
         <div style={pdfStyles.section}>
           <div style={pdfStyles.sectionHeader}>
-            <div style={pdfStyles.sectionIcon}>🎓</div>
             <h2 style={pdfStyles.sectionTitle}>Təhsil</h2>
           </div>
           {cv.data.education.map((edu, index) => (
             <div key={index} style={pdfStyles.educationItem}>
               <div style={pdfStyles.educationDegree}>{edu.degree}</div>
               <div style={pdfStyles.educationInstitution}>{edu.institution}</div>
-              {edu.fieldOfStudy && <div style={{ fontSize: '10pt', color: '#6b7280' }}>{edu.fieldOfStudy}</div>}
               <div style={pdfStyles.experienceDate}>
-                {edu.startDate} - {edu.current ? 'Hazırda' : edu.endDate}
+                {edu.startDate} - {edu.endDate || 'Hazırda'}
               </div>
               {edu.gpa && (
                 <div style={{ fontSize: '10pt', color: '#6b7280' }}>GPA: {edu.gpa}</div>
@@ -344,13 +337,12 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
       {cv.data.skills && cv.data.skills.length > 0 && (
         <div style={pdfStyles.section}>
           <div style={pdfStyles.sectionHeader}>
-            <div style={pdfStyles.sectionIcon}>🛠️</div>
             <h2 style={pdfStyles.sectionTitle}>Bacarıqlar</h2>
           </div>
           <div style={pdfStyles.skillsGrid}>
             {cv.data.skills.map((skill, index) => (
               <div key={index} style={pdfStyles.skillCategory}>
-                <div style={pdfStyles.skillCategoryTitle}>{skill.category || 'Ümumi'}</div>
+                <div style={pdfStyles.skillCategoryTitle}>Bacarıqlar</div>
                 <div style={pdfStyles.skillItem}>
                   <span>{skill.name || 'Bacarıq'}</span>
                 </div>
@@ -364,12 +356,11 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
       {cv.data.languages && cv.data.languages.length > 0 && (
         <div style={pdfStyles.section}>
           <div style={pdfStyles.sectionHeader}>
-            <div style={pdfStyles.sectionIcon}>🌐</div>
             <h2 style={pdfStyles.sectionTitle}>Dillər</h2>
           </div>
           {cv.data.languages.map((lang, index) => (
             <div key={index} style={pdfStyles.languageItem}>
-              <span style={pdfStyles.languageName}>{lang.name}</span>
+              <span style={pdfStyles.languageName}>{lang.language}</span>
               <span style={pdfStyles.languageLevel}>{lang.level}</span>
             </div>
           ))}
@@ -380,7 +371,6 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
       {cv.data.projects && cv.data.projects.length > 0 && (
         <div style={pdfStyles.section}>
           <div style={pdfStyles.sectionHeader}>
-            <div style={pdfStyles.sectionIcon}>🚀</div>
             <h2 style={pdfStyles.sectionTitle}>Layihələr</h2>
           </div>
           {cv.data.projects.map((project, index) => (
@@ -403,7 +393,6 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
       {cv.data.certifications && cv.data.certifications.length > 0 && (
         <div style={pdfStyles.section}>
           <div style={pdfStyles.sectionHeader}>
-            <div style={pdfStyles.sectionIcon}>🏆</div>
             <h2 style={pdfStyles.sectionTitle}>Sertifikatlar</h2>
           </div>
           {cv.data.certifications.map((cert, index) => (

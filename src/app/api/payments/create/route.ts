@@ -77,11 +77,12 @@ export async function POST(request: NextRequest) {
     const payment = await prisma.payment.create({
       data: {
         userId: decoded.userId,
-        tier,
+        planType: tier,
         amount,
         status: 'pending',
-        provider: 'epointaz',
+        paymentMethod: 'epoint',
         transactionId,
+        orderId: transactionId, // Use same for orderId
       },
     });
 

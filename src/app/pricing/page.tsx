@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 
@@ -57,11 +57,7 @@ export default function PricingPage() {
   const [userTier, setUserTier] = useState<string>('Free');
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    loadUserInfo();
-  }, []);
-
-  const loadUserInfo = async () => {
+  const loadUserInfo = useCallback(async () => {
     try {
       const token = localStorage.getItem('accessToken');
       if (!token) {
@@ -82,7 +78,11 @@ export default function PricingPage() {
     } catch (error) {
       console.error('Error loading user info:', error);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    loadUserInfo();
+  }, [loadUserInfo]);
 
   const handleUpgrade = async (planId: string) => {
     if (planId === 'free') return;
