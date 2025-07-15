@@ -16,6 +16,8 @@ model User {
   resetToken       String?
   resetTokenExpiry DateTime?
   lastLogin        DateTime?
+  linkedinId       String?         @unique
+  tier             String          @default("Free")
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
   role             String          @default("USER")
