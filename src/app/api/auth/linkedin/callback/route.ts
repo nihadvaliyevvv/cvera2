@@ -12,11 +12,13 @@ export async function GET(request: NextRequest) {
   const error = searchParams.get('error');
 
   if (error) {
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/?error=linkedin_cancelled`);
+    console.error('LinkedIn authorization error:', error);
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/?error=LinkedIn%20autorization%20xətası`);
   }
 
   if (!code) {
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/?error=linkedin_error`);
+    console.error('No authorization code received');
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/?error=Avtorizasiya%20kodu%20alınmadı`);
   }
 
   try {
@@ -38,7 +40,8 @@ export async function GET(request: NextRequest) {
     const tokenData = await tokenResponse.json();
 
     if (!tokenData.access_token) {
-      throw new Error('Failed to get access token');
+      console.error('Token exchange failed:', tokenData);
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/?error=Token%20mübadiləsi%20xətası`);
     }
 
     // Get user profile
@@ -58,10 +61,12 @@ export async function GET(request: NextRequest) {
     });
 
     const emailData = await emailResponse.json();
-    const email = emailData.elements?.[0]?.['handle~']?.emailAddress;
+    let email = emailData.elements?.[0]?.['handle~']?.emailAddress;
 
+    // LinkedIn-də email yoxdursa, avtomatik email yaradaq
     if (!email) {
-      throw new Error('No email found in LinkedIn profile');
+      // LinkedIn ID-sindən email yaradaq
+      email = `linkedin_${profile.id}@cvera.temp`;
     }
 
     // Check if user already exists
@@ -97,7 +102,7 @@ export async function GET(request: NextRequest) {
     const token = generateJWT({ userId: user.id, email: user.email });
 
     // Create response with redirect
-    const response = NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard`);
+    const response = NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/?success=LinkedIn%20ilə%20uğurla%20giriş%20edildi`);
     
     // Set cookies
     response.cookies.set('accessToken', token, {
@@ -110,7 +115,7 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('LinkedIn OAuth error:', error);
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/?error=linkedin_failed`);
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/?error=LinkedIn%20giriş%20xətası`);
   } finally {
     await prisma.$disconnect();
   }

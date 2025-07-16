@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import LoginForm from '@/components/auth/LoginForm';
 import RegisterForm from '@/components/auth/RegisterForm';
@@ -9,7 +9,25 @@ import Dashboard from '@/components/dashboard/Dashboard';
 
 export default function Home() {
   const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot'>('login');
+  const [authMessage, setAuthMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const { user, loading } = useAuth();
+
+  // Check for authentication messages from URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    const success = urlParams.get('success');
+    
+    if (error) {
+      setAuthMessage({ type: 'error', text: decodeURIComponent(error) });
+      // Clear the URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (success) {
+      setAuthMessage({ type: 'success', text: decodeURIComponent(success) });
+      // Clear the URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const handleAuthSuccess = () => {
     // Auth success is handled by the AuthProvider
@@ -170,6 +188,34 @@ export default function Home() {
             {/* Right side - Auth Card */}
             <div className="relative">
               <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-2xl p-8 border border-gray-200/50">
+                {/* Auth Messages */}
+                {authMessage && (
+                  <div className={`mb-6 p-4 rounded-lg ${
+                    authMessage.type === 'error' 
+                      ? 'bg-red-50 border border-red-200 text-red-700' 
+                      : 'bg-green-50 border border-green-200 text-green-700'
+                  }`}>
+                    <div className="flex items-center">
+                      <svg className={`w-5 h-5 mr-2 ${
+                        authMessage.type === 'error' ? 'text-red-500' : 'text-green-500'
+                      }`} fill="currentColor" viewBox="0 0 20 20">
+                        {authMessage.type === 'error' ? (
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        ) : (
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        )}
+                      </svg>
+                      <span className="text-sm font-medium">{authMessage.text}</span>
+                    </div>
+                    <button 
+                      onClick={() => setAuthMessage(null)}
+                      className="mt-2 text-sm underline opacity-75 hover:opacity-100"
+                    >
+                      Bağla
+                    </button>
+                  </div>
+                )}
+
                 <div className="mb-8 text-center">
                   <h2 className="text-3xl font-bold text-gray-900 mb-2">
                     {authMode === 'login' && 'Giriş'}
