@@ -11,7 +11,7 @@ npm run db:backup
 
 # Check if new Azure DATABASE_URL is provided
 if [ -z "$AZURE_DATABASE_URL" ]; then
-    echo "❌ Error: Please provide AZURE_DATABASE_URL environment variable"
+    echo "❌ Error: Please provide AZURE_DATABASE_URL environment variable "
     echo "Usage: AZURE_DATABASE_URL='your-azure-connection-string' ./migrate-to-azure.sh"
     exit 1
 fi
