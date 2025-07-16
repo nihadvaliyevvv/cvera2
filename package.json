@@ -13,6 +13,11 @@
     "db:seed": "npx tsx prisma/seed.ts",
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
+    "db:backup": "pg_dump $DATABASE_URL > backup-$(date +%Y%m%d-%H%M%S).sql",
+    "db:restore": "psql $DATABASE_URL < backup.sql",
+    "db:test": "node -e \"require('@prisma/client').PrismaClient().then(p => p.user.count().then(c => console.log('✅ Database connection successful. Users:', c)).catch(e => console.error('❌ Database connection failed:', e.message)))\"",
+    "db:reset": "prisma migrate reset --force",
+    "db:studio": "prisma studio",
     "postinstall": "prisma generate"
   },
   "dependencies": {

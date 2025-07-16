@@ -33,8 +33,6 @@ async function main() {
   // Create sample API keys for LinkedIn scraping
   const apiKeys = [
     { name: 'Sample API Key 1', key: 'sample-api-key-1', active: true },
-    { name: 'Sample API Key 2', key: 'sample-api-key-2', active: true },
-    { name: 'Sample API Key 3', key: 'sample-api-key-3', active: false },
   ];
 
   for (const apiKey of apiKeys) {
