@@ -42,16 +42,14 @@ const transformLinkedInDataToCVData = (linkedInData: any): CVData => {
   return {
     title: `${linkedInData.personal_info?.full_name || 'İmport edilən'} CV`,
     templateId: '',
-    data: {
-      personalInfo: {
-        fullName: linkedInData.personal_info?.full_name || '',
-        email: linkedInData.personal_info?.email || '',
-        phone: linkedInData.personal_info?.phone || '',
-        location: linkedInData.personal_info?.address || '',
-        website: linkedInData.personal_info?.website || '',
-        linkedin: linkedInData.personal_info?.linkedin_url || '',
-        summary: linkedInData.summary || linkedInData.personal_info?.headline || ''
-      },
+    data: {        personalInfo: {
+          fullName: linkedInData.personal_info?.full_name || '',
+          email: linkedInData.personal_info?.email || '',
+          phone: linkedInData.personal_info?.phone || '',
+          website: linkedInData.personal_info?.website || '',
+          linkedin: linkedInData.personal_info?.linkedin_url || '',
+          summary: linkedInData.summary || linkedInData.personal_info?.headline || ''
+        },
       experience: (linkedInData.experience || []).map((exp: any) => ({
         id: generateId(),
         company: exp.company || '',
@@ -59,8 +57,7 @@ const transformLinkedInDataToCVData = (linkedInData: any): CVData => {
         startDate: exp.start_date || '',
         endDate: exp.end_date || '',
         current: exp.is_current || false,
-        description: exp.description || '',
-        location: exp.location || ''
+        description: exp.description || ''
       })),
       education: (linkedInData.education || []).map((edu: any) => ({
         id: generateId(),
@@ -170,7 +167,6 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
           fullName: '',
           email: '',
           phone: '',
-          location: '',
           website: '',
           linkedin: '',
           summary: ''
@@ -226,7 +222,6 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
             fullName: '',
             email: '',
             phone: '',
-            location: '',
             website: '',
             linkedin: '',
             summary: ''
@@ -601,7 +596,6 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                         name: cv.data.personalInfo.fullName,
                         email: cv.data.personalInfo.email,
                         phone: cv.data.personalInfo.phone,
-                        location: cv.data.personalInfo.location,
                         website: cv.data.personalInfo.website,
                         linkedin: cv.data.personalInfo.linkedin,
                         summary: cv.data.personalInfo.summary
@@ -610,7 +604,6 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                         fullName: data.name,
                         email: data.email,
                         phone: data.phone,
-                        location: data.location,
                         website: data.website,
                         linkedin: data.linkedin,
                         summary: data.summary

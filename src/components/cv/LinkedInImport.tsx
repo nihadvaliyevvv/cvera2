@@ -10,7 +10,6 @@ interface LinkedInData {
     name: string;
     email: string;
     phone?: string;
-    location: string;
     linkedin: string;
     summary?: string;
     website?: string;
@@ -23,7 +22,6 @@ interface LinkedInData {
     endDate?: string;
     current: boolean;
     description: string;
-    location?: string;
     jobType?: string;
     skills?: string;
   }>;
@@ -176,7 +174,6 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
         name: apiData.personal_info?.full_name || '',
         email: apiData.personal_info?.email || '',
         phone: apiData.personal_info?.phone || '',
-        location: apiData.personal_info?.address || '',
         linkedin: apiData.personal_info?.linkedin_url || url,
         summary: apiData.summary || '',
         website: apiData.personal_info?.website || '',
@@ -189,7 +186,6 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
         endDate: exp.end_date || '',
         current: exp.is_current || !exp.end_date,
         description: exp.description || '',
-        location: exp.location || '',
         jobType: exp.job_type || '',
         skills: exp.skills || ''
       })),
@@ -313,7 +309,6 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                   <div className="space-y-2 text-sm">
                     <div><strong>Ad:</strong> {importedData.personalInfo?.name || 'N/A'}</div>
                     <div><strong>Email:</strong> {importedData.personalInfo?.email || 'N/A'}</div>
-                    <div><strong>Yer:</strong> {importedData.personalInfo?.location || 'N/A'}</div>
                     {importedData.personalInfo?.headline && (
                       <div><strong>Başlıq:</strong> {importedData.personalInfo.headline}</div>
                     )}

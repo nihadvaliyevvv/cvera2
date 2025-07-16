@@ -12,7 +12,6 @@ interface CVData {
       fullName?: string;
       email?: string;
       phone?: string;
-      location?: string;
       website?: string;
       linkedin?: string;
       summary?: string;
@@ -26,7 +25,6 @@ interface CVData {
       endDate?: string;
       current?: boolean;
       description?: string;
-      location?: string;
     }>;
     education?: Array<{
       id?: string;
@@ -174,12 +172,6 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
               <tr>
                 <td style={{ padding: '5px 10px', border: '1px solid #ddd', fontWeight: 'bold', background: '#f8f8f8', width: '20%', fontSize: '11pt' }}>LinkedIn:</td>
                 <td style={{ padding: '5px 10px', border: '1px solid #ddd', fontSize: '11pt' }}>{personalInfo.linkedin}</td>
-              </tr>
-            )}
-            {personalInfo?.location && (
-              <tr>
-                <td style={{ padding: '5px 10px', border: '1px solid #ddd', fontWeight: 'bold', background: '#f8f8f8', width: '20%', fontSize: '11pt' }}>Location:</td>
-                <td style={{ padding: '5px 10px', border: '1px solid #ddd', fontSize: '11pt' }}>{personalInfo.location}</td>
               </tr>
             )}
           </tbody>
@@ -493,18 +485,6 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
                 <span>{personalInfo.phone}</span>
               </div>
             )}
-            {personalInfo?.location && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                color: '#6b7280',
-                fontSize: '0.875rem',
-                whiteSpace: 'nowrap'
-              }}>
-                <span>{personalInfo.location}</span>
-              </div>
-            )}
             {personalInfo?.linkedin && (
               <div style={{
                 display: 'flex',
@@ -611,13 +591,6 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
                     color: '#3b82f6',
                     marginBottom: '0.25rem'
                   }}>{exp.company || ''}</div>
-                  {exp.location && (
-                    <div style={{
-                      fontSize: '0.875rem',
-                      color: '#6b7280',
-                      fontStyle: 'italic'
-                    }}>{exp.location}</div>
-                  )}
                 </div>
                 <div style={{
                   fontSize: '0.875rem',

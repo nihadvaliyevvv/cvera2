@@ -106,10 +106,6 @@ const pdfStyles = {
     color: '#4b5563',
     marginBottom: '2pt',
   },
-  experienceLocation: {
-    fontSize: '10pt',
-    color: '#6b7280',
-  },
   experienceDate: {
     fontSize: '10pt',
     color: '#6b7280',
@@ -267,12 +263,6 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
                 <span>{cv.data.personalInfo.phone}</span>
               </div>
             )}
-            {cv.data.personalInfo.location && (
-              <div style={pdfStyles.contactItem}>
-                <span>Yer:</span>
-                <span>{cv.data.personalInfo.location}</span>
-              </div>
-            )}
             {cv.data.personalInfo.linkedin && (
               <div style={pdfStyles.contactItem}>
                 <span>LinkedIn:</span>
@@ -310,9 +300,6 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
                 <div>
                   <div style={pdfStyles.experienceTitle}>{exp.position}</div>
                   <div style={pdfStyles.experienceCompany}>{exp.company}</div>
-                  {exp.location && (
-                    <div style={pdfStyles.experienceLocation}>{exp.location}</div>
-                  )}
                 </div>
                 <div style={pdfStyles.experienceDate}>
                   {exp.startDate} - {exp.endDate || 'Hazırda'}

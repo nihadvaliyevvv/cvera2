@@ -10,7 +10,6 @@ interface Experience {
   endDate?: string;
   current: boolean;
   description: string;
-  location?: string;
 }
 
 interface ExperienceSectionProps {
@@ -29,8 +28,7 @@ export default function ExperienceSection({ data, onChange }: ExperienceSectionP
       startDate: '',
       endDate: '',
       current: false,
-      description: '',
-      location: ''
+      description: ''
     };
     onChange([...data, newExperience]);
     setExpandedId(newExperience.id);
@@ -172,19 +170,6 @@ export default function ExperienceSection({ data, onChange }: ExperienceSectionP
                         onChange={(e) => updateExperience(experience.id, 'endDate', e.target.value)}
                         disabled={experience.current}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Yer <span className="text-gray-400 text-xs">(ixtiyari)</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={experience.location || ''}
-                        onChange={(e) => updateExperience(experience.id, 'location', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Bakı, Azərbaycan"
                       />
                     </div>
 

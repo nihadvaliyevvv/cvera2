@@ -6,27 +6,23 @@ interface CVData {
   id?: string;
   title: string;
   templateId: string;
-  data: {
-    personalInfo: {
-      name?: string;
-      fullName?: string;
-      email?: string;
-      phone?: string;
-      location?: string;
-      website?: string;
-      linkedin?: string;
-      summary?: string;
-    };
-    experience?: Array<{
-      id?: string;
-      company?: string;
-      position?: string;
-      startDate?: string;
-      endDate?: string;
-      current?: boolean;
-      description?: string;
-      location?: string;
-    }>;
+  data: {      personalInfo: {
+        name?: string;
+        fullName?: string;
+        email?: string;
+        phone?: string;
+        website?: string;
+        linkedin?: string;
+        summary?: string;
+      };      experience?: Array<{
+        id?: string;
+        company?: string;
+        position?: string;
+        startDate?: string;
+        endDate?: string;
+        current?: boolean;
+        description?: string;
+      }>;
     education?: Array<{
       id?: string;
       institution?: string;
@@ -158,18 +154,6 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
                 <span>{personalInfo.phone}</span>
               </div>
             )}
-            {personalInfo?.location && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                color: '#6b7280',
-                fontSize: '0.875rem',
-                whiteSpace: 'nowrap'
-              }}>
-                <span>{personalInfo.location}</span>
-              </div>
-            )}
             {personalInfo?.linkedin && (
               <div style={{
                 display: 'flex',
@@ -276,13 +260,6 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
                     color: '#3b82f6',
                     marginBottom: '0.25rem'
                   }}>{exp.company || ''}</div>
-                  {exp.location && (
-                    <div style={{
-                      fontSize: '0.875rem',
-                      color: '#6b7280',
-                      fontStyle: 'italic'
-                    }}>{exp.location}</div>
-                  )}
                 </div>
                 <div style={{
                   fontSize: '0.875rem',

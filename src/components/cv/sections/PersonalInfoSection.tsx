@@ -6,7 +6,6 @@ interface PersonalInfo {
   name: string;
   email: string;
   phone: string;
-  location: string;
   website?: string;
   linkedin?: string;
   summary?: string;
@@ -67,19 +66,6 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
             onChange={(e) => handleChange('phone', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             placeholder="+994 XX XXX XX XX"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Yaşayış yeri <span className="text-gray-400 text-xs">(ixtiyari)</span>
-          </label>
-          <input
-            type="text"
-            value={data.location}
-            onChange={(e) => handleChange('location', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            placeholder="Bakı, Azərbaycan"
           />
         </div>
 

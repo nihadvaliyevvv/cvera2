@@ -2,7 +2,6 @@ export interface PersonalInfo {
   fullName: string;
   email: string;
   phone: string;
-  location: string;
   summary?: string;
   linkedin?: string;
   github?: string;
@@ -15,7 +14,6 @@ export interface Experience {
   company: string;
   startDate: string;
   endDate?: string;
-  location?: string;
   description?: string;
 }
 
@@ -25,7 +23,6 @@ export interface Education {
   institution: string;
   startDate: string;
   endDate?: string;
-  location?: string;
   gpa?: string;
 }
 
