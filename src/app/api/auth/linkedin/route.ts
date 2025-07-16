@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const clientId = process.env.LINKEDIN_CLIENT_ID;
+  const clientId = "78gi6jtz8ue28i";
   const redirectUri = process.env.LINKEDIN_REDIRECT_URI || `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/linkedin/callback`;
   const scope = 'openid profile email';
   const state = Math.random().toString(36).substring(2);
