@@ -33,17 +33,12 @@ export async function POST(request: NextRequest) {
     const paymentStatus = await epointService.getPaymentStatus(transactionId);
 
     return NextResponse.json({
-      success: true,
+      success: paymentStatus.success,
       status: paymentStatus.status,
+      transactionId: paymentStatus.transactionId,
       amount: paymentStatus.amount,
       currency: paymentStatus.currency,
-      orderId: paymentStatus.orderId,
-      paymentMethod: paymentStatus.paymentMethod,
-      cardMask: paymentStatus.cardMask,
-      processingTime: paymentStatus.processingTime,
-      responseCode: paymentStatus.responseCode,
-      responseMessage: paymentStatus.responseMessage,
-      bankMessage: epointService.getBankResponseMessage(paymentStatus.responseCode || '000')
+      message: paymentStatus.message
     });
 
   } catch (error) {

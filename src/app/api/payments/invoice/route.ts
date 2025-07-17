@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     const token = authHeader.split(' ')[1];
     const decoded = verifyJWT(token);
     
-    if (!decoded || !decoded.userId) {
+    if (!decoded || !decoded.userId || !decoded.email) {
       return NextResponse.json(
         { message: 'Yanlış token' },
         { status: 401 }
@@ -51,14 +51,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { amount, currency, description, customerName, dueDate, invoiceNumber } = invoiceSchema.parse(body);
 
+    const orderId = `cvera_invoice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     const invoiceResult = await epointService.createInvoice({
       amount,
       currency,
+      orderId,
       description,
       customerEmail: decoded.email,
-      customerName,
-      dueDate,
-      invoiceNumber
+      customerName: customerName || 'Customer',
+      dueDate
     });
 
     return NextResponse.json({

@@ -18,35 +18,37 @@ const plans: PricingPlan[] = [
     name: 'Free',
     price: 0,
     features: [
-      'Basic template',
-      'PDF export',
-      'Basic CV editor',
-      'Email support'
+      'Əsas şablonlar',
+      'PDF formatında yükləmə',
+      'E-poçt dəstəyi',
+      '1 CV yaratma'
     ]
   },
   {
     id: 'medium',
     name: 'Medium',
-    price: 9.99,
+    price: 2.97,
     features: [
-      'All Free features',
-      'Resumonk Bold template',
-      'DOCX export',
-      'Priority support',
-      'LinkedIn import'
+      'Bütün əsas funksiyalar',
+      'Premium şablonlar',
+      'PDF və DOCX formatında yükləmə',
+      'LinkedIn profilindən idxal',
+      'Prioritet dəstək',
+      '5 CV yaratma'
     ],
     popular: true
   },
   {
     id: 'premium',
     name: 'Premium',
-    price: 19.99,
+    price: 4.97,
     features: [
-      'All Medium features',
-      'Premium templates',
-      'Advanced customization',
-      'Personal branding',
-      'Unlimited exports'
+      'Bütün Medium funksiyalar',
+      'Ən eksklüziv şablonlar',
+      'CV-də brending və ya logo',
+      'A4 ölçüsündə ideal formatlaşdırma',
+      'Limitsiz CV yaratma',
+      'VIP dəstək xidməti'
     ]
   }
 ];
@@ -241,7 +243,7 @@ export default function PricingPage() {
                     ) : plan.price === 0 ? (
                       'Pulsuz Başla'
                     ) : (
-                      userTier === 'Free' ? 'Yüksəlt' : 'Planı Dəyiş'
+                      userTier === 'Pulsuz' ? 'Yüksəldin' : 'Planı Dəyişin'
                     )}
                   </button>
                 </div>

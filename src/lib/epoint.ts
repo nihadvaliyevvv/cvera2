@@ -5,7 +5,6 @@ interface EpointConfig {
   privateKey: string;
   apiUrl: string;
   webhookSecret: string;
-  demoMode: boolean;
 }
 
 interface PaymentRequest {
@@ -58,41 +57,53 @@ interface RefundResponse {
   error?: string;
 }
 
-interface PaymentStatus {
-  transactionId: string;
-  status: 'pending' | 'completed' | 'failed' | 'cancelled' | 'refunded';
+interface PaymentStatusResponse {
+  success: boolean;
+  status?: 'pending' | 'completed' | 'failed' | 'cancelled' | 'refunded';
+  transactionId?: string;
+  amount?: number;
+  currency?: string;
+  message?: string;
+  error?: string;
+}
+
+interface SplitPaymentRequest {
   amount: number;
   currency: string;
   orderId: string;
-  paymentMethod?: string;
-  cardMask?: string;
-  processingTime?: string;
-  responseCode?: string;
-  responseMessage?: string;
+  description: string;
+  recipients: {
+    merchantId: string;
+    amount: number;
+  }[];
+  successRedirectUrl: string;
+  errorRedirectUrl: string;
 }
 
-interface WalletStatusResponse {
-  success: boolean;
-  wallets?: Array<{
-    id: string;
-    name: string;
-    type: string;
-    balance: number;
-    currency: string;
-    status: string;
-  }>;
-  message?: string;
-  error?: string;
+interface PreAuthRequest {
+  amount: number;
+  currency: string;
+  orderId: string;
+  description: string;
+  cardToken: string;
+}
+
+interface WalletPaymentRequest {
+  walletId: string;
+  amount: number;
+  currency: string;
+  orderId: string;
+  description: string;
 }
 
 interface InvoiceRequest {
   amount: number;
   currency: string;
+  orderId: string;
   description: string;
   customerEmail: string;
-  customerName?: string;
+  customerName: string;
   dueDate?: string;
-  invoiceNumber?: string;
 }
 
 interface InvoiceResponse {
@@ -103,7 +114,7 @@ interface InvoiceResponse {
   error?: string;
 }
 
-export class EpointService {
+class EpointService {
   private config: EpointConfig;
 
   constructor() {
@@ -111,49 +122,8 @@ export class EpointService {
       publicKey: process.env.EPOINT_MERCHANT_ID || '',
       privateKey: process.env.EPOINT_SECRET_KEY || '',
       apiUrl: process.env.EPOINT_API_URL || 'https://epoint.az/api/1',
-      webhookSecret: process.env.EPOINT_WEBHOOK_SECRET || '',
-      demoMode: process.env.EPOINT_DEMO_MODE === 'true',
+      webhookSecret: process.env.EPOINT_WEBHOOK_SECRET || ''
     };
-  }
-
-  /**
-   * Base64 kodlaşdırma və SHA1 imza yaratmaq
-   */
-  private generateSignature(data: string): string {
-    const signatureData = this.config.privateKey + data + this.config.privateKey;
-    const hash = crypto.createHash('sha1').update(signatureData, 'binary').digest('binary');
-    return Buffer.from(hash, 'binary').toString('base64');
-  }
-
-  /**
-   * API sorğusu göndərmək
-   */
-  private async makeRequest(endpoint: string, requestData: any): Promise<any> {
-    const jsonData = JSON.stringify(requestData);
-    const data = Buffer.from(jsonData).toString('base64');
-    const signature = this.generateSignature(data);
-
-    const payload = {
-      data: data,
-      signature: signature
-    };
-
-    const response = await fetch(`${this.config.apiUrl}${endpoint}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const responseData = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(`API Error: ${responseData.message || 'Unknown error'}`);
-    }
-
-    return responseData;
   }
 
   /**
@@ -161,10 +131,6 @@ export class EpointService {
    */
   async createPayment(request: PaymentRequest): Promise<PaymentResponse> {
     try {
-      if (this.config.demoMode) {
-        return await this.createDemoPayment(request);
-      }
-
       const requestData = {
         public_key: this.config.publicKey,
         amount: request.amount,
@@ -179,19 +145,37 @@ export class EpointService {
         customer_name: request.customerName
       };
 
-      const response = await this.makeRequest('/checkout', requestData);
-      
-      return {
-        success: true,
-        paymentUrl: response.redirect_url,
-        transactionId: response.transaction_id,
-        message: 'Payment created successfully'
-      };
+      const signature = this.generateSignature(requestData);
+      const payload = { ...requestData, signature };
+
+      const response = await fetch(`${this.config.apiUrl}/checkout/payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        return {
+          success: true,
+          paymentUrl: result.checkout_url,
+          transactionId: result.transaction_id,
+          message: 'Payment created successfully'
+        };
+      } else {
+        return {
+          success: false,
+          error: result.message || 'Payment creation failed'
+        };
+      }
     } catch (error) {
       console.error('Payment creation error:', error);
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Payment creation failed'
+        error: 'Payment creation failed'
       };
     }
   }
@@ -199,61 +183,55 @@ export class EpointService {
   /**
    * 2. Ödəniş statusunu yoxlamaq
    */
-  async getPaymentStatus(transactionId: string): Promise<PaymentStatus> {
+  async getPaymentStatus(transactionId: string): Promise<PaymentStatusResponse> {
     try {
-      if (this.config.demoMode) {
-        return {
-          transactionId,
-          status: 'completed',
-          amount: 100,
-          currency: 'AZN',
-          orderId: 'demo-order',
-          paymentMethod: 'card',
-          cardMask: '****-****-****-1234',
-          processingTime: new Date().toISOString(),
-          responseCode: '000',
-          responseMessage: 'Success'
-        };
-      }
-
       const requestData = {
         public_key: this.config.publicKey,
         transaction_id: transactionId
       };
 
-      const response = await this.makeRequest('/get-status', requestData);
-      
-      return {
-        transactionId: response.transaction_id,
-        status: this.mapPaymentStatus(response.status),
-        amount: response.amount,
-        currency: response.currency,
-        orderId: response.order_id,
-        paymentMethod: response.payment_method,
-        cardMask: response.card_mask,
-        processingTime: response.processing_time,
-        responseCode: response.response_code,
-        responseMessage: response.response_message
-      };
+      const signature = this.generateSignature(requestData);
+      const payload = { ...requestData, signature };
+
+      const response = await fetch(`${this.config.apiUrl}/checkout/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        return {
+          success: true,
+          status: this.mapPaymentStatus(result.status),
+          transactionId: result.transaction_id,
+          amount: result.amount,
+          currency: result.currency,
+          message: 'Payment status retrieved successfully'
+        };
+      } else {
+        return {
+          success: false,
+          error: result.message || 'Failed to get payment status'
+        };
+      }
     } catch (error) {
-      console.error('Get payment status error:', error);
-      throw error;
+      console.error('Payment status error:', error);
+      return {
+        success: false,
+        error: 'Failed to get payment status'
+      };
     }
   }
 
   /**
-   * 3. Kartı qeydiyyatdan keçirmək
+   * 3. Kart qeydiyyatı
    */
   async registerCard(request: CardRegistrationRequest): Promise<CardRegistrationResponse> {
     try {
-      if (this.config.demoMode) {
-        return {
-          success: true,
-          cardToken: `demo_card_token_${Date.now()}`,
-          message: 'Demo card registered successfully'
-        };
-      }
-
       const requestData = {
         public_key: this.config.publicKey,
         card_number: request.cardNumber,
@@ -264,18 +242,36 @@ export class EpointService {
         customer_email: request.customerEmail
       };
 
-      const response = await this.makeRequest('/card-registration', requestData);
-      
-      return {
-        success: true,
-        cardToken: response.card_token,
-        message: 'Card registered successfully'
-      };
+      const signature = this.generateSignature(requestData);
+      const payload = { ...requestData, signature };
+
+      const response = await fetch(`${this.config.apiUrl}/card/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        return {
+          success: true,
+          cardToken: result.card_token,
+          message: 'Card registered successfully'
+        };
+      } else {
+        return {
+          success: false,
+          error: result.message || 'Card registration failed'
+        };
+      }
     } catch (error) {
       console.error('Card registration error:', error);
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Card registration failed'
+        error: 'Card registration failed'
       };
     }
   }
@@ -285,14 +281,6 @@ export class EpointService {
    */
   async executePayWithCard(cardToken: string, amount: number, currency: string, orderId: string, description: string): Promise<PaymentResponse> {
     try {
-      if (this.config.demoMode) {
-        return {
-          success: true,
-          transactionId: `demo_card_pay_${Date.now()}`,
-          message: 'Demo card payment successful'
-        };
-      }
-
       const requestData = {
         public_key: this.config.publicKey,
         card_token: cardToken,
@@ -302,35 +290,45 @@ export class EpointService {
         description: description
       };
 
-      const response = await this.makeRequest('/execute-pay', requestData);
-      
-      return {
-        success: true,
-        transactionId: response.transaction_id,
-        message: 'Payment executed successfully'
-      };
+      const signature = this.generateSignature(requestData);
+      const payload = { ...requestData, signature };
+
+      const response = await fetch(`${this.config.apiUrl}/card/pay`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        return {
+          success: true,
+          transactionId: result.transaction_id,
+          message: 'Card payment successful'
+        };
+      } else {
+        return {
+          success: false,
+          error: result.message || 'Card payment failed'
+        };
+      }
     } catch (error) {
-      console.error('Execute payment error:', error);
+      console.error('Card payment error:', error);
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Payment execution failed'
+        error: 'Card payment failed'
       };
     }
   }
 
   /**
-   * 5. Kartı qeydiyyatdan keçirib həmin anda ödəniş
+   * 5. Kart qeydiyyatı və ödəniş (bir addımda)
    */
-  async registerCardAndPay(request: CardRegistrationRequest & PaymentRequest): Promise<PaymentResponse> {
+  async registerCardAndPay(request: CardRegistrationRequest & { amount: number; currency: string; orderId: string; description: string }): Promise<PaymentResponse> {
     try {
-      if (this.config.demoMode) {
-        return {
-          success: true,
-          transactionId: `demo_register_pay_${Date.now()}`,
-          message: 'Demo card registration and payment successful'
-        };
-      }
-
       const requestData = {
         public_key: this.config.publicKey,
         card_number: request.cardNumber,
@@ -345,35 +343,45 @@ export class EpointService {
         description: request.description
       };
 
-      const response = await this.makeRequest('/card-registration-with-pay', requestData);
-      
-      return {
-        success: true,
-        transactionId: response.transaction_id,
-        message: 'Card registered and payment completed successfully'
-      };
+      const signature = this.generateSignature(requestData);
+      const payload = { ...requestData, signature };
+
+      const response = await fetch(`${this.config.apiUrl}/card/register-and-pay`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        return {
+          success: true,
+          transactionId: result.transaction_id,
+          message: 'Card registration and payment successful'
+        };
+      } else {
+        return {
+          success: false,
+          error: result.message || 'Card registration and payment failed'
+        };
+      }
     } catch (error) {
       console.error('Card registration and payment error:', error);
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Card registration and payment failed'
+        error: 'Card registration and payment failed'
       };
     }
   }
 
   /**
-   * 6. Refund (Qaytarma)
+   * 6. Refund (ödənişi geri qaytarmaq)
    */
   async refundPayment(request: RefundRequest): Promise<RefundResponse> {
     try {
-      if (this.config.demoMode) {
-        return {
-          success: true,
-          refundId: `demo_refund_${Date.now()}`,
-          message: 'Demo refund processed successfully'
-        };
-      }
-
       const requestData = {
         public_key: this.config.publicKey,
         transaction_id: request.transactionId,
@@ -381,474 +389,640 @@ export class EpointService {
         reason: request.reason
       };
 
-      const response = await this.makeRequest('/refund-request', requestData);
-      
-      return {
-        success: true,
-        refundId: response.refund_id,
-        message: 'Refund processed successfully'
-      };
+      const signature = this.generateSignature(requestData);
+      const payload = { ...requestData, signature };
+
+      const response = await fetch(`${this.config.apiUrl}/payment/refund`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        return {
+          success: true,
+          refundId: result.refund_id,
+          message: 'Refund processed successfully'
+        };
+      } else {
+        return {
+          success: false,
+          error: result.message || 'Refund failed'
+        };
+      }
     } catch (error) {
       console.error('Refund error:', error);
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Refund failed'
+        error: 'Refund failed'
       };
     }
   }
 
   /**
-   * 7. Əməliyyatı ləğv etmək (Reverse)
+   * 7. Split payment (bölünmüş ödəniş)
    */
-  async reversePayment(transactionId: string): Promise<PaymentResponse> {
+  async splitPayment(request: SplitPaymentRequest): Promise<PaymentResponse> {
     try {
-      if (this.config.demoMode) {
-        return {
-          success: true,
-          transactionId: `demo_reverse_${Date.now()}`,
-          message: 'Demo reverse processed successfully'
-        };
-      }
-
-      const requestData = {
-        public_key: this.config.publicKey,
-        transaction_id: transactionId
-      };
-
-      const response = await this.makeRequest('/reverse', requestData);
-      
-      return {
-        success: true,
-        transactionId: response.transaction_id,
-        message: 'Payment reversed successfully'
-      };
-    } catch (error) {
-      console.error('Reverse error:', error);
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Reverse failed'
-      };
-    }
-  }
-
-  /**
-   * 8. Split Payment (ödəməni bölmək)
-   */
-  async splitPayment(recipients: Array<{merchantId: string; amount: number; description: string}>, orderId: string): Promise<PaymentResponse> {
-    try {
-      if (this.config.demoMode) {
-        return {
-          success: true,
-          transactionId: `demo_split_${Date.now()}`,
-          message: 'Demo split payment created successfully'
-        };
-      }
-
-      const requestData = {
-        public_key: this.config.publicKey,
-        order_id: orderId,
-        recipients: recipients
-      };
-
-      const response = await this.makeRequest('/split-request', requestData);
-      
-      return {
-        success: true,
-        transactionId: response.transaction_id,
-        paymentUrl: response.payment_url,
-        message: 'Split payment created successfully'
-      };
-    } catch (error) {
-      console.error('Split payment error:', error);
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Split payment failed'
-      };
-    }
-  }
-
-  /**
-   * 9. Preauth ödəniş (bloklama)
-   */
-  async preAuthPayment(request: PaymentRequest): Promise<PaymentResponse> {
-    try {
-      if (this.config.demoMode) {
-        return {
-          success: true,
-          transactionId: `demo_preauth_${Date.now()}`,
-          message: 'Demo preauth payment created successfully'
-        };
-      }
-
       const requestData = {
         public_key: this.config.publicKey,
         amount: request.amount,
         currency: request.currency,
         order_id: request.orderId,
         description: request.description,
-        customer_email: request.customerEmail
+        recipients: request.recipients,
+        success_redirect_url: request.successRedirectUrl,
+        error_redirect_url: request.errorRedirectUrl
       };
 
-      const response = await this.makeRequest('/pre-auth-request', requestData);
-      
-      return {
-        success: true,
-        transactionId: response.transaction_id,
-        paymentUrl: response.payment_url,
-        message: 'Preauth payment created successfully'
-      };
+      const signature = this.generateSignature(requestData);
+      const payload = { ...requestData, signature };
+
+      const response = await fetch(`${this.config.apiUrl}/payment/split`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        return {
+          success: true,
+          paymentUrl: result.checkout_url,
+          transactionId: result.transaction_id,
+          message: 'Split payment created successfully'
+        };
+      } else {
+        return {
+          success: false,
+          error: result.message || 'Split payment failed'
+        };
+      }
     } catch (error) {
-      console.error('Preauth payment error:', error);
+      console.error('Split payment error:', error);
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Preauth payment failed'
+        error: 'Split payment failed'
       };
     }
   }
 
   /**
-   * 10. Preauth-u təsdiqləmək
+   * 8. Pre-authorization (əvvəlcədən avtorizasiya)
+   */
+  async preAuthPayment(request: PreAuthRequest): Promise<PaymentResponse> {
+    try {
+      const requestData = {
+        public_key: this.config.publicKey,
+        amount: request.amount,
+        currency: request.currency,
+        order_id: request.orderId,
+        description: request.description,
+        card_token: request.cardToken
+      };
+
+      const signature = this.generateSignature(requestData);
+      const payload = { ...requestData, signature };
+
+      const response = await fetch(`${this.config.apiUrl}/payment/preauth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        return {
+          success: true,
+          transactionId: result.transaction_id,
+          message: 'Pre-authorization successful'
+        };
+      } else {
+        return {
+          success: false,
+          error: result.message || 'Pre-authorization failed'
+        };
+      }
+    } catch (error) {
+      console.error('Pre-authorization error:', error);
+      return {
+        success: false,
+        error: 'Pre-authorization failed'
+      };
+    }
+  }
+
+  /**
+   * 9. Pre-authorization completion (əvvəlcədən avtorizasiyanı tamamlamaq)
    */
   async completePreAuth(transactionId: string, amount?: number): Promise<PaymentResponse> {
     try {
-      if (this.config.demoMode) {
-        return {
-          success: true,
-          transactionId: `demo_preauth_complete_${Date.now()}`,
-          message: 'Demo preauth completed successfully'
-        };
-      }
-
       const requestData = {
         public_key: this.config.publicKey,
         transaction_id: transactionId,
         amount: amount
       };
 
-      const response = await this.makeRequest('/pre-auth-complete', requestData);
-      
-      return {
-        success: true,
-        transactionId: response.transaction_id,
-        message: 'Preauth completed successfully'
-      };
+      const signature = this.generateSignature(requestData);
+      const payload = { ...requestData, signature };
+
+      const response = await fetch(`${this.config.apiUrl}/payment/preauth/complete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        return {
+          success: true,
+          transactionId: result.transaction_id,
+          message: 'Pre-authorization completed successfully'
+        };
+      } else {
+        return {
+          success: false,
+          error: result.message || 'Pre-authorization completion failed'
+        };
+      }
     } catch (error) {
-      console.error('Preauth complete error:', error);
+      console.error('Pre-authorization completion error:', error);
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Preauth complete failed'
+        error: 'Pre-authorization completion failed'
       };
     }
   }
 
   /**
-   * 11. Apple Pay & Google Pay widget token
+   * 10. Payment widget URL yaratmaq
    */
-  async getPaymentWidget(amount: number, currency: string, orderId: string): Promise<{success: boolean; widgetToken?: string; message?: string}> {
+  async getPaymentWidget(request: PaymentRequest): Promise<PaymentResponse> {
     try {
-      if (this.config.demoMode) {
-        return {
-          success: true,
-          widgetToken: `demo_widget_token_${Date.now()}`,
-          message: 'Demo widget token created successfully'
-        };
-      }
-
-      const requestData = {
-        public_key: this.config.publicKey,
-        amount: amount,
-        currency: currency,
-        order_id: orderId
-      };
-
-      const response = await this.makeRequest('/token/widget', requestData);
-      
-      return {
-        success: true,
-        widgetToken: response.widget_token,
-        message: 'Widget token created successfully'
-      };
-    } catch (error) {
-      console.error('Widget token error:', error);
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Widget token creation failed'
-      };
-    }
-  }
-
-  /**
-   * 12. Wallet status (Cüzdan siyahısı)
-   */
-  async getWalletStatus(): Promise<WalletStatusResponse> {
-    try {
-      if (this.config.demoMode) {
-        return {
-          success: true,
-          wallets: [
-            {
-              id: 'demo_wallet_1',
-              name: 'Demo Wallet',
-              type: 'main',
-              balance: 1000.50,
-              currency: 'AZN',
-              status: 'active'
-            }
-          ],
-          message: 'Demo wallet status retrieved successfully'
-        };
-      }
-
-      const requestData = {
-        public_key: this.config.publicKey
-      };
-
-      const response = await this.makeRequest('/wallet/status', requestData);
-      
-      return {
-        success: true,
-        wallets: response.wallets,
-        message: 'Wallet status retrieved successfully'
-      };
-    } catch (error) {
-      console.error('Wallet status error:', error);
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Wallet status retrieval failed'
-      };
-    }
-  }
-
-  /**
-   * 13. Cüzdanla ödəniş
-   */
-  async payWithWallet(walletId: string, amount: number, currency: string, orderId: string, description: string): Promise<PaymentResponse> {
-    try {
-      if (this.config.demoMode) {
-        return {
-          success: true,
-          transactionId: `demo_wallet_pay_${Date.now()}`,
-          message: 'Demo wallet payment successful'
-        };
-      }
-
-      const requestData = {
-        public_key: this.config.publicKey,
-        wallet_id: walletId,
-        amount: amount,
-        currency: currency,
-        order_id: orderId,
-        description: description
-      };
-
-      const response = await this.makeRequest('/wallet/payment', requestData);
-      
-      return {
-        success: true,
-        transactionId: response.transaction_id,
-        message: 'Wallet payment successful'
-      };
-    } catch (error) {
-      console.error('Wallet payment error:', error);
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Wallet payment failed'
-      };
-    }
-  }
-
-  /**
-   * 14. Invoice yaratmaq
-   */
-  async createInvoice(request: InvoiceRequest): Promise<InvoiceResponse> {
-    try {
-      if (this.config.demoMode) {
-        return {
-          success: true,
-          invoiceId: `demo_invoice_${Date.now()}`,
-          invoiceUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/demo/invoice/${Date.now()}`,
-          message: 'Demo invoice created successfully'
-        };
-      }
-
       const requestData = {
         public_key: this.config.publicKey,
         amount: request.amount,
         currency: request.currency,
+        order_id: request.orderId,
         description: request.description,
-        customer_email: request.customerEmail,
-        customer_name: request.customerName,
-        due_date: request.dueDate,
-        invoice_number: request.invoiceNumber
+        success_redirect_url: request.successRedirectUrl,
+        error_redirect_url: request.errorRedirectUrl
       };
 
-      const response = await this.makeRequest('/invoices/create', requestData);
-      
-      return {
-        success: true,
-        invoiceId: response.invoice_id,
-        invoiceUrl: response.invoice_url,
-        message: 'Invoice created successfully'
-      };
+      const signature = this.generateSignature(requestData);
+      const payload = { ...requestData, signature };
+
+      const response = await fetch(`${this.config.apiUrl}/widget/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        return {
+          success: true,
+          paymentUrl: result.widget_url,
+          transactionId: result.transaction_id,
+          message: 'Payment widget created successfully'
+        };
+      } else {
+        return {
+          success: false,
+          error: result.message || 'Payment widget creation failed'
+        };
+      }
     } catch (error) {
-      console.error('Invoice creation error:', error);
+      console.error('Payment widget error:', error);
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Invoice creation failed'
+        error: 'Payment widget creation failed'
       };
     }
   }
 
   /**
-   * 15. Invoice yeniləmək
+   * 11. Wallet status yoxlamaq
+   */
+  async getWalletStatus(walletId: string): Promise<any> {
+    try {
+      const requestData = {
+        public_key: this.config.publicKey,
+        wallet_id: walletId
+      };
+
+      const signature = this.generateSignature(requestData);
+      const payload = { ...requestData, signature };
+
+      const response = await fetch(`${this.config.apiUrl}/wallet/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        return {
+          success: true,
+          walletId: result.wallet_id,
+          balance: result.balance,
+          currency: result.currency,
+          message: 'Wallet status retrieved successfully'
+        };
+      } else {
+        return {
+          success: false,
+          error: result.message || 'Failed to get wallet status'
+        };
+      }
+    } catch (error) {
+      console.error('Wallet status error:', error);
+      return {
+        success: false,
+        error: 'Failed to get wallet status'
+      };
+    }
+  }
+
+  /**
+   * 12. Wallet-dən ödəniş
+   */
+  async payWithWallet(request: WalletPaymentRequest): Promise<PaymentResponse> {
+    try {
+      const requestData = {
+        public_key: this.config.publicKey,
+        wallet_id: request.walletId,
+        amount: request.amount,
+        currency: request.currency,
+        order_id: request.orderId,
+        description: request.description
+      };
+
+      const signature = this.generateSignature(requestData);
+      const payload = { ...requestData, signature };
+
+      const response = await fetch(`${this.config.apiUrl}/wallet/pay`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        return {
+          success: true,
+          transactionId: result.transaction_id,
+          message: 'Wallet payment successful'
+        };
+      } else {
+        return {
+          success: false,
+          error: result.message || 'Wallet payment failed'
+        };
+      }
+    } catch (error) {
+      console.error('Wallet payment error:', error);
+      return {
+        success: false,
+        error: 'Wallet payment failed'
+      };
+    }
+  }
+
+  /**
+   * 13. Invoice yaratmaq
+   */
+  async createInvoice(request: InvoiceRequest): Promise<InvoiceResponse> {
+    try {
+      const requestData = {
+        public_key: this.config.publicKey,
+        amount: request.amount,
+        currency: request.currency,
+        order_id: request.orderId,
+        description: request.description,
+        customer_email: request.customerEmail,
+        customer_name: request.customerName,
+        due_date: request.dueDate
+      };
+
+      const signature = this.generateSignature(requestData);
+      const payload = { ...requestData, signature };
+
+      const response = await fetch(`${this.config.apiUrl}/invoice/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        return {
+          success: true,
+          invoiceId: result.invoice_id,
+          invoiceUrl: result.invoice_url,
+          message: 'Invoice created successfully'
+        };
+      } else {
+        return {
+          success: false,
+          error: result.message || 'Invoice creation failed'
+        };
+      }
+    } catch (error) {
+      console.error('Invoice creation error:', error);
+      return {
+        success: false,
+        error: 'Invoice creation failed'
+      };
+    }
+  }
+
+  /**
+   * 14. Invoice update etmək
    */
   async updateInvoice(invoiceId: string, updates: Partial<InvoiceRequest>): Promise<InvoiceResponse> {
     try {
-      if (this.config.demoMode) {
-        return {
-          success: true,
-          invoiceId: invoiceId,
-          message: 'Demo invoice updated successfully'
-        };
-      }
-
       const requestData = {
         public_key: this.config.publicKey,
         invoice_id: invoiceId,
         ...updates
       };
 
-      const response = await this.makeRequest('/invoices/update', requestData);
-      
-      return {
-        success: true,
-        invoiceId: response.invoice_id,
-        message: 'Invoice updated successfully'
-      };
+      const signature = this.generateSignature(requestData);
+      const payload = { ...requestData, signature };
+
+      const response = await fetch(`${this.config.apiUrl}/invoice/update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        return {
+          success: true,
+          invoiceId: result.invoice_id,
+          message: 'Invoice updated successfully'
+        };
+      } else {
+        return {
+          success: false,
+          error: result.message || 'Invoice update failed'
+        };
+      }
     } catch (error) {
       console.error('Invoice update error:', error);
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Invoice update failed'
+        error: 'Invoice update failed'
       };
     }
   }
 
   /**
-   * 16. Invoice SMS göndərmək
+   * 15. Invoice SMS göndərmək
    */
-  async sendInvoiceSMS(invoiceId: string, phoneNumber: string): Promise<{success: boolean; message?: string}> {
+  async sendInvoiceSMS(invoiceId: string, phoneNumber: string): Promise<any> {
     try {
-      if (this.config.demoMode) {
-        return {
-          success: true,
-          message: 'Demo invoice SMS sent successfully'
-        };
-      }
-
       const requestData = {
         public_key: this.config.publicKey,
         invoice_id: invoiceId,
         phone_number: phoneNumber
       };
 
-      const response = await this.makeRequest('/invoices/send-sms', requestData);
-      
-      return {
-        success: true,
-        message: 'Invoice SMS sent successfully'
-      };
+      const signature = this.generateSignature(requestData);
+      const payload = { ...requestData, signature };
+
+      const response = await fetch(`${this.config.apiUrl}/invoice/send-sms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        return {
+          success: true,
+          message: 'Invoice SMS sent successfully'
+        };
+      } else {
+        return {
+          success: false,
+          error: result.message || 'Failed to send invoice SMS'
+        };
+      }
     } catch (error) {
       console.error('Invoice SMS error:', error);
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Invoice SMS sending failed'
+        error: 'Failed to send invoice SMS'
       };
     }
   }
 
   /**
-   * 17. Invoice email göndərmək
+   * 16. Invoice email göndərmək
    */
-  async sendInvoiceEmail(invoiceId: string, email: string): Promise<{success: boolean; message?: string}> {
+  async sendInvoiceEmail(invoiceId: string, email: string): Promise<any> {
     try {
-      if (this.config.demoMode) {
-        return {
-          success: true,
-          message: 'Demo invoice email sent successfully'
-        };
-      }
-
       const requestData = {
         public_key: this.config.publicKey,
         invoice_id: invoiceId,
         email: email
       };
 
-      const response = await this.makeRequest('/invoices/send-email', requestData);
-      
-      return {
-        success: true,
-        message: 'Invoice email sent successfully'
-      };
+      const signature = this.generateSignature(requestData);
+      const payload = { ...requestData, signature };
+
+      const response = await fetch(`${this.config.apiUrl}/invoice/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        return {
+          success: true,
+          message: 'Invoice email sent successfully'
+        };
+      } else {
+        return {
+          success: false,
+          error: result.message || 'Failed to send invoice email'
+        };
+      }
     } catch (error) {
       console.error('Invoice email error:', error);
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Invoice email sending failed'
+        error: 'Failed to send invoice email'
       };
     }
   }
 
   /**
-   * 18. Heartbeat (Xidmətin işləkliyini yoxlamaq)
+   * 17. Heartbeat - API status yoxlamaq
    */
-  async checkHeartbeat(): Promise<{success: boolean; status?: string; message?: string}> {
+  async checkHeartbeat(): Promise<any> {
     try {
-      const response = await fetch(`${this.config.apiUrl.replace('/api/1', '')}/api/heartbeat`, {
-        method: 'GET',
+      const requestData = {
+        public_key: this.config.publicKey
+      };
+
+      const signature = this.generateSignature(requestData);
+      const payload = { ...requestData, signature };
+
+      const response = await fetch(`${this.config.apiUrl}/system/heartbeat`, {
+        method: 'POST',
         headers: {
-          'Accept': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
       });
 
-      const data = await response.json();
-      
-      return {
-        success: response.ok,
-        status: data.status,
-        message: data.message || 'Heartbeat check completed'
-      };
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        return {
+          success: true,
+          status: result.status,
+          timestamp: result.timestamp,
+          message: 'API is working correctly'
+        };
+      } else {
+        return {
+          success: false,
+          error: result.message || 'API heartbeat failed'
+        };
+      }
     } catch (error) {
       console.error('Heartbeat error:', error);
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Heartbeat check failed'
+        error: 'API heartbeat failed'
       };
     }
+  }
+
+  /**
+   * 18. Bank response mesajını tərcümə etmək
+   */
+  getBankResponseMessage(responseCode: string): string {
+    const messages: { [key: string]: string } = {
+      '00': 'Əməliyyat uğurla tamamlandı',
+      '01': 'Kartınızla əlaqədar bank problemi',
+      '03': 'Ticarət mərkəzi yanlışdır',
+      '04': 'Kartınız ələ keçirilmişdir',
+      '05': 'Əməliyyat rədd edildi',
+      '06': 'Sistem xətası',
+      '07': 'Kartınız ələ keçirilmişdir',
+      '12': 'Yanlış əməliyyat',
+      '13': 'Yanlış məbləğ',
+      '14': 'Yanlış kart nömrəsi',
+      '15': 'Yanlış bank',
+      '19': 'Əməliyyatı təkrarlayın',
+      '20': 'Yanlış cavab',
+      '21': 'Heç bir işlem edilmir',
+      '25': 'Qeyd tapılmadı',
+      '30': 'Format xətası',
+      '33': 'Kartın müddəti bitib',
+      '34': 'Saxtakarlıq şübhəsi',
+      '36': 'Kartınız məhdudlaşdırılıb',
+      '38': 'PIN daxil etmə limiti bitib',
+      '39': 'Kredit hesabı yoxdur',
+      '41': 'İtirilmiş kart',
+      '43': 'Oğurlanmış kart',
+      '51': 'Kifayət qədər vəsait yoxdur',
+      '52': 'Çəkkredili hesab yoxdur',
+      '53': 'Əmanət hesabı yoxdur',
+      '54': 'Kartın müddəti bitib',
+      '55': 'Yanlış PIN',
+      '56': 'Kart qeydiyatda yoxdur',
+      '57': 'Bu əməliyyata icazə verilmir',
+      '58': 'Bu terminalda əməliyyata icazə verilmir',
+      '59': 'Saxtakarlıq şübhəsi',
+      '61': 'Limiti aşır',
+      '62': 'Kartınız məhdudlaşdırılıb',
+      '63': 'Təhlükəsizlik qaydaları pozulub',
+      '65': 'Gündəlik əməliyyat sayı limitini aşır',
+      '66': 'Kartınızla əlaqədar bank problemi',
+      '67': 'Kartınız ələ keçirilmişdir',
+      '68': 'Cavab gecikir',
+      '75': 'PIN daxil etmə limiti bitib',
+      '76': 'Hesab artıq var',
+      '77': 'Hesab yoxdur',
+      '78': 'Hesab bağlıdır',
+      '79': 'Hesab ləğv edilib',
+      '80': 'Tarix yanlışdır',
+      '81': 'Şifrələmə xətası',
+      '82': 'CVV yanlışdır',
+      '83': 'PIN təsdiq edilə bilmir',
+      '84': 'PIN sıfırlanmalıdır',
+      '85': 'Rədd edilib, PIN təsdiq edilə bilmir',
+      '86': 'PIN təsdiq edilə bilmir',
+      '87': 'Alış nağd mərkəzində hesab yoxdur',
+      '88': 'Kriptoqrafiya xətası',
+      '89': 'Doğrulama xətası',
+      '90': 'Gün sonu zamanı',
+      '91': 'Bank işləmir',
+      '92': 'Yönləndirici tapılmadı',
+      '93': 'Əməliyyat tamamlana bilmir',
+      '94': 'Təkrar ötürmə',
+      '95': 'Hesablaşma zamanı deyil',
+      '96': 'Sistem xətası',
+      '97': 'ATM nağd yoxdur',
+      '98': 'Kriptoqrafiya xətası',
+      '99': 'Qarışıq səbəblər'
+    };
+
+    return messages[responseCode] || `Naməlum xəta kodu: ${responseCode}`;
   }
 
   /**
    * Helper functions
    */
-  private async createDemoPayment(request: PaymentRequest): Promise<PaymentResponse> {
-    const demoTransactionId = `demo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    return {
-      success: true,
-      paymentUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/demo/payment?transactionId=${demoTransactionId}&amount=${request.amount}&orderId=${request.orderId}`,
-      transactionId: demoTransactionId,
-      message: 'Demo payment created successfully'
-    };
-  }
-
   private mapPaymentStatus(status: string): 'pending' | 'completed' | 'failed' | 'cancelled' | 'refunded' {
     switch (status) {
       case 'success':
       case 'completed':
         return 'completed';
       case 'failed':
-      case 'declined':
+      case 'error':
         return 'failed';
       case 'cancelled':
         return 'cancelled';
@@ -859,91 +1033,47 @@ export class EpointService {
     }
   }
 
-  /**
-   * Webhook signature-ni yoxlayır
-   */
-  verifyWebhookSignature(payload: string, signature: string): boolean {
-    const expectedSignature = crypto
-      .createHmac('sha256', this.config.webhookSecret)
-      .update(payload)
-      .digest('hex');
-    
-    return signature === expectedSignature;
+  private generateSignature(data: any): string {
+    // Remove empty values and sort keys
+    const filteredData = Object.keys(data)
+      .filter(key => data[key] !== null && data[key] !== undefined && data[key] !== '')
+      .sort()
+      .reduce((obj: any, key) => {
+        obj[key] = data[key];
+        return obj;
+      }, {});
+
+    // Create query string
+    const queryString = Object.keys(filteredData)
+      .map(key => `${key}=${filteredData[key]}`)
+      .join('&');
+
+    // Append secret key
+    const stringToSign = queryString + this.config.privateKey;
+
+    // Generate SHA1 hash and encode to base64
+    const signature = crypto
+      .createHash('sha1')
+      .update(stringToSign, 'utf8')
+      .digest('base64');
+
+    return signature;
   }
 
   /**
-   * Demo payment status-unu yoxlayır (köhnə metod - geriyə uyğunluq üçün)
+   * Webhook signature verification
    */
-  async checkPaymentStatus(transactionId: string): Promise<{
-    success: boolean;
-    status: 'pending' | 'completed' | 'failed';
-    amount?: number;
-    orderId?: string;
-  }> {
-    if (this.config.demoMode && transactionId.startsWith('demo_')) {
-      return {
-        success: true,
-        status: 'completed',
-        amount: 100,
-        orderId: 'demo-order'
-      };
-    }
-
+  verifyWebhookSignature(payload: any, receivedSignature: string): boolean {
     try {
-      const fullStatus = await this.getPaymentStatus(transactionId);
-      const mappedStatus = fullStatus.status === 'cancelled' || fullStatus.status === 'refunded' ? 'failed' : fullStatus.status;
-      return {
-        success: true,
-        status: mappedStatus,
-        amount: fullStatus.amount,
-        orderId: fullStatus.orderId
-      };
+      const generatedSignature = this.generateSignature(payload);
+      return generatedSignature === receivedSignature;
     } catch (error) {
-      return {
-        success: false,
-        status: 'failed'
-      };
+      console.error('Webhook signature verification error:', error);
+      return false;
     }
-  }
-
-  /**
-   * Bank cavab kodlarını tərcümə etmək
-   */
-  getBankResponseMessage(responseCode: string): string {
-    const responses: Record<string, string> = {
-      '000': 'Uğurlu ödəniş',
-      '100': 'Rədd edildi',
-      '116': 'Balans kifayət etmir',
-      '117': 'Yanlış PIN',
-      '119': 'Əməliyyat limiti aşıldı',
-      '120': 'Kart bloklanıb',
-      '121': 'Kart vaxtı bitib',
-      '122': 'Yanlış kart məlumatları',
-      '200': 'Kart götürülməlidir',
-      '201': 'Kart oğurlandı',
-      '202': 'Kart itib',
-      '203': 'Saxta kart',
-      '204': 'Kart qəbul edilmir',
-      '205': 'Kart məhdudlaşdırılıb',
-      '206': 'Kart deaktiv edilib',
-      '207': 'Kart müvəqqəti bloklanıb',
-      '208': 'Kart daimi bloklanıb',
-      '300': 'Format xətası',
-      '301': 'Məchul kart',
-      '302': 'Məchul əməliyyat',
-      '303': 'Məchul merchant',
-      '304': 'Təkrar əməliyyat',
-      '305': 'Sistem xətası',
-      '306': 'Şəbəkə xətası',
-      '307': 'Timeout',
-      '308': 'Əməliyyat ləğv edildi',
-      '309': 'Məlumat bazası xətası',
-      '310': 'Konfigürasiya xətası'
-    };
-
-    return responses[responseCode] || `Naməlum xəta: ${responseCode}`;
   }
 }
 
+// Export singleton instance
 const epointService = new EpointService();
 export default epointService;

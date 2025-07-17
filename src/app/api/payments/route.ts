@@ -118,13 +118,15 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const paymentStatus = await EpointService.checkPaymentStatus(transactionId);
+    const paymentStatus = await EpointService.getPaymentStatus(transactionId);
 
     return NextResponse.json({
       success: paymentStatus.success,
       status: paymentStatus.status,
       amount: paymentStatus.amount,
-      orderId: paymentStatus.orderId
+      transactionId: paymentStatus.transactionId,
+      currency: paymentStatus.currency,
+      message: paymentStatus.message
     });
 
   } catch (error) {

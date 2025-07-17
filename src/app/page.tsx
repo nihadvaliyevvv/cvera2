@@ -78,13 +78,19 @@ export default function Home() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  CVera
+                  cvera.
                 </h1>
-                <p className="text-xs text-gray-500 -mt-1">Professional CV Platform</p>
+                <p className="text-xs text-gray-500 -mt-1">LinkedIn-dən Müsahibəyə gedən yol!</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-4">
+              <a
+                href="/pricing"
+                className="text-gray-600 hover:text-blue-600 font-medium transition-all"
+              >
+                Qiymətlər
+              </a>
               <button
                 onClick={() => setAuthMode('login')}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${
@@ -129,19 +135,20 @@ export default function Home() {
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
                   </svg>
-                  <span>AI-powered CV Builder</span>
+                  <span>CV yaratmaq bu qədər asan olmamışdı!</span>
                 </div>
                 
                 <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
                   Peşəkar CV-nizi
                   <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"> 
-                    {' '}dəqiqələrlə yaradın
+                    {' '}sürətlə yaradın
                   </span>
                 </h1>
                 
                 <p className="text-xl text-gray-600 leading-relaxed">
-                  LinkedIn profilindən avtomatik import, professional template-lər və real-time önizləmə ilə 
-                  CV yaratma prosesini asanlaşdırın.
+               LinkedIn profilindən avtomatik məlumat idxalı, 
+               peşəkar şablonlar və real-time önizləmə funksiyaları ilə 
+               CV hazırlama prosesini sürətli və rahat şəkildə tamamlayın.
                 </p>
               </div>
               
@@ -153,7 +160,7 @@ export default function Home() {
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
                   </div>
-                  <span className="text-gray-700 font-medium">LinkedIn Import</span>
+                  <span className="text-gray-700 font-medium">LinkedIn-dən İdxal</span>
                 </div>
                 
                 <div className="flex items-center space-x-3 p-4 bg-white/70 backdrop-blur-sm rounded-xl shadow-sm">
@@ -162,7 +169,7 @@ export default function Home() {
                       <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clipRule="evenodd" />
                     </svg>
                   </div>
-                  <span className="text-gray-700 font-medium">Premium Templates</span>
+                  <span className="text-gray-700 font-medium">Premium Şablonlar</span>
                 </div>
                 
                 <div className="flex items-center space-x-3 p-4 bg-white/70 backdrop-blur-sm rounded-xl shadow-sm">
@@ -171,7 +178,7 @@ export default function Home() {
                       <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zM3.293 7.707A1 1 0 014 7h12a1 1 0 01.707.293A1 1 0 0117 8v6a1 1 0 01-.293.707A1 1 0 0116 15H4a1 1 0 01-.707-.293A1 1 0 013 14V8a1 1 0 01.293-.707zM5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clipRule="evenodd" />
                     </svg>
                   </div>
-                  <span className="text-gray-700 font-medium">PDF & DOCX Export</span>
+                  <span className="text-gray-700 font-medium">PDF & DOCX ixrac</span>
                 </div>
                 
                 <div className="flex items-center space-x-3 p-4 bg-white/70 backdrop-blur-sm rounded-xl shadow-sm">
@@ -180,7 +187,7 @@ export default function Home() {
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.736 6.979C9.208 6.193 9.696 6 10 6c.304 0 .792.193 1.264.979.514.858.736 2.1.736 3.521 0 1.421-.222 2.663-.736 3.521C10.792 13.807 10.304 14 10 14c-.304 0-.792-.193-1.264-.979C8.222 12.163 8 10.921 8 9.5c0-1.421.222-2.663.736-3.521z" clipRule="evenodd" />
                     </svg>
                   </div>
-                  <span className="text-gray-700 font-medium">Real-time Preview</span>
+                  <span className="text-gray-700 font-medium">Real-zamanlı baxış</span>
                 </div>
               </div>
             </div>
@@ -211,7 +218,7 @@ export default function Home() {
                       onClick={() => setAuthMessage(null)}
                       className="mt-2 text-sm underline opacity-75 hover:opacity-100"
                     >
-                      Bağla
+                      Bağlayın
                     </button>
                   </div>
                 )}
@@ -261,21 +268,21 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div className="space-y-2">
               <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                10K+
+                150+
               </div>
               <div className="text-gray-600">Yaradılan CV</div>
             </div>
             <div className="space-y-2">
               <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                5K+
+                100+
               </div>
               <div className="text-gray-600">Aktiv İstifadəçi</div>
             </div>
             <div className="space-y-2">
               <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                15+
+                5+
               </div>
-              <div className="text-gray-600">Template Variantı</div>
+              <div className="text-gray-600">Şablon Seçimi</div>
             </div>
           </div>
         </div>
@@ -296,7 +303,7 @@ export default function Home() {
               </h3>
             </div>
             <p className="text-gray-600 text-sm">
-              © 2024 CVera. Bütün hüquqlar qorunur.
+              © 2025 CVera. Bütün hüquqlar qorunur.
             </p>
           </div>
         </div>

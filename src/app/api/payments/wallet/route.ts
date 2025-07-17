@@ -31,7 +31,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const walletStatus = await epointService.getWalletStatus();
+    const url = new URL(request.url);
+    const walletId = url.searchParams.get('walletId');
+
+    if (!walletId) {
+      return NextResponse.json(
+        { message: 'Wallet ID tələb olunur' },
+        { status: 400 }
+      );
+    }
+
+    const walletStatus = await epointService.getWalletStatus(walletId);
 
     return NextResponse.json({
       success: walletStatus.success,
@@ -78,13 +88,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const paymentResult = await epointService.payWithWallet(
+    const paymentResult = await epointService.payWithWallet({
       walletId,
       amount,
       currency,
       orderId,
       description
-    );
+    });
 
     return NextResponse.json({
       success: paymentResult.success,
