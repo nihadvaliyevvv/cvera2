@@ -2,7 +2,6 @@ import crypto from 'crypto';
 
 interface EpointConfig {
   publicKey: string;
-  privateKey: string;
   apiUrl: string;
   webhookSecret: string;
   developmentMode: boolean;
@@ -120,8 +119,7 @@ class EpointService {
 
   constructor() {
     this.config = {
-      publicKey: process.env.EPOINT_MERCHANT_ID || '',
-      privateKey: process.env.EPOINT_SECRET_KEY || '',
+      publicKey: process.env.EPOINT_PUBLIC_KEY || '',
       apiUrl: process.env.EPOINT_API_URL || 'https://epoint.az/api/1',
       webhookSecret: process.env.EPOINT_WEBHOOK_SECRET || '',
       developmentMode: process.env.EPOINT_DEVELOPMENT_MODE === 'true'
@@ -129,8 +127,7 @@ class EpointService {
     
     // Debug: Log configuration (without sensitive data)
     console.log('Epoint Configuration:', {
-      hasPublicKey: !!this.config.publicKey && this.config.publicKey !== 'your-real-merchant-id',
-      hasPrivateKey: !!this.config.privateKey && this.config.privateKey !== 'your-real-secret-key',
+      hasPublicKey: !!this.config.publicKey && this.config.publicKey !== 'your-real-public-key',
       apiUrl: this.config.apiUrl,
       hasWebhookSecret: !!this.config.webhookSecret && this.config.webhookSecret !== 'your-real-webhook-secret',
       developmentMode: this.config.developmentMode
@@ -154,17 +151,10 @@ class EpointService {
       }
 
       // Check if credentials are properly configured
-      if (!this.config.publicKey || this.config.publicKey === 'your-real-merchant-id') {
+      if (!this.config.publicKey || this.config.publicKey === 'your-real-public-key') {
         return {
           success: false,
-          error: 'Epoint.az merchant ID konfiqurasiya edilməyib. .env.local faylında EPOINT_MERCHANT_ID dəyərini həqiqi merchant ID ilə əvəz edin.'
-        };
-      }
-
-      if (!this.config.privateKey || this.config.privateKey === 'your-real-secret-key') {
-        return {
-          success: false,
-          error: 'Epoint.az secret key konfiqurasiya edilməyib. .env.local faylında EPOINT_SECRET_KEY dəyərini həqiqi secret key ilə əvəz edin.'
+          error: 'Epoint.az public key konfiqurasiya edilməyib. .env.local faylında EPOINT_PUBLIC_KEY dəyərini həqiqi public key ilə əvəz edin.'
         };
       }
 
@@ -1096,8 +1086,8 @@ class EpointService {
       .map(key => `${key}=${filteredData[key]}`)
       .join('&');
 
-    // Append secret key
-    const stringToSign = queryString + this.config.privateKey;
+    // Append public key (Epoint.az uses public key for signing)
+    const stringToSign = queryString + this.config.publicKey;
 
     // Generate SHA1 hash and encode to base64
     const signature = crypto
