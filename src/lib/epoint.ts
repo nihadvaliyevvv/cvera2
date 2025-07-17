@@ -160,41 +160,59 @@ class EpointService {
 
       const requestData = {
         public_key: this.config.publicKey,
-        amount: request.amount,
+        amount: request.amount.toString(),
         currency: request.currency,
         language: request.language || 'az',
         order_id: request.orderId,
         description: request.description,
         success_redirect_url: request.successRedirectUrl,
         error_redirect_url: request.errorRedirectUrl,
-        result_url: request.resultUrl,
-        customer_email: request.customerEmail,
-        customer_name: request.customerName
+        result_url: request.resultUrl || '',
+        customer_email: request.customerEmail || '',
+        customer_name: request.customerName || ''
       };
 
-      const signature = this.generateSignature(requestData);
-      const payload = { ...requestData, signature };
+      // Filter out empty values for URLSearchParams
+      const filteredRequestData = Object.fromEntries(
+        Object.entries(requestData).filter(([_, v]) => v !== '')
+      );
+
+      const signature = this.generateSignature(filteredRequestData);
+      const payload = { ...filteredRequestData, signature };
 
       console.log('Epoint API Request:', {
-        url: `${this.config.apiUrl}/checkout/payment`,
+        url: this.config.apiUrl,
         payload: { ...payload, signature: '***' } // Hide signature in logs
       });
 
-      const response = await fetch(`${this.config.apiUrl}/request`, {
+      const response = await fetch(`${this.config.apiUrl}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify(payload)
+        body: new URLSearchParams(payload).toString()
       });
 
-      const result = await response.json();
+      const responseText = await response.text();
       
-      console.log('Epoint API Response:', {
+      console.log('Epoint API Raw Response:', {
         status: response.status,
         ok: response.ok,
-        result: result
+        headers: Object.fromEntries(response.headers.entries()),
+        body: responseText.substring(0, 500) // First 500 chars
       });
+
+      // Try to parse as JSON, fallback if it's HTML
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (error) {
+        console.error('Response is not JSON, likely HTML error page:', error);
+        return {
+          success: false,
+          error: `API Error: ${response.status} - Response was HTML, not JSON. Check API endpoint and parameters.`
+        };
+      }
 
       if (response.ok && result.success) {
         return {
