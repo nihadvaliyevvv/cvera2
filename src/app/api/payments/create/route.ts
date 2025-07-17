@@ -94,6 +94,15 @@ export async function POST(request: NextRequest) {
       language: 'az'
     };
 
+    console.log('Payment Request Debug:', {
+      paymentRequest,
+      environment: {
+        NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+        EPOINT_PUBLIC_KEY: process.env.EPOINT_PUBLIC_KEY?.substring(0, 5) + '...',
+        EPOINT_API_URL: process.env.EPOINT_API_URL
+      }
+    });
+
     let paymentResult;
 
     // Check if using saved card
@@ -109,6 +118,12 @@ export async function POST(request: NextRequest) {
       paymentResult = await epointService.createPayment(paymentRequest);
     }
 
+    console.log('Payment Result Debug:', {
+      success: paymentResult.success,
+      error: paymentResult.error,
+      message: paymentResult.message
+    });
+
     if (!paymentResult.success) {
       await prisma.payment.update({
         where: { id: payment.id },
@@ -116,7 +131,7 @@ export async function POST(request: NextRequest) {
       });
 
       return NextResponse.json(
-        { message: paymentResult.message || 'Ödəniş yaradılarkən xəta' },
+        { message: paymentResult.error || paymentResult.message || 'Ödəniş yaradılarkən xəta' },
         { status: 400 }
       );
     }

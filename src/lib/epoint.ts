@@ -180,7 +180,7 @@ class EpointService {
         payload: { ...payload, signature: '***' } // Hide signature in logs
       });
 
-      const response = await fetch(`${this.config.apiUrl}/checkout/payment`, {
+      const response = await fetch(`${this.config.apiUrl}/request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
