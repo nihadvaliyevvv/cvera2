@@ -27,7 +27,7 @@ const TIER_FEATURES = {
       'Əsas məlumatlar',
     ],
     limitations: [
-      'Yalnız 1 şablon',
+      'Yalnız 2 şablon',
       'Şəkil yükləmə yoxdur',
       'Məhdud dizayn',
     ],
@@ -35,12 +35,11 @@ const TIER_FEATURES = {
   },
   Medium: {
     name: 'Orta',
-    price: '9.99₼',
+    price: '2.99₼',
     features: [
       'Orta səviyyə şablonlar',
-      'Şəkil yükləmə',
-      'Rəng seçimi',
-      'PDF və DOCX',
+      'Şəkil yükləmə mövcuddur',
+      'PDF və DOCX yükləmə',
     ],
     limitations: [
       'Məhdud premium şablonlar',
@@ -53,9 +52,8 @@ const TIER_FEATURES = {
     features: [
       'Bütün şablonlar',
       'Premium dizayn',
-      'Sınırsız yükləmə',
+      'Limitsiz yükləmə',
       'Prioritet dəstək',
-      'LinkedIn import',
     ],
     limitations: [],
     color: 'purple',

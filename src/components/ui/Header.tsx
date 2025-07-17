@@ -84,14 +84,14 @@ export default function Header() {
                     onClick={() => handleNavigation('/dashboard')}
                     className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                   >
-                    Dashboard
+                    İdarə paneli
                   </button>
                   <hr className="my-1" />
                   <button
                     onClick={handleLogout}
                     className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                   >
-                    Logout
+                    Çıxış
                   </button>
                 </div>
               )}
@@ -107,7 +107,7 @@ export default function Header() {
             onClick={() => handleNavigation('/cv/create')}
             className="flex-1 bg-white text-blue-600 py-2 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium"
           >
-            Create CV
+            CV Yarat
           </button>
         </div>
       </div>

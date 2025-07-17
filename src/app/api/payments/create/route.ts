@@ -2,19 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import { verifyJWT } from '@/lib/auth';
-import crypto from 'crypto';
+import epointService from '@/lib/epoint';
 
 const prisma = new PrismaClient();
 
 const createPaymentSchema = z.object({
   tier: z.enum(['free', 'medium', 'premium']),
   amount: z.number().min(0),
+  saveCard: z.boolean().optional(),
+  cardToken: z.string().optional(),
 });
-
-// epoint.az configuration
-const EPOINT_MERCHANT_ID = process.env.EPOINT_MERCHANT_ID;
-const EPOINT_SECRET_KEY = process.env.EPOINT_SECRET_KEY;
-const EPOINT_BASE_URL = process.env.EPOINT_BASE_URL || 'https://epoint.az/api/v1';
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,11 +34,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { tier, amount } = createPaymentSchema.parse(body);
+    const { tier, amount, saveCard, cardToken } = createPaymentSchema.parse(body);
 
     // Check if free tier
     if (tier === 'free') {
-      // Cancel existing subscription and set to free
       await prisma.subscription.updateMany({
         where: {
           userId: decoded.userId,
@@ -52,7 +48,6 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Create free subscription
       await prisma.subscription.create({
         data: {
           userId: decoded.userId,
@@ -60,7 +55,7 @@ export async function POST(request: NextRequest) {
           status: 'active',
           provider: 'system',
           startedAt: new Date(),
-          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
+          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
         },
       });
 
@@ -70,8 +65,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Generate unique transaction ID
-    const transactionId = crypto.randomUUID();
+    // Generate unique order ID
+    const orderId = `cvera_${tier}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     // Create payment record
     const payment = await prisma.payment.create({
@@ -81,45 +76,67 @@ export async function POST(request: NextRequest) {
         amount,
         status: 'pending',
         paymentMethod: 'epoint',
-        transactionId,
-        orderId: transactionId, // Use same for orderId
+        orderId,
+        transactionId: 'pending', // Will be updated after payment creation
       },
     });
 
-    // Prepare epoint.az payment data
-    const paymentData = {
-      merchant_id: EPOINT_MERCHANT_ID,
-      transaction_id: transactionId,
-      amount: amount * 100, // Convert to cents
+    // Prepare payment request
+    const paymentRequest = {
+      amount: amount,
       currency: 'AZN',
+      orderId: orderId,
       description: `CVera ${tier} abunəlik`,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/cancel`,
-      callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/epointaz`,
-      customer_email: decoded.email,
+      successRedirectUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success`,
+      errorRedirectUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/error`,
+      resultUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/epoint`,
+      customerEmail: decoded.email,
+      language: 'az'
     };
 
-    // Generate signature for epoint.az
-    const signatureString = Object.keys(paymentData)
-      .sort()
-      .map(key => `${key}=${paymentData[key as keyof typeof paymentData]}`)
-      .join('&');
-    
-    const signature = crypto
-      .createHmac('sha256', EPOINT_SECRET_KEY!)
-      .update(signatureString)
-      .digest('hex');
+    let paymentResult;
 
-    // Create payment URL
-    const paymentUrl = `${EPOINT_BASE_URL}/payment/create?${Object.entries({
-      ...paymentData,
-      signature,
-    }).map(([key, value]) => `${key}=${encodeURIComponent(value?.toString() || '')}`).join('&')}`;
+    // Check if using saved card
+    if (cardToken) {
+      paymentResult = await epointService.executePayWithCard(
+        cardToken,
+        amount,
+        'AZN',
+        orderId,
+        paymentRequest.description
+      );
+    } else {
+      paymentResult = await epointService.createPayment(paymentRequest);
+    }
+
+    if (!paymentResult.success) {
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: 'failed' }
+      });
+
+      return NextResponse.json(
+        { message: paymentResult.message || 'Ödəniş yaradılarkən xəta' },
+        { status: 400 }
+      );
+    }
+
+    // Update payment with transaction ID
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: { 
+        transactionId: paymentResult.transactionId,
+        status: cardToken ? 'completed' : 'pending'
+      }
+    });
 
     return NextResponse.json({
-      paymentUrl,
-      transactionId,
+      paymentUrl: paymentResult.paymentUrl,
+      transactionId: paymentResult.transactionId,
+      orderId: orderId,
+      saveCard: saveCard
     });
+
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

@@ -46,7 +46,7 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
   };
 
   const handleCancelSubscription = async () => {
-    if (!window.confirm('Abunəlikdən imtina etmək istədiyinizə əminsiniz? Bu halda hesabınız Free plana keçəcək.')) return;
+    if (!window.confirm('Abunəlikdən imtina etmək istədiyinizə əminsiniz? Bu halda hesabınız Pulsuz plana keçəcək.')) return;
     
     try {
       setError('');
@@ -81,7 +81,7 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
         }])
       }));
       
-      alert('Abunəlik uğurla ləğv edildi. Hesabınız Free plana keçdi.');
+      alert('Abunəlik uğurla ləğv edildi. Hesabınız Pulsuz plana keçdi.');
       
     } catch (err) {
       console.error('Subscription cancellation error:', err);
@@ -195,7 +195,7 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Dashboard
+                İdarə paneli
               </button>
               <button
                 onClick={() => setActiveTab('profile')}
@@ -267,13 +267,13 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
                         onClick={handleSubscriptionTab}
                         className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
                       >
-                        Yenilə
+                        Yeniləyin
                       </button>
                       <button
                         onClick={handleCancelSubscription}
                         className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
                       >
-                        Ləğv Et
+                        Ləğv Edin
                       </button>
                     </div>
                   )}
@@ -282,7 +282,7 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
                       onClick={handleSubscriptionTab}
                       className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
                     >
-                      Yüksəlt
+                      Yüksəldin
                     </button>
                   )}
                 </div>
@@ -299,7 +299,7 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Üçün üzv</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Üzv olundu</dt>
                       <dd className="text-lg font-medium text-gray-900">
                         {currentUser.createdAt ? new Date(String(currentUser.createdAt)).toLocaleDateString('az-AZ') : 'Məlumat yoxdur'}
                       </dd>
@@ -322,7 +322,7 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                  Yeni CV Yarat
+                  Yeni CV Yaradın
                 </button>
                 <button
                   onClick={() => setShowProfileEditor(true)}
@@ -331,7 +331,7 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
-                  Profili Redaktə Et
+                  Profili Redaktə Edin
                 </button>
               </div>
             </div>
@@ -352,7 +352,7 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
                 </div>
               ) : cvs.length === 0 ? (
                 <div className="p-6 text-center text-gray-500">
-                  <p>Hələ CV yaratmamısınız. İlk CV-nizi yaratmaq üçün yuxarıdakı düyməyə basın.</p>
+                  <p>Hələ CV yaratmamısınız. İlk CV-nizi yaratmaq üçün yuxarıdakı düyməyə klik edin.</p>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-200">
@@ -373,7 +373,7 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
                             onClick={() => onEditCV(cv.id)}
                             className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
                           >
-                            Redaktə et
+                            Redaktə edin
                           </button>
                           <button
                             onClick={() => handleDownloadCV(cv.id, 'pdf')}
@@ -413,7 +413,7 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
                             onClick={() => handleDeleteCV(cv.id)}
                             className="px-3 py-1 text-sm text-red-600 hover:text-red-800 transition-colors"
                           >
-                            Sil
+                            Silin
                           </button>
                         </div>
                       </div>
@@ -441,7 +441,7 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
+                    E-poçt
                   </label>
                   <p className="text-gray-900">{currentUser.email}</p>
                 </div>

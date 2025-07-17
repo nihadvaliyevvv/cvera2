@@ -243,9 +243,9 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
         <div className="bg-blue-600 text-white px-6 py-4">
-          <h2 className="text-xl font-semibold">LinkedIn-dən Import Et</h2>
+          <h2 className="text-xl font-semibold">LinkedIn vasitəsilə yaradın</h2>
           <p className="text-blue-100 mt-1">
-            LinkedIn profilinizi avtomatik olaraq CV-yə çevirin
+            LinkedIn profilinizi avtomatik olaraq CV-ə çevirin.
           </p>
         </div>
 
@@ -255,17 +255,18 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="font-medium text-blue-900 mb-2">💡 Necə işləyir?</h3>
                 <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• LinkedIn profil URL-nizi daxil edin</li>
-                  <li>• Sistem avtomatik olaraq məlumatları çəkəcək</li>
-                  <li>• İmport etmək istədiyiniz hissələri seçin</li>
+                  <li>• LinkedIn profil linkinizi daxil edin</li>
+                  <li>• Sistem avtomatik olaraq məlumatları əldə edir</li>
                   <li>• Məlumatlar CV-yə əlavə olunacaq</li>
+                  <li>• İstədiyiniz düzəlişləri edə bilərsiniz</li>
+
                 </ul>
 
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  LinkedIn Profil URL-i <span className="text-red-500">*</span>
+                  LinkedIn profil linki <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="url"
@@ -275,7 +276,7 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 />
                 <p className="text-sm text-gray-500 mt-1">
-                  Nümunə: https://linkedin.com/in/john-doe
+                  Nümunə: https://linkedin.com/in/musayevcreate
                 </p>
               </div>
 
@@ -288,7 +289,6 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <h3 className="font-medium text-yellow-900 mb-2">⚠️ Məlumat</h3>
                 <p className="text-sm text-yellow-800">
-                  Bu xidmət üçün LinkedIn profili ictimai (public) olmalıdır. 
                   Bəzi məlumatlar mövcud olmaya bilər və ya tam yüklənməyə bilər.
                 </p>
               </div>
@@ -296,7 +296,7 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
           ) : (
             <div className="space-y-6">
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <h3 className="font-medium text-green-900 mb-2">✅ Import Uğurla Tamamlandı</h3>
+                <h3 className="font-medium text-green-900 mb-2">✅ İdxal Uğurla Tamamlandı</h3>
                 <p className="text-sm text-green-800">
                   LinkedIn profiliniz uğurla yükləndi. Aşağıdakı məlumatlar tapıldı:
                 </p>
@@ -308,12 +308,12 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                   <h4 className="font-medium text-gray-900 mb-3">👤 Şəxsi məlumatlar</h4>
                   <div className="space-y-2 text-sm">
                     <div><strong>Ad:</strong> {importedData.personalInfo?.name || 'N/A'}</div>
-                    <div><strong>Email:</strong> {importedData.personalInfo?.email || 'N/A'}</div>
+                    <div><strong>E-poçt:</strong> {importedData.personalInfo?.email || 'N/A'}</div>
                     {importedData.personalInfo?.headline && (
                       <div><strong>Başlıq:</strong> {importedData.personalInfo.headline}</div>
                     )}
                     {importedData.personalInfo?.summary && (
-                      <div><strong>Özet:</strong> {importedData.personalInfo.summary.substring(0, 100)}...</div>
+                      <div><strong>Xülasə:</strong> {importedData.personalInfo.summary.substring(0, 100)}...</div>
                     )}
                   </div>
                 </div>
@@ -488,7 +488,7 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
 
                 {/* Honors & Awards */}
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-3">🏅 Mükafat və təqdirdirmələr</h4>
+                  <h4 className="font-medium text-gray-900 mb-3">🏅 Mükafatlar</h4>
                   <div className="space-y-2 text-sm">
                     {importedData.honorsAwards && importedData.honorsAwards.length > 0 ? (
                       <>
@@ -509,7 +509,7 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                       </>
                     ) : (
                       <div className="text-gray-500 text-center py-4">
-                        Mükafat və təqdirdirmə məlumatı tapılmadı
+                        Mükafat məlumatı tapılmadı
                       </div>
                     )}
                   </div>
@@ -519,7 +519,7 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="font-medium text-blue-900 mb-2">ℹ️ Qeyd</h3>
                 <p className="text-sm text-blue-800">
-                  İmport edilən məlumatlar CV-yə əlavə olunacaq. Var olan məlumatlar əvəz olunmayacaq. 
+                  İdxal edilən məlumatlar CV-ə əlavə olunacaq. Var olan məlumatlar əvəz olunmayacaq. 
                   Siz sonradan bütün məlumatları redaktə edə bilərsiniz.
                 </p>
               </div>
@@ -549,7 +549,7 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                 onClick={handleConfirmImport}
                 className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
-                CV-yə əlavə et
+                CV-ə əlavə et
               </button>
             )}
           </div>

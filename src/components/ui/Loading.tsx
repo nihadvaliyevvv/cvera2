@@ -100,7 +100,7 @@ export const CVEditorLoading: React.FC = () => {
     <div className="min-h-[600px] bg-gray-50 rounded-lg flex items-center justify-center">
       <div className="text-center">
         <LoadingSpinner size="lg" />
-        <p className="mt-4 text-gray-600">Loading CV Editor...</p>
+        <p className="mt-4 text-gray-600">CV yüklənir...</p>
       </div>
     </div>
   );

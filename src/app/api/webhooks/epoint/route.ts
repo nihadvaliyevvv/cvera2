@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import EpointService from '@/lib/epoint';
+import epointService from '@/lib/epoint';
 
 const prisma = new PrismaClient();
 
@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     const signature = req.headers.get('X-Epoint-Signature');
     const rawBody = await req.text();
     
-    if (!signature || !EpointService.verifyWebhookSignature(rawBody, signature)) {
+    if (!signature || !epointService.verifyWebhookSignature(rawBody, signature)) {
       console.error('Invalid webhook signature');
       return NextResponse.json(
         { message: 'Invalid signature' },
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     }
 
     const payload = JSON.parse(rawBody);
-    const { transaction_id, order_id, status, amount, currency } = payload;
+    const { transaction_id, order_id, status, amount, currency, response_code, response_message } = payload;
 
     // Find payment in database
     const payment = await prisma.payment.findFirst({
@@ -48,18 +48,34 @@ export async function POST(req: NextRequest) {
       newStatus = 'completed';
     } else if (status === 'failed' || status === 'error') {
       newStatus = 'failed';
+    } else if (status === 'cancelled') {
+      newStatus = 'cancelled';
+    } else if (status === 'refunded') {
+      newStatus = 'refunded';
     }
 
     await prisma.payment.update({
       where: { id: payment.id },
-      data: {
+      data: { 
         status: newStatus,
-        updatedAt: new Date()
+        transactionId: transaction_id
       }
     });
 
-    // If payment is completed, create or update subscription
+    // Handle successful payment
     if (newStatus === 'completed') {
+      // Cancel existing active subscriptions
+      await prisma.subscription.updateMany({
+        where: {
+          userId: payment.userId,
+          status: 'active'
+        },
+        data: {
+          status: 'cancelled'
+        }
+      });
+
+      // Create new subscription
       await prisma.subscription.create({
         data: {
           userId: payment.userId,
@@ -68,14 +84,33 @@ export async function POST(req: NextRequest) {
           provider: 'epoint',
           providerRef: transaction_id,
           startedAt: new Date(),
-          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
         }
       });
 
-      console.log(`✅ Subscription activated for user ${payment.user.email}: ${payment.planType}`);
+      console.log(`✅ Subscription activated for user ${payment.userId}, tier: ${payment.planType}`);
+    } else if (newStatus === 'failed') {
+      console.log(`❌ Payment failed: ${response_code} - ${response_message}`);
+      console.log(`Bank message: ${epointService.getBankResponseMessage(response_code || '100')}`);
+    } else if (newStatus === 'refunded') {
+      // Cancel associated subscription
+      await prisma.subscription.updateMany({
+        where: {
+          userId: payment.userId,
+          status: 'active'
+        },
+        data: {
+          status: 'cancelled'
+        }
+      });
+      console.log(`↩️ Payment refunded and subscription cancelled for user ${payment.userId}`);
     }
 
-    return NextResponse.json({ message: 'Webhook processed successfully' });
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Webhook processed successfully',
+      paymentStatus: newStatus
+    });
 
   } catch (error) {
     console.error('Webhook processing error:', error);
