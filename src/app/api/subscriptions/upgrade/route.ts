@@ -70,8 +70,8 @@ export async function POST(req: NextRequest) {
         currency: 'AZN',
         orderId: orderId,
         description: `CVera ${tier} Abunəlik Yeniləmə`,
-        successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/success`,
-        failUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/fail`,
+        successRedirectUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/success`,
+        errorRedirectUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/fail`,
         customerEmail: '', // You might want to get this from user
         customerName: ''
       });
