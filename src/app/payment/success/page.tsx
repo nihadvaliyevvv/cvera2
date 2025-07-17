@@ -70,7 +70,7 @@ function PaymentSuccessContent() {
     };
 
     verifyPayment();
-  }, [transactionId, orderId, router]);
+  }, [transactionId, orderId, router, searchParams]);
 
   if (loading) {
     return (

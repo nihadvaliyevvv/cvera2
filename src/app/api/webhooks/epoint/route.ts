@@ -7,10 +7,20 @@ const prisma = new PrismaClient();
 // POST /api/webhooks/epoint - epoint.az webhook handler
 export async function POST(req: NextRequest) {
   try {
-    const signature = req.headers.get('X-Epoint-Signature');
-    const rawBody = await req.text();
+    const body = await req.formData();
+    const data = body.get('data') as string;
+    const signature = body.get('signature') as string;
     
-    if (!signature || !epointService.verifyWebhookSignature(rawBody, signature)) {
+    if (!data || !signature) {
+      console.error('Missing data or signature in webhook');
+      return NextResponse.json(
+        { message: 'Missing required parameters' },
+        { status: 400 }
+      );
+    }
+    
+    // Verify webhook signature according to Epoint.az documentation
+    if (!epointService.verifyWebhookSignature(data, signature)) {
       console.error('Invalid webhook signature');
       return NextResponse.json(
         { message: 'Invalid signature' },
@@ -18,8 +28,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const payload = JSON.parse(rawBody);
-    const { transaction_id, order_id, status, amount, currency, response_code, response_message } = payload;
+    // Parse webhook data
+    const payload = epointService.parseWebhookData(data);
+    if (!payload) {
+      console.error('Failed to parse webhook data');
+      return NextResponse.json(
+        { message: 'Invalid data format' },
+        { status: 400 }
+      );
+    }
+
+    const { order_id, status, amount, currency, response_code, response_message, transaction_id, rrn } = payload;
+
+    console.log('Epoint Webhook received:', {
+      order_id,
+      status,
+      amount,
+      currency,
+      response_code,
+      transaction_id
+    });
 
     // Find payment in database
     const payment = await prisma.payment.findFirst({
@@ -35,18 +63,18 @@ export async function POST(req: NextRequest) {
     });
 
     if (!payment) {
-      console.error('Payment not found for transaction:', transaction_id);
+      console.error('Payment not found for order:', order_id);
       return NextResponse.json(
         { message: 'Payment not found' },
         { status: 404 }
       );
     }
 
-    // Update payment status
+    // Update payment status based on Epoint.az response
     let newStatus = 'pending';
-    if (status === 'completed' || status === 'success') {
+    if (status === 'success') {
       newStatus = 'completed';
-    } else if (status === 'failed' || status === 'error') {
+    } else if (status === 'failed') {
       newStatus = 'failed';
     } else if (status === 'cancelled') {
       newStatus = 'cancelled';
@@ -91,7 +119,6 @@ export async function POST(req: NextRequest) {
       console.log(`✅ Subscription activated for user ${payment.userId}, tier: ${payment.planType}`);
     } else if (newStatus === 'failed') {
       console.log(`❌ Payment failed: ${response_code} - ${response_message}`);
-      console.log(`Bank message: ${epointService.getBankResponseMessage(response_code || '100')}`);
     } else if (newStatus === 'refunded') {
       // Cancel associated subscription
       await prisma.subscription.updateMany({

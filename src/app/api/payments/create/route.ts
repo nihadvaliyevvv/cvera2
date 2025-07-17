@@ -10,7 +10,6 @@ const createPaymentSchema = z.object({
   tier: z.enum(['free', 'medium', 'premium']),
   amount: z.number().min(0),
   saveCard: z.boolean().optional(),
-  cardToken: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -34,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { tier, amount, saveCard, cardToken } = createPaymentSchema.parse(body);
+    const { tier, amount, saveCard } = createPaymentSchema.parse(body);
 
     // Check if free tier
     if (tier === 'free') {
@@ -88,7 +87,7 @@ export async function POST(request: NextRequest) {
       orderId: orderId,
       description: `CVera ${tier} abunəlik`,
       successRedirectUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success`,
-      errorRedirectUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/error`,
+      errorRedirectUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/fail`,
       resultUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/epoint`,
       customerEmail: decoded.email,
       language: 'az'
@@ -103,20 +102,9 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    let paymentResult;
-
-    // Check if using saved card
-    if (cardToken) {
-      paymentResult = await epointService.executePayWithCard(
-        cardToken,
-        amount,
-        'AZN',
-        orderId,
-        paymentRequest.description
-      );
-    } else {
-      paymentResult = await epointService.createPayment(paymentRequest);
-    }
+    // For now, we only support standard payment creation
+    // Card tokenization will be implemented later when needed
+    const paymentResult = await epointService.createPayment(paymentRequest);
 
     console.log('Payment Result Debug:', {
       success: paymentResult.success,
@@ -141,7 +129,7 @@ export async function POST(request: NextRequest) {
       where: { id: payment.id },
       data: { 
         transactionId: paymentResult.transactionId,
-        status: cardToken ? 'completed' : 'pending'
+        status: 'pending' // Payment will be completed via webhook
       }
     });
 

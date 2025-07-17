@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import epointService from '@/lib/epoint';
 
 export async function GET(request: NextRequest) {
   try {
-    const heartbeatResult = await epointService.checkHeartbeat();
-
+    // Simple heartbeat - just check if payment system is configured
+    const isConfigured = !!(process.env.EPOINT_PUBLIC_KEY && process.env.EPOINT_PRIVATE_KEY);
+    
     return NextResponse.json({
-      success: heartbeatResult.success,
-      status: heartbeatResult.status,
-      message: heartbeatResult.message,
-      timestamp: new Date().toISOString()
+      success: true,
+      status: isConfigured ? 'configured' : 'not_configured',
+      message: isConfigured ? 'Payment system is configured' : 'Payment system needs configuration',
+      timestamp: new Date().toISOString(),
+      development_mode: process.env.EPOINT_DEVELOPMENT_MODE === 'true'
     });
 
   } catch (error) {
