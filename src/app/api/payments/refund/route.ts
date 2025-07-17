@@ -68,8 +68,7 @@ export async function POST(request: NextRequest) {
     await prisma.payment.update({
       where: { id: payment.id },
       data: { 
-        status: 'refunded',
-        refundId: refundResult.refundId
+        status: 'refunded'
       }
     });
 
