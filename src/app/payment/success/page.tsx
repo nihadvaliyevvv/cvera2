@@ -28,9 +28,14 @@ function PaymentSuccessContent() {
     const verifyPayment = async () => {
       try {
         const token = localStorage.getItem('accessToken');
+        const isDevelopment = searchParams.get('development') === 'true';
         
-        // Call demo success API to activate subscription
-        const response = await fetch('/api/payments/demo-success', {
+        // Choose the appropriate endpoint based on mode
+        const endpoint = isDevelopment 
+          ? '/api/payments/complete-development'
+          : '/api/payments/verify'; // Use a different endpoint for real payments
+        
+        const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

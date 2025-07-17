@@ -5,7 +5,6 @@ interface EpointConfig {
   privateKey: string;
   apiUrl: string;
   webhookSecret: string;
-  developmentMode: boolean;
 }
 
 interface PaymentRequest {
@@ -123,18 +122,8 @@ class EpointService {
       publicKey: process.env.EPOINT_MERCHANT_ID || '',
       privateKey: process.env.EPOINT_SECRET_KEY || '',
       apiUrl: process.env.EPOINT_API_URL || 'https://epoint.az/api/1',
-      webhookSecret: process.env.EPOINT_WEBHOOK_SECRET || '',
-      developmentMode: process.env.EPOINT_DEVELOPMENT_MODE === 'true'
+      webhookSecret: process.env.EPOINT_WEBHOOK_SECRET || ''
     };
-    
-    // Debug: Log configuration (without sensitive data)
-    console.log('Epoint Configuration:', {
-      hasPublicKey: !!this.config.publicKey && this.config.publicKey !== 'your-real-merchant-id',
-      hasPrivateKey: !!this.config.privateKey && this.config.privateKey !== 'your-real-secret-key',
-      apiUrl: this.config.apiUrl,
-      hasWebhookSecret: !!this.config.webhookSecret && this.config.webhookSecret !== 'your-real-webhook-secret',
-      developmentMode: this.config.developmentMode
-    });
   }
 
   /**
@@ -142,32 +131,6 @@ class EpointService {
    */
   async createPayment(request: PaymentRequest): Promise<PaymentResponse> {
     try {
-      // Development mode - simulate payment for testing
-      if (this.config.developmentMode) {
-        const simulatedTransactionId = `dev_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        return {
-          success: true,
-          paymentUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/success?transactionId=${simulatedTransactionId}&orderId=${request.orderId}&development=true`,
-          transactionId: simulatedTransactionId,
-          message: 'Development mode - Payment simulation created successfully'
-        };
-      }
-
-      // Check if credentials are properly configured
-      if (!this.config.publicKey || this.config.publicKey === 'your-real-merchant-id') {
-        return {
-          success: false,
-          error: 'Epoint.az merchant ID konfiqurasiya edilməyib. .env.local faylında EPOINT_MERCHANT_ID dəyərini həqiqi merchant ID ilə əvəz edin.'
-        };
-      }
-
-      if (!this.config.privateKey || this.config.privateKey === 'your-real-secret-key') {
-        return {
-          success: false,
-          error: 'Epoint.az secret key konfiqurasiya edilməyib. .env.local faylında EPOINT_SECRET_KEY dəyərini həqiqi secret key ilə əvəz edin.'
-        };
-      }
-
       const requestData = {
         public_key: this.config.publicKey,
         amount: request.amount,
@@ -185,11 +148,6 @@ class EpointService {
       const signature = this.generateSignature(requestData);
       const payload = { ...requestData, signature };
 
-      console.log('Epoint API Request:', {
-        url: `${this.config.apiUrl}/checkout/payment`,
-        payload: { ...payload, signature: '***' } // Hide signature in logs
-      });
-
       const response = await fetch(`${this.config.apiUrl}/checkout/payment`, {
         method: 'POST',
         headers: {
@@ -199,12 +157,6 @@ class EpointService {
       });
 
       const result = await response.json();
-      
-      console.log('Epoint API Response:', {
-        status: response.status,
-        ok: response.ok,
-        result: result
-      });
 
       if (response.ok && result.success) {
         return {
@@ -216,14 +168,14 @@ class EpointService {
       } else {
         return {
           success: false,
-          error: result.message || `API Error: ${response.status} - ${result.error || 'Payment creation failed'}`
+          error: result.message || 'Payment creation failed'
         };
       }
     } catch (error) {
       console.error('Payment creation error:', error);
       return {
         success: false,
-        error: `Network error: ${error instanceof Error ? error.message : 'Payment creation failed'}`
+        error: 'Payment creation failed'
       };
     }
   }
