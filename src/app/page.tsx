@@ -85,12 +85,7 @@ export default function Home() {
             </div>
             
             <div className="flex items-center space-x-4">
-              <a
-                href="/pricing"
-                className="text-gray-600 hover:text-blue-600 font-medium transition-all"
-              >
-                Qiymətlər
-              </a>
+             
               <button
                 onClick={() => setAuthMode('login')}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${
