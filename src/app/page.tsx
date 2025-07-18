@@ -80,17 +80,12 @@ export default function Home() {
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                   cvera.
                 </h1>
-                <p className="text-xs text-gray-500 -mt-1">LinkedIn-dən Müsahibəyə gedən yol!</p>
+                <p className="text-xs text-gray-500 -mt-1">CV-dən Müsahibəyə gedən yol!</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-4">
-              <a
-                href="/pricing"
-                className="text-gray-600 hover:text-blue-600 font-medium transition-all"
-              >
-                Qiymətlər
-              </a>
+             
               <button
                 onClick={() => setAuthMode('login')}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${
