@@ -27,7 +27,7 @@ const plans: PricingPlan[] = [
   {
     id: 'medium',
     name: 'Medium',
-    price: 2.97,
+    price: 0.02,
     features: [
       'Bütün əsas funksiyalar',
       'Premium şablonlar',

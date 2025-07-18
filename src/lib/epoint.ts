@@ -36,7 +36,7 @@ class EpointService {
   constructor() {
     this.config = {
       publicKey: process.env.EPOINT_PUBLIC_KEY || '',
-      privateKey: process.env.EPOINT_PRIVATE_KEY || process.env.EPOINT_PUBLIC_KEY || '', // Use public key as private key if no separate private key
+      privateKey: process.env.EPOINT_PRIVATE_KEY || '',
       apiUrl: 'https://epoint.az/api/1/request',
       checkoutUrl: 'https://epoint.az/api/1/checkout',
       webhookSecret: process.env.EPOINT_WEBHOOK_SECRET || '',
@@ -46,6 +46,8 @@ class EpointService {
     console.log('Epoint Configuration:', {
       hasPublicKey: !!this.config.publicKey && this.config.publicKey !== 'your-real-public-key',
       hasPrivateKey: !!this.config.privateKey,
+      publicKeyLength: this.config.publicKey.length,
+      privateKeyLength: this.config.privateKey.length,
       apiUrl: this.config.apiUrl,
       checkoutUrl: this.config.checkoutUrl,
       developmentMode: this.config.developmentMode
@@ -76,6 +78,13 @@ class EpointService {
         };
       }
 
+      if (!this.config.privateKey) {
+        return {
+          success: false,
+          error: 'Epoint.az private key konfiqurasiya edilməyib. .env.local faylında EPOINT_PRIVATE_KEY dəyərini əlavə edin.'
+        };
+      }
+
       // Prepare payment data according to Epoint.az documentation
       const paymentData = {
         public_key: this.config.publicKey,
@@ -98,18 +107,39 @@ class EpointService {
       const data = Buffer.from(dataString).toString('base64');
 
       // Create signature according to documentation: base64_encode(sha1(private_key + data + private_key))
+      // Try different signature methods based on Epoint.az variations
       const signatureString = this.config.privateKey + data + this.config.privateKey;
-      const signature = crypto
+      
+      // Method 1: Standard SHA1 with base64
+      const signature1 = crypto
         .createHash('sha1')
         .update(signatureString, 'utf8')
         .digest('base64');
 
-      console.log('Epoint Payment Request:', {
+      // Method 2: SHA1 hex then base64
+      const signature2 = Buffer.from(
+        crypto.createHash('sha1').update(signatureString, 'utf8').digest('hex')
+      ).toString('base64');
+
+      // Method 3: MD5 for legacy compatibility
+      const signature3 = crypto
+        .createHash('md5')
+        .update(signatureString, 'utf8')
+        .digest('base64');
+
+      console.log('Epoint Signature Debug:', {
         dataString: dataString,
         data: data,
-        signature: '***', // Hide signature in logs
+        privateKeyLength: this.config.privateKey.length,
+        signatureStringLength: signatureString.length,
+        signature1: signature1,
+        signature2: signature2,
+        signature3: signature3,
         url: this.config.apiUrl
       });
+
+      // Use primary signature method
+      const signature = signature1;
 
       // Send request to Epoint.az API
       const response = await fetch(this.config.apiUrl, {
