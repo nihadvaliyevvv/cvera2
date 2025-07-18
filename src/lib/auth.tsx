@@ -38,7 +38,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchCurrentUser = useCallback(async () => {
-    const token = localStorage.getItem('accessToken');
+    // First try to get token from localStorage
+    let token = localStorage.getItem('accessToken');
+    
+    // If no token in localStorage, try to get from cookies via API
+    if (!token) {
+      try {
+        const response = await fetch('/api/auth/token', {
+          credentials: 'include',
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          token = data.accessToken;
+          // Store token in localStorage for future requests
+          if (token) {
+            localStorage.setItem('accessToken', token);
+          }
+        }
+      } catch (error) {
+        console.error('Error getting token from cookie:', error);
+      }
+    }
+
     if (!token) {
       setLoading(false);
       return;
@@ -126,9 +148,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('accessToken');
     setUser(null);
     
-    // Call logout endpoint to invalidate token on server
+    // Call logout endpoint to invalidate token on server and clear cookies
     fetch('/api/auth/logout', {
       method: 'POST',
+      credentials: 'include',
     }).catch(console.error);
   }, []);
 

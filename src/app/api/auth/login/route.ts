@@ -27,12 +27,22 @@ export async function POST(req: NextRequest) {
     const refreshToken = generateRefreshToken({ userId: user.id, email: user.email });
     
     const response = NextResponse.json({ accessToken });
-    response.cookies.set("refreshToken", refreshToken, {
+    
+    // Set auth-token cookie for consistency with LinkedIn OAuth
+    response.cookies.set("auth-token", accessToken, {
       httpOnly: true,
-      secure: process.env.COOKIE_SECURE === "true",
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 30,
+      maxAge: 24 * 60 * 60, // 24 hours
+    });
+    
+    response.cookies.set("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
     });
     
     return response;
