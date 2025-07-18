@@ -2,14 +2,30 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const clientId = "78gi6jtz8ue28i";
-  const redirectUri = process.env.LINKEDIN_REDIRECT_URI || `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/linkedin/callback`;
+  
+  // Determine the correct redirect URI based on environment
+  let redirectUri;
+  const host = request.headers.get('host');
+  const protocol = request.headers.get('x-forwarded-proto') || 'https';
+  
+  if (process.env.NODE_ENV === 'development' || host?.includes('localhost')) {
+    redirectUri = 'http://localhost:3000/api/auth/linkedin/callback';
+  } else if (host?.includes('vercel.app')) {
+    redirectUri = `${protocol}://${host}/api/auth/linkedin/callback`;
+  } else {
+    redirectUri = process.env.LINKEDIN_REDIRECT_URI || 'https://cvera.net/api/auth/linkedin/callback';
+  }
+  
   const scope = 'openid profile email';
   const state = Math.random().toString(36).substring(2);
 
   console.log('LinkedIn OAuth Config:', {
     clientId: clientId ? `${clientId.substring(0, 8)}...` : 'NOT SET',
     redirectUri,
-    scope
+    scope,
+    host,
+    protocol,
+    nodeEnv: process.env.NODE_ENV
   });
 
   if (!clientId) {
