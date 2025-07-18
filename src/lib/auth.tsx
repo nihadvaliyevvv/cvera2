@@ -144,15 +144,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [login]);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    // Clear all client-side storage immediately
     localStorage.removeItem('accessToken');
-    setUser(null);
+    localStorage.clear(); // Clear all localStorage
+    sessionStorage.clear(); // Clear all sessionStorage
     
-    // Call logout endpoint to invalidate token on server and clear cookies
-    fetch('/api/auth/logout', {
-      method: 'POST',
-      credentials: 'include',
-    }).catch(console.error);
+    // Reset user state immediately
+    setUser(null);
+    setLoading(false);
+    
+    try {
+      // Call logout endpoint to invalidate token on server and clear cookies
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Server logout error:', error);
+    }
+    
+    // Force page reload to clear any cached state
+    window.location.href = '/';
   }, []);
 
   useEffect(() => {

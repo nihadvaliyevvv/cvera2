@@ -90,8 +90,12 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
   };
 
   useEffect(() => {
+    // Reset CV state when user changes
+    setCvs([]);
+    setError('');
+    setLoading(true);
     loadCVs();
-  }, []);
+  }, [user.id]); // Dependency on user ID to reload when user changes
 
   const loadCVs = async () => {
     try {

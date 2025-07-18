@@ -20,6 +20,15 @@ export class ApiClient {
     this.accessToken = token;
   }
 
+  clearSession() {
+    this.accessToken = null;
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('accessToken');
+      localStorage.clear();
+      sessionStorage.clear();
+    }
+  }
+
   private async request(endpoint: string, options: RequestInit = {}) {
     // Handle absolute URLs
     const url = endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint}`;
@@ -110,12 +119,6 @@ export class ApiClient {
     });
   }
 
-  async logout() {
-    return this.request('/api/auth/logout', {
-      method: 'POST',
-    });
-  }
-
   async refreshToken() {
     return this.request('/api/auth/refresh-token', {
       method: 'POST',
@@ -190,6 +193,17 @@ export class ApiClient {
 
   async getJobResult(jobId: string) {
     return this.request(`/api/jobs/${jobId}/result`);
+  }
+
+  async logout() {
+    try {
+      await this.request('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } finally {
+      this.clearSession();
+    }
   }
 }
 
