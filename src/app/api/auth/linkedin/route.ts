@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
   } else if (host?.includes('vercel.app')) {
     redirectUri = `${protocol}://${host}/api/auth/linkedin/callback`;
   } else {
-    // Support both callback paths for LinkedIn
-    redirectUri = process.env.LINKEDIN_REDIRECT_URI || 'https://cvera.net/api/auth/callback/linkedin';
+    // Support both callback paths for LinkedIn - use the new one as default
+    redirectUri = 'https://cvera.net/api/auth/callback/linkedin';
   }
   
   const scope = 'openid profile email';
