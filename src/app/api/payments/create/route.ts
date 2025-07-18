@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       description: `CVera ${tier} abunəlik`,
       successRedirectUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success`,
       errorRedirectUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/fail`,
-      resultUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/epoint`,
+      resultUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/epointaz`,
       customerEmail: decoded.email,
       language: 'az'
     };

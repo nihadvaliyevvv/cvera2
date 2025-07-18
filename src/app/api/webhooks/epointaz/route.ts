@@ -1,124 +1,112 @@
-import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-import crypto from "crypto";
+import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
+import epointService from '@/lib/epoint';
 
 const prisma = new PrismaClient();
 
-function verifyEpointWebhook(payload: string, signature: string): boolean {
-  const secret = process.env.EPOINT_WEBHOOK_SECRET || "";
-  const expectedSignature = crypto
-    .createHmac("sha256", secret)
-    .update(payload)
-    .digest("hex");
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
-  );
-}
-
-// POST /api/webhooks/epointaz - Handle epoint.az webhook events
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const signature = req.headers.get("x-epoint-signature");
-    const payload = await req.text();
-
-    if (!signature || !verifyEpointWebhook(payload, signature)) {
-      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
-    }
-
-    const event = JSON.parse(payload);
+    console.log('Epoint.az webhook received');
     
-    switch (event.type) {
-      case "payment.success":
-        await handlePaymentSuccess(event.data);
-        break;
-      case "payment.failed":
-        await handlePaymentFailed(event.data);
-        break;
-      case "subscription.created":
-        await handleSubscriptionCreated(event.data);
-        break;
-      case "subscription.cancelled":
-        await handleSubscriptionCancelled(event.data);
-        break;
-      case "subscription.expired":
-        await handleSubscriptionExpired(event.data);
-        break;
-      default:
-        console.log("Unhandled webhook event:", event.type);
+    const contentType = request.headers.get('content-type') || '';
+    let webhookData;
+    
+    if (contentType.includes('application/json')) {
+      webhookData = await request.json();
+      console.log('Webhook JSON data:', webhookData);
+    } else {
+      const formData = await request.formData();
+      const dataParam = formData.get('data') as string;
+      const signature = formData.get('signature') as string;
+      
+      console.log('Webhook form data received:', {
+        hasData: !!dataParam,
+        hasSignature: !!signature
+      });
+
+      if (!dataParam || !signature) {
+        return NextResponse.json({ error: 'Missing data or signature' }, { status: 400 });
+      }
+
+      const isValid = epointService.verifyWebhookSignature(dataParam, signature);
+      if (!isValid) {
+        console.error('Invalid webhook signature');
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+      }
+
+      webhookData = epointService.parseWebhookData(dataParam);
+      console.log('Parsed webhook data:', webhookData);
     }
 
-    return NextResponse.json({ received: true });
+    if (webhookData && webhookData.order_id) {
+      const orderId = webhookData.order_id;
+      const status = webhookData.status || webhookData.payment_status;
+      const transactionId = webhookData.transaction_id || webhookData.txn_id;
+
+      console.log('Processing payment:', { orderId, status, transactionId });
+
+      const payment = await prisma.payment.findFirst({
+        where: { orderId: orderId },
+        include: { user: true }
+      });
+
+      if (!payment) {
+        console.error('Payment not found:', orderId);
+        return NextResponse.json({ error: 'Payment not found' }, { status: 404 });
+      }
+
+      if (status === 'success' || status === 'completed' || status === 'paid') {
+        await prisma.payment.update({
+          where: { id: payment.id },
+          data: {
+            status: 'completed',
+            transactionId: transactionId || payment.transactionId
+          }
+        });
+
+        await prisma.subscription.updateMany({
+          where: {
+            userId: payment.userId,
+            status: 'active'
+          },
+          data: { status: 'cancelled' }
+        });
+
+        const subscription = await prisma.subscription.create({
+          data: {
+            userId: payment.userId,
+            tier: payment.planType,
+            status: 'active',
+            provider: 'epoint',
+            startedAt: new Date(),
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          }
+        });
+
+        console.log('Subscription created:', subscription);
+
+      } else if (status === 'failed' || status === 'cancelled' || status === 'error') {
+        await prisma.payment.update({
+          where: { id: payment.id },
+          data: {
+            status: 'failed',
+            transactionId: transactionId || payment.transactionId
+          }
+        });
+
+        console.log('Payment marked as failed:', orderId);
+      }
+    }
+
+    return NextResponse.json({ success: true, message: 'Webhook processed successfully' });
+
   } catch (error) {
-    console.error("Webhook error:", error);
-    return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
+    console.error('Webhook processing error:', error);
+    return NextResponse.json(
+      { error: 'Webhook processing failed' },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
   }
-}
-
-async function handlePaymentSuccess(data: {
-  subscription_id: string;
-  [key: string]: unknown;
-}) {
-  // Update subscription status based on successful payment
-  await prisma.subscription.updateMany({
-    where: { providerRef: data.subscription_id },
-    data: { status: "active" },
-  });
-}
-
-async function handlePaymentFailed(data: {
-  subscription_id: string;
-  [key: string]: unknown;
-}) {
-  // Handle failed payment
-  await prisma.subscription.updateMany({
-    where: { providerRef: data.subscription_id },
-    data: { status: "payment_failed" },
-  });
-}
-
-async function handleSubscriptionCreated(data: {
-  customer_email: string;
-  tier: string;
-  subscription_id: string;
-  expires_at: string;
-  [key: string]: unknown;
-}) {
-  // Create new subscription record
-  const user = await prisma.user.findUnique({
-    where: { email: data.customer_email },
-  });
-
-  if (user) {
-    await prisma.subscription.create({
-      data: {
-        userId: user.id,
-        tier: data.tier,
-        status: "active",
-        provider: "epointaz",
-        providerRef: data.subscription_id,
-        expiresAt: new Date(data.expires_at),
-      },
-    });
-  }
-}
-
-async function handleSubscriptionCancelled(data: {
-  subscription_id: string;
-  [key: string]: unknown;
-}) {
-  await prisma.subscription.updateMany({
-    where: { providerRef: data.subscription_id },
-    data: { status: "cancelled" },
-  });
-}
-
-async function handleSubscriptionExpired(data: {
-  subscription_id: string;
-  [key: string]: unknown;
-}) {
-  await prisma.subscription.updateMany({
-    where: { providerRef: data.subscription_id },
-    data: { status: "expired" },
-  });
 }

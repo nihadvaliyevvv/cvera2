@@ -43,14 +43,18 @@ class EpointService {
       developmentMode: process.env.EPOINT_DEVELOPMENT_MODE === 'true'
     };
     
-    console.log('Epoint Configuration:', {
+    console.log('Epoint Configuration Debug:', {
+      NODE_ENV: process.env.NODE_ENV,
       hasPublicKey: !!this.config.publicKey && this.config.publicKey !== 'your-real-public-key',
       hasPrivateKey: !!this.config.privateKey,
       publicKeyLength: this.config.publicKey.length,
       privateKeyLength: this.config.privateKey.length,
+      publicKeyValue: this.config.publicKey ? `${this.config.publicKey.substring(0, 3)}...` : 'MISSING',
+      privateKeyValue: this.config.privateKey ? `${this.config.privateKey.substring(0, 3)}...` : 'MISSING',
       apiUrl: this.config.apiUrl,
       checkoutUrl: this.config.checkoutUrl,
-      developmentMode: this.config.developmentMode
+      developmentMode: this.config.developmentMode,
+      allEnvKeys: Object.keys(process.env).filter(k => k.includes('EPOINT'))
     });
   }
 
