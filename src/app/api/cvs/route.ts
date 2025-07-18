@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
+import { canCreateCV, canUseTemplate, incrementDailyUsage } from "@/lib/subscription-limits";
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || "";
@@ -95,10 +96,37 @@ export async function POST(req: NextRequest) {
     
     console.log('Creating CV with userId:', userId);
     
+    // Check if user can create CV (daily limit)
+    const cvLimitCheck = await canCreateCV(userId);
+    if (!cvLimitCheck.allowed) {
+      return NextResponse.json({ 
+        error: cvLimitCheck.reason,
+        errorCode: 'DAILY_LIMIT_EXCEEDED'
+      }, { status: 403 });
+    }
+    
     // Extract templateId from cv_data for database field
     const templateId = (cv_data as any)?.templateId || null;
 
     // Check template access if templateId is present
+    if (templateId) {
+      const template = await prisma.template.findUnique({
+        where: { id: templateId },
+        select: { tier: true },
+      });
+
+      if (template) {
+        const templateAccessCheck = await canUseTemplate(userId, template.tier);
+        if (!templateAccessCheck.allowed) {
+          return NextResponse.json({ 
+            error: templateAccessCheck.reason,
+            errorCode: 'TEMPLATE_ACCESS_DENIED'
+          }, { status: 403 });
+        }
+      }
+    }
+
+    // Legacy template access validation (keeping for compatibility)
     const hasAccess = await validateTemplateAccess(userId, templateId);
     if (!hasAccess) {
       return NextResponse.json({ error: "Access to this template is denied." }, { status: 403 });
@@ -112,6 +140,9 @@ export async function POST(req: NextRequest) {
         templateId 
       },
     });
+    
+    // Increment daily CV creation count
+    await incrementDailyUsage(userId, 'cv');
     
     console.log('CV created successfully:', cv.id);
     return NextResponse.json(cv, { status: 201 });

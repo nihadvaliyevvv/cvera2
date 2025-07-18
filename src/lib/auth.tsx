@@ -145,27 +145,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [login]);
 
   const logout = useCallback(async () => {
-    // Clear all client-side storage immediately
-    localStorage.removeItem('accessToken');
-    localStorage.clear(); // Clear all localStorage
-    sessionStorage.clear(); // Clear all sessionStorage
-    
-    // Reset user state immediately
+    // 1. Clear user state immediately to prevent UI issues
     setUser(null);
     setLoading(false);
     
+    // 2. Clear all possible client-side storage
+    const clearClientStorage = () => {
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Clear specific tokens just in case
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('auth-token');
+      localStorage.removeItem('user');
+      
+      sessionStorage.removeItem('accessToken');
+      sessionStorage.removeItem('refreshToken');
+      sessionStorage.removeItem('auth-token');
+      sessionStorage.removeItem('user');
+    };
+    
+    clearClientStorage();
+    
+    // 3. Call logout API to clear server-side session/cookies
     try {
-      // Call logout endpoint to invalidate token on server and clear cookies
-      await fetch('/api/auth/logout', {
+      const response = await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
+      
+      // 4. Additional cleanup: call token revoke if exists
+      await fetch('/api/auth/revoke', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).catch(() => {}); // Ignore errors
+      
     } catch (error) {
       console.error('Server logout error:', error);
     }
     
-    // Force page reload to clear any cached state
-    window.location.href = '/';
+    // 5. Clear storage again to be extra sure
+    clearClientStorage();
+    
+    // 6. Force complete navigation with cache clearing
+    // Clear browser cache and force redirect
+    if (typeof window !== 'undefined') {
+      // Clear any possible cached data
+      window.history.replaceState(null, '', '/');
+      
+      // Force complete page reload
+      window.location.replace('/');
+    }
   }, []);
 
   useEffect(() => {

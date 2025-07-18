@@ -15,40 +15,39 @@ interface PricingPlan {
 const plans: PricingPlan[] = [
   {
     id: 'free',
-    name: 'Free',
+    name: 'Pulsuz',
     price: 0,
     features: [
-      'Əsas şablonlar',
-      'PDF formatında yükləmə',
-      'E-poçt dəstəyi',
-      '1 CV yaratma'
+      'Gündə 2 CV yaratma limiti',
+      'Pulsuz şablonlar (Basic və Resumonk Bold)',
+      'Yalnız PDF formatında yükləmə',
+      'E-poçt dəstəyi'
     ]
   },
   {
     id: 'medium',
-    name: 'Medium',
-    price: 0.02,
+    name: 'Orta',
+    price: 2.99,
     features: [
-      'Bütün əsas funksiyalar',
-      'Premium şablonlar',
+      'Gündə 5 CV yaratma limiti',
+      'Pulsuz və Orta səviyyə şablonlar',
       'PDF və DOCX formatında yükləmə',
-      'LinkedIn profilindən idxal',
-      'Prioritet dəstək',
-      '5 CV yaratma'
+      'Saytda texniki dəstək',
+      'LinkedIn profilindən idxal'
     ],
     popular: true
   },
   {
     id: 'premium',
     name: 'Premium',
-    price: 4.97,
+    price: 4.99,
     features: [
-      'Bütün Medium funksiyalar',
-      'Ən eksklüziv şablonlar',
-      'CV-də brending və ya logo',
-      'A4 ölçüsündə ideal formatlaşdırma',
       'Limitsiz CV yaratma',
-      'VIP dəstək xidməti'
+      'Bütün şablonlar (Premium daxil)',
+      'PDF və DOCX formatında yükləmə',
+      'CV-də şəkil yerləşdirmə imkanı',
+      'Prioritet dəstək xidməti',
+      'LinkedIn profilindən idxal'
     ]
   }
 ];
@@ -140,7 +139,10 @@ export default function PricingPage() {
   };
 
   const getTierLevel = (tier: string) => {
-    const levels = { Free: 0, Medium: 1, Premium: 2 };
+    const levels = { 
+      Free: 0, Medium: 1, Premium: 2,
+      Pulsuz: 0, Orta: 1  // Azərbaycanca adlar
+    };
     return levels[tier as keyof typeof levels] || 0;
   };
 
@@ -172,7 +174,11 @@ export default function PricingPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {plans.map((plan) => {
             const planLevel = getTierLevel(plan.name);
-            const isCurrentPlan = userTier === plan.name;
+            // Plan comparison - həm English həm Azərbaycanca adları yoxla
+            const isCurrentPlan = userTier === plan.name || 
+                                 (userTier === 'Free' && plan.name === 'Pulsuz') ||
+                                 (userTier === 'Medium' && plan.name === 'Orta') ||
+                                 (userTier === 'Premium' && plan.name === 'Premium');
             const isDowngrade = planLevel < currentTierLevel;
             
             console.log(`Plan: ${plan.name}, Level: ${planLevel}, Current: ${currentTierLevel}, IsCurrentPlan: ${isCurrentPlan}, IsDowngrade: ${isDowngrade}`); // Debug log
@@ -200,7 +206,7 @@ export default function PricingPage() {
                       {plan.price === 0 ? 'Pulsuz' : `${plan.price} AZN`}
                     </span>
                     {plan.price > 0 && (
-                      <span className="text-gray-600 ml-2">/ay</span>
+                      <span className="text-gray-600 ml-2">/aylıq</span>
                     )}
                   </div>
 

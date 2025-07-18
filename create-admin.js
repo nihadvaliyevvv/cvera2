@@ -27,20 +27,19 @@ async function createAdmin() {
     console.log('User ID:', admin.id);
     
     // Create subscription for admin
-    await prisma.subscription.upsert({
-      where: { userId: admin.id },
-      update: {},
-      create: {
+    const subscription = await prisma.subscription.create({
+      data: {
         userId: admin.id,
-        tier: 'PREMIUM',
-        status: 'ACTIVE',
-        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // 1 year
+        tier: 'Premium',
+        status: 'active',
+        provider: 'system',
+        providerRef: `admin-premium-${admin.id}`,
+        startedAt: new Date(),
+        expiresAt: new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000) // 10 years
       }
     });
-    
-    console.log('Premium subscription created for admin');
-    
-  } catch (error) {
+
+    console.log('✅ Admin subscription created');  } catch (error) {
     console.error('Error creating admin user:', error);
   } finally {
     await prisma.$disconnect();

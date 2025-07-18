@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
+import { getUserTierAndLimits } from "@/lib/subscription-limits";
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || "";
@@ -25,39 +26,34 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user's current subscription tier
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        subscriptions: {
-          where: { status: "active" },
-          orderBy: { startedAt: "desc" },
-          take: 1,
-        },
-      },
-    });
-
-    const userTier = user?.subscriptions[0]?.tier || "Free";
+    // Get user's tier and limits
+    const { tier: userTier, limits } = await getUserTierAndLimits(userId);
 
     // Get all templates
     const templates = await prisma.template.findMany({
       orderBy: { createdAt: "desc" },
     });
 
-    // Filter templates based on user's tier
-    const tierOrder = { Free: 1, Medium: 2, Premium: 3 };
-    const userTierLevel = tierOrder[userTier as keyof typeof tierOrder] || 1;
+    // Add access information to each template
+    const templatesWithAccess = templates.map(template => ({
+      ...template,
+      preview_url: template.previewUrl, // Add preview_url for backward compatibility
+      hasAccess: limits.allowedTemplates.includes(template.tier),
+      requiresUpgrade: !limits.allowedTemplates.includes(template.tier),
+      accessTier: template.tier,
+    }));
 
-    const templatesWithAccess = templates.map((template) => {
-      const templateTierLevel = tierOrder[template.tier as keyof typeof tierOrder] || 1;
-      return {
-        ...template,
-        preview_url: template.previewUrl, // Add preview_url for backward compatibility
-        hasAccess: templateTierLevel <= userTierLevel,
-      };
+    return NextResponse.json({
+      templates: templatesWithAccess,
+      userTier,
+      limits: {
+        dailyCVLimit: limits.dailyCVLimit,
+        allowedTemplates: limits.allowedTemplates,
+        exportFormats: limits.exportFormats,
+        supportType: limits.supportType,
+        allowImages: limits.allowImages,
+      }
     });
-
-    return NextResponse.json(templatesWithAccess);
   } catch (error) {
     console.error("Templates API error:", error);
     return NextResponse.json({ error: "Şablonlar yüklənərkən xəta baş verdi" }, { status: 500 });

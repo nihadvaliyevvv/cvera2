@@ -171,6 +171,10 @@ export class ApiClient {
     return this.request('/api/templates');
   }
 
+  async getUserLimits() {
+    return this.request('/api/users/limits');
+  }
+
   // LinkedIn import
   async importLinkedIn(url: string) {
     return this.request('/api/import/linkedin', {

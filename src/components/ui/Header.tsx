@@ -29,9 +29,16 @@ export default function Header() {
 
   const userTier = user.subscriptions?.find(sub => sub.status === 'active')?.tier || 'Free';
 
-  const handleLogout = () => {
-    logout();
-    router.push('/');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      window.location.replace('/');
+    } catch (error) {
+      console.error('Logout xətası:', error);
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.replace('/');
+    }
   };
 
   const handleNavigation = (path: string) => {

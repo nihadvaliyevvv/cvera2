@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
-import { User } from '@/lib/auth';
+import { User, useAuth } from '@/lib/auth';
 import ProfileEditor from '@/components/profile/ProfileEditor';
 
 interface CV {
@@ -11,6 +11,30 @@ interface CV {
   title: string;
   createdAt: string;
   updatedAt: string;
+}
+
+interface UserLimits {
+  userTier: string;
+  limits: {
+    dailyCVLimit: number | string;
+    allowedTemplates: string[];
+    exportFormats: string[];
+    supportType: string;
+    allowImages: boolean;
+  };
+  todayUsage: {
+    cvCreated: number;
+    pdfExports: number;
+    docxExports: number;
+  };
+  remaining: {
+    cvCreations: number | string;
+  };
+  supportInfo: {
+    type: string;
+    description: string;
+    contact?: string;
+  };
 }
 
 interface DashboardProps {
@@ -21,11 +45,19 @@ interface DashboardProps {
 
 export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps) {
   const router = useRouter();
+  const { logout } = useAuth();
   const [cvs, setCvs] = useState<CV[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [downloadingCV, setDownloadingCV] = useState<{cvId: string, format: string} | null>(null);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
+  const [userLimits, setUserLimits] = useState<{
+    userTier: string;
+    limits: any;
+    todayUsage: any;
+    remaining: any;
+    supportInfo: any;
+  } | null>(null);
   const [currentUser, setCurrentUser] = useState<User>({ 
     id: user.id, 
     name: user.name, 
@@ -43,9 +75,7 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
 
   const handleSubscriptionTab = () => {
     router.push('/pricing');
-  };
-
-  const handleCancelSubscription = async () => {
+  };  const handleCancelSubscription = async () => {
     if (!window.confirm('Abunəlikdən imtina etmək istədiyinizə əminsiniz? Bu halda hesabınız Pulsuz plana keçəcək.')) return;
     
     try {
@@ -95,6 +125,7 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
     setError('');
     setLoading(true);
     loadCVs();
+    loadUserLimits();
   }, [user.id]); // Dependency on user ID to reload when user changes
 
   const loadCVs = async () => {
@@ -105,6 +136,23 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
       setError('CV-lər yüklənərkən xəta baş verdi.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadUserLimits = async () => {
+    try {
+      const response = await fetch('/api/users/limits', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      });
+      
+      if (response.ok) {
+        const limitsData = await response.json();
+        setUserLimits(limitsData);
+      }
+    } catch (err) {
+      console.error('Error loading user limits:', err);
     }
   };
 
@@ -229,7 +277,7 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
@@ -248,6 +296,30 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
                 </div>
               </div>
 
+              {/* Daily CV Limit Card */}
+              <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Bugünkü CV</dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {userLimits ? 
+                          `${userLimits.todayUsage.cvCreated}/${userLimits.limits.dailyCVLimit === 'unlimited' ? '∞' : userLimits.limits.dailyCVLimit}` 
+                          : '--'
+                        }
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -261,33 +333,55 @@ export default function Dashboard({ user, onCreateCV, onEditCV }: DashboardProps
                     <div className="ml-5 w-0 flex-1">
                       <dl>
                         <dt className="text-sm font-medium text-gray-500 truncate">Abunəlik</dt>
-                        <dd className="text-lg font-medium text-gray-900">{userTier}</dd>
+                        <dd className="text-lg font-medium text-gray-900">
+                          {userTier === 'Free' ? 'Pulsuz' : 
+                           userTier === 'Medium' ? 'Orta' : 
+                           userTier === 'Premium' ? 'Premium' : userTier}
+                        </dd>
                       </dl>
                     </div>
                   </div>
-                  {userTier !== 'Free' && (
+                  
+                  {/* Pulsuz plan - yalnız Yüksəlt düyməsi */}
+                  {userTier === 'Free' && (
                     <div className="flex space-x-2">
                       <button
-                        onClick={handleSubscriptionTab}
+                        onClick={() => setActiveTab('subscription')}
                         className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
                       >
-                        Yeniləyin
+                        Yüksəlt
+                      </button>
+                    </div>
+                  )}
+                  
+                  {/* Orta plan - Yüksəlt və Ləğv Et düymələri */}
+                  {userTier === 'Medium' && (
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => setActiveTab('subscription')}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        Yüksəlt
                       </button>
                       <button
                         onClick={handleCancelSubscription}
                         className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
                       >
-                        Ləğv Edin
+                        Ləğv Et
                       </button>
                     </div>
                   )}
-                  {userTier === 'Free' && (
-                    <button
-                      onClick={handleSubscriptionTab}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
-                    >
-                      Yüksəldin
-                    </button>
+                  
+                  {/* Premium plan - yalnız Ləğv Et düyməsi */}
+                  {userTier === 'Premium' && (
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={handleCancelSubscription}
+                        className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
+                      >
+                        Ləğv Et
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>

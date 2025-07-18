@@ -4,6 +4,7 @@ import { verifyJWT } from "@/lib/jwt";
 import FileGenerationService from "@/lib/fileGeneration";
 import { CVData } from "@/types/cv";
 import { v4 as uuidv4 } from "uuid";
+import { canExportFormat, incrementDailyUsage } from "@/lib/subscription-limits";
 
 const prisma = new PrismaClient();
 
@@ -36,6 +37,15 @@ export async function POST(
     const { format } = await req.json();
     if (!format || !["pdf", "docx"].includes(format)) {
       return NextResponse.json({ error: "Invalid format. Use 'pdf' or 'docx'" }, { status: 400 });
+    }
+
+    // Check if user can export in this format
+    const formatCheck = await canExportFormat(decoded.userId, format as 'pdf' | 'docx');
+    if (!formatCheck.allowed) {
+      return NextResponse.json({ 
+        error: formatCheck.reason,
+        errorCode: 'FORMAT_ACCESS_DENIED'
+      }, { status: 403 });
     }
 
     // Verify CV ownership
@@ -73,6 +83,9 @@ export async function POST(
           status: 'done',
         },
       });
+
+      // Increment daily export count
+      await incrementDailyUsage(decoded.userId, format as 'pdf' | 'docx');
 
       const mimeType = format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
       const filename = `${cv.title}.${format}`;

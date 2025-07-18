@@ -35,7 +35,15 @@ export default function TemplateSelector({ selectedTemplateId, onTemplateSelect,
       setLoading(true);
       setError('');
       const result = await apiClient.getTemplates();
-      setTemplates(result);
+      
+      // Handle new API response format
+      const templateList = result.templates || result;
+      if (Array.isArray(templateList)) {
+        setTemplates(templateList);
+      } else {
+        console.error('Unexpected templates response format:', result);
+        setError('Şablonlar formatı yanlışdır');
+      }
     } catch (err) {
       console.error('Template loading error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Şablonlar yüklənərkən xəta baş verdi.';
@@ -103,7 +111,7 @@ export default function TemplateSelector({ selectedTemplateId, onTemplateSelect,
         </div>
 
         <div className="p-4 space-y-3">
-          {templates.map((template) => (
+          {Array.isArray(templates) && templates.map((template) => (
             <div
               key={template.id}
               onClick={() => handleTemplateClick(template)}
@@ -161,7 +169,7 @@ export default function TemplateSelector({ selectedTemplateId, onTemplateSelect,
           ))}
         </div>
 
-        {templates.length === 0 && (
+        {(!Array.isArray(templates) || templates.length === 0) && !loading && (
           <div className="p-4 text-center text-gray-500">
             <p>Şablon tapılmadı</p>
           </div>

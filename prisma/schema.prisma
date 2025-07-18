@@ -25,6 +25,7 @@ model User {
   importSessions   ImportSession[] @relation("UserImportSessions")
   payments         Payment[]       @relation("UserPayments")
   subscriptions    Subscription[]  @relation("UserSubscriptions")
+  dailyUsage       DailyUsage[]    @relation("UserDailyUsage")
 }
 
 model CV {
@@ -122,6 +123,21 @@ model Payment {
   user          User     @relation("UserPayments", fields: [userId], references: [id])
 
   @@index([userId])
+}
+
+model DailyUsage {
+  id          String   @id @default(uuid())
+  userId      String
+  date        DateTime @default(now()) @db.Date
+  cvCreated   Int      @default(0)
+  pdfExports  Int      @default(0)
+  docxExports Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation("UserDailyUsage", fields: [userId], references: [id])
+
+  @@unique([userId, date])
+  @@index([userId, date])
 }
 
 model ImportSession {
