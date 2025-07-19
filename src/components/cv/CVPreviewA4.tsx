@@ -16,6 +16,7 @@ interface CVData {
       linkedin?: string;
       summary?: string;
       title?: string;
+      profileImage?: string;
     };
     experience?: Array<{
       id?: string;
@@ -122,26 +123,52 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
         lineHeight: '1.4' // Exact PDF line height
       }}>
           {/* Header - Bold style */}
-          <div style={{ textAlign: 'left', marginBottom: '30px' }}>
-            <div style={{ 
-              fontSize: '36pt', 
-            fontWeight: 'bold', 
-            color: '#000', 
-            marginBottom: '5px',
-            textTransform: 'uppercase',
-            lineHeight: '1'
-          }}>
-            {fullName}
-          </div>
           <div style={{ 
-            fontSize: '14pt', 
-            color: '#666', 
-            marginBottom: '20px',
-            fontStyle: 'italic'
+            display: 'flex', 
+            alignItems: 'flex-start', 
+            gap: '20px',
+            marginBottom: '30px'
           }}>
-            {personalInfo?.title || ''}
+            {personalInfo?.profileImage && (
+              <div style={{
+                flexShrink: 0,
+                width: '80px',
+                height: '80px'
+              }}>
+                <img 
+                  src={personalInfo.profileImage}
+                  alt="Profile"
+                  style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '3px solid #ddd'
+                  }}
+                />
+              </div>
+            )}
+            <div style={{ flex: 1 }}>
+              <div style={{ 
+                fontSize: '36pt', 
+                fontWeight: 'bold', 
+                color: '#000', 
+                marginBottom: '5px',
+                textTransform: 'uppercase',
+                lineHeight: '1'
+              }}>
+                {fullName}
+              </div>
+              <div style={{ 
+                fontSize: '14pt', 
+                color: '#666', 
+                marginBottom: '20px',
+                fontStyle: 'italic'
+              }}>
+                {personalInfo?.title || ''}
+              </div>
+            </div>
           </div>
-        </div>
 
         {/* Contact Info - Table style */}
         <table style={{

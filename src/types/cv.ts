@@ -6,6 +6,7 @@ export interface PersonalInfo {
   linkedin?: string;
   github?: string;
   website?: string;
+  profileImage?: string; // Premium feature - profile image URL
 }
 
 export interface Experience {

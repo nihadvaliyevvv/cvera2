@@ -602,15 +602,18 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                         phone: cv.data.personalInfo.phone,
                         website: cv.data.personalInfo.website,
                         linkedin: cv.data.personalInfo.linkedin,
-                        summary: cv.data.personalInfo.summary
+                        summary: cv.data.personalInfo.summary,
+                        profileImage: cv.data.personalInfo.profileImage
                       }}
+                      userTier={userTier}
                       onChange={(data: any) => updateCVData('personalInfo', {
                         fullName: data.name,
                         email: data.email,
                         phone: data.phone,
                         website: data.website,
                         linkedin: data.linkedin,
-                        summary: data.summary
+                        summary: data.summary,
+                        profileImage: data.profileImage
                       })}
                     />
                   )}

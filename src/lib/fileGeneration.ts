@@ -111,8 +111,23 @@ export class FileGenerationService {
         
         /* Header - Bold style */
         .header {
-            text-align: left;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
             margin-bottom: 20px;
+        }
+        
+        .profile-image {
+            flex-shrink: 0;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ddd;
+        }
+        
+        .header-content {
+            flex: 1;
         }
         
         .name {
@@ -293,8 +308,13 @@ export class FileGenerationService {
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <div class="name">${personalInfo.fullName || ''}</div>
-            ${personalInfo.title ? `<div class="title">${personalInfo.title}</div>` : ''}
+            ${personalInfo.profileImage ? `
+                <img src="${personalInfo.profileImage}" alt="Profile" class="profile-image" />
+            ` : ''}
+            <div class="header-content">
+                <div class="name">${personalInfo.fullName || ''}</div>
+                ${personalInfo.title ? `<div class="title">${personalInfo.title}</div>` : ''}
+            </div>
         </div>
 
         <!-- Contact Information Table -->
