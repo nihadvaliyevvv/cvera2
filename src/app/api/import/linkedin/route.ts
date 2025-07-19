@@ -83,31 +83,31 @@ async function tryApiKeysSequentially(url: string): Promise<{ apiKey: string; re
         // Clean URL to prevent 431 errors
         const cleanUrl = url.includes('?') ? url.split('?')[0] : url;
       
-        // Test different endpoints and methods for fresh-linkedin-profile-data
+        // Test the correct endpoint based on your curl example
         const endpointsToTest = [
-          // Query parameter variations
-          { path: '/get-profile', method: 'GET', params: { url: cleanUrl } },
-          { path: '/profile', method: 'GET', params: { url: cleanUrl } },
-          { path: '/linkedin-profile', method: 'GET', params: { url: cleanUrl } },
-          { path: '/scrape', method: 'GET', params: { url: cleanUrl } },
-          { path: '/fetch', method: 'GET', params: { url: cleanUrl } },
-          { path: '/data', method: 'GET', params: { url: cleanUrl } },
-          { path: '/user', method: 'GET', params: { url: cleanUrl } },
-          { path: '', method: 'GET', params: { url: cleanUrl } },
-          
-          // POST with JSON body variations
-          { path: '/get-profile', method: 'POST', body: { url: cleanUrl } },
-          { path: '/profile', method: 'POST', body: { url: cleanUrl } },
-          { path: '/linkedin-profile', method: 'POST', body: { url: cleanUrl } },
-          { path: '/scrape', method: 'POST', body: { url: cleanUrl } },
-          { path: '/fetch', method: 'POST', body: { url: cleanUrl } },
-          { path: '', method: 'POST', body: { url: cleanUrl } },
-          
-          // Alternative parameter names
+          // The working endpoint from your curl example
+          { 
+            path: '/get-profile-public-data', 
+            method: 'GET', 
+            params: { 
+              linkedin_url: cleanUrl,
+              include_skills: 'false',
+              include_certifications: 'false',
+              include_publications: 'false',
+              include_honors: 'false',
+              include_volunteers: 'false',
+              include_projects: 'false',
+              include_patents: 'false',
+              include_courses: 'false',
+              include_organizations: 'false',
+              include_profile_status: 'false',
+              include_company_public_url: 'false'
+            } 
+          },
+          // Backup variations if the first one fails
+          { path: '/get-profile-public-data', method: 'GET', params: { linkedin_url: cleanUrl } },
           { path: '/get-profile', method: 'GET', params: { linkedin_url: cleanUrl } },
-          { path: '/profile', method: 'GET', params: { profile_url: cleanUrl } },
-          { path: '/scrape', method: 'GET', params: { target: cleanUrl } },
-          { path: '/fetch', method: 'GET', params: { link: cleanUrl } },
+          { path: '/profile', method: 'GET', params: { linkedin_url: cleanUrl } },
         ];
       
         for (const endpoint of endpointsToTest) {
@@ -126,28 +126,18 @@ async function tryApiKeysSequentially(url: string): Promise<{ apiKey: string; re
             let response;
             let requestUrl = `https://${rapidApiHost}${endpoint.path}`;
             
-            if (endpoint.method === 'POST') {
-              // Use body if provided, otherwise default
-              const postData = endpoint.body || { 
-                linkedin_url: cleanUrl,
-                url: cleanUrl
-              };
+            // All endpoints are GET requests now
+            if (endpoint.params) {
+              // Filter out undefined values
+              const cleanParams = Object.entries(endpoint.params)
+                .filter(([_, value]) => value !== undefined)
+                .reduce((acc, [key, value]) => ({ ...acc, [key]: value as string }), {});
               
-              response = await axios.post(requestUrl, postData, config);
-            } else {
-              // Add query parameters if provided
-              if (endpoint.params) {
-                // Filter out undefined values
-                const cleanParams = Object.entries(endpoint.params)
-                  .filter(([_, value]) => value !== undefined)
-                  .reduce((acc, [key, value]) => ({ ...acc, [key]: value as string }), {});
-                
-                const searchParams = new URLSearchParams(cleanParams);
-                requestUrl += '?' + searchParams.toString();
-              }
-              
-              response = await axios.get(requestUrl, config);
+              const searchParams = new URLSearchParams(cleanParams);
+              requestUrl += '?' + searchParams.toString();
             }
+            
+            response = await axios.get(requestUrl, config);
 
             if (response.status === 200 && response.data) {
               console.log(`✅ Endpoint işlədi: ${endpoint.path} (${endpoint.method})`);
@@ -222,54 +212,58 @@ export async function POST(request: NextRequest) {
 
     const linkedinData = result.response;
     console.log('📊 LinkedIn data alındı:', Object.keys(linkedinData));
+    console.log('🔍 Full LinkedIn response:', JSON.stringify(linkedinData, null, 2));
 
     // Transform the data for our CV format
+    const profileData = linkedinData.data || linkedinData; // Handle nested structure
+    
     const transformedData = {
       personalInfo: {
-        name: linkedinData.full_name || linkedinData.name || '',
-        email: linkedinData.email || '',
-        phone: linkedinData.phone || '',
+        name: profileData.full_name || profileData.first_name + ' ' + profileData.last_name || '',
+        email: profileData.email || '',
+        phone: profileData.phone || '',
         linkedin: url,
-        summary: linkedinData.summary || linkedinData.about || '',
-        website: linkedinData.website || '',
-        headline: linkedinData.headline || linkedinData.title || ''
+        summary: profileData.about || profileData.summary || '',
+        website: profileData.company_website || '',
+        headline: profileData.headline || profileData.job_title || ''
       },
-      experience: linkedinData.experiences?.map((exp: any) => ({
+      experience: profileData.experiences?.map((exp: any) => ({
         company: exp.company || exp.company_name || '',
         position: exp.title || exp.position || '',
-        startDate: exp.start_date || exp.starts_at || '',
-        endDate: exp.end_date || exp.ends_at || '',
-        current: !exp.end_date && !exp.ends_at,
+        startDate: exp.start_year ? exp.start_year.toString() : exp.start_date || exp.starts_at || '',
+        endDate: exp.end_year ? exp.end_year.toString() : exp.end_date || exp.ends_at || '',
+        current: exp.is_current || (!exp.end_date && !exp.ends_at && !exp.end_year),
         description: exp.description || '',
-        jobType: exp.employment_type || '',
-        skills: exp.skills || ''
+        jobType: exp.job_type || exp.employment_type || '',
+        skills: exp.skills || '',
+        duration: exp.duration || ''
       })) || [],
-      education: linkedinData.education?.map((edu: any) => ({
+      education: profileData.educations?.map((edu: any) => ({
         institution: edu.school || edu.institution || '',
         degree: edu.degree || '',
         field: edu.field_of_study || edu.field || '',
-        startDate: edu.start_date || edu.starts_at || '',
-        endDate: edu.end_date || edu.ends_at || '',
-        current: !edu.end_date && !edu.ends_at,
+        startDate: edu.start_year ? edu.start_year.toString() : edu.start_date || edu.starts_at || '',
+        endDate: edu.end_year ? edu.end_year.toString() : edu.end_date || edu.ends_at || '',
+        current: !edu.end_date && !edu.ends_at && !edu.end_year,
         description: edu.description || '',
         activities: edu.activities || '',
         grade: edu.grade || ''
       })) || [],
-      skills: linkedinData.skills?.map((skill: any) => ({
+      skills: profileData.skills?.map((skill: any) => ({
         name: typeof skill === 'string' ? skill : skill.name || '',
         level: 'Intermediate' as const
       })) || [],
-      languages: linkedinData.languages?.map((lang: any) => ({
+      languages: profileData.languages?.map((lang: any) => ({
         name: typeof lang === 'string' ? lang : lang.name || '',
         proficiency: typeof lang === 'string' ? 'Professional' : lang.proficiency || 'Professional'
       })) || [],
-      certifications: linkedinData.certifications?.map((cert: any) => ({
+      certifications: profileData.certifications?.map((cert: any) => ({
         name: cert.name || cert.title || '',
         issuer: cert.authority || cert.issuer || '',
         date: cert.start_date || cert.date || '',
         description: cert.description || ''
       })) || [],
-      projects: linkedinData.projects?.map((proj: any) => ({
+      projects: profileData.projects?.map((proj: any) => ({
         name: proj.title || proj.name || '',
         description: proj.description || '',
         startDate: proj.start_date || '',

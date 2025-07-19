@@ -5,12 +5,12 @@ async function testLinkedInImport() {
     console.log('🚀 LinkedIn import test...');
     
     const response = await axios.post('http://localhost:3000/api/import/linkedin', {
-      url: 'https://www.linkedin.com/in/johnsmith'
+      url: 'https://www.linkedin.com/in/williamhgates'  // Bill Gates profili
     }, {
       headers: {
         'Content-Type': 'application/json'
       },
-      timeout: 30000
+      timeout: 60000  // 60 saniyə
     });
     
     console.log('✅ Status:', response.status);
