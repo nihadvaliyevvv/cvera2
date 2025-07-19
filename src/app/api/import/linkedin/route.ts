@@ -123,7 +123,6 @@ async function tryApiKeysSequentially(url: string): Promise<{ apiKey: string; re
               timeout: 10000
             };
             
-            let response;
             let requestUrl = `https://${rapidApiHost}${endpoint.path}`;
             
             // All endpoints are GET requests now
@@ -137,7 +136,7 @@ async function tryApiKeysSequentially(url: string): Promise<{ apiKey: string; re
               requestUrl += '?' + searchParams.toString();
             }
             
-            response = await axios.get(requestUrl, config);
+            const response = await axios.get(requestUrl, config);
 
             if (response.status === 200 && response.data) {
               console.log(`✅ Endpoint işlədi: ${endpoint.path} (${endpoint.method})`);
