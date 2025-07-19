@@ -220,6 +220,14 @@ export async function POST(request: NextRequest) {
     console.log('🔍 Skills data structure:', profileData.skills);
     console.log('🔍 Skills type:', typeof profileData.skills);
     console.log('🔍 Is skills array?:', Array.isArray(profileData.skills));
+    console.log('🔍 Certifications data:', profileData.certifications);
+    console.log('🔍 PersonalInfo data:', {
+      full_name: profileData.full_name,
+      first_name: profileData.first_name,
+      last_name: profileData.last_name,
+      headline: profileData.headline,
+      about: profileData.about
+    });
     
     const transformedData = {
       personalInfo: {
@@ -299,6 +307,12 @@ export async function POST(request: NextRequest) {
     };
 
     console.log('✅ LinkedIn data transform edildi');
+    console.log('🎯 Final transformed data structure:');
+    console.log('🎯 PersonalInfo:', transformedData.personalInfo);
+    console.log('🎯 Skills count:', transformedData.skills.length);
+    console.log('🎯 Certifications count:', transformedData.certifications.length);
+    console.log('🎯 Experience count:', transformedData.experience.length);
+    console.log('🎯 Education count:', transformedData.education.length);
 
     return NextResponse.json({
       success: true,

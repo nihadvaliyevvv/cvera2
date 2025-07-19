@@ -37,17 +37,20 @@ interface CVEditorProps {
 
 // Transform LinkedIn data to CV data format
   const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
-    console.log('Transforming LinkedIn data:', linkedInData);
+    console.log('🎯 CVEditor: Transforming LinkedIn data:', linkedInData);
+    console.log('🎯 CVEditor: PersonalInfo available:', linkedInData.personalInfo);
+    console.log('🎯 CVEditor: Skills available:', linkedInData.skills);
+    console.log('🎯 CVEditor: Certifications available:', linkedInData.certifications);
     
     const transformedData = {
       personalInfo: {
-        fullName: linkedInData.name || linkedInData.fullName || '',
-        email: linkedInData.email || '',
-        phone: linkedInData.phone || '',
-        address: linkedInData.address || linkedInData.location || '',
-        website: linkedInData.website || linkedInData.public_profile_url || '',
-        linkedin: linkedInData.linkedin || linkedInData.public_profile_url || '',
-        summary: linkedInData.headline || linkedInData.summary || ''
+        fullName: linkedInData.personalInfo?.name || linkedInData.name || linkedInData.fullName || '',
+        email: linkedInData.personalInfo?.email || linkedInData.email || '',
+        phone: linkedInData.personalInfo?.phone || linkedInData.phone || '',
+        address: linkedInData.personalInfo?.address || linkedInData.address || linkedInData.location || '',
+        website: linkedInData.personalInfo?.website || linkedInData.website || linkedInData.public_profile_url || '',
+        linkedin: linkedInData.personalInfo?.linkedin || linkedInData.linkedin || linkedInData.public_profile_url || '',
+        summary: linkedInData.personalInfo?.summary || linkedInData.personalInfo?.headline || linkedInData.headline || linkedInData.summary || ''
       },
       experience: (linkedInData.experience || []).map((exp: any) => ({
         position: exp.title || exp.position || '',
