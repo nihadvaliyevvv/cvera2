@@ -20,20 +20,31 @@ export default function EditCVPage() {
   const isNewCV = cvId === 'new';
   const importType = searchParams.get('import');
   const sessionId = searchParams.get('session');
+  const dataParam = searchParams.get('data');
   
   // State for session-based import data
   const [sessionImportData, setSessionImportData] = useState(null);
   
-  // Process imported data from session
-  const linkedInData = sessionImportData ? sessionImportData : null;
+  // Process imported data from URL or session
+  let linkedInData = null;
+  if (sessionImportData) {
+    linkedInData = sessionImportData;
+  } else if (dataParam) {
+    try {
+      linkedInData = JSON.parse(decodeURIComponent(dataParam));
+    } catch (e) {
+      console.error('Failed to parse LinkedIn data from URL:', e);
+    }
+  }
 
   // Debug logging
   console.log('Edit page debug:', {
     importType,
     sessionId,
+    dataParam: dataParam ? 'present' : 'null',
     hasSessionData: !!sessionImportData,
     linkedInData: linkedInData ? 'present' : 'null',
-    sessionImportData: sessionImportData ? JSON.stringify(sessionImportData).substring(0, 200) : 'null'
+    linkedInDataSample: linkedInData ? JSON.stringify(linkedInData).substring(0, 200) : 'null'
   });
 
   useEffect(() => {

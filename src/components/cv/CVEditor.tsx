@@ -40,33 +40,34 @@ const transformLinkedInDataToCVData = (linkedInData: any): CVData => {
   const generateId = () => Math.random().toString(36).substr(2, 9);
   
   return {
-    title: `${linkedInData.personal_info?.full_name || 'İmport edilən'} CV`,
+    title: `${linkedInData.personalInfo?.name || 'İmport edilən'} CV`,
     templateId: '',
-    data: {        personalInfo: {
-          fullName: linkedInData.personal_info?.full_name || '',
-          email: linkedInData.personal_info?.email || '',
-          phone: linkedInData.personal_info?.phone || '',
-          website: linkedInData.personal_info?.website || '',
-          linkedin: linkedInData.personal_info?.linkedin_url || '',
-          summary: linkedInData.summary || linkedInData.personal_info?.headline || ''
-        },
+    data: {
+      personalInfo: {
+        fullName: linkedInData.personalInfo?.name || '',
+        email: linkedInData.personalInfo?.email || '',
+        phone: linkedInData.personalInfo?.phone || '',
+        website: linkedInData.personalInfo?.website || '',
+        linkedin: linkedInData.personalInfo?.linkedin || '',
+        summary: linkedInData.personalInfo?.summary || linkedInData.personalInfo?.headline || ''
+      },
       experience: (linkedInData.experience || []).map((exp: any) => ({
         id: generateId(),
         company: exp.company || '',
-        position: exp.title || '',
-        startDate: exp.start_date || '',
-        endDate: exp.end_date || '',
-        current: exp.is_current || false,
+        position: exp.position || '',
+        startDate: exp.startDate || '',
+        endDate: exp.endDate || '',
+        current: exp.current || false,
         description: exp.description || ''
       })),
       education: (linkedInData.education || []).map((edu: any) => ({
         id: generateId(),
         institution: edu.institution || '',
         degree: edu.degree || '',
-        field: edu.field_of_study || '',
-        startDate: edu.start_date || '',
-        endDate: edu.end_date || '',
-        current: false,
+        field: edu.field || '',
+        startDate: edu.startDate || '',
+        endDate: edu.endDate || '',
+        current: edu.current || false,
         gpa: edu.grade || '',
         description: edu.description || ''
       })),

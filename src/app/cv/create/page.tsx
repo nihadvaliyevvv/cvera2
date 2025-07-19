@@ -30,13 +30,10 @@ export default function CreateCVPage() {
   }
 
   const handleLinkedInImport = (data: any) => {
-    // Check if data contains sessionId (new approach)
-    if (data && data.sessionId) {
-      router.push(`/cv/edit/new?session=${data.sessionId}`);
-    } else {
-      // Fallback to old approach if needed
-      router.push(`/cv/edit/new?import=linkedin&data=${encodeURIComponent(JSON.stringify(data))}`);
-    }
+    console.log('LinkedIn import data received:', data);
+    
+    // Direct data approach - encode the data in URL
+    router.push(`/cv/edit/new?import=linkedin&data=${encodeURIComponent(JSON.stringify(data))}`);
   };
 
   const handleManualCreate = () => {
