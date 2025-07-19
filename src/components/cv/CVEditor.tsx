@@ -606,6 +606,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                         profileImage: cv.data.personalInfo.profileImage
                       }}
                       userTier={userTier}
+                      cvData={cv.data}
                       onChange={(data: any) => updateCVData('personalInfo', {
                         fullName: data.name,
                         email: data.email,

@@ -16,11 +16,14 @@ interface PersonalInfoSectionProps {
   data: PersonalInfo;
   onChange: (data: PersonalInfo) => void;
   userTier?: string; // User tier for premium features
+  cvData?: any; // Full CV data for AI summary
 }
 
-export default function PersonalInfoSection({ data, onChange, userTier = 'Free' }: PersonalInfoSectionProps) {
+export default function PersonalInfoSection({ data, onChange, userTier = 'Free', cvData }: PersonalInfoSectionProps) {
   const [imageUploading, setImageUploading] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
   const isPremium = userTier === 'Premium';
+  const canUseAI = userTier === 'Premium' || userTier === 'Medium';
 
   const handleChange = (field: keyof PersonalInfo, value: string) => {
     onChange({ ...data, [field]: value });
@@ -61,6 +64,58 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free' 
 
   const removeImage = () => {
     handleChange('profileImage', '');
+  };
+
+  const generateAISummary = async () => {
+    if (!canUseAI) {
+      alert('AI professional summary Premium və Medium istifadəçilər üçün mövcuddur!');
+      return;
+    }
+
+    if (!cvData || !cvData.personalInfo || !cvData.personalInfo.fullName) {
+      alert('AI summary yaratmaq üçün əvvəlcə əsas məlumatları doldurun');
+      return;
+    }
+
+    setAiGenerating(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('İcazə xətası. Yenidən giriş edin.');
+        return;
+      }
+
+      const response = await fetch('/api/ai/summary', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cvData }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 403) {
+          alert(result.message || 'AI funksiyalar üçün Premium planı lazımdır');
+        } else {
+          throw new Error(result.error || 'API xətası');
+        }
+        return;
+      }
+
+      if (result.summary) {
+        handleChange('summary', result.summary);
+        alert('AI professional summary yaradıldı! 🎉');
+      }
+
+    } catch (error) {
+      console.error('AI Summary error:', error);
+      alert('AI summary yaradarkən xəta baş verdi. Yenidən cəhd edin.');
+    } finally {
+      setAiGenerating(false);
+    }
   };
 
   return (
@@ -190,15 +245,62 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free' 
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Professional özət
-        </label>
+        <div className="flex items-center justify-between mb-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Professional özət
+          </label>
+          <button
+            type="button"
+            onClick={generateAISummary}
+            disabled={aiGenerating || !canUseAI}
+            className={`px-3 py-1 text-xs rounded-full font-medium transition-all ${
+              canUseAI
+                ? aiGenerating
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 hover:scale-105 shadow-md'
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+            }`}
+            title={canUseAI ? 'AI ilə avtomatik professional özət yaradın' : 'AI funksiyalar Premium/Medium üçün mövcuddur'}
+          >
+            {aiGenerating ? (
+              <div className="flex items-center space-x-1">
+                <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                <span>AI yaradır...</span>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-1">
+                <span>🤖</span>
+                <span>AI Özət</span>
+                {!canUseAI && <span className="ml-1">🔒</span>}
+              </div>
+            )}
+          </button>
+        </div>
+        
+        {!canUseAI && (
+          <div className="mb-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <span className="text-purple-600">🤖</span>
+              <div>
+                <p className="text-sm font-medium text-purple-800">AI Professional Summary</p>
+                <p className="text-xs text-purple-600">
+                  LinkedIn məlumatlarınızdan avtomatik professional özət yaradın! 
+                  <span className="font-semibold"> Premium və Medium </span> istifadəçilər üçün mövcuddur.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <textarea
           value={data.summary || ''}
           onChange={(e) => handleChange('summary', e.target.value)}
           rows={4}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
-          placeholder="Professional təcrübənizi və məqsədlərinizi qısaca təsvir edin..."
+          placeholder={canUseAI 
+            ? "Professional təcrübənizi yazın və ya yuxarıdakı AI butonundan avtomatik yaradın..." 
+            : "Professional təcrübənizi və məqsədlərinizi qısaca təsvir edin..."
+          }
         />
       </div>
     </div>
