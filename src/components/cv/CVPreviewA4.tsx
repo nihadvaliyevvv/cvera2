@@ -104,7 +104,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
       <div style={{
         fontFamily: 'Times New Roman, serif',
         fontSize: '12pt',
-        lineHeight: '1.5',
+        lineHeight: '1.4',
         color: '#333',
         background: 'white',
         width: '100%',
@@ -114,7 +114,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
       <div style={{
         height: '100%',
         overflowY: 'auto',
-        padding: '20px',
+        padding: '15px',
         scrollbarWidth: 'thin',
         scrollbarColor: '#cbd5e1 #f1f5f9',
         width: '794px', // Exact A4 width
@@ -139,7 +139,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
             marginBottom: '20px',
             fontStyle: 'italic'
           }}>
-            {personalInfo?.title || 'Professional'}
+            {personalInfo?.title || ''}
           </div>
         </div>
 
@@ -197,13 +197,14 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
               fontWeight: 'bold',
               color: '#000',
               textTransform: 'uppercase',
-              margin: '25px 0 15px 0',
+              margin: '20px 0 10px 0',
               borderBottom: '2px solid #000',
-              paddingBottom: '5px'
+              paddingBottom: '5px',
+              pageBreakAfter: 'avoid'
             }}>EXPERIENCE</div>
             {experience.map((exp, index) => (
               <div key={index} style={{
-                marginBottom: '20px',
+                marginBottom: '15px',
                 pageBreakInside: 'avoid'
               }}>
                 <div style={{
@@ -262,13 +263,14 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
               fontWeight: 'bold',
               color: '#000',
               textTransform: 'uppercase',
-              margin: '25px 0 15px 0',
+              margin: '20px 0 10px 0',
               borderBottom: '2px solid #000',
-              paddingBottom: '5px'
+              paddingBottom: '5px',
+              pageBreakAfter: 'avoid'
             }}>EDUCATION</div>
             {education.map((edu, index) => (
               <div key={index} style={{
-                marginBottom: '15px',
+                marginBottom: '12px',
                 pageBreakInside: 'avoid'
               }}>
                 <div style={{
@@ -308,9 +310,10 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
               fontWeight: 'bold',
               color: '#000',
               textTransform: 'uppercase',
-              margin: '25px 0 15px 0',
+              margin: '20px 0 10px 0',
               borderBottom: '2px solid #000',
-              paddingBottom: '5px'
+              paddingBottom: '5px',
+              pageBreakAfter: 'avoid'
             }}>SKILLS</div>
             <div style={{
               fontSize: '11pt',
@@ -329,9 +332,10 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
               fontWeight: 'bold',
               color: '#000',
               textTransform: 'uppercase',
-              margin: '25px 0 15px 0',
+              margin: '20px 0 10px 0',
               borderBottom: '2px solid #000',
-              paddingBottom: '5px'
+              paddingBottom: '5px',
+              pageBreakAfter: 'avoid'
             }}>LANGUAGES</div>
             <div style={{
               fontSize: '11pt',
@@ -350,13 +354,14 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
               fontWeight: 'bold',
               color: '#000',
               textTransform: 'uppercase',
-              margin: '25px 0 15px 0',
+              margin: '20px 0 10px 0',
               borderBottom: '2px solid #000',
-              paddingBottom: '5px'
+              paddingBottom: '5px',
+              pageBreakAfter: 'avoid'
             }}>PROJECTS</div>
             {projects.map((project, index) => (
               <div key={index} style={{
-                marginBottom: '15px',
+                marginBottom: '12px',
                 pageBreakInside: 'avoid'
               }}>
                 <div style={{
@@ -392,9 +397,10 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
               fontWeight: 'bold',
               color: '#000',
               textTransform: 'uppercase',
-              margin: '25px 0 15px 0',
+              margin: '20px 0 10px 0',
               borderBottom: '2px solid #000',
-              paddingBottom: '5px'
+              paddingBottom: '5px',
+              pageBreakAfter: 'avoid'
             }}>CERTIFICATIONS</div>
             {certifications.map((cert, index) => (
               <div key={index} style={{
