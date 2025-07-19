@@ -91,17 +91,17 @@ async function tryApiKeysSequentially(url: string): Promise<{ apiKey: string; re
             method: 'GET', 
             params: { 
               linkedin_url: cleanUrl,
-              include_skills: 'false',
-              include_certifications: 'false',
-              include_publications: 'false',
-              include_honors: 'false',
-              include_volunteers: 'false',
-              include_projects: 'false',
-              include_patents: 'false',
-              include_courses: 'false',
-              include_organizations: 'false',
-              include_profile_status: 'false',
-              include_company_public_url: 'false'
+              include_skills: 'true',
+              include_certifications: 'true',
+              include_publications: 'true',
+              include_honors: 'true',
+              include_volunteers: 'true',
+              include_projects: 'true',
+              include_patents: 'true',
+              include_courses: 'true',
+              include_organizations: 'true',
+              include_profile_status: 'true',
+              include_company_public_url: 'true'
             } 
           },
           // Backup variations if the first one fails
@@ -269,7 +269,14 @@ export async function POST(request: NextRequest) {
         endDate: proj.end_date || '',
         skills: proj.skills || '',
         url: proj.url || ''
-      })) || []
+      })) || [],
+      // Additional sections - even if empty, include them for CV completeness
+      volunteerExperience: profileData.volunteer_experience || profileData.volunteering || [],
+      publications: profileData.publications || [],
+      honorsAwards: profileData.honors || profileData.awards || [],
+      testScores: profileData.test_scores || [],
+      recommendations: profileData.recommendations || [],
+      courses: profileData.courses || []
     };
 
     console.log('✅ LinkedIn data transform edildi');

@@ -36,129 +36,110 @@ interface CVEditorProps {
 }
 
 // Transform LinkedIn data to CV data format
-const transformLinkedInDataToCVData = (linkedInData: any): CVData => {
-  const generateId = () => Math.random().toString(36).substr(2, 9);
-  
-  return {
-    title: `${linkedInData.personalInfo?.name || 'İmport edilən'} CV`,
-    templateId: '',
-    data: {
+  const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
+    console.log('Transforming LinkedIn data:', linkedInData);
+    
+    const transformedData = {
       personalInfo: {
-        fullName: linkedInData.personalInfo?.name || '',
-        email: linkedInData.personalInfo?.email || '',
-        phone: linkedInData.personalInfo?.phone || '',
-        website: linkedInData.personalInfo?.website || '',
-        linkedin: linkedInData.personalInfo?.linkedin || '',
-        summary: linkedInData.personalInfo?.summary || linkedInData.personalInfo?.headline || ''
+        fullName: linkedInData.name || linkedInData.fullName || '',
+        email: linkedInData.email || '',
+        phone: linkedInData.phone || '',
+        address: linkedInData.address || linkedInData.location || '',
+        website: linkedInData.website || linkedInData.public_profile_url || '',
+        linkedin: linkedInData.linkedin || linkedInData.public_profile_url || '',
+        summary: linkedInData.headline || linkedInData.summary || ''
       },
       experience: (linkedInData.experience || []).map((exp: any) => ({
-        id: generateId(),
-        company: exp.company || '',
-        position: exp.position || '',
-        startDate: exp.startDate || '',
-        endDate: exp.endDate || '',
-        current: exp.current || false,
-        description: exp.description || ''
+        position: exp.title || exp.position || '',
+        company: exp.company || exp.company_name || '',
+        startDate: exp.start_date || exp.startDate || '',
+        endDate: exp.end_date || exp.endDate || 'Present',
+        description: exp.description || '',
+        location: exp.location || ''
       })),
       education: (linkedInData.education || []).map((edu: any) => ({
-        id: generateId(),
-        institution: edu.institution || '',
-        degree: edu.degree || '',
-        field: edu.field || '',
-        startDate: edu.startDate || '',
-        endDate: edu.endDate || '',
-        current: edu.current || false,
-        gpa: edu.grade || '',
-        description: edu.description || ''
+        degree: edu.degree || edu.field_of_study || '',
+        institution: edu.school || edu.institution || '',
+        year: edu.end_date || edu.year || '',
+        description: edu.description || '',
+        gpa: edu.gpa || ''
       })),
       skills: (linkedInData.skills || []).map((skill: any) => ({
-        id: generateId(),
-        name: skill.name || skill
+        name: typeof skill === 'string' ? skill : skill.name || '',
+        level: 'Intermediate' as const
       })),
       languages: (linkedInData.languages || []).map((lang: any) => ({
-        id: generateId(),
-        name: lang.name || lang,
-        level: lang.proficiency || 'Intermediate'
+        name: typeof lang === 'string' ? lang : lang.name || '',
+        proficiency: typeof lang === 'string' ? 'Professional' : lang.proficiency || 'Professional'
       })),
       projects: (linkedInData.projects || []).map((proj: any) => ({
-        id: generateId(),
-        name: proj.name || proj.title || '',
+        name: proj.title || proj.name || '',
         description: proj.description || '',
-        technologies: proj.technologies || [],
-        url: proj.url || '',
-        startDate: proj.startDate || '',
-        endDate: proj.endDate || '',
-        current: false
+        startDate: proj.start_date || proj.startDate || '',
+        endDate: proj.end_date || proj.endDate || '',
+        skills: proj.skills || '',
+        url: proj.url || ''
       })),
       certifications: (linkedInData.certifications || []).map((cert: any) => ({
-        id: generateId(),
-        name: cert.name || '',
-        issuer: cert.issuer || '',
-        date: cert.date || '',
-        issueDate: cert.date || '',
-        expiryDate: '',
-        credentialId: cert.license_number || '',
-        url: cert.url || ''
+        name: cert.name || cert.title || '',
+        issuer: cert.authority || cert.issuer || '',
+        date: cert.start_date || cert.date || '',
+        description: cert.description || ''
       })),
-      volunteerExperience: (linkedInData.volunteer_experience || []).map((vol: any) => ({
-        id: generateId(),
-        organization: vol.organization || '',
-        role: vol.role || '',
-        startDate: vol.start_date || '',
-        endDate: vol.end_date || '',
-        current: !vol.end_date,
+      volunteerExperience: (linkedInData.volunteerExperience || linkedInData.volunteer_experience || linkedInData.volunteering || []).map((vol: any) => ({
+        organization: vol.organization || vol.company || '',
+        role: vol.role || vol.title || vol.position || '',
+        startDate: vol.start_date || vol.startDate || '',
+        endDate: vol.end_date || vol.endDate || '',
         description: vol.description || '',
         cause: vol.cause || ''
       })),
       publications: (linkedInData.publications || []).map((pub: any) => ({
-        id: generateId(),
         title: pub.title || pub.name || '',
-        description: pub.description || pub.summary || '',
-        url: pub.url || '',
-        date: pub.date || pub.publishedDate || '',
-        publisher: pub.publisher || '',
-        authors: pub.authors || []
+        publisher: pub.publisher || pub.publication || '',
+        date: pub.date || pub.published_date || '',
+        description: pub.description || '',
+        url: pub.url || ''
       })),
-      honorsAwards: (linkedInData.honorsAwards || linkedInData.honors || linkedInData.awards || []).map((honor: any) => ({
-        id: generateId(),
-        title: honor.title || honor.name || '',
-        description: honor.description || '',
-        date: honor.date || honor.dateReceived || '',
-        issuer: honor.issuer || honor.organization || '',
-        url: honor.url || ''
+      honorsAwards: (linkedInData.honorsAwards || linkedInData.honors || linkedInData.awards || []).map((award: any) => ({
+        title: award.title || award.name || '',
+        issuer: award.issuer || award.authority || '',
+        date: award.date || award.issued_date || '',
+        description: award.description || ''
       })),
-      testScores: (linkedInData.testScores || linkedInData.tests || []).map((test: any) => ({
-        id: generateId(),
-        testName: test.testName || test.name || '',
+      testScores: (linkedInData.testScores || linkedInData.test_scores || []).map((test: any) => ({
+        name: test.name || test.title || '',
         score: test.score || '',
-        date: test.date || test.dateTaken || '',
+        date: test.date || '',
         description: test.description || ''
       })),
       recommendations: (linkedInData.recommendations || []).map((rec: any) => ({
-        id: generateId(),
-        recommenderName: rec.recommenderName || rec.name || '',
-        recommenderTitle: rec.recommenderTitle || rec.title || '',
-        recommenderCompany: rec.recommenderCompany || rec.company || '',
-        text: rec.text || rec.recommendationText || '',
-        date: rec.date || rec.dateReceived || ''
+        recommender: rec.recommender || rec.name || '',
+        relation: rec.relation || rec.relationship || '',
+        text: rec.text || rec.recommendation || '',
+        date: rec.date || ''
       })),
       courses: (linkedInData.courses || []).map((course: any) => ({
-        id: generateId(),
         name: course.name || course.title || '',
         institution: course.institution || course.provider || '',
-        description: course.description || '',
-        completionDate: course.completionDate || course.date || '',
-        certificate: course.certificate || false,
-        url: course.url || ''
+        date: course.date || course.completion_date || '',
+        description: course.description || ''
       }))
-    }
+    };
+    
+    console.log('Transformed data:', transformedData);
+    return transformedData;
   };
-};
 
 export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier = 'Free' }: CVEditorProps) {
   const [cv, setCv] = useState<CVData>(() => {
     if (initialData) {
-      return transformLinkedInDataToCVData(initialData);
+      const transformedData = transformLinkedInDataToCVData(initialData);
+      return {
+        title: 'Imported CV',
+        templateId: 'professional',
+        data: transformedData
+      };
     }
     return {
       title: '',
@@ -168,6 +149,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
           fullName: '',
           email: '',
           phone: '',
+          address: '',
           website: '',
           linkedin: '',
           summary: ''
@@ -260,7 +242,11 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
       console.log('CVEditor: Transforming LinkedIn data to CV data');
       const transformedData = transformLinkedInDataToCVData(initialData);
       console.log('CVEditor: Transformed data:', transformedData);
-      setCv(transformedData);
+      setCv({
+        title: 'Imported CV',
+        templateId: 'professional',
+        data: transformedData
+      });
     }
   }, [cvId, loadCV, initialData]);
 
