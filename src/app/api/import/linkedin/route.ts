@@ -216,6 +216,11 @@ export async function POST(request: NextRequest) {
     // Transform the data for our CV format
     const profileData = linkedinData.data || linkedinData; // Handle nested structure
     
+    // Debug skills structure specifically
+    console.log('🔍 Skills data structure:', profileData.skills);
+    console.log('🔍 Skills type:', typeof profileData.skills);
+    console.log('🔍 Is skills array?:', Array.isArray(profileData.skills));
+    
     const transformedData = {
       personalInfo: {
         name: profileData.full_name || profileData.first_name + ' ' + profileData.last_name || '',
@@ -226,9 +231,9 @@ export async function POST(request: NextRequest) {
         website: profileData.company_website || '',
         headline: profileData.headline || profileData.job_title || ''
       },
-      experience: profileData.experiences?.map((exp: any) => ({
-        company: exp.company || exp.company_name || '',
-        position: exp.title || exp.position || '',
+      experience: Array.isArray(profileData.experiences) ? profileData.experiences.map((exp: any) => ({
+        company: exp.company || exp.company_name || exp.organization || '',
+        position: exp.title || exp.position || exp.job_title || '',
         startDate: exp.start_year ? exp.start_year.toString() : exp.start_date || exp.starts_at || '',
         endDate: exp.end_year ? exp.end_year.toString() : exp.end_date || exp.ends_at || '',
         current: exp.is_current || (!exp.end_date && !exp.ends_at && !exp.end_year),
@@ -236,10 +241,10 @@ export async function POST(request: NextRequest) {
         jobType: exp.job_type || exp.employment_type || '',
         skills: exp.skills || '',
         duration: exp.duration || ''
-      })) || [],
-      education: profileData.educations?.map((edu: any) => ({
-        institution: edu.school || edu.institution || '',
-        degree: edu.degree || '',
+      })) : [],
+      education: Array.isArray(profileData.educations) ? profileData.educations.map((edu: any) => ({
+        institution: edu.school || edu.institution || edu.university || '',
+        degree: edu.degree || edu.degree_name || '',
         field: edu.field_of_study || edu.field || '',
         startDate: edu.start_year ? edu.start_year.toString() : edu.start_date || edu.starts_at || '',
         endDate: edu.end_year ? edu.end_year.toString() : edu.end_date || edu.ends_at || '',
@@ -247,36 +252,50 @@ export async function POST(request: NextRequest) {
         description: edu.description || '',
         activities: edu.activities || '',
         grade: edu.grade || ''
-      })) || [],
-      skills: profileData.skills?.map((skill: any) => ({
-        name: typeof skill === 'string' ? skill : skill.name || '',
+      })) : [],
+      skills: Array.isArray(profileData.skills) ? profileData.skills.map((skill: any) => ({
+        name: typeof skill === 'string' ? skill : skill.name || skill.title || '',
         level: 'Intermediate' as const
-      })) || [],
-      languages: profileData.languages?.map((lang: any) => ({
-        name: typeof lang === 'string' ? lang : lang.name || '',
-        proficiency: typeof lang === 'string' ? 'Professional' : lang.proficiency || 'Professional'
-      })) || [],
-      certifications: profileData.certifications?.map((cert: any) => ({
-        name: cert.name || cert.title || '',
-        issuer: cert.authority || cert.issuer || '',
-        date: cert.start_date || cert.date || '',
+      })) : [],
+      languages: Array.isArray(profileData.languages) ? profileData.languages.map((lang: any) => ({
+        name: typeof lang === 'string' ? lang : lang.name || lang.language || '',
+        proficiency: typeof lang === 'string' ? 'Professional' : lang.proficiency || lang.level || 'Professional'
+      })) : [],
+      certifications: Array.isArray(profileData.certifications) ? profileData.certifications.map((cert: any) => ({
+        name: cert.name || cert.title || cert.certification || '',
+        issuer: cert.authority || cert.issuer || cert.organization || '',
+        date: cert.start_date || cert.date || cert.issued_date || '',
         description: cert.description || ''
-      })) || [],
-      projects: profileData.projects?.map((proj: any) => ({
-        name: proj.title || proj.name || '',
+      })) : [],
+      projects: Array.isArray(profileData.projects) ? profileData.projects.map((proj: any) => ({
+        name: proj.title || proj.name || proj.project_name || '',
         description: proj.description || '',
-        startDate: proj.start_date || '',
-        endDate: proj.end_date || '',
+        startDate: proj.start_date || proj.starts_at || '',
+        endDate: proj.end_date || proj.ends_at || '',
         skills: proj.skills || '',
-        url: proj.url || ''
-      })) || [],
+        url: proj.url || proj.project_url || ''
+      })) : [],
       // Additional sections - even if empty, include them for CV completeness
-      volunteerExperience: profileData.volunteer_experience || profileData.volunteering || [],
-      publications: profileData.publications || [],
-      honorsAwards: profileData.honors || profileData.awards || [],
-      testScores: profileData.test_scores || [],
-      recommendations: profileData.recommendations || [],
-      courses: profileData.courses || []
+      volunteerExperience: Array.isArray(profileData.volunteer_experience) ? profileData.volunteer_experience.map((vol: any) => ({
+        organization: vol.organization || vol.company || '',
+        role: vol.role || vol.title || vol.position || '',
+        startDate: vol.start_date || vol.starts_at || '',
+        endDate: vol.end_date || vol.ends_at || '',
+        description: vol.description || '',
+        cause: vol.cause || ''
+      })) : (Array.isArray(profileData.volunteering) ? profileData.volunteering.map((vol: any) => ({
+        organization: vol.organization || vol.company || '',
+        role: vol.role || vol.title || vol.position || '',
+        startDate: vol.start_date || vol.starts_at || '',
+        endDate: vol.end_date || vol.ends_at || '',
+        description: vol.description || '',
+        cause: vol.cause || ''
+      })) : []),
+      publications: Array.isArray(profileData.publications) ? profileData.publications : [],
+      honorsAwards: Array.isArray(profileData.honors) ? profileData.honors : (Array.isArray(profileData.awards) ? profileData.awards : []),
+      testScores: Array.isArray(profileData.test_scores) ? profileData.test_scores : [],
+      recommendations: Array.isArray(profileData.recommendations) ? profileData.recommendations : [],
+      courses: Array.isArray(profileData.courses) ? profileData.courses : []
     };
 
     console.log('✅ LinkedIn data transform edildi');
