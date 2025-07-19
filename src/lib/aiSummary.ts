@@ -164,7 +164,8 @@ function generateFallbackSummary(cvData: CVDataForSummary): string {
  * Validate if user has Premium access for AI features
  */
 export function canUseAIFeatures(userTier: string): boolean {
-  return userTier === 'premium' || userTier === 'medium';
+  const tier = userTier.toLowerCase();
+  return tier === 'premium' || tier === 'medium';
 }
 
 /**
