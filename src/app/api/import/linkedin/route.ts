@@ -261,10 +261,13 @@ export async function POST(request: NextRequest) {
         activities: edu.activities || '',
         grade: edu.grade || ''
       })) : [],
-      skills: Array.isArray(profileData.skills) ? profileData.skills.map((skill: any) => ({
-        name: typeof skill === 'string' ? skill : skill.name || skill.title || '',
-        level: 'Intermediate' as const
-      })) : [],
+      skills: profileData.skills ? 
+        (typeof profileData.skills === 'string' && profileData.skills.trim() ? 
+          profileData.skills.split('|').map((skill: string) => ({
+            name: skill.trim(),
+            level: 'Intermediate' as const
+          })) : []) :
+        [],
       languages: Array.isArray(profileData.languages) ? profileData.languages.map((lang: any) => ({
         name: typeof lang === 'string' ? lang : lang.name || lang.language || '',
         proficiency: typeof lang === 'string' ? 'Professional' : lang.proficiency || lang.level || 'Professional'
@@ -284,7 +287,14 @@ export async function POST(request: NextRequest) {
         url: proj.url || proj.project_url || ''
       })) : [],
       // Additional sections - even if empty, include them for CV completeness
-      volunteerExperience: Array.isArray(profileData.volunteer_experience) ? profileData.volunteer_experience.map((vol: any) => ({
+      volunteerExperience: Array.isArray(profileData.volunteers) ? profileData.volunteers.map((vol: any) => ({
+        organization: vol.company || vol.organization || '',
+        role: vol.title || vol.role || vol.position || '',
+        startDate: vol.start_date || vol.starts_at || vol.date_range || '',
+        endDate: vol.end_date || vol.ends_at || '',
+        description: vol.description || '',
+        cause: vol.topic || vol.cause || ''
+      })) : (Array.isArray(profileData.volunteer_experience) ? profileData.volunteer_experience.map((vol: any) => ({
         organization: vol.organization || vol.company || '',
         role: vol.role || vol.title || vol.position || '',
         startDate: vol.start_date || vol.starts_at || '',
@@ -298,9 +308,9 @@ export async function POST(request: NextRequest) {
         endDate: vol.end_date || vol.ends_at || '',
         description: vol.description || '',
         cause: vol.cause || ''
-      })) : []),
+      })) : [])),
       publications: Array.isArray(profileData.publications) ? profileData.publications : [],
-      honorsAwards: Array.isArray(profileData.honors) ? profileData.honors : (Array.isArray(profileData.awards) ? profileData.awards : []),
+      honorsAwards: Array.isArray(profileData.honors_and_awards) ? profileData.honors_and_awards : (Array.isArray(profileData.honors) ? profileData.honors : (Array.isArray(profileData.awards) ? profileData.awards : [])),
       testScores: Array.isArray(profileData.test_scores) ? profileData.test_scores : [],
       recommendations: Array.isArray(profileData.recommendations) ? profileData.recommendations : [],
       courses: Array.isArray(profileData.courses) ? profileData.courses : []
@@ -310,9 +320,15 @@ export async function POST(request: NextRequest) {
     console.log('🎯 Final transformed data structure:');
     console.log('🎯 PersonalInfo:', transformedData.personalInfo);
     console.log('🎯 Skills count:', transformedData.skills.length);
+    console.log('🎯 Skills data:', transformedData.skills.slice(0, 5)); // First 5 skills
     console.log('🎯 Certifications count:', transformedData.certifications.length);
+    console.log('🎯 Certifications data:', transformedData.certifications);
     console.log('🎯 Experience count:', transformedData.experience.length);
     console.log('🎯 Education count:', transformedData.education.length);
+    console.log('🎯 Volunteer count:', transformedData.volunteerExperience.length);
+    console.log('🎯 HonorsAwards count:', transformedData.honorsAwards.length);
+    console.log('🎯 Projects count:', transformedData.projects.length);
+    console.log('🎯 Languages count:', transformedData.languages.length);
 
     return NextResponse.json({
       success: true,

@@ -39,8 +39,10 @@ interface CVEditorProps {
   const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
     console.log('🎯 CVEditor: Transforming LinkedIn data:', linkedInData);
     console.log('🎯 CVEditor: PersonalInfo available:', linkedInData.personalInfo);
-    console.log('🎯 CVEditor: Skills available:', linkedInData.skills);
-    console.log('🎯 CVEditor: Certifications available:', linkedInData.certifications);
+    console.log('🎯 CVEditor: Skills available:', linkedInData.skills, 'Type:', typeof linkedInData.skills);
+    console.log('🎯 CVEditor: Certifications available:', linkedInData.certifications, 'Length:', Array.isArray(linkedInData.certifications) ? linkedInData.certifications.length : 'N/A');
+    console.log('🎯 CVEditor: VolunteerExperience available:', linkedInData.volunteerExperience, 'Length:', Array.isArray(linkedInData.volunteerExperience) ? linkedInData.volunteerExperience.length : 'N/A');
+    console.log('🎯 CVEditor: HonorsAwards available:', linkedInData.honorsAwards, 'Length:', Array.isArray(linkedInData.honorsAwards) ? linkedInData.honorsAwards.length : 'N/A');
     
     const transformedData = {
       personalInfo: {
@@ -67,10 +69,19 @@ interface CVEditorProps {
         description: edu.description || '',
         gpa: edu.gpa || ''
       })),
-      skills: (linkedInData.skills || []).map((skill: any) => ({
-        name: typeof skill === 'string' ? skill : skill.name || '',
-        level: 'Intermediate' as const
-      })),
+      skills: linkedInData.skills ? 
+        (Array.isArray(linkedInData.skills) ? 
+          linkedInData.skills.map((skill: any) => ({
+            name: typeof skill === 'string' ? skill : skill.name || '',
+            level: 'Intermediate' as const
+          })) : 
+          (typeof linkedInData.skills === 'string' && linkedInData.skills.trim() ?
+            linkedInData.skills.split('|').map((skill: string) => ({
+              name: skill.trim(),
+              level: 'Intermediate' as const
+            })) : []
+          )
+        ) : [],
       languages: (linkedInData.languages || []).map((lang: any) => ({
         name: typeof lang === 'string' ? lang : lang.name || '',
         proficiency: typeof lang === 'string' ? 'Professional' : lang.proficiency || 'Professional'
@@ -83,20 +94,22 @@ interface CVEditorProps {
         skills: proj.skills || '',
         url: proj.url || ''
       })),
-      certifications: (linkedInData.certifications || []).map((cert: any) => ({
-        name: cert.name || cert.title || '',
-        issuer: cert.authority || cert.issuer || '',
-        date: cert.start_date || cert.date || '',
-        description: cert.description || ''
-      })),
-      volunteerExperience: (linkedInData.volunteerExperience || linkedInData.volunteer_experience || linkedInData.volunteering || []).map((vol: any) => ({
-        organization: vol.organization || vol.company || '',
-        role: vol.role || vol.title || vol.position || '',
-        startDate: vol.start_date || vol.startDate || '',
-        endDate: vol.end_date || vol.endDate || '',
-        description: vol.description || '',
-        cause: vol.cause || ''
-      })),
+      certifications: Array.isArray(linkedInData.certifications) ? 
+        linkedInData.certifications.map((cert: any) => ({
+          name: cert.name || cert.title || cert.certification || '',
+          issuer: cert.authority || cert.issuer || cert.organization || '',
+          date: cert.start_date || cert.date || cert.issued_date || '',
+          description: cert.description || ''
+        })) : [],
+      volunteerExperience: Array.isArray(linkedInData.volunteerExperience) ? 
+        linkedInData.volunteerExperience.map((vol: any) => ({
+          organization: vol.organization || vol.company || '',
+          role: vol.role || vol.title || vol.position || '',
+          startDate: vol.start_date || vol.startDate || vol.date_range || '',
+          endDate: vol.end_date || vol.endDate || '',
+          description: vol.description || '',
+          cause: vol.cause || vol.topic || ''
+        })) : [],
       publications: (linkedInData.publications || []).map((pub: any) => ({
         title: pub.title || pub.name || '',
         publisher: pub.publisher || pub.publication || '',
@@ -104,12 +117,13 @@ interface CVEditorProps {
         description: pub.description || '',
         url: pub.url || ''
       })),
-      honorsAwards: (linkedInData.honorsAwards || linkedInData.honors || linkedInData.awards || []).map((award: any) => ({
-        title: award.title || award.name || '',
-        issuer: award.issuer || award.authority || '',
-        date: award.date || award.issued_date || '',
-        description: award.description || ''
-      })),
+      honorsAwards: Array.isArray(linkedInData.honorsAwards) ? 
+        linkedInData.honorsAwards.map((award: any) => ({
+          title: award.title || award.name || '',
+          issuer: award.issuer || award.authority || '',
+          date: award.date || award.issued_date || '',
+          description: award.description || ''
+        })) : [],
       testScores: (linkedInData.testScores || linkedInData.test_scores || []).map((test: any) => ({
         name: test.name || test.title || '',
         score: test.score || '',
