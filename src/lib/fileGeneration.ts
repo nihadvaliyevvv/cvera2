@@ -98,10 +98,10 @@ export class FileGenerationService {
         body {
             font-family: 'Times New Roman', serif;
             font-size: 10pt;
-            line-height: 1.3;
+            line-height: 1.2;
             color: #333;
             background: white;
-            padding: 15px;
+            padding: 12px;
         }
         .container {
             max-width: 800px;
@@ -155,14 +155,15 @@ export class FileGenerationService {
             font-weight: bold;
             color: #000;
             text-transform: uppercase;
-            margin: 15px 0 10px 0;
+            margin: 15px 0 8px 0;
             border-bottom: 2px solid #000;
             padding-bottom: 3px;
+            page-break-after: avoid;
         }
         
         /* Experience Items */
         .experience-item {
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             page-break-inside: avoid;
         }
         
@@ -209,7 +210,7 @@ export class FileGenerationService {
         
         /* Education */
         .education-item {
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             page-break-inside: avoid;
         }
         
@@ -293,7 +294,7 @@ export class FileGenerationService {
         <!-- Header -->
         <div class="header">
             <div class="name">${personalInfo.fullName || ''}</div>
-            <div class="title">${personalInfo.title || 'Professional'}</div>
+            ${personalInfo.title ? `<div class="title">${personalInfo.title}</div>` : ''}
         </div>
 
         <!-- Contact Information Table -->
