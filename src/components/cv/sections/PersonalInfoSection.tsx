@@ -79,7 +79,8 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
 
     setAiGenerating(true);
     try {
-      const token = localStorage.getItem('token');
+      // Token-i düzgün key ilə alaq
+      const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
       if (!token) {
         alert('İcazə xətası. Yenidən giriş edin.');
         return;

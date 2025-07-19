@@ -246,7 +246,7 @@ console.log('User tier:', user.tier);
 **2. Access Denied**
 ```javascript
 // Verify JWT token
-const token = localStorage.getItem('token');
+const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
 if (!token) {
   // Redirect to login
 }
