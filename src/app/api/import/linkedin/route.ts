@@ -407,6 +407,16 @@ function mapLinkedInToCVData(linkedinData: any) {
 
 // POST /api/import/linkedin - Import LinkedIn profile
 export async function POST(req: NextRequest) {
+  // Temporary disable LinkedIn import due to API subscription issues
+  return NextResponse.json({
+    error: "LinkedIn import müvəqqəti olaraq deaktivdir",
+    message: "LinkedIn profil import funksiyası hal-hazırda API subscription problemləri səbəbindən mövcud deyil. Profil məlumatlarınızı manual şəkildə daxil edə bilərsiniz.",
+    code: "LINKEDIN_IMPORT_TEMPORARILY_DISABLED",
+    details: "API key-lər 'Fresh LinkedIn Profile Data' servisinə subscribe edilməlidir."
+  }, { status: 503 });
+
+  // Original code commented out until API subscription is fixed
+  /*
   const userId = getUserIdFromRequest(req);
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -574,4 +584,5 @@ export async function POST(req: NextRequest) {
       error: "LinkedIn profili yüklənərkən xəta baş verdi. URL-nin düzgün olduğunu və profilin ictimai (public) olduğunu yoxlayın." 
     }, { status: 500 });
   }
+  */
 }
