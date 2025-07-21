@@ -8,8 +8,11 @@ interface Template {
   id: string;
   name: string;
   tier: 'Free' | 'Medium' | 'Premium';
-  preview_url: string;
+  preview_url?: string; // API-dən backward compatibility üçün
+  previewUrl?: string;  // Database field
   description?: string;
+  hasAccess?: boolean;  // API-dən gələn access info
+  requiresUpgrade?: boolean;
 }
 
 interface TemplateGalleryProps {
@@ -35,7 +38,11 @@ export default function TemplateGallery({ onTemplateSelect, onClose, currentUser
       setLoading(true);
       setError('');
       const result = await apiClient.getTemplates();
-      setTemplates(result);
+      
+      // API yeni format qaytarır: { templates: [...], userTier, limits }
+      // və ya köhnə format: [...templates]
+      const templateData = result.templates || result;
+      setTemplates(Array.isArray(templateData) ? templateData : []);
     } catch (err) {
       console.error('Template loading error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Şablonlar yüklənərkən xəta baş verdi.';
@@ -49,8 +56,18 @@ export default function TemplateGallery({ onTemplateSelect, onClose, currentUser
     selectedTier === 'all' || template.tier === selectedTier
   );
 
+  // Əsas məqsəd: BÜTÜN template-lar göstərilməlidir, tier fərq etməz
+  // Yalnız seçilmiş tab-a görə filtrlənir, access səviyyəsinə görə deyil
+  // Free istifadəçilər Premium template-ların preview-ını görə bilərlər
+
   // Check if user has access to template
   const hasTemplateAccess = (template: Template) => {
+    // Əgər API-dən hasAccess məlumatı gəlirsə, onu istifadə et
+    if (typeof template.hasAccess === 'boolean') {
+      return template.hasAccess;
+    }
+    
+    // Yoxsa öz logic-imizi istifadə et
     if (template.tier === 'Free') return true;
     if (template.tier === 'Medium' && ['Medium', 'Premium'].includes(currentUserTier)) return true;
     if (template.tier === 'Premium' && currentUserTier === 'Premium') return true;
@@ -186,9 +203,9 @@ export default function TemplateGallery({ onTemplateSelect, onClose, currentUser
                     className="bg-white rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-200 overflow-hidden relative"
                   >
                     <div className="aspect-[3/4] bg-gray-100 relative overflow-hidden">
-                      {template.preview_url ? (
+                      {(template.preview_url || template.previewUrl) ? (
                         <Image
-                          src={template.preview_url}
+                          src={template.preview_url || template.previewUrl || ''}
                           alt={`${template.name} preview`}
                           fill
                           className="object-cover group-hover:scale-105 transition-transform duration-200"
