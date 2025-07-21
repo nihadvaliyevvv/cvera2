@@ -24,6 +24,8 @@ export default function TemplateSelector({ selectedTemplateId, onTemplateSelect,
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -59,6 +61,12 @@ export default function TemplateSelector({ selectedTemplateId, onTemplateSelect,
       return;
     }
     onTemplateSelect(template.id);
+  };
+
+  const handlePreviewClick = (template: Template, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPreviewTemplate(template);
+    setShowPreviewModal(true);
   };
 
   const handleUpgrade = () => {
@@ -114,8 +122,7 @@ export default function TemplateSelector({ selectedTemplateId, onTemplateSelect,
           {Array.isArray(templates) && templates.map((template) => (
             <div
               key={template.id}
-              onClick={() => handleTemplateClick(template)}
-              className={`cursor-pointer rounded-lg border-2 p-3 transition-all relative ${
+              className={`rounded-lg border-2 p-3 transition-all relative ${
                 selectedTemplateId === template.id
                   ? 'border-blue-500 bg-blue-50'
                   : template.hasAccess
@@ -134,7 +141,10 @@ export default function TemplateSelector({ selectedTemplateId, onTemplateSelect,
               )}
               
               <div className="flex items-center justify-between">
-                <div className="flex-1">
+                <div 
+                  className="flex-1 cursor-pointer"
+                  onClick={() => handleTemplateClick(template)}
+                >
                   <h4 className="font-medium text-gray-900">{template.name}</h4>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`px-2 py-1 text-xs rounded border ${tierColors[template.tier]}`}>
@@ -149,21 +159,31 @@ export default function TemplateSelector({ selectedTemplateId, onTemplateSelect,
                   </div>
                 </div>
                 
-                {template.preview_url && (
-                  <div className="ml-3 relative">
-                    <Image
-                      src={template.preview_url}
-                      alt={`${template.name} preview`}
-                      width={48}
-                      height={64}
-                      className="object-cover rounded border border-gray-200"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                )}
+                <div className="ml-3 flex items-center gap-2">
+                  {/* Preview Button */}
+                  <button
+                    onClick={(e) => handlePreviewClick(template, e)}
+                    className="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded border transition-colors"
+                  >
+                    👁️ Önizləmə
+                  </button>
+                  
+                  {template.preview_url && (
+                    <div className="relative">
+                      <Image
+                        src={template.preview_url}
+                        alt={`${template.name} preview`}
+                        width={48}
+                        height={64}
+                        className="object-cover rounded border border-gray-200"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -192,6 +212,93 @@ export default function TemplateSelector({ selectedTemplateId, onTemplateSelect,
           </div>
         </div>
       </div>
+
+      {/* Preview Modal */}
+      {showPreviewModal && previewTemplate && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">{previewTemplate.name}</h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={`px-2 py-1 text-xs rounded border ${tierColors[previewTemplate.tier]}`}>
+                    {tierLabels[previewTemplate.tier]}
+                  </span>
+                  {!previewTemplate.hasAccess && (
+                    <span className="text-red-600 text-xs">🔒 Kiliddə</span>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setShowPreviewModal(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-[70vh]">
+              {previewTemplate.preview_url ? (
+                <div className="text-center">
+                  <Image
+                    src={previewTemplate.preview_url}
+                    alt={`${previewTemplate.name} preview`}
+                    width={600}
+                    height={800}
+                    className="mx-auto object-contain border border-gray-200 rounded shadow-lg"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = '<div class="text-gray-500 py-20">Önizləmə şəkli yüklənmədi</div>';
+                      }
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-20">
+                  Önizləmə mövcud deyil
+                </div>
+              )}
+            </div>
+            
+            <div className="p-4 border-t border-gray-200 bg-gray-50">
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowPreviewModal(false)}
+                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Bağla
+                </button>
+                {previewTemplate.hasAccess ? (
+                  <button
+                    onClick={() => {
+                      onTemplateSelect(previewTemplate.id);
+                      setShowPreviewModal(false);
+                    }}
+                    className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Bu Şablonu Seç
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setShowPreviewModal(false);
+                      setShowUpgradeModal(true);
+                    }}
+                    className="px-4 py-2 text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    🔓 Abunəliyi Yenilə
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Upgrade Modal */}
       {showUpgradeModal && (
