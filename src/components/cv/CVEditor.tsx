@@ -150,7 +150,7 @@ interface CVEditorProps {
     return transformedData;
   };
 
-export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier = 'Free' }: CVEditorProps) {
+export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier = 'Premium' }: CVEditorProps) {
   const [cv, setCv] = useState<CVData>(() => {
     if (initialData) {
       const transformedData = transformLinkedInDataToCVData(initialData);

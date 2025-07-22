@@ -30,6 +30,8 @@ export const SECTION_LABELS = {
     linkedin: 'LinkedIn',
     github: 'GitHub',
     website: 'Veb sayt',
+    location: 'Yer',
+    professionalSummary: 'Professional Özet',
     
     // Experience fields
     position: 'Vəzifə',
@@ -43,9 +45,12 @@ export const SECTION_LABELS = {
     degree: 'Dərəcə',
     institution: 'Təhsil müəssisəsi',
     gpa: 'Orta bal',
+    fieldOfStudy: 'Təhsil sahəsi',
     
     // Skill fields
     skillName: 'Bacarıq',
+    name: 'Ad',
+    category: 'Kateqoriya',
     
     // Language fields
     language: 'Dil',
@@ -56,20 +61,58 @@ export const SECTION_LABELS = {
     technologies: 'Texnologiyalar',
     url: 'URL',
     
+    // Certification fields
+    issuer: 'Verən təşkilat',
+    date: 'Tarix',
+    
+    // Volunteer fields
+    organization: 'Təşkilat',
+    role: 'Rol',
+    cause: 'Məqsəd',
+    
     // Date formats
     present: 'İndiyədək',
     to: '-',
     
-    // Buttons
+    // Buttons and actions
+    add: 'Əlavə et',
     addSection: 'Əlavə et',
     save: 'Yadda saxla',
     cancel: 'Ləğv et',
     delete: 'Sil',
     edit: 'Düzəliş et',
+    generate: 'Yarad',
+    translate: 'Tərcümə et',
+    preview: 'Önizləmə',
+    download: 'Yüklə',
     
-    // Common
+    // Common terms
     optional: '(İxtiyari)',
-    required: '(Məcburi)'
+    required: '(Məcburi)',
+    loading: 'Yüklənir...',
+    error: 'Xəta',
+    success: 'Uğurlu',
+    warning: 'Xəbərdarlıq',
+    info: 'Məlumat',
+    
+    // CV sections titles
+    cvLanguage: 'CV Dili',
+    template: 'Şablon',
+    export: 'İxrac',
+    
+    // Placeholders
+    enterName: 'Adınızı daxil edin',
+    enterEmail: 'E-poçt ünvanınızı daxil edin',
+    enterPhone: 'Telefon nömrənizi daxil edin',
+    enterLinkedin: 'LinkedIn profilinizi daxil edin',
+    enterGithub: 'GitHub profilinizi daxil edin',
+    enterWebsite: 'Veb saytınızı daxil edin',
+    enterLocation: 'Yerləşdiyiniz yeri daxil edin',
+    
+    // Messages
+    noDataAdded: 'Hələ məlumat əlavə edilməyib',
+    addFirstItem: 'İlk elementi əlavə et',
+    addMoreItems: 'Daha çox əlavə et'
   },
   
   english: {
@@ -95,6 +138,8 @@ export const SECTION_LABELS = {
     linkedin: 'LinkedIn',
     github: 'GitHub',
     website: 'Website',
+    location: 'Location',
+    professionalSummary: 'Professional Summary',
     
     // Experience fields
     position: 'Position',
@@ -108,9 +153,12 @@ export const SECTION_LABELS = {
     degree: 'Degree',
     institution: 'Institution',
     gpa: 'GPA',
+    fieldOfStudy: 'Field of Study',
     
     // Skill fields
     skillName: 'Skill',
+    name: 'Name',
+    category: 'Category',
     
     // Language fields
     language: 'Language',
@@ -121,20 +169,58 @@ export const SECTION_LABELS = {
     technologies: 'Technologies',
     url: 'URL',
     
+    // Certification fields
+    issuer: 'Issuing Organization',
+    date: 'Date',
+    
+    // Volunteer fields
+    organization: 'Organization',
+    role: 'Role',
+    cause: 'Cause',
+    
     // Date formats
     present: 'Present',
     to: 'to',
     
-    // Buttons
+    // Buttons and actions
+    add: 'Add',
     addSection: 'Add',
     save: 'Save',
     cancel: 'Cancel',
     delete: 'Delete',
     edit: 'Edit',
+    generate: 'Generate',
+    translate: 'Translate',
+    preview: 'Preview',
+    download: 'Download',
     
-    // Common
+    // Common terms
     optional: '(Optional)',
-    required: '(Required)'
+    required: '(Required)',
+    loading: 'Loading...',
+    error: 'Error',
+    success: 'Success',
+    warning: 'Warning',
+    info: 'Information',
+    
+    // CV sections titles
+    cvLanguage: 'CV Language',
+    template: 'Template',
+    export: 'Export',
+    
+    // Placeholders
+    enterName: 'Enter your name',
+    enterEmail: 'Enter your email address',
+    enterPhone: 'Enter your phone number',
+    enterLinkedin: 'Enter your LinkedIn profile',
+    enterGithub: 'Enter your GitHub profile',
+    enterWebsite: 'Enter your website',
+    enterLocation: 'Enter your location',
+    
+    // Messages
+    noDataAdded: 'No data added yet',
+    addFirstItem: 'Add first item',
+    addMoreItems: 'Add more items'
   }
 };
 
