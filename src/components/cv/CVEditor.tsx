@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
 import { CVData as CVDataType } from '@/types/cv';
-import { CVLanguage, getDefaultCVLanguage } from '@/lib/cvLanguage';
+import { CVLanguage, getDefaultCVLanguage, getLabel, SECTION_LABELS } from '@/lib/cvLanguage';
 import PersonalInfoSection from './sections/PersonalInfoSection';
 import ExperienceSection from './sections/ExperienceSection';
 import EducationSection from './sections/EducationSection';
@@ -198,6 +198,17 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState<'pdf' | 'docx' | null>(null);
+
+  // Handle CV language change
+  const handleLanguageChange = (newLanguage: CVLanguage) => {
+    setCv(prevCv => ({
+      ...prevCv,
+      data: {
+        ...prevCv.data,
+        cvLanguage: newLanguage
+      }
+    }));
+  };
 
   const loadCV = useCallback(async () => {
     if (!cvId) return;
@@ -667,42 +678,49 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                   {activeSection === 'experience' && (
                     <ExperienceSection
                       data={cv.data.experience || [] as any}
+                      language={cv.data.cvLanguage || 'azerbaijani'}
                       onChange={(data: CVData['data']['experience']) => updateCVData('experience', data)}
                     />
                   )}
                   {activeSection === 'education' && (
                     <EducationSection
                       data={cv.data.education || [] as any}
+                      language={cv.data.cvLanguage || 'azerbaijani'}
                       onChange={(data: CVData['data']['education']) => updateCVData('education', data)}
                     />
                   )}
                   {activeSection === 'skills' && (
                     <SkillsSection
                       data={cv.data.skills || [] as any}
+                      language={cv.data.cvLanguage || 'azerbaijani'}
                       onChange={(data: any) => updateCVData('skills', data)}
                     />
                   )}
                   {activeSection === 'languages' && (
                     <LanguagesSection
                       data={cv.data.languages || [] as any}
+                      language={cv.data.cvLanguage || 'azerbaijani'}
                       onChange={(data: any) => updateCVData('languages', data)}
                     />
                   )}
                   {activeSection === 'projects' && (
                     <ProjectsSection
                       data={cv.data.projects || [] as any}
+                      language={cv.data.cvLanguage || 'azerbaijani'}
                       onChange={(data: any) => updateCVData('projects', data)}
                     />
                   )}
                   {activeSection === 'certifications' && (
                     <CertificationsSection
                       data={cv.data.certifications || [] as any}
+                      language={cv.data.cvLanguage || 'azerbaijani'}
                       onChange={(data: any) => updateCVData('certifications', data)}
                     />
                   )}
                   {activeSection === 'volunteer' && (
                     <VolunteerExperienceSection
                       data={cv.data.volunteerExperience || [] as any}
+                      language={cv.data.cvLanguage || 'azerbaijani'}
                       onChange={(data: any) => updateCVData('volunteerExperience', data)}
                     />
                   )}

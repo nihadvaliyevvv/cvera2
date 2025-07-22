@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
-import { generateProfessionalSummary, canUseAIFeatures, CVDataForSummary } from "@/lib/aiSummary";
+import { generateIntelligentProfessionalSummary, canUseAIFeatures, CVDataForSummary } from "@/lib/aiSummary";
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || "";
@@ -82,10 +82,9 @@ export async function POST(req: NextRequest) {
       hasSkills: !!cvData.skills?.length
     });
 
-    // Generate AI summary
-    const summary = await generateProfessionalSummary(cvData);
-
-    if (!summary) {
+    // Generate AI-powered professional summary with language detection
+    console.log('🧠 AI Summary yaradılır, CV data:', cvData);
+    const summary = await generateIntelligentProfessionalSummary(cvData);    if (!summary) {
       return NextResponse.json(
         { error: "Failed to generate summary" },
         { status: 500 }

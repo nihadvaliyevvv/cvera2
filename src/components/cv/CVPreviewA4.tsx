@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { CVLanguage, getLabel, formatDate } from '@/lib/cvLanguage';
 
 interface CVData {
   id?: string;
@@ -18,6 +19,7 @@ interface CVData {
       title?: string;
       profileImage?: string;
     };
+    cvLanguage?: CVLanguage;
     experience?: Array<{
       id?: string;
       company?: string;

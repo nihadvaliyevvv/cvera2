@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { CVLanguage, getLabel } from '@/lib/cvLanguage';
 
 interface Experience {
   id: string;
@@ -15,9 +16,10 @@ interface Experience {
 interface ExperienceSectionProps {
   data: Experience[];
   onChange: (data: Experience[]) => void;
+  language?: CVLanguage;
 }
 
-export default function ExperienceSection({ data, onChange }: ExperienceSectionProps) {
+export default function ExperienceSection({ data, onChange, language = 'azerbaijani' }: ExperienceSectionProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const addExperience = () => {
@@ -63,20 +65,20 @@ export default function ExperienceSection({ data, onChange }: ExperienceSectionP
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-2xl">💼</span>
-          <h2 className="text-xl font-semibold text-gray-900">İş təcrübəsi</h2>
+          <h2 className="text-xl font-semibold text-gray-900">{getLabel('experience', language)}</h2>
         </div>
         <button
           onClick={addExperience}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          + Təcrübə əlavə et
+          + {getLabel('addSection', language)}
         </button>
       </div>
 
       {data.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
-          <p>Hələ heç bir iş təcrübəsi əlavə edilməyib.</p>
-          <p className="text-sm mt-2">Başlamaq üçün "Təcrübə əlavə et" düyməsini basın.</p>
+          <p>{language === 'english' ? 'No work experience added yet.' : 'Hələ heç bir iş təcrübəsi əlavə edilməyib.'}</p>
+          <p className="text-sm mt-2">{language === 'english' ? 'Click "Add" to get started.' : 'Başlamaq üçün "Əlavə et" düyməsini basın.'}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -124,27 +126,27 @@ export default function ExperienceSection({ data, onChange }: ExperienceSectionP
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Şirkət <span className="text-red-500">*</span>
+                        {getLabel('company', language)} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={experience.company}
                         onChange={(e) => updateExperience(experience.id, 'company', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Şirkət adı"
+                        placeholder={language === 'english' ? 'Company name' : 'Şirkət adı'}
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Vəzifə <span className="text-red-500">*</span>
+                        {getLabel('position', language)} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={experience.position}
                         onChange={(e) => updateExperience(experience.id, 'position', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Vəzifə adı"
+                        placeholder={language === 'english' ? 'Position title' : 'Vəzifə adı'}
                       />
                     </div>
 

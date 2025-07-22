@@ -1,25 +1,27 @@
 'use client';
 
 import { useState } from 'react';
+import { CVLanguage, getLabel } from '@/lib/cvLanguage';
 
 interface Language {
   id: string;
-  name: string;
-  level: 'Basic' | 'Conversational' | 'Professional' | 'Native';
+  language: string;
+  level: string;
 }
 
 interface LanguagesSectionProps {
   data: Language[];
   onChange: (data: Language[]) => void;
+  language?: CVLanguage;
 }
 
-export default function LanguagesSection({ data, onChange }: LanguagesSectionProps) {
+export default function LanguagesSection({ data, onChange, language = 'azerbaijani' }: LanguagesSectionProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const addLanguage = () => {
     const newLanguage: Language = {
       id: Date.now().toString(),
-      name: '',
+      language: '',
       level: 'Conversational'
     };
     onChange([...data, newLanguage]);
@@ -91,10 +93,10 @@ export default function LanguagesSection({ data, onChange }: LanguagesSectionPro
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-gray-600">#{index + 1}</span>
-                  <span className="text-sm text-gray-900 font-medium">{language.name}</span>
-                  {language.name && (
-                    <span className={`px-2 py-1 text-xs rounded-full ${levelColors[language.level]}`}>
-                      {levelLabels[language.level]}
+                  <span className="text-sm text-gray-900 font-medium">{language.language}</span>
+                  {language.language && (
+                    <span className={`px-2 py-1 text-xs rounded-full ${levelColors[language.level as keyof typeof levelColors]}`}>
+                      {levelLabels[language.level as keyof typeof levelLabels]}
                     </span>
                   )}
                 </div>
@@ -137,8 +139,8 @@ export default function LanguagesSection({ data, onChange }: LanguagesSectionPro
                       </label>
                       <input
                         type="text"
-                        value={language.name}
-                        onChange={(e) => updateLanguage(language.id, 'name', e.target.value)}
+                        value={language.language}
+                        onChange={(e) => updateLanguage(language.id, 'language', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         placeholder="Azərbaycan, İngilis, Rus, və s."
                       />

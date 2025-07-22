@@ -1,23 +1,24 @@
 'use client';
 
 import { useState } from 'react';
+import { CVLanguage, getLabel } from '@/lib/cvLanguage';
 
 interface Certification {
   id: string;
   name: string;
   issuer: string;
-  issueDate: string;
-  expiryDate?: string;
-  credentialId?: string;
+  date: string;
+  description?: string;
   url?: string;
 }
 
 interface CertificationsSectionProps {
   data: Certification[];
   onChange: (data: Certification[]) => void;
+  language?: CVLanguage;
 }
 
-export default function CertificationsSection({ data, onChange }: CertificationsSectionProps) {
+export default function CertificationsSection({ data, onChange, language = 'azerbaijani' }: CertificationsSectionProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const addCertification = () => {
@@ -25,9 +26,8 @@ export default function CertificationsSection({ data, onChange }: Certifications
       id: Date.now().toString(),
       name: '',
       issuer: '',
-      issueDate: '',
-      expiryDate: '',
-      credentialId: '',
+      date: '',
+      description: '',
       url: ''
     };
     onChange([...data, newCertification]);
@@ -58,11 +58,6 @@ export default function CertificationsSection({ data, onChange }: Certifications
     }
   };
 
-  const isExpired = (expiryDate: string) => {
-    if (!expiryDate) return false;
-    return new Date(expiryDate) < new Date();
-  };
-
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
     const date = new Date(dateString + '-01');
@@ -74,140 +69,143 @@ export default function CertificationsSection({ data, onChange }: Certifications
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-2xl">🏆</span>
-          <h2 className="text-xl font-semibold text-gray-900">Sertifikatlar</h2>
+          <h2 className="text-xl font-semibold text-gray-900">
+            {getLabel('certifications', language)}
+          </h2>
         </div>
         <button
           onClick={addCertification}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          + Sertifikat əlavə et
+          <span className="text-lg">+</span>
+          {getLabel('add', language)}
         </button>
       </div>
 
       {data.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          <p>Hələ heç bir sertifikat əlavə edilməyib.</p>
-          <p className="text-sm mt-2">Başlamaq üçün "Sertifikat əlavə et" düyməsini basın.</p>
+        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+          <span className="text-4xl mb-4 block">🏆</span>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {language === 'azerbaijani' ? 'Hələ sertifikat əlavə edilməyib' : 'No certifications added yet'}
+          </h3>
+          <p className="text-gray-600 mb-4">
+            {language === 'azerbaijani' ? 
+              'Peşəkar inkişafınızı göstərmək üçün sertifikatlarınızı əlavə edin' : 
+              'Add your certifications to showcase your professional development'
+            }
+          </p>
+          <button
+            onClick={addCertification}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <span className="text-lg">+</span>
+            {language === 'azerbaijani' ? 'İlk sertifikatı əlavə et' : 'Add first certification'}
+          </button>
         </div>
       ) : (
         <div className="space-y-4">
           {data.map((certification, index) => (
-            <div key={certification.id} className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-600">#{index + 1}</span>
-                  <span className="text-sm text-gray-900 font-medium">{certification.name}</span>
-                  {certification.name && certification.issuer && (
-                    <span className="text-xs text-gray-500">- {certification.issuer}</span>
-                  )}
-                  {certification.expiryDate && isExpired(certification.expiryDate) && (
-                    <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">
-                      Müddəti keçib
-                    </span>
-                  )}
+            <div key={certification.id} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-lg">🏆</span>
+                    <h3 className="font-medium text-gray-900">
+                      {certification.name || (language === 'azerbaijani' ? 'Sertifikat adı' : 'Certification name')}
+                    </h3>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span>🏢</span>
+                      <span>{certification.issuer || (language === 'azerbaijani' ? 'Verən təşkilat' : 'Issuing organization')}</span>
+                    </div>
+                    {certification.date && (
+                      <div className="flex items-center gap-2">
+                        <span>📅</span>
+                        <span>{formatDate(certification.date)}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => moveCertification(certification.id, 'up')}
                     disabled={index === 0}
-                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={language === 'azerbaijani' ? 'Yuxarı köçür' : 'Move up'}
                   >
                     ↑
                   </button>
                   <button
                     onClick={() => moveCertification(certification.id, 'down')}
                     disabled={index === data.length - 1}
-                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={language === 'azerbaijani' ? 'Aşağı köçür' : 'Move down'}
                   >
                     ↓
                   </button>
                   <button
                     onClick={() => setExpandedId(expandedId === certification.id ? null : certification.id)}
-                    className="p-1 text-blue-600 hover:text-blue-800"
+                    className="p-2 text-gray-500 hover:text-gray-700"
+                    title={language === 'azerbaijani' ? 'Redaktə et' : 'Edit'}
                   >
-                    {expandedId === certification.id ? '▼' : '▶'}
+                    ✏️
                   </button>
                   <button
                     onClick={() => removeCertification(certification.id)}
-                    className="p-1 text-red-600 hover:text-red-800"
+                    className="p-2 text-red-500 hover:text-red-700"
+                    title={language === 'azerbaijani' ? 'Sil' : 'Delete'}
                   >
-                    ✕
+                    🗑️
                   </button>
                 </div>
               </div>
 
               {expandedId === certification.id && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border-t border-gray-200 pt-4 space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Sertifikat adı <span className="text-red-500">*</span>
+                        {getLabel('name', language)} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={certification.name}
                         onChange={(e) => updateCertification(certification.id, 'name', e.target.value)}
+                        placeholder={language === 'azerbaijani' ? 'AWS Cloud Practitioner' : 'AWS Cloud Practitioner'}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="AWS Cloud Practitioner, PMP, və s."
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Verən təşkilat <span className="text-red-500">*</span>
+                        {language === 'azerbaijani' ? 'Verən təşkilat' : 'Issuing organization'} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={certification.issuer}
                         onChange={(e) => updateCertification(certification.id, 'issuer', e.target.value)}
+                        placeholder={language === 'azerbaijani' ? 'Amazon Web Services' : 'Amazon Web Services'}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Amazon Web Services, PMI, Microsoft, və s."
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Verilmə tarixi <span className="text-red-500">*</span>
+                        {getLabel('date', language)} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="month"
-                        value={certification.issueDate}
-                        onChange={(e) => updateCertification(certification.id, 'issueDate', e.target.value)}
+                        value={certification.date}
+                        onChange={(e) => updateCertification(certification.id, 'date', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Bitirmə tarixi
-                      </label>
-                      <input
-                        type="month"
-                        value={certification.expiryDate || ''}
-                        onChange={(e) => updateCertification(certification.id, 'expiryDate', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      />
-                      <p className="text-sm text-gray-500 mt-1">
-                        Müddəti yoxdursa, boş buraxın
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Sertifikat ID
-                      </label>
-                      <input
-                        type="text"
-                        value={certification.credentialId || ''}
-                        onChange={(e) => updateCertification(certification.id, 'credentialId', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="ABC123456789"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Sertifikat URL-i
+                        {language === 'azerbaijani' ? 'Sertifikat URL-i' : 'Certification URL'}
                       </label>
                       <input
                         type="url"
@@ -219,31 +217,28 @@ export default function CertificationsSection({ data, onChange }: Certifications
                     </div>
                   </div>
 
-                  {certification.issueDate && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {getLabel('description', language)}
+                    </label>
+                    <textarea
+                      value={certification.description || ''}
+                      onChange={(e) => updateCertification(certification.id, 'description', e.target.value)}
+                      placeholder={language === 'azerbaijani' ? 
+                        'Sertifikatın təsviri və əldə edilən bacarıqlar...' : 
+                        'Description of the certification and skills gained...'
+                      }
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    />
+                  </div>
+
+                  {certification.date && (
                     <div className="bg-gray-50 rounded-lg p-3">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <span>📅</span>
-                        <span>
-                          {formatDate(certification.issueDate)}
-                          {certification.expiryDate && (
-                            <>
-                              {' - '}
-                              <span className={isExpired(certification.expiryDate) ? 'text-red-600' : ''}>
-                                {formatDate(certification.expiryDate)}
-                              </span>
-                              {isExpired(certification.expiryDate) && (
-                                <span className="text-red-600"> (Müddəti keçib)</span>
-                              )}
-                            </>
-                          )}
-                        </span>
+                        <span>{formatDate(certification.date)}</span>
                       </div>
-                      {certification.credentialId && (
-                        <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                          <span>🆔</span>
-                          <span>ID: {certification.credentialId}</span>
-                        </div>
-                      )}
                       {certification.url && (
                         <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
                           <span>🔗</span>
@@ -253,7 +248,7 @@ export default function CertificationsSection({ data, onChange }: Certifications
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:text-blue-800 underline"
                           >
-                            Sertifikatı görüntülə
+                            {language === 'azerbaijani' ? 'Sertifikatı görüntülə' : 'View certificate'}
                           </a>
                         </div>
                       )}
@@ -267,12 +262,14 @@ export default function CertificationsSection({ data, onChange }: Certifications
       )}
 
       {data.length > 0 && (
-        <div className="bg-blue-50 rounded-lg p-4">
-          <h4 className="font-medium text-blue-900 mb-2">💡 Məsləhət:</h4>
-          <p className="text-sm text-blue-800">
-            Sertifikatlarınızı əhəmiyyət sırasına görə düzün. Aktual olan və iş üçün vacib olanları 
-            yuxarıda yerləşdirin. Sertifikat linkləri və ID-ləri əlavə etməyi unutmayın.
-          </p>
+        <div className="text-center">
+          <button
+            onClick={addCertification}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            <span className="text-lg">+</span>
+            {language === 'azerbaijani' ? 'Başqa sertifikat əlavə et' : 'Add another certification'}
+          </button>
         </div>
       )}
     </div>
