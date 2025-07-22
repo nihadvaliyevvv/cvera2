@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
 import { CVData as CVDataType } from '@/types/cv';
 import { CVLanguage, getDefaultCVLanguage, getLabel, SECTION_LABELS } from '@/lib/cvLanguage';
+import { translateCVContent, canUseAIFeatures } from '@/lib/aiSummary';
 import PersonalInfoSection from './sections/PersonalInfoSection';
 import ExperienceSection from './sections/ExperienceSection';
 import EducationSection from './sections/EducationSection';
@@ -198,16 +199,86 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState<'pdf' | 'docx' | null>(null);
+  const [translating, setTranslating] = useState(false);
+  const [showTranslationDialog, setShowTranslationDialog] = useState(false);
+  const [pendingLanguage, setPendingLanguage] = useState<CVLanguage | null>(null);
 
-  // Handle CV language change
-  const handleLanguageChange = (newLanguage: CVLanguage) => {
+  // Handle CV language change with translation option
+  const handleLanguageChange = async (newLanguage: CVLanguage) => {
+    const currentLanguage = cv.data.cvLanguage || 'azerbaijani';
+    
+    // If language is the same, no need to change
+    if (currentLanguage === newLanguage) return;
+
+    // Check if user has content to translate
+    const hasContent = cv.data.personalInfo?.summary || 
+                      (cv.data.experience && cv.data.experience.length > 0) ||
+                      (cv.data.education && cv.data.education.length > 0);
+
+    // If user has AI features and content, show translation dialog
+    if (canUseAIFeatures(userTier) && hasContent) {
+      setPendingLanguage(newLanguage);
+      setShowTranslationDialog(true);
+    } else {
+      // Just change language without translation
+      setCv(prevCv => ({
+        ...prevCv,
+        data: {
+          ...prevCv.data,
+          cvLanguage: newLanguage
+        }
+      }));
+    }
+  };
+
+  // Translate CV content to new language
+  const handleTranslateContent = async () => {
+    if (!pendingLanguage) return;
+
+    setTranslating(true);
+    setShowTranslationDialog(false);
+    
+    try {
+      const translatedData = await translateCVContent(cv.data, pendingLanguage);
+      setCv(prevCv => ({
+        ...prevCv,
+        data: translatedData
+      }));
+      setSuccess(pendingLanguage === 'english' ? 
+        'CV content translated to English successfully!' : 
+        'CV məzmunu Azərbaycan dilinə tərcümə edildi!'
+      );
+    } catch (error) {
+      console.error('Translation error:', error);
+      setError('Translation failed. Language changed without content translation.');
+      // Still change the language even if translation fails
+      setCv(prevCv => ({
+        ...prevCv,
+        data: {
+          ...prevCv.data,
+          cvLanguage: pendingLanguage
+        }
+      }));
+    } finally {
+      setTranslating(false);
+      setPendingLanguage(null);
+    }
+  };
+
+  // Skip translation and just change language
+  const handleSkipTranslation = () => {
+    if (!pendingLanguage) return;
+    
     setCv(prevCv => ({
       ...prevCv,
       data: {
         ...prevCv.data,
-        cvLanguage: newLanguage
+        cvLanguage: pendingLanguage
       }
     }));
+    
+    setShowTranslationDialog(false);
+    setPendingLanguage(null);
   };
 
   const loadCV = useCallback(async () => {
@@ -485,19 +556,23 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                 </svg>
                 <select
-                  value={cv.data.cvLanguage || 'english'}
-                  onChange={(e) => setCv(prev => ({
-                    ...prev,
-                    data: {
-                      ...prev.data,
-                      cvLanguage: e.target.value as CVLanguage
-                    }
-                  }))}
-                  className="text-sm border border-gray-300 rounded-lg px-3 py-1 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={cv.data.cvLanguage || 'azerbaijani'}
+                  onChange={(e) => handleLanguageChange(e.target.value as CVLanguage)}
+                  disabled={translating}
+                  className="text-sm border border-gray-300 rounded-lg px-3 py-1 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                 >
                   <option value="azerbaijani">🇦🇿 Azərbaycan</option>
                   <option value="english">🇺🇸 English</option>
                 </select>
+                {translating && (
+                  <div className="flex items-center text-sm text-blue-600">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Translating...
+                  </div>
+                )}
               </div>
             </div>
 
@@ -916,6 +991,55 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
           </div>
         </div>
       </div>
+
+      {/* Translation Dialog */}
+      {showTranslationDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center mb-4">
+              <svg className="w-6 h-6 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+              </svg>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {pendingLanguage === 'english' ? 'Translate to English?' : 'Azərbaycan dilinə tərcümə edilsin?'}
+              </h3>
+            </div>
+            
+            <p className="text-gray-600 mb-6">
+              {pendingLanguage === 'english' ? 
+                'Would you like to translate your CV content to English using AI? This will translate your experience, education, and other text content.' :
+                'CV məzmununuzu AI ilə Azərbaycan dilinə tərcümə etmək istəyirsiniz? Bu, təcrübə, təhsil və digər mətn məzmununu tərcümə edəcək.'
+              }
+            </p>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleSkipTranslation}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                {pendingLanguage === 'english' ? 'Skip Translation' : 'Tərcüməni Keç'}
+              </button>
+              <button
+                onClick={handleTranslateContent}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                {pendingLanguage === 'english' ? 'Translate Content' : 'Məzmunu Tərcümə Et'}
+              </button>
+            </div>
+            
+            {!canUseAIFeatures(userTier) && (
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  {pendingLanguage === 'english' ? 
+                    'AI translation requires Premium subscription. Only the interface language will change.' :
+                    'AI tərcümə Premium abunəlik tələb edir. Yalnız interfeys dili dəyişəcək.'
+                  }
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

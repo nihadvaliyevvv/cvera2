@@ -414,3 +414,81 @@ export function getAIFeatureMessage(userTier: string): string {
   
   return 'AI professional summary Premium istifadəçilər üçün mövcuddur. Planınızı yüksəldin!';
 }
+
+/**
+ * Translate CV content to target language using AI
+ */
+export async function translateCVContent(cvData: any, targetLanguage: CVLanguage): Promise<any> {
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+
+    // Create translation prompt
+    const prompt = createTranslationPrompt(cvData, targetLanguage);
+    
+    console.log(`🌐 Translating CV content to ${targetLanguage}...`);
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const translatedText = response.text();
+
+    console.log('✅ CV content translated successfully');
+    
+    // Parse the JSON response
+    const translatedData = JSON.parse(translatedText);
+    return { ...cvData, ...translatedData, cvLanguage: targetLanguage };
+  } catch (error) {
+    console.error('❌ Translation error:', error);
+    
+    // Fallback: Return original data with language changed
+    return { ...cvData, cvLanguage: targetLanguage };
+  }
+}
+
+/**
+ * Create translation prompt for CV content
+ */
+function createTranslationPrompt(cvData: any, targetLanguage: CVLanguage): string {
+  const isToEnglish = targetLanguage === 'english';
+  const targetLang = isToEnglish ? 'English' : 'Azerbaijani';
+  const sourceLang = isToEnglish ? 'Azerbaijani' : 'English';
+
+  const prompt = `Translate the following CV content from ${sourceLang} to ${targetLang}. 
+Maintain professional tone and preserve formatting. Return ONLY a valid JSON object with the translated fields.
+
+Current CV data:
+${JSON.stringify(cvData, null, 2)}
+
+Please translate the following fields while keeping the structure intact:
+- personalInfo.professionalSummary
+- experience[].position
+- experience[].company  
+- experience[].description
+- education[].degree
+- education[].institution
+- education[].description
+- skills[].name
+- projects[].name
+- projects[].description
+- certifications[].name
+- certifications[].issuer
+- certifications[].description
+- languages[].language
+- volunteerExperience[].organization
+- volunteerExperience[].role
+- volunteerExperience[].description
+
+Important rules:
+1. Keep the same JSON structure
+2. Translate content naturally and professionally
+3. Keep technical terms and proper nouns appropriate for the target language
+4. For skills, translate categories but keep technology names in original form
+5. Return valid JSON only, no additional text
+6. Preserve all IDs, dates, and URLs unchanged
+
+${isToEnglish ? 
+  'Translate to professional English suitable for international job applications.' :
+  'Azərbaycan dilinə tərcümə edin, professional və formal dil istifadə edin.'
+}`;
+
+  return prompt;
+}
