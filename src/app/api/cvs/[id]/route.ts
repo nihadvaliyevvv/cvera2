@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
+import { isValidCVLanguage } from "@/lib/cvLanguage";
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || "";
@@ -126,6 +127,14 @@ export async function PUT(
       console.error('Invalid cv_data format for update:', typeof cv_data);
       return NextResponse.json({ error: "cv_data must be an object" }, { status: 400 });
     }
+
+    // Validate and set CV language if specified
+    if (cv_data.cvLanguage && !isValidCVLanguage(cv_data.cvLanguage)) {
+      console.error('Invalid CV language:', cv_data.cvLanguage);
+      return NextResponse.json({ error: "Invalid CV language. Must be 'azerbaijani' or 'english'" }, { status: 400 });
+    }
+    
+    console.log('CV language for update:', cv_data.cvLanguage || 'not specified');
     
     console.log('Updating CV with ID:', id, 'userId:', userId);
     

@@ -128,6 +128,7 @@ export interface CVData {
   testScores?: TestScore[];
   recommendations?: Recommendation[];
   courses?: Course[];
+  cvLanguage?: 'azerbaijani' | 'english'; // CV display language
 }
 
 export interface CV {

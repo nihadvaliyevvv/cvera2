@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
 import { CVData as CVDataType } from '@/types/cv';
+import { CVLanguage, getDefaultCVLanguage } from '@/lib/cvLanguage';
 import PersonalInfoSection from './sections/PersonalInfoSection';
 import ExperienceSection from './sections/ExperienceSection';
 import EducationSection from './sections/EducationSection';
@@ -155,7 +156,10 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
       return {
         title: 'Imported CV',
         templateId: 'professional',
-        data: transformedData
+        data: {
+          ...transformedData,
+          cvLanguage: getDefaultCVLanguage()
+        }
       };
     }
     return {
@@ -182,7 +186,8 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
         honorsAwards: [],
         testScores: [],
         recommendations: [],
-        courses: []
+        courses: [],
+        cvLanguage: getDefaultCVLanguage()
       }
     };
   });
@@ -397,17 +402,36 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
     }
   };
 
-  const sections = [
-    { id: 'personal', label: 'Şəxsi Məlumatlar', icon: '👤' },
-    { id: 'experience', label: 'İş Təcrübəsi', icon: '💼' },
-    { id: 'education', label: 'Təhsil', icon: '🎓' },
-    { id: 'skills', label: 'Bacarıqlar', icon: '🛠️' },
-    { id: 'languages', label: 'Dillər', icon: '🌍' },
-    { id: 'projects', label: 'Layihələr', icon: '🚀' },
-    { id: 'certifications', label: 'Sertifikatlar', icon: '🏆' },
-    { id: 'volunteer', label: 'Könüllü Təcrübə', icon: '❤️' },
-    { id: 'template', label: 'Şablon Seçimi', icon: '🎨' }
-  ];
+  // Get sections based on CV language
+  const getSections = (language: CVLanguage) => {
+    if (language === 'english') {
+      return [
+        { id: 'personal', label: 'Personal Information', icon: '👤' },
+        { id: 'experience', label: 'Work Experience', icon: '💼' },
+        { id: 'education', label: 'Education', icon: '🎓' },
+        { id: 'skills', label: 'Skills', icon: '🛠️' },
+        { id: 'languages', label: 'Languages', icon: '🌍' },
+        { id: 'projects', label: 'Projects', icon: '🚀' },
+        { id: 'certifications', label: 'Certifications', icon: '🏆' },
+        { id: 'volunteer', label: 'Volunteer Experience', icon: '❤️' },
+        { id: 'template', label: 'Template Selection', icon: '🎨' }
+      ];
+    } else {
+      return [
+        { id: 'personal', label: 'Şəxsi Məlumatlar', icon: '👤' },
+        { id: 'experience', label: 'İş Təcrübəsi', icon: '💼' },
+        { id: 'education', label: 'Təhsil', icon: '🎓' },
+        { id: 'skills', label: 'Bacarıqlar', icon: '🛠️' },
+        { id: 'languages', label: 'Dillər', icon: '🌍' },
+        { id: 'projects', label: 'Layihələr', icon: '🚀' },
+        { id: 'certifications', label: 'Sertifikatlar', icon: '🏆' },
+        { id: 'volunteer', label: 'Könüllü Təcrübə', icon: '❤️' },
+        { id: 'template', label: 'Şablon Seçimi', icon: '🎨' }
+      ];
+    }
+  };
+
+  const sections = getSections(cv.data.cvLanguage || 'azerbaijani');
 
   if (loading) {
     return (
@@ -443,6 +467,27 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                 onChange={(e) => setCv(prev => ({ ...prev, title: e.target.value }))}
                 className="w-full sm:w-64 text-lg font-semibold border-none outline-none focus:ring-2 focus:ring-blue-500 rounded-lg px-3 py-2 bg-gray-50 hover:bg-gray-100 focus:bg-white transition-colors"
               />
+              
+              {/* CV Language Selector */}
+              <div className="flex items-center space-x-2">
+                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                </svg>
+                <select
+                  value={cv.data.cvLanguage || 'english'}
+                  onChange={(e) => setCv(prev => ({
+                    ...prev,
+                    data: {
+                      ...prev.data,
+                      cvLanguage: e.target.value as CVLanguage
+                    }
+                  }))}
+                  className="text-sm border border-gray-300 rounded-lg px-3 py-1 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="azerbaijani">🇦🇿 Azərbaycan</option>
+                  <option value="english">🇺🇸 English</option>
+                </select>
+              </div>
             </div>
 
             <div className="flex items-center space-x-2">
@@ -607,6 +652,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                       }}
                       userTier={userTier}
                       cvData={cv.data}
+                      language={cv.data.cvLanguage || 'azerbaijani'}
                       onChange={(data: any) => updateCVData('personalInfo', {
                         fullName: data.name,
                         email: data.email,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { canCreateCV, canUseTemplate, incrementDailyUsage } from "@/lib/subscription-limits";
+import { isValidCVLanguage, getDefaultCVLanguage } from "@/lib/cvLanguage";
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || "";
@@ -86,6 +87,16 @@ export async function POST(req: NextRequest) {
     if (!title || !cv_data) {
       console.error('Missing required fields:', { title: !!title, cv_data: !!cv_data });
       return NextResponse.json({ error: "Title and cv_data required." }, { status: 400 });
+    }
+
+    // Set default CV language if not specified
+    if (cv_data && typeof cv_data === 'object') {
+      if (!cv_data.cvLanguage) {
+        cv_data.cvLanguage = getDefaultCVLanguage();
+      } else if (!isValidCVLanguage(cv_data.cvLanguage)) {
+        cv_data.cvLanguage = 'english'; // Fallback to English
+      }
+      console.log('CV language set to:', cv_data.cvLanguage);
     }
     
     // Validate cv_data structure

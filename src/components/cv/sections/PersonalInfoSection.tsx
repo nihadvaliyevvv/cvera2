@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { CVLanguage, getLabel } from '@/lib/cvLanguage';
 
 interface PersonalInfo {
   name: string;
@@ -17,9 +18,10 @@ interface PersonalInfoSectionProps {
   onChange: (data: PersonalInfo) => void;
   userTier?: string; // User tier for premium features
   cvData?: any; // Full CV data for AI summary
+  language?: CVLanguage; // CV language
 }
 
-export default function PersonalInfoSection({ data, onChange, userTier = 'Free', cvData }: PersonalInfoSectionProps) {
+export default function PersonalInfoSection({ data, onChange, userTier = 'Free', cvData, language = 'azerbaijani' }: PersonalInfoSectionProps) {
   const [imageUploading, setImageUploading] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
   const isPremium = userTier === 'Premium';
@@ -123,14 +125,14 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
     <div className="space-y-6">
       <div className="flex items-center gap-2 mb-6">
         <span className="text-2xl">👤</span>
-        <h2 className="text-xl font-semibold text-gray-900">Şəxsi məlumatlar</h2>
+        <h2 className="text-xl font-semibold text-gray-900">{getLabel('personalInfo', language)}</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {isPremium && (
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Profil Şəkli <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full">Premium</span>
+              {language === 'english' ? 'Profile Image' : 'Profil Şəkli'} <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full">Premium</span>
             </label>
             {data.profileImage ? (
               <div className="flex items-center space-x-4">
@@ -180,21 +182,21 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Ad və Soyad <span className="text-red-500">*</span>
+            {getLabel('fullName', language)} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             value={data.name}
             onChange={(e) => handleChange('name', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            placeholder="Ad və Soyad"
+            placeholder={getLabel('fullName', language)}
             required
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Email <span className="text-gray-400 text-xs">(ixtiyari)</span>
+            {getLabel('email', language)} <span className="text-gray-400 text-xs">({getLabel('optional', language)})</span>
           </label>
           <input
             type="email"
@@ -207,20 +209,20 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Telefon <span className="text-gray-400 text-xs">(ixtiyari)</span>
+            {getLabel('phone', language)} <span className="text-gray-400 text-xs">({getLabel('optional', language)})</span>
           </label>
           <input
             type="tel"
             value={data.phone}
             onChange={(e) => handleChange('phone', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            placeholder="+994 XX XXX XX XX"
+            placeholder={language === 'english' ? '+1 (555) 123-4567' : '+994 XX XXX XX XX'}
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Veb sayt
+            {getLabel('website', language)}
           </label>
           <input
             type="url"
@@ -233,7 +235,7 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            LinkedIn
+            {getLabel('linkedin', language)}
           </label>
           <input
             type="url"
