@@ -1,106 +1,51 @@
-// Test real LinkedIn API structure  
-const axios = require('axios');
+#!/usr/bin/env node
+/**
+ * LinkedIn Import API Real Test
+ */
 
-async function testRealLinkedInAPI() {
-  const testUrl = 'https://www.linkedin.com/in/williamhgates';
-  const apiKey = process.env.RAPIDAPI_KEY_1 || 'your-key-here';
-  
-  if (!apiKey || apiKey === 'your-key-here') {
-    console.log('❌ RapidAPI key not found. Using mock data structure test.');
-    return;
-  }
+async function testLinkedInImport() {
+  console.log('🚀 LinkedIn Import API Test Başlayır...\n');
+
+  const API_BASE = 'http://localhost:3001/api';
+
+  // Test LinkedIn URLs
+  const testUrls = [
+    'https://www.linkedin.com/in/elonmusk',
+    'https://www.linkedin.com/in/satyanadella',
+    'https://www.linkedin.com/in/nihatvaliyev',
+    'https://linkedin.com/in/test-user-az'
+  ];
+
+  console.log('📊 API Status yoxlanılır...');
+  console.log('Test LinkedIn URL: https://www.linkedin.com/in/elonmusk');
   
   try {
-    console.log('Testing real LinkedIn API response structure...');
+    const fetch = (await import('node-fetch')).default;
+    const response = await fetch(`${API_BASE}/import/linkedin`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ url: 'https://www.linkedin.com/in/elonmusk' })
+    });
+
+    const data = await response.json();
     
-    const response = await axios.get(
-      `https://fresh-linkedin-profile-data.p.rapidapi.com/get-linkedin-profile`,
-      {
-        params: { linkedin_url: testUrl },
-        headers: {
-          'X-RapidAPI-Key': apiKey,
-          'X-RapidAPI-Host': 'fresh-linkedin-profile-data.p.rapidapi.com'
-        }
-      }
-    );
-    
-    const data = response.data.data;
-    
-    console.log('\n=== Real LinkedIn API Response Structure ===');
-    console.log('Has languages:', !!data.languages);
-    console.log('Languages count:', (data.languages || []).length);
-    console.log('Languages sample:', data.languages ? data.languages.slice(0, 2) : 'None');
-    
-    console.log('\nHas certifications:', !!data.certifications);
-    console.log('Certifications count:', (data.certifications || []).length);
-    console.log('Certifications sample:', data.certifications ? data.certifications.slice(0, 2) : 'None');
-    
-    console.log('\nHas projects:', !!data.projects);
-    console.log('Projects count:', (data.projects || []).length);
-    console.log('Projects sample:', data.projects ? data.projects.slice(0, 2) : 'None');
-    
-    console.log('\nHas volunteer:', !!data.volunteer);
-    console.log('Volunteer count:', (data.volunteer || []).length);
-    console.log('Volunteer sample:', data.volunteer ? data.volunteer.slice(0, 2) : 'None');
-    
-    console.log('\n=== Response Keys ===');
-    console.log('Available keys:', Object.keys(data));
+    if (data.success) {
+      console.log('✅ Import uğurlu:');
+      console.log(`   Ad: ${data.data.personalInfo?.name}`);
+      console.log(`   Başlıq: ${data.data.personalInfo?.headline}`);
+      console.log(`   İş təcrübəsi: ${data.data.experience?.length || 0} ədəd`);
+      console.log(`   Təhsil: ${data.data.education?.length || 0} ədəd`);
+      console.log(`   Bacarıqlar: ${data.data.skills?.length || 0} ədəd`);
+      console.log('✅ Real LinkedIn data gətirildi!');
+    } else {
+      console.log('❌ Import uğursuz:', data.error);
+    }
     
   } catch (error) {
-    console.error('❌ LinkedIn API test failed:', error.message);
-    console.log('This is expected if API key is not configured or rate limited.');
+    console.log('❌ Xəta:', error.message);
   }
 }
 
-// Test with mock data to verify structure
-console.log('=== Testing with mock data structure ===');
-const mockData = {
-  languages: [],
-  certifications: [],
-  projects: [],
-  volunteer: []
-};
-
-console.log('Mock languages:', mockData.languages);
-console.log('Mock certifications:', mockData.certifications);
-console.log('Mock projects:', mockData.projects);
-console.log('Mock volunteer:', mockData.volunteer);
-
-// Test empty arrays properly map
-const extractCertifications = (data) => {
-  return (data.certifications || []).map((cert) => ({
-    name: cert.name || cert.title || "",
-    issuer: cert.authority || cert.issuer || cert.organization || "",
-    date: cert.date || `${cert.start_date || ""} - ${cert.end_date || ""}`,
-    url: cert.url || "",
-    license_number: cert.license_number || cert.credential_id || "",
-  }));
-};
-
-const extractProjects = (data) => {
-  return (data.projects || []).map((project) => ({
-    name: project.name || project.title || "",
-    description: project.description || "",
-    url: project.url || "",
-    date: project.date || `${project.start_date || ""} - ${project.end_date || ""}`,
-  }));
-};
-
-const extractVolunteer = (data) => {
-  return (data.volunteer || data.volunteer_experience || []).map((vol) => ({
-    organization: vol.organization || vol.company || "",
-    role: vol.role || vol.title || vol.position || "",
-    description: vol.description || "",
-    start_date: vol.start_date || "",
-    end_date: vol.end_date || "",
-    cause: vol.cause || "",
-  }));
-};
-
-console.log('\n=== Testing empty arrays ===');
-console.log('Empty certifications:', extractCertifications(mockData));
-console.log('Empty projects:', extractProjects(mockData));
-console.log('Empty volunteer:', extractVolunteer(mockData));
-
-// Test LinkedIn API if key is available
-testRealLinkedInAPI();
+testLinkedInImport().catch(console.error);
