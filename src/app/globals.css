@@ -16,6 +16,27 @@
   --warning-color: #f59e0b;
 }
 
+/* Landing page navigation hover effects */
+.nav-link {
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: var(--brand-blue);
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Animation for SVG dash effect */
+@keyframes dash {
+  to {
+    stroke-dashoffset: -30;
+  }
+}
+
 /* Force light mode - remove dark mode */
 body {
   background: linear-gradient(135deg, #dbeafe 0%, #f1f5f9 25%, #ffffff 50%, #f1f5f9 75%, #dbeafe 100%);

@@ -30,64 +30,14 @@ export default function LandingPage() {
 
   return (
     <div id="top" className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden" style={{scrollBehavior: 'smooth'}}>
-      {/* Ultra Creative Background Effects */}
+      {/* Enhanced Background Effects */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {/* Animated Floating Spheres */}
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-400/40 to-indigo-300/30 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute top-1/2 -left-48 w-80 h-80 bg-gradient-to-tr from-purple-300/30 to-pink-300/25 rounded-full blur-3xl animate-bounce" style={{animationDuration: '6s'}}></div>
-        <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-gradient-to-bl from-emerald-300/30 to-teal-300/25 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
-        <div className="absolute top-1/4 left-1/3 w-72 h-72 bg-gradient-to-tr from-amber-300/25 to-orange-300/20 rounded-full blur-3xl animate-bounce" style={{animationDuration: '8s', animationDelay: '1s'}}></div>
-        <div className="absolute bottom-1/3 -right-32 w-88 h-88 bg-gradient-to-bl from-rose-300/30 to-pink-300/20 rounded-full blur-3xl animate-pulse" style={{animationDelay: '4s'}}></div>
-        
-        {/* Floating Geometric Shapes */}
-        <div className="absolute top-20 left-20 w-16 h-16 bg-gradient-to-r from-cyan-400/20 to-blue-400/20 rounded-lg rotate-45 animate-spin" style={{animationDuration: '20s'}}></div>
-        <div className="absolute top-60 right-20 w-12 h-12 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-full animate-ping" style={{animationDelay: '3s'}}></div>
-        <div className="absolute bottom-40 left-40 w-20 h-20 bg-gradient-to-r from-green-400/20 to-emerald-400/20 transform rotate-12 animate-pulse" style={{animationDelay: '1s'}}></div>
-        
-        {/* Flowing Wave Pattern */}
-        <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-r from-blue-100/30 via-purple-100/20 to-pink-100/30 opacity-60" style={{clipPath: 'polygon(0 20px, 100% 0, 100% 100%, 0 100%)'}}>
-          <div className="w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse"></div>
-        </div>
-        
-        {/* Animated Grid Pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="w-full h-full" style={{
-            backgroundImage: `
-              linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px),
-              linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px)
-            `,
-            backgroundSize: '50px 50px',
-            animation: 'float 20s ease-in-out infinite'
-          }}></div>
-        </div>
-        
-        {/* Floating CV Icons */}
-        <div className="absolute top-32 right-1/3 text-4xl opacity-10 animate-bounce" style={{animationDuration: '3s', animationDelay: '2s'}}>📄</div>
-        <div className="absolute bottom-32 left-1/4 text-3xl opacity-10 animate-pulse" style={{animationDelay: '1s'}}>💼</div>
-        <div className="absolute top-2/3 left-1/6 text-5xl opacity-10 animate-bounce" style={{animationDuration: '4s', animationDelay: '3s'}}>🚀</div>
-        <div className="absolute top-1/2 right-1/5 text-3xl opacity-10 animate-ping" style={{animationDelay: '2s'}}>✨</div>
-        
-        {/* Particle Effect */}
-        <div className="absolute inset-0">
-          <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-blue-400 rounded-full animate-ping" style={{animationDelay: '1s'}}></div>
-          <div className="absolute top-3/4 left-3/4 w-1 h-1 bg-purple-400 rounded-full animate-ping" style={{animationDelay: '3s'}}></div>
-          <div className="absolute top-1/2 left-1/6 w-1 h-1 bg-pink-400 rounded-full animate-ping" style={{animationDelay: '2s'}}></div>
-          <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-green-400 rounded-full animate-ping" style={{animationDelay: '4s'}}></div>
-          <div className="absolute bottom-1/4 right-1/4 w-1 h-1 bg-yellow-400 rounded-full animate-ping" style={{animationDelay: '5s'}}></div>
-        </div>
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-200/30 to-indigo-200/20 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 -left-48 w-80 h-80 bg-gradient-to-tr from-purple-200/20 to-pink-200/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-gradient-to-bl from-emerald-200/20 to-teal-200/20 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/4 left-1/3 w-72 h-72 bg-gradient-to-tr from-amber-200/15 to-orange-200/15 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/3 -right-32 w-88 h-88 bg-gradient-to-bl from-rose-200/20 to-pink-200/15 rounded-full blur-3xl"></div>
       </div>
-      
-      {/* CSS Keyframes for custom animations */}
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(180deg); }
-        }
-        @keyframes gentle-spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
 
       {/* Header */}
       <header className="relative z-10 bg-white/90 backdrop-blur-xl border-b border-blue-200/30 shadow-lg shadow-blue-100/20">
@@ -106,26 +56,26 @@ export default function LandingPage() {
             {/* Navigation */}
             <div className="flex items-center space-x-6">
               <nav className="hidden md:flex items-center space-x-6">
-                <a href="#features" className="text-gray-600 font-medium">
+                <a href="#features" className="nav-link text-gray-600 hover:text-blue-600 font-medium transition-all duration-300 hover:scale-105 transform relative">
                   Xüsusiyyətlər
                 </a>
-                <a href="#why-us" className="text-gray-600 font-medium">
+                <a href="#why-us" className="nav-link text-gray-600 hover:text-blue-600 font-medium transition-all duration-300 hover:scale-105 transform relative">
                   Niyə Biz?
                 </a>
-                <a href="#how-it-works" className="text-gray-600 font-medium">
+                <a href="#how-it-works" className="nav-link text-gray-600 hover:text-blue-600 font-medium transition-all duration-300 hover:scale-105 transform relative">
                   Necə İşləyir?
                 </a>
-                <a href="#common-mistakes" className="text-gray-600 font-medium">
+                <a href="#common-mistakes" className="nav-link text-gray-600 hover:text-blue-600 font-medium transition-all duration-300 hover:scale-105 transform relative">
                   CV Səhvləri
                 </a>
               </nav>
               
-              <Link href="/auth/login" className="hidden md:block bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2.5 rounded-xl font-medium shadow-lg shadow-blue-500/30">
+              <Link href="/auth/login" className="hidden md:block bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2.5 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-medium shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transform hover:-translate-y-0.5">
                 Daxil Ol
               </Link>
               
               {/* Mobile menu button */}
-              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 rounded-lg text-gray-600">
+              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-300">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {mobileMenuOpen ? (
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -143,19 +93,19 @@ export default function LandingPage() {
       {mobileMenuOpen && (
         <div className="md:hidden fixed top-16 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-b border-blue-200/30 shadow-lg">
           <nav className="px-4 py-6 space-y-4">
-            <a href="#features" onClick={() => setMobileMenuOpen(false)} className="block text-gray-600 font-medium py-2">
+            <a href="#features" onClick={() => setMobileMenuOpen(false)} className="block text-gray-600 hover:text-blue-600 font-medium transition-colors duration-300 py-2">
               Xüsusiyyətlər
             </a>
-            <a href="#why-us" onClick={() => setMobileMenuOpen(false)} className="block text-gray-600 font-medium py-2">
+            <a href="#why-us" onClick={() => setMobileMenuOpen(false)} className="block text-gray-600 hover:text-blue-600 font-medium transition-colors duration-300 py-2">
               Niyə Biz?
             </a>
-            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block text-gray-600 font-medium py-2">
+            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block text-gray-600 hover:text-blue-600 font-medium transition-colors duration-300 py-2">
               Necə İşləyir?
             </a>
-            <a href="#common-mistakes" onClick={() => setMobileMenuOpen(false)} className="block text-gray-600 font-medium py-2">
+            <a href="#common-mistakes" onClick={() => setMobileMenuOpen(false)} className="block text-gray-600 hover:text-blue-600 font-medium transition-colors duration-300 py-2">
               CV Səhvləri
             </a>
-            <Link href="/auth/login" className="block w-full text-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-medium shadow-lg mt-4">
+            <Link href="/auth/login" className="block w-full text-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-medium shadow-lg transition-all duration-300 mt-4">
               Daxil Ol
             </Link>
           </nav>
@@ -168,38 +118,47 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 py-20">
           <div className="text-center max-w-4xl mx-auto">
             <div className="mb-16" data-aos="fade-up" data-aos-duration="1000">
-              <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-                <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight transform transition-all duration-700 hover:scale-105">
+                <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent animate-pulse">
                   Professional CV
                 </span>
                 <br />
-                <span className="text-gray-800">
+                <span className="text-gray-800 transition-colors duration-500 hover:text-gray-700">
                   Hazırlayın
                 </span>
               </h1>
-              <p className="text-xl md:text-2xl text-gray-600 mb-12 leading-relaxed">
+              <p className="text-xl md:text-2xl text-gray-600 mb-12 leading-relaxed transition-all duration-500 hover:text-gray-700 transform hover:scale-105">
                 LinkedIn profilinizi avtomatik import edin və professional CV-nizi dəqiqələr içində yaradın
               </p>
             </div>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-6 justify-center mb-20" data-aos="fade-up" data-aos-delay="200">
-              <Link href="/auth/register" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-5 rounded-2xl font-semibold text-lg shadow-2xl shadow-blue-500/30">
-                <span className="flex items-center justify-center space-x-3">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <Link href="/auth/register" className="group relative bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-5 rounded-2xl font-semibold text-lg shadow-2xl shadow-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/50 transform hover:-translate-y-2 transition-all duration-300 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                <span className="relative flex items-center justify-center space-x-3">
+                  <svg className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                   <span>Pulsuz Başlayın</span>
                 </span>
+                
+                <div className="absolute top-0 -inset-full h-full w-1/2 z-[5] block transform -skew-x-12 bg-gradient-to-r from-transparent to-white/20 opacity-0 group-hover:animate-pulse group-hover:opacity-100"></div>
               </Link>
               
-              <a href="#features" className="bg-white/90 backdrop-blur-xl text-gray-800 px-10 py-5 rounded-2xl font-semibold text-lg shadow-xl shadow-blue-100/30 border border-blue-200/40">
-                <span className="flex items-center justify-center space-x-3">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <a href="#features" className="group relative bg-white/90 backdrop-blur-xl text-gray-800 px-10 py-5 rounded-2xl font-semibold text-lg shadow-xl shadow-blue-100/30 hover:shadow-2xl hover:shadow-blue-200/40 transform hover:-translate-y-2 transition-all duration-300 border border-blue-200/40 hover:border-blue-300/60 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-indigo-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                <span className="relative flex items-center justify-center space-x-3">
+                  <svg className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                   </svg>
                   <span>Daha Ətraflı</span>
                 </span>
+                
+                <div className="absolute top-0 -inset-full h-full w-1/2 z-[5] block transform -skew-x-12 bg-gradient-to-r from-transparent to-blue-100/30 opacity-0 group-hover:animate-pulse group-hover:opacity-100"></div>
               </a>
             </div>
           </div>
@@ -220,7 +179,7 @@ export default function LandingPage() {
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
-              <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-white/30" data-aos="fade-up">
+              <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 border border-white/30" data-aos="fade-up">
                 <div className="text-5xl mb-6 text-center">🚀</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">Sürətli Yaradılış</h3>
                 <p className="text-gray-600 text-center mb-4">LinkedIn profilinizi import edib dəqiqələr içində CV hazırlayın</p>
@@ -246,7 +205,7 @@ export default function LandingPage() {
                 </ul>
               </div>
               
-              <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-white/30" data-aos="fade-up" data-aos-delay="100">
+              <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 border border-white/30" data-aos="fade-up" data-aos-delay="100">
                 <div className="text-5xl mb-6 text-center">🎨</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">Professional Şablonlar</h3>
                 <p className="text-gray-600 text-center mb-4">Modern və cəlbedici CV şablonları arasından seçim edin</p>
@@ -272,7 +231,7 @@ export default function LandingPage() {
                 </ul>
               </div>
               
-              <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-white/30" data-aos="fade-up" data-aos-delay="200">
+              <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 border border-white/30" data-aos="fade-up" data-aos-delay="200">
                 <div className="text-5xl mb-6 text-center">📄</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">Çoxlu Format</h3>
                 <p className="text-gray-600 text-center mb-4">PDF və DOCX formatlarında CV-nizi ixrac edin</p>
@@ -357,7 +316,21 @@ export default function LandingPage() {
               </div>
             </div>
 
-            
+            {/* Statistics */}
+            <div className="grid md:grid-cols-3 gap-8 mt-16" data-aos="fade-up">
+              <div className="text-center">
+                <div className="text-4xl font-bold text-blue-600 mb-2">10,000+</div>
+                <p className="text-gray-600">Yaradılan CV-lər</p>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-bold text-purple-600 mb-2">95%</div>
+                <p className="text-gray-600">Müşteri məmnuniyyəti</p>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-bold text-green-600 mb-2">30+</div>
+                <p className="text-gray-600">Dəstəklənən dillər</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -463,7 +436,7 @@ export default function LandingPage() {
             <div className="text-center mb-16" data-aos="fade-up">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
                 <span className="bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
-                  Ən Çox Edilən CV Səhvlər
+                  Ən Çox Edilən CV Səhvləri
                 </span>
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
@@ -583,7 +556,7 @@ export default function LandingPage() {
                 Minlərlə insanın seçdiyi CVera ilə siz də dream job-unuzu tapın. 
                 LinkedIn import etməkdən tutmuş professional export-a qədər hər şey daxil!
               </p>
-              <Link href="/auth/register" className="inline-flex items-center space-x-3 bg-white text-blue-600 px-10 py-4 rounded-2xl font-semibold text-lg shadow-xl">
+              <Link href="/auth/register" className="inline-flex items-center space-x-3 bg-white text-blue-600 px-10 py-4 rounded-2xl font-semibold text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 hover:scale-105">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
@@ -593,6 +566,15 @@ export default function LandingPage() {
           </div>
         </div>
       </main>
+
+      {/* Scroll to top button */}
+      <div className="fixed bottom-8 right-8 z-50">
+        <a href="#top" className="group bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-full shadow-2xl shadow-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/50 transform hover:-translate-y-2 hover:scale-110 transition-all duration-300 backdrop-blur-sm border border-white/20" aria-label="Yuxarı qayıt">
+          <svg className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+          </svg>
+        </a>
+      </div>
 
       {/* Footer */}
       <footer className="relative z-10 bg-white/90 backdrop-blur-xl border-t border-blue-200/30 mt-20 shadow-lg shadow-blue-100/20">
@@ -612,12 +594,12 @@ export default function LandingPage() {
                 Professional CV Platform - LinkedIn integration ilə dəqiqələr içində peşəkar CV hazırlayın.
               </p>
               <div className="flex space-x-4">
-                <a href="#" className="text-gray-400">
+                <a href="#" className="text-gray-400 hover:text-blue-600 transition-colors duration-300">
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
                   </svg>
                 </a>
-                <a href="#" className="text-gray-400">
+                <a href="#" className="text-gray-400 hover:text-blue-600 transition-colors duration-300">
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                   </svg>
@@ -629,10 +611,10 @@ export default function LandingPage() {
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Sürətli Keçidlər</h3>
               <ul className="space-y-2">
-                <li><a href="#features" className="text-gray-600">Xüsusiyyətlər</a></li>
-                <li><a href="#why-us" className="text-gray-600">Niyə Biz?</a></li>
-                <li><a href="#how-it-works" className="text-gray-600">Necə İşləyir?</a></li>
-                <li><Link href="/auth/register" className="text-gray-600">Qeydiyyat</Link></li>
+                <li><a href="#features" className="text-gray-600 hover:text-blue-600 transition-colors duration-300">Xüsusiyyətlər</a></li>
+                <li><a href="#why-us" className="text-gray-600 hover:text-blue-600 transition-colors duration-300">Niyə Biz?</a></li>
+                <li><a href="#how-it-works" className="text-gray-600 hover:text-blue-600 transition-colors duration-300">Necə İşləyir?</a></li>
+                <li><Link href="/auth/register" className="text-gray-600 hover:text-blue-600 transition-colors duration-300">Qeydiyyat</Link></li>
               </ul>
             </div>
 
@@ -640,10 +622,10 @@ export default function LandingPage() {
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Dəstək</h3>
               <ul className="space-y-2">
-                <li><a href="mailto:support@cvera.az" className="text-gray-600">Email Dəstəyi</a></li>
-                <li><a href="#" className="text-gray-600">FAQ</a></li>
-                <li><a href="#" className="text-gray-600">Məxfilik Siyasəti</a></li>
-                <li><a href="#" className="text-gray-600">İstifadə Şərtləri</a></li>
+                <li><a href="mailto:support@cvera.az" className="text-gray-600 hover:text-blue-600 transition-colors duration-300">Email Dəstəyi</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-blue-600 transition-colors duration-300">FAQ</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-blue-600 transition-colors duration-300">Məxfilik Siyasəti</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-blue-600 transition-colors duration-300">İstifadə Şərtləri</a></li>
               </ul>
             </div>
           </div>
