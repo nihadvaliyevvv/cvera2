@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CVLanguage, getLabel } from '@/lib/cvLanguage';
+import { getLabel } from '@/lib/cvLanguage';
 
 interface VolunteerExperience {
   id: string;
@@ -17,10 +17,10 @@ interface VolunteerExperience {
 interface VolunteerExperienceSectionProps {
   data: VolunteerExperience[];
   onChange: (data: VolunteerExperience[]) => void;
-  language?: CVLanguage;
+  
 }
 
-export default function VolunteerExperienceSection({ data, onChange, language = 'azerbaijani' }: VolunteerExperienceSectionProps) {
+export default function VolunteerExperienceSection({ data, onChange }: VolunteerExperienceSectionProps) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   const generateId = () => Math.random().toString(36).substr(2, 9);

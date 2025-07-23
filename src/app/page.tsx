@@ -2,15 +2,23 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
 import LoginForm from '@/components/auth/LoginForm';
 import RegisterForm from '@/components/auth/RegisterForm';
 import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm';
-import Dashboard from '@/components/dashboard/Dashboard';
 
 export default function Home() {
   const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot'>('login');
   const [authMessage, setAuthMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const { user, loading } = useAuth();
+  const router = useRouter();
+
+  // Handle user authentication redirect
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
 
   // Check for authentication messages from URL parameters
   useEffect(() => {
@@ -33,16 +41,6 @@ export default function Home() {
     // Auth success is handled by the AuthProvider
   };
 
-  const handleCreateCV = () => {
-    // Navigate to CV creation page
-    window.location.href = '/cv/create';
-  };
-
-  const handleEditCV = (cvId: string) => {
-    // Navigate to CV editing page
-    window.location.href = `/cv/edit/${cvId}`;
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -55,62 +53,19 @@ export default function Home() {
   }
 
   if (user) {
+    // İstifadəçi daxil olmuşsa dashboard-a yönləndir (useEffect-də idarə olunur)
     return (
-      <Dashboard 
-        user={user} 
-        onCreateCV={handleCreateCV}
-        onEditCV={handleEditCV}
-      />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="text-gray-600 text-lg">Dashboard-a yönləndirilir...</div>
+        </div>
+      </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100">
-      {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200/50 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  cvera.
-                </h1>
-                <p className="text-xs text-gray-500 -mt-1">CV-dən Müsahibəyə gedən yol!</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-             
-              <button
-                onClick={() => setAuthMode('login')}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  authMode === 'login' 
-                    ? 'bg-blue-600 text-white shadow-lg' 
-                    : 'text-gray-600 hover:text-blue-600'
-                }`}
-              >
-                Giriş
-              </button>
-              <button
-                onClick={() => setAuthMode('register')}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  authMode === 'register' 
-                    ? 'bg-blue-600 text-white shadow-lg' 
-                    : 'text-gray-600 hover:text-blue-600'
-                }`}
-              >
-                Qeydiyyat
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         {/* Background Pattern */}

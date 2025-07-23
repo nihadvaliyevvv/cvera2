@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { getLabel } from '@/lib/cvLanguage';
+import { CVLanguage, getLabel } from '@/lib/cvLanguage';
 
 interface Certification {
   id: string;
@@ -15,10 +15,10 @@ interface Certification {
 interface CertificationsSectionProps {
   data: Certification[];
   onChange: (data: Certification[]) => void;
-  
+  language?: CVLanguage;
 }
 
-export default function CertificationsSection({ data, onChange }: CertificationsSectionProps) {
+export default function CertificationsSection({ data, onChange, language = 'azerbaijani' }: CertificationsSectionProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const addCertification = () => {
@@ -70,7 +70,7 @@ export default function CertificationsSection({ data, onChange }: Certifications
         <div className="flex items-center gap-2">
           <span className="text-2xl">🏆</span>
           <h2 className="text-xl font-semibold text-gray-900">
-            {getLabel('certifications', 'azerbaijani')}
+            {getLabel('certifications', language)}
           </h2>
         </div>
         <button
@@ -78,7 +78,7 @@ export default function CertificationsSection({ data, onChange }: Certifications
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <span className="text-lg">+</span>
-          {getLabel('add', 'azerbaijani')}
+          {getLabel('add', language)}
         </button>
       </div>
 
@@ -86,10 +86,12 @@ export default function CertificationsSection({ data, onChange }: Certifications
         <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
           <span className="text-4xl mb-4 block">🏆</span>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {'Hələ sertifikat əlavə edilməyib'}
+            {language === 'azerbaijani' ? 'Hələ sertifikat əlavə edilməyib' : 'No certifications added yet'}
           </h3>
           <p className="text-gray-600 mb-4">
-            {'Peşəkar inkişafınızı göstərmək üçün sertifikatlarınızı əlavə edin'
+            {language === 'azerbaijani' ? 
+              'Peşəkar inkişafınızı göstərmək üçün sertifikatlarınızı əlavə edin' : 
+              'Add your certifications to showcase your professional development'
             }
           </p>
           <button
@@ -97,7 +99,7 @@ export default function CertificationsSection({ data, onChange }: Certifications
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <span className="text-lg">+</span>
-            {'İlk sertifikatı əlavə et'}
+            {language === 'azerbaijani' ? 'İlk sertifikatı əlavə et' : 'Add first certification'}
           </button>
         </div>
       ) : (
@@ -109,13 +111,13 @@ export default function CertificationsSection({ data, onChange }: Certifications
                   <div className="flex items-center gap-3 mb-2">
                     <span className="text-lg">🏆</span>
                     <h3 className="font-medium text-gray-900">
-                      {certification.name || ('Sertifikat adı')}
+                      {certification.name || (language === 'azerbaijani' ? 'Sertifikat adı' : 'Certification name')}
                     </h3>
                   </div>
                   <div className="text-sm text-gray-600">
                     <div className="flex items-center gap-2 mb-1">
                       <span>🏢</span>
-                      <span>{certification.issuer || ('Verən təşkilat')}</span>
+                      <span>{certification.issuer || (language === 'azerbaijani' ? 'Verən təşkilat' : 'Issuing organization')}</span>
                     </div>
                     {certification.date && (
                       <div className="flex items-center gap-2">
@@ -131,7 +133,7 @@ export default function CertificationsSection({ data, onChange }: Certifications
                     onClick={() => moveCertification(certification.id, 'up')}
                     disabled={index === 0}
                     className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    title={'Yuxarı köçür'}
+                    title={language === 'azerbaijani' ? 'Yuxarı köçür' : 'Move up'}
                   >
                     ↑
                   </button>
@@ -139,21 +141,21 @@ export default function CertificationsSection({ data, onChange }: Certifications
                     onClick={() => moveCertification(certification.id, 'down')}
                     disabled={index === data.length - 1}
                     className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    title={'Aşağı köçür'}
+                    title={language === 'azerbaijani' ? 'Aşağı köçür' : 'Move down'}
                   >
                     ↓
                   </button>
                   <button
                     onClick={() => setExpandedId(expandedId === certification.id ? null : certification.id)}
                     className="p-2 text-gray-500 hover:text-gray-700"
-                    title={'Redaktə et'}
+                    title={language === 'azerbaijani' ? 'Redaktə et' : 'Edit'}
                   >
                     ✏️
                   </button>
                   <button
                     onClick={() => removeCertification(certification.id)}
                     className="p-2 text-red-500 hover:text-red-700"
-                    title={'Sil'}
+                    title={language === 'azerbaijani' ? 'Sil' : 'Delete'}
                   >
                     🗑️
                   </button>
@@ -165,33 +167,33 @@ export default function CertificationsSection({ data, onChange }: Certifications
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {getLabel('name', 'azerbaijani')} <span className="text-red-500">*</span>
+                        {getLabel('name', language)} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={certification.name}
                         onChange={(e) => updateCertification(certification.id, 'name', e.target.value)}
-                        placeholder={'AWS Cloud Practitioner'}
+                        placeholder={language === 'azerbaijani' ? 'AWS Cloud Practitioner' : 'AWS Cloud Practitioner'}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {'Verən təşkilat'} <span className="text-red-500">*</span>
+                        {language === 'azerbaijani' ? 'Verən təşkilat' : 'Issuing organization'} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={certification.issuer}
                         onChange={(e) => updateCertification(certification.id, 'issuer', e.target.value)}
-                        placeholder={'Amazon Web Services'}
+                        placeholder={language === 'azerbaijani' ? 'Amazon Web Services' : 'Amazon Web Services'}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {getLabel('date', 'azerbaijani')} <span className="text-red-500">*</span>
+                        {getLabel('date', language)} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="month"
@@ -203,7 +205,7 @@ export default function CertificationsSection({ data, onChange }: Certifications
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {'Sertifikat URL-i'}
+                        {language === 'azerbaijani' ? 'Sertifikat URL-i' : 'Certification URL'}
                       </label>
                       <input
                         type="url"
@@ -217,12 +219,14 @@ export default function CertificationsSection({ data, onChange }: Certifications
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {getLabel('description', 'azerbaijani')}
+                      {getLabel('description', language)}
                     </label>
                     <textarea
                       value={certification.description || ''}
                       onChange={(e) => updateCertification(certification.id, 'description', e.target.value)}
-                      placeholder={'Sertifikatın təsviri və əldə edilən bacarıqlar...'
+                      placeholder={language === 'azerbaijani' ? 
+                        'Sertifikatın təsviri və əldə edilən bacarıqlar...' : 
+                        'Description of the certification and skills gained...'
                       }
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
@@ -244,7 +248,7 @@ export default function CertificationsSection({ data, onChange }: Certifications
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:text-blue-800 underline"
                           >
-                            {'Sertifikatı görüntülə'}
+                            {language === 'azerbaijani' ? 'Sertifikatı görüntülə' : 'View certificate'}
                           </a>
                         </div>
                       )}
@@ -264,7 +268,7 @@ export default function CertificationsSection({ data, onChange }: Certifications
             className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
           >
             <span className="text-lg">+</span>
-            {'Başqa sertifikat əlavə et'}
+            {language === 'azerbaijani' ? 'Başqa sertifikat əlavə et' : 'Add another certification'}
           </button>
         </div>
       )}

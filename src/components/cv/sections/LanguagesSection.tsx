@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CVLanguage, getLabel } from '@/lib/cvLanguage';
+import { getLabel } from '@/lib/cvLanguage';
 
 interface Language {
   id: string;
@@ -12,10 +12,9 @@ interface Language {
 interface LanguagesSectionProps {
   data: Language[];
   onChange: (data: Language[]) => void;
-  language?: CVLanguage;
 }
 
-export default function LanguagesSection({ data, onChange, language = 'azerbaijani' }: LanguagesSectionProps) {
+export default function LanguagesSection({ data, onChange }: LanguagesSectionProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const addLanguage = () => {

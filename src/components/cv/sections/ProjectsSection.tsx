@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CVLanguage, getLabel } from '@/lib/cvLanguage';
+import { getLabel } from '@/lib/cvLanguage';
 
 interface Project {
   id: string;
@@ -18,10 +18,10 @@ interface Project {
 interface ProjectsSectionProps {
   data: Project[];
   onChange: (data: Project[]) => void;
-  language?: CVLanguage;
+  
 }
 
-export default function ProjectsSection({ data, onChange, language = 'azerbaijani' }: ProjectsSectionProps) {
+export default function ProjectsSection({ data, onChange }: ProjectsSectionProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const addProject = () => {

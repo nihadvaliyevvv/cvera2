@@ -1,0 +1,71 @@
+Design and develop a cutting-edge, visually immersive, and 3D-oriented landing page for an online resume builder or personal portfolio platform.
+
+🔵 General Theme:
+Futuristic, clean, and elegant. The experience should evoke trust and creativity, combining professional UX with artistic and technical depth. Use scroll-based transitions and a cinematic intro to grab user attention immediately.
+
+👁️‍🗨️ Visual Direction:
+- 3D visuals with depth and parallax (WebGL/Three.js or animated SVG layers)
+- Glassmorphism, soft gradients, neon accents, and smooth hover/mouse interactions
+- Modular and responsive layout with scroll-triggered animations (GSAP or Framer Motion)
+- Dark/light toggle with animated transition
+- Floating/responsive 3D objects (resumes, laptops, documents)
+- Animated cursor (magnetic or trail-follow effect)
+
+📄 Section Breakdown (Resume Builder / CV-focused site):
+
+1. **Hero Section:**
+   - Animated tagline: “Design your future resume in 3D.”
+   - 3D visual of a resume floating, flipping, or being typed in real-time.
+   - CTA buttons: “Build Your Resume” / “See Templates” (with hover-glow effects)
+   - Background: subtle motion particles or interactive depth field
+
+2. **How It Works Section:**
+   - 3-step process: Choose Template → Customize → Export
+   - Each step shown with animated 3D icon (e.g., document flying into editor)
+   - Timeline-style scroll reveal
+
+3. **Interactive Resume Demo:**
+   - Embedded interactive resume preview with real-time 3D flip or scroll
+   - Hover over sections to animate skills, experience, etc.
+
+4. **Templates Gallery:**
+   - Grid or carousel of 3D template thumbnails
+   - On-hover animations (zoom, rotate, glass reflection)
+   - Filter system (modern, minimalist, creative, corporate)
+
+5. **AI-Powered Features Section:**
+   - Show icons for “AI Text Generator”, “Skill Suggestions”, “Grammar Check”, etc.
+   - Animate with Lottie or SVGs with glowing neon borders
+
+6. **User Testimonials:**
+   - Floating card-style reviews with scrolling marquee or 3D slide-in effect
+   - Avatar animation with voice bubble or subtle pop
+
+7. **Pricing Plans:**
+   - 3D cards for each pricing tier
+   - Hover transition rotates card and shows benefits on the back side
+
+8. **FAQ Section:**
+   - Accordion-style with micro-animations and icon morphing
+   - Subtle background animation (floating question marks, etc.)
+
+9. **Call to Action Footer:**
+   - Big bold “Start Building Your Resume” button
+   - Footer design mimics a desktop workspace or virtual terminal (like in a tech UI)
+   - Social media & contact links with glowing icons
+
+🔧 Technologies (Optional Dev Layer):
+- HTML5, SCSS or TailwindCSS
+- React.js with Framer Motion for animations
+- Three.js or R3F for 3D components
+- ScrollTrigger or Locomotive Scroll for parallax scroll
+- Optional: LottieFiles for animated icons
+
+🎨 Design Style Keywords:
+resume · 3D UI · futuristic · clean portfolio · glowing glass · animated resume preview · AI-enhanced experience · WebGL showcase · cinematic scroll
+
+💡 Bonus Ideas:
+- Add keyboard typing simulation in Hero
+- Include “Resume Score” with animated circular graph
+- Add a 3D floating chatbot to guide users
+

@@ -3,12 +3,12 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import Dashboard from '@/components/dashboard/Dashboard';
+import DashboardV2 from '@/components/dashboard/DashboardV2';
 import { LoadingSpinner } from '@/components/ui/Loading';
 
 export default function DashboardPage() {
-  const router = useRouter();
   const { user, loading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -26,8 +26,10 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 backdrop-blur-sm border border-white/20">
+          <LoadingSpinner size="lg" />
+        </div>
       </div>
     );
   }
@@ -37,7 +39,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <Dashboard
+    <DashboardV2
       user={user}
       onCreateCV={handleCreateCV}
       onEditCV={handleEditCV}
