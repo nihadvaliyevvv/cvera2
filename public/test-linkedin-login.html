@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Login Scraper Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background: #f5f5f5;
+        }
+        .container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { 
+            color: #0077b5; 
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group { 
+            margin-bottom: 20px; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="url"], input[type="email"], input[type="password"] { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #ddd; 
+            border-radius: 5px; 
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        input:focus {
+            border-color: #0077b5;
+            outline: none;
+        }
+        button { 
+            background: #0077b5; 
+            color: white; 
+            padding: 12px 30px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover { 
+            background: #005582; 
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            color: #0077b5;
+        }
+        .result { 
+            margin-top: 30px; 
+            padding: 20px; 
+            border-radius: 5px; 
+            white-space: pre-wrap; 
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+        }
+        .success { 
+            background: #d4edda; 
+            border: 1px solid #c3e6cb; 
+            color: #155724;
+        }
+        .error { 
+            background: #f8d7da; 
+            border: 1px solid #f5c6cb; 
+            color: #721c24;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .example {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            color: #0056b3;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 LinkedIn Login Scraper Test</h1>
+        
+        <div class="warning">
+            <strong>⚠️ Diqqət:</strong> Bu test üçün gerçək LinkedIn login məlumatlarınızı istifadə etməlisiniz. 
+            Məlumatlar təhlükəsiz şəkildə işlədilir və saxlanılmır.
+        </div>
+
+        <div class="example">
+            <strong>📌 İki seçim mövcuddur:</strong><br>
+            1. <strong>Başqa profilin URL-i ilə:</strong> https://www.linkedin.com/in/username/<br>
+            2. <strong>Öz profilinizi çəkmək:</strong> Sadəcə email/password daxil edin, URL-ə ehtiyac yoxdur
+        </div>
+
+        <form id="scraperForm">
+            <div class="form-group">
+                <label for="scrapingType">Scraping növü:</label>
+                <select id="scrapingType" name="scrapingType" onchange="toggleUrlField()">
+                    <option value="url">Başqa profilin URL-i ilə</option>
+                    <option value="own">Öz profilimi çək</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="urlGroup">
+                <label for="profileUrl">LinkedIn Profil URL-i:</label>
+                <input type="url" id="profileUrl" name="profileUrl" 
+                       placeholder="https://www.linkedin.com/in/username/" 
+                       value="https://www.linkedin.com/in/satyanadella/">
+            </div>
+
+            <div class="form-group">
+                <label for="email">LinkedIn Email (İsteğe bağlı - qorunan profillər üçün):</label>
+                <input type="email" id="email" name="email" 
+                       placeholder="your-email@example.com">
+            </div>
+
+            <div class="form-group">
+                <label for="password">LinkedIn Password (İsteğe bağlı - qorunan profillər üçün):</label>
+                <input type="password" id="password" name="password" 
+                       placeholder="your-password">
+            </div>
+
+            <button type="submit" id="submitBtn">
+                🔍 LinkedIn Profil Import Et
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <p>⏳ LinkedIn profiliniz import edilir...</p>
+            <p>Bu proses 30-60 saniyə çəkə bilər.</p>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function toggleUrlField() {
+            const scrapingType = document.getElementById('scrapingType').value;
+            const urlGroup = document.getElementById('urlGroup');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (scrapingType === 'own') {
+                urlGroup.style.display = 'none';
+                document.getElementById('profileUrl').required = false;
+                submitBtn.textContent = '🔐 Öz Profilimi Import Et';
+            } else {
+                urlGroup.style.display = 'block';
+                document.getElementById('profileUrl').required = true;
+                submitBtn.textContent = '🔍 LinkedIn Profil Import Et';
+            }
+        }
+
+        document.getElementById('scraperForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            
+            const scrapingType = document.getElementById('scrapingType').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            // Validation
+            if (!email || !password) {
+                alert('Email və password tələb olunur!');
+                return;
+            }
+            
+            let requestData = {
+                email: email,
+                password: password
+            };
+            
+            let apiUrl = '/api/import/linkedin/own';
+            
+            if (scrapingType === 'url') {
+                const profileUrl = document.getElementById('profileUrl').value;
+                if (!profileUrl) {
+                    alert('Profil URL-i tələb olunur!');
+                    return;
+                }
+                requestData.url = profileUrl;
+                apiUrl = '/api/import/linkedin';
+            }
+
+            // UI state
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Import edilir...';
+            loading.style.display = 'block';
+            result.innerHTML = '';
+
+            try {
+                console.log('🚀 API request göndərilir:', requestData);
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const data = await response.json();
+                console.log('📡 API response:', data);
+
+                if (data.success) {
+                    result.className = 'result success';
+                    result.textContent = '✅ Uğurlu!\n\n' + JSON.stringify(data, null, 2);
+                } else {
+                    result.className = 'result error';
+                    result.textContent = '❌ Xəta!\n\n' + JSON.stringify(data, null, 2);
+                }
+
+            } catch (error) {
+                console.error('💥 Network xətası:', error);
+                result.className = 'result error';
+                result.textContent = '💥 Network Xətası:\n\n' + error.message;
+            } finally {
+                // UI state reset
+                submitBtn.disabled = false;
+                toggleUrlField(); // Reset button text
+                loading.style.display = 'none';
+            }
+        });
+
+        // Email/password input listeners
+        document.getElementById('password').addEventListener('input', function() {
+            const email = document.getElementById('email').value;
+            const password = this.value;
+            const scrapingType = document.getElementById('scrapingType').value;
+            
+            if (email && password) {
+                if (scrapingType === 'own') {
+                    document.getElementById('submitBtn').innerHTML = '🔐 Öz Profilimi Import Et';
+                } else {
+                    document.getElementById('submitBtn').innerHTML = '🔐 Login ilə Import Et';
+                }
+            } else {
+                document.getElementById('submitBtn').innerHTML = '🔍 LinkedIn Profil Import Et';
+            }
+        });
+
+        document.getElementById('email').addEventListener('input', function() {
+            const email = this.value;
+            const password = document.getElementById('password').value;
+            const scrapingType = document.getElementById('scrapingType').value;
+            
+            if (email && password) {
+                if (scrapingType === 'own') {
+                    document.getElementById('submitBtn').innerHTML = '🔐 Öz Profilimi Import Et';
+                } else {
+                    document.getElementById('submitBtn').innerHTML = '🔐 Login ilə Import Et';
+                }
+            } else {
+                document.getElementById('submitBtn').innerHTML = '🔍 LinkedIn Profil Import Et';
+            }
+        });
+    </script>
+</body>
+</html>

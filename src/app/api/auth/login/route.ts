@@ -10,23 +10,37 @@ export async function POST(req: NextRequest) {
     const { email, password } = await req.json();
     
     if (!email || !password) {
-      return NextResponse.json({ error: "Email and password required." }, { status: 400 });
+      return NextResponse.json({ message: "Email və şifrə tələb olunur." }, { status: 400 });
     }
     
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return NextResponse.json({ error: "Invalid credentials." }, { status: 401 });
+      return NextResponse.json({ message: "Email və ya şifrə yanlışdır." }, { status: 401 });
     }
     
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
-      return NextResponse.json({ error: "Invalid credentials." }, { status: 401 });
+      return NextResponse.json({ message: "Email və ya şifrə yanlışdır." }, { status: 401 });
     }
+    
+    // Update last login
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() }
+    });
     
     const accessToken = generateJWT({ userId: user.id, email: user.email });
     const refreshToken = generateRefreshToken({ userId: user.id, email: user.email });
     
-    const response = NextResponse.json({ accessToken });
+    const response = NextResponse.json({ 
+      message: "Giriş uğurlu oldu",
+      accessToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email
+      }
+    });
     
     // Set auth-token cookie for consistency with LinkedIn OAuth
     response.cookies.set("auth-token", accessToken, {
@@ -48,6 +62,6 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     console.error('Login error:', error);
-    return NextResponse.json({ error: "Login failed." }, { status: 500 });
+    return NextResponse.json({ message: "Giriş zamanı xəta baş verdi." }, { status: 500 });
   }
 }

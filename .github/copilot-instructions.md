@@ -1,49 +1,84 @@
-# CVera Project - Copilot Instructions
+You are tasked with building a complete system that imports public profile data from LinkedIn using HTML scraping (not API). The goal is to fetch a user's public information from their LinkedIn profile URL and use it in a CV builder or career platform. The system must automatically handle the full process, including validation, scraping, and parsing.
 
-<!-- Use this file to provide workspace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
+Build this system with the following requirements:
 
-## Project Overview
+📌 Functional Requirements:
+Input:
 
-CVera is a professional CV platform built with Next.js, TypeScript, and Tailwind CSS. The application allows users to create, manage, and export professional CVs with LinkedIn import capabilities, template selection, and subscription management.
+A valid LinkedIn public profile URL (e.g., https://www.linkedin.com/in/john-doe/)
 
-## Architecture
+Optionally, a user-provided custom name or identifier for storing the data.
 
-- **Frontend**: Next.js 15 with App Router, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes (serverless functions)
-- **Database**: PostgreSQL with TypeORM/Prisma
-- **Authentication**: JWT with refresh tokens stored in httpOnly cookies
-- **Payments**: epoint.az integration for Azerbaijan users (only payment method)
-- **File Generation**: Puppeteer for PDF, docx library for DOCX
-- **External APIs**: RapidAPI for LinkedIn scraping
+Output:
 
-## Key Features
+Parsed JSON containing structured data:
 
-1. **Authentication System**: JWT-based auth with refresh tokens
-2. **CV Management**: Create, edit, delete CVs with JSON data structure
-3. **LinkedIn Import**: Scrape LinkedIn profiles with API key rotation
-4. **Template System**: Tiered templates based on subscription level
-5. **Subscription Management**: Free/Medium/Premium tiers with epoint.az
-6. **File Generation**: Async PDF/DOCX generation with job queue
-7. **Real-time Preview**: Live CV preview while editing
+json
+Copy
+Edit
+{
+  "name": "",
+  "headline": "",
+  "location": "",
+  "about": "",
+  "experience": [
+    {
+      "position": "",
+      "company": "",
+      "date_range": "",
+      "location": "",
+      "description": ""
+    }
+  ],
+  "education": [
+    {
+      "school": "",
+      "degree": "",
+      "field_of_study": "",
+      "date_range": ""
+    }
+  ],
+  "skills": [],
+  "certifications": [],
+  "languages": []
+}
+🔧 Technical Requirements:
+Use Node.js with Puppeteer or Python with Playwright/BeautifulSoup/Selenium.
 
-## Code Standards
+The scraper must run in headless mode, with user-agent and bot detection bypass.
 
-- Use TypeScript with strict mode
-- Follow Next.js 15 App Router conventions
-- Use Tailwind CSS for styling
-- Implement proper error handling and validation
-- Use React Server Components where appropriate
-- Follow security best practices (OWASP guidelines)
+Implement error handling for:
 
-## Database Schema
+Invalid URLs
 
-Key models: users, cvs, templates, subscriptions, api_keys, file_generation_jobs
+Unreachable or restricted profiles
 
-## API Endpoints
+Missing elements (fallback to null or default)
 
-RESTful API structure with proper authentication and rate limiting:
-- `/api/auth/*` - Authentication endpoints
-- `/api/cvs/*` - CV management
-- `/api/templates/*` - Template management
-- `/api/import/*` - LinkedIn import
-- `/api/webhooks/*` - epoint.az webhooks
+🚀 Features:
+Auto-detect profile sections (Experience, Education, etc.)
+
+Clean HTML tags and normalize whitespace
+
+Optional: Cache previous imports in a local or cloud database (MongoDB, SQLite, or Firebase)
+
+Optional: Export as downloadable JSON or integrate into an existing CV platform backend
+
+⚠️ Constraints:
+Do not use LinkedIn API – this must work solely via HTML scraping of public profiles.
+
+Ensure the scraper respects the website structure and avoid aggressive crawling.
+
+📂 Folder Structure:
+pgsql
+Copy
+Edit
+linkedin-scraper/
+├── scraper/
+│   └── linkedin_scraper.py
+├── utils/
+│   └── parser.py
+├── output/
+│   └── profile.json
+├── app.py or main.js
+├── requirements.txt / package.json

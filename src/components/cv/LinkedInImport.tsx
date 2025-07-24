@@ -65,9 +65,9 @@ interface LinkedInImportProps {
 }
 
 export default function LinkedInImport({ onImport, onCancel }: LinkedInImportProps) {
-  // LinkedIn import now uses DATABASE API KEYS - NO MOCK DATA
-  // API keys are managed through admin panel at /error/api-keys
-  // Supports multiple key rotation and usage tracking
+  // LinkedIn HTML SCRAPER - API YOXDUR 
+  // Puppeteer istifadə edərək HTML səhifəsindən məlumatları çəkirik
+  // Bütün məlumatlar real-time olaraq LinkedIn səhifəsindən alınır
   
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -89,12 +89,10 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
     setError('');
 
     try {
-      const token = localStorage.getItem('accessToken');
       const response = await fetch('/api/import/linkedin', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ url })
       });
@@ -104,15 +102,15 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
       if (response.ok && data.success) {
         setImportedData(data.data);
         setError('');
-        console.log('✅ LinkedIn data successfully imported:', data.data);
+        console.log('✅ HTML Scraper ilə LinkedIn məlumatları import edildi:', data.data);
       } else {
-        const errorMsg = data.error || 'LinkedIn import zamanı xəta baş verdi';
+        const errorMsg = data.error || 'HTML scraping zamanı xəta baş verdi';
         setError(errorMsg);
-        console.error('❌ LinkedIn import failed:', errorMsg);
+        console.error('❌ HTML Scraper xətası:', errorMsg);
       }
     } catch (error: any) {
-      console.error('💥 LinkedIn import network error:', error);
-      setError('Şəbəkə xətası: ' + (error.message || 'LinkedIn import zamanı xəta baş verdi'));
+      console.error('💥 HTML Scraper şəbəkə xətası:', error);
+      setError('Şəbəkə xətası: ' + (error.message || 'HTML scraping zamanı xəta baş verdi'));
     } finally {
       setLoading(false);
     }
@@ -143,8 +141,8 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
               </svg>
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">LinkedIn Profil Import 🚀</h2>
-              <p className="text-sm sm:text-base text-gray-600">Professional məlumatlarınızı avtomatik köçürün</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">LinkedIn HTML Scraper 🌐</h2>
+              <p className="text-sm sm:text-base text-gray-600">HTML scraping ilə professional məlumatlarınızı avtomatik köçürün</p>
             </div>
           </div>
           <button
@@ -222,11 +220,11 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                   </svg>
                 </div>
                 <div className="w-full">
-                  <h3 className="text-base sm:text-lg font-semibold text-blue-800 mb-2 sm:mb-3">Import Qaydaları 📋</h3>
+                  <h3 className="text-base sm:text-lg font-semibold text-blue-800 mb-2 sm:mb-3">HTML Scraping Qaydaları 🌐</h3>
                   <ul className="text-blue-700 space-y-1.5 sm:space-y-2 text-sm sm:text-base">
                     <li className="flex items-start space-x-2">
                       <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
-                      <span>API key-lər admin panelindən <strong>avtomatik</strong> seçilir</span>
+                      <span><strong>API YOXDUR</strong> - Puppeteer HTML scraper istifadə edir</span>
                     </li>
                     <li className="flex items-start space-x-2">
                       <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
@@ -238,11 +236,11 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                     </li>
                     <li className="flex items-start space-x-2">
                       <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
-                      <span>Çox API key-dən <strong>ağıllı seçim</strong> və rotation</span>
+                      <span>Headless browser <strong>real-time</strong> scraping</span>
                     </li>
                     <li className="flex items-start space-x-2">
                       <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
-                      <span>Məlumatlar sonradan redaktə edilə bilər</span>
+                      <span>Bot detection bypass və optimizasiya</span>
                     </li>
                   </ul>
                 </div>
@@ -254,11 +252,11 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
               <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-lg border border-gray-200/50 p-3 sm:p-4 text-center">
                 <div className="w-10 sm:w-12 h-10 sm:h-12 bg-green-100 rounded-lg sm:rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3">
                   <svg className="w-5 sm:w-6 h-5 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
                   </svg>
                 </div>
-                <h4 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Avtomatik Import</h4>
-                <p className="text-gray-600 text-xs sm:text-sm">Bütün məlumatlar avtomatik olaraq köçürülür</p>
+                <h4 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">HTML Scraping</h4>
+                <p className="text-gray-600 text-xs sm:text-sm">Puppeteer ilə real-time data</p>
               </div>
 
               <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-lg border border-gray-200/50 p-3 sm:p-4 text-center">
@@ -268,17 +266,17 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                   </svg>
                 </div>
                 <h4 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Sürətli Proses</h4>
-                <p className="text-gray-600 text-xs sm:text-sm">Saatlarca vaxt qənaət edin</p>
+                <p className="text-gray-600 text-xs sm:text-sm">Headless browser ilə sürətli</p>
               </div>
 
               <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-lg border border-gray-200/50 p-3 sm:p-4 text-center sm:col-span-2 lg:col-span-1">
                 <div className="w-10 sm:w-12 h-10 sm:h-12 bg-emerald-100 rounded-lg sm:rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3">
                   <svg className="w-5 sm:w-6 h-5 sm:h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h4 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Database İdarəsi</h4>
-                <p className="text-gray-600 text-xs sm:text-sm">API key-lər admin panelindən idarə olunur</p>
+                <h4 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">No API Limits</h4>
+                <p className="text-gray-600 text-xs sm:text-sm">API limiti yoxdur, direct scraping</p>
               </div>
             </div>
           </div>
@@ -293,8 +291,8 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-green-800">Import Uğurlu! ✅</h3>
-                  <p className="text-sm sm:text-base text-green-600">LinkedIn profiliniz uğurla import edildi</p>
+                  <h3 className="text-base sm:text-lg font-semibold text-green-800">HTML Scraping Uğurlu! ✅</h3>
+                  <p className="text-sm sm:text-base text-green-600">LinkedIn profiliniz HTML scraper ilə uğurla import edildi</p>
                 </div>
               </div>
             </div>
