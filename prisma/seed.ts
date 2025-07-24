@@ -30,18 +30,9 @@ async function main() {
     });
   }
 
-  // Create sample API keys for LinkedIn scraping
-  const apiKeys = [
-    { name: 'Sample API Key 1', key: 'sample-api-key-1', active: true },
-  ];
-
-  for (const apiKey of apiKeys) {
-    await prisma.apiKey.upsert({
-      where: { key: apiKey.key },
-      update: {},
-      create: apiKey,
-    });
-  }
+  // API key functionality removed - using HTML scraping approach
+  console.log('✅ Templates seeded successfully');
+  console.log('📝 Note: API keys disabled - LinkedIn scraper uses HTML scraping');
 
   console.log('Database has been seeded with sample data');
 }

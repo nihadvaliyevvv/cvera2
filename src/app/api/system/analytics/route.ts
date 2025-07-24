@@ -13,25 +13,16 @@ export async function GET(req: NextRequest) {
     // Get basic counts
     const [
       totalUsers,
-      activeUsers,
-      totalCVs,
-      totalApiKeys,
+      totalCvs,
       recentUsers,
-      recentCVs,
+      recentCvs,
       subscriptionStats,
-      apiKeyStats,
     ] = await Promise.all([
       // Total users
       prisma.user.count(),
       
-      // Active users (not suspended/deactivated)
-      prisma.user.count(),
-      
       // Total CVs
       prisma.cV.count(),
-      
-      // Total API keys
-      prisma.apiKey.count(),
       
       // Recent users (last 30 days)
       prisma.user.count({
@@ -56,12 +47,6 @@ export async function GET(req: NextRequest) {
         by: ["tier"],
         _count: { tier: true },
         where: { status: "active" },
-      }),
-      
-      // API key statistics
-      prisma.apiKey.groupBy({
-        by: ["active"],
-        _count: { active: true },
       }),
     ]);
 
@@ -92,20 +77,20 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       overview: {
         totalUsers,
-        activeUsers,
-        totalCVs,
-        totalApiKeys,
+        totalCvs,
         recentUsers,
-        recentCVs,
+        recentCvs,
       },
       subscriptions: {
         Free: subscriptionData.Free || 0,
         Medium: subscriptionData.Medium || 0,
         Premium: subscriptionData.Premium || 0,
       },
-      apiKeys: {
-        active: apiKeyStats.find(s => s.active)?._count.active || 0,
-        inactive: apiKeyStats.find(s => !s.active)?._count.active || 0,
+      // API keys removed - using HTML scraping approach
+      scraping: {
+        method: 'HTML Scraping',
+        status: 'Active',
+        note: 'Direct LinkedIn profile extraction via browser automation',
       },
       templates: templateStats.map(stat => ({
         templateId: stat.templateId,

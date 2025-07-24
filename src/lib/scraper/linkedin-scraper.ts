@@ -96,7 +96,7 @@ export class LinkedInScraper {
       const isProduction = process.env.NODE_ENV === 'production';
       
       // Chrome executable path-ni tapın
-      const fs = require('fs');
+      const fs = await import('fs');
       const chromePaths = [
         '/usr/bin/google-chrome',
         '/usr/bin/chrome',
@@ -177,7 +177,7 @@ export class LinkedInScraper {
       
       // Chrome path yoxla
       console.log('🔍 Chrome path yoxlanır...');
-      const fs = require('fs');
+      const fs = await import('fs');
       const chromePaths = [
         '/usr/bin/google-chrome',
         '/usr/bin/chrome',
@@ -541,7 +541,7 @@ export class LinkedInScraper {
       });
 
       // Yoxlayın ki, login səhifəsinə yönləndirilibmi
-      let currentUrl = this.page.url();
+      const currentUrl = this.page.url();
       if (currentUrl.includes('authwall') || currentUrl.includes('login')) {
         console.log('🔒 Profil qorunur, login lazımdır');
         
@@ -1058,7 +1058,7 @@ export class LinkedInScraper {
         }
 
         // Extract Contact Info - yalnız login olduqda əlçatan
-        let contactInfo = {
+        const contactInfo = {
           email: '',
           phone: '',
           website: '',
