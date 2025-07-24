@@ -1,10 +1,12 @@
 import axios from 'axios';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export interface LinkedInProfile {
   name: string;
   headline: string;
   location: string;
   about: string;
+  professionalSummary?: string; // AI-generated professional summary
   experience: Experience[];
   education: Education[];
   skills: string[];
@@ -82,10 +84,242 @@ export interface VolunteerExperience {
 class ScrapingDogLinkedInScraper {
   private apiKey: string;
   private baseUrl: string;
+  private geminiAI: GoogleGenerativeAI;
 
   constructor() {
     this.apiKey = '6882894b855f5678d36484c8';
     this.baseUrl = 'https://api.scrapingdog.com/linkedin';
+    
+    // Gemini AI-ni initialize et
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    if (!geminiApiKey) {
+      throw new Error('GEMINI_API_KEY environment variable tapılmadı');
+    }
+    this.geminiAI = new GoogleGenerativeAI(geminiApiKey);
+  }
+
+  // Gemini AI ilə profil məlumatlarından skills çıxar
+  private async extractSkillsWithAI(profile: any): Promise<string[]> {
+    try {
+      console.log('🤖 Gemini AI ilə skills çıxarılır...');
+      
+      // Profil məlumatlarını Gemini üçün hazırla
+      const profileText = this.prepareProfileTextForAI(profile);
+      
+      const model = this.geminiAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      
+      const prompt = `
+LinkedIn profil məlumatlarına əsasən bu şəxsin əsas 5-6 professional skills/bacarıqlarını müəyyən et.
+
+Profil məlumatları:
+${profileText}
+
+Qaydalar:
+1. Yalnız texniki və professional bacarıqları seç
+2. Profilin iş təcrübəsi və təhsilinə uyğun olsun  
+3. JavaScript formatlı array olaraq cavab ver
+4. Hər skill 1-3 kelimə olsun
+5. Azərbaycan, ingilis və ya texniki terminlər istifadə et
+
+Nümunə format: ["JavaScript", "React", "Node.js", "SQL", "Agile", "Testing"]
+
+Skills:`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      // AI cavabından array çıxar
+      const skillsArray = this.parseAISkillsResponse(text);
+      
+      console.log(`✅ Gemini AI ${skillsArray.length} skills tapıldı:`, skillsArray);
+      return skillsArray;
+      
+    } catch (error) {
+      console.error('❌ Gemini AI skills çıxarma xətası:', error);
+      // Fallback: boş array
+      return [];
+    }
+  }
+
+  // Gemini AI ilə professional summary generasiya et
+  private async generateProfessionalSummary(profile: any): Promise<string> {
+    try {
+      console.log('📝 Gemini AI ilə Professional Summary generasiya edilir...');
+      
+      // Profil məlumatlarını hazırla
+      const profileText = this.prepareProfileTextForAI(profile);
+      
+      const model = this.geminiAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      
+      const prompt = `
+Based on the LinkedIn profile information below, create a professional CV summary in English.
+
+Profile Information:
+${profileText}
+
+Requirements:
+1. Write in English only
+2. 3-4 sentences (80-120 words)
+3. Professional tone suitable for CV/Resume
+4. Highlight key expertise, experience level, and value proposition
+5. Include specific technical skills and industry experience
+6. Use active voice and strong action words
+7. Focus on achievements and impact
+8. Make it compelling for employers
+
+Format: Return only the professional summary text, no extra formatting or quotes.
+
+Professional Summary:`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      let summary = response.text().trim();
+      
+      // Clean up the response
+      summary = summary.replace(/^["']|["']$/g, ''); // Remove quotes
+      summary = summary.replace(/^Professional Summary:?\s*/i, ''); // Remove "Professional Summary:" prefix
+      summary = summary.replace(/\n+/g, ' '); // Replace newlines with spaces
+      summary = summary.replace(/\s+/g, ' '); // Multiple spaces to single space
+      
+      console.log('✅ Professional Summary generasiya edildi');
+      console.log(`📊 Uzunluq: ${summary.length} simvol`);
+      
+      return summary;
+      
+    } catch (error) {
+      console.error('❌ Professional Summary generasiya xətası:', error);
+      // Fallback: Create basic summary from existing data
+      return this.createFallbackSummary(profile);
+    }
+  }
+
+  // Fallback professional summary (AI olmadan)
+  private createFallbackSummary(profile: any): string {
+    const parts = [];
+    
+    // Experience based summary
+    if (profile.experience && profile.experience.length > 0) {
+      const latestJob = profile.experience[0];
+      const yearsExp = profile.experience.length > 3 ? "experienced" : "skilled";
+      parts.push(`${yearsExp} ${latestJob.position || 'professional'}`);
+      
+      if (latestJob.company_name || latestJob.company) {
+        parts.push(`at ${latestJob.company_name || latestJob.company}`);
+      }
+    }
+    
+    // Education/Field
+    if (profile.education && profile.education.length > 0) {
+      const education = profile.education[0];
+      if (education.college_degree_field || education.field_of_study) {
+        parts.push(`with background in ${education.college_degree_field || education.field_of_study}`);
+      }
+    }
+    
+    // Basic summary
+    const summary = parts.length > 0 
+      ? parts.join(' ') + '. Focused on delivering high-quality solutions and driving business growth through technical expertise.'
+      : 'Experienced professional with strong technical skills and proven track record of delivering results in dynamic environments.';
+    
+    return summary;
+  }
+
+  // Profil mətnini AI üçün hazırla
+  private prepareProfileTextForAI(profile: any): string {
+    const sections = [];
+    
+    // Şəxsi məlumatlar
+    if (profile.fullName) sections.push(`Ad: ${profile.fullName}`);
+    if (profile.headline) sections.push(`Başlıq: ${profile.headline}`);
+    if (profile.about) sections.push(`Haqqında: ${profile.about.substring(0, 500)}`);
+    
+    // İş təcrübəsi
+    if (profile.experience && profile.experience.length > 0) {
+      sections.push('\nİş Təcrübəsi:');
+      profile.experience.slice(0, 3).forEach((exp: any, index: number) => {
+        sections.push(`${index + 1}. ${exp.position} - ${exp.company_name || exp.company}`);
+        if (exp.summary) {
+          sections.push(`   Təsvir: ${exp.summary.substring(0, 200)}`);
+        }
+      });
+    }
+    
+    // Təhsil
+    if (profile.education && profile.education.length > 0) {
+      sections.push('\nTəhsil:');
+      profile.education.slice(0, 2).forEach((edu: any, index: number) => {
+        sections.push(`${index + 1}. ${edu.college_degree || edu.degree} - ${edu.college_name || edu.school}`);
+        if (edu.college_degree_field || edu.field_of_study) {
+          sections.push(`   Sahə: ${edu.college_degree_field || edu.field_of_study}`);
+        }
+      });
+    }
+    
+    // Layihələr
+    if (profile.projects && profile.projects.length > 0) {
+      sections.push('\nLayihələr:');
+      profile.projects.slice(0, 3).forEach((project: any, index: number) => {
+        sections.push(`${index + 1}. ${project.title}`);
+      });
+    }
+    
+    // Mükafatlar/Sertifikatlar
+    if (profile.awards && profile.awards.length > 0) {
+      sections.push('\nMükafatlar:');
+      profile.awards.slice(0, 3).forEach((award: any, index: number) => {
+        sections.push(`${index + 1}. ${award.name}`);
+      });
+    }
+    
+    return sections.join('\n');
+  }
+
+  // AI cavabından skills array-ni parse et
+  private parseAISkillsResponse(text: string): string[] {
+    try {
+      // JSON array axtarışı
+      const jsonMatch = text.match(/\[([^\]]+)\]/);
+      if (jsonMatch) {
+        const arrayString = jsonMatch[0];
+        const skills = JSON.parse(arrayString);
+        if (Array.isArray(skills)) {
+          return skills.map(skill => skill.toString().replace(/['"]/g, '').trim()).filter(skill => skill.length > 0);
+        }
+      }
+      
+      // Sadə string parse
+      const lines = text.split('\n');
+      const skills: string[] = [];
+      
+      for (const line of lines) {
+        // Bullet points və ya nömrələnmiş siyahı
+        const match = line.match(/^[\d\-\*\•]\s*([^,\n]+)/);
+        if (match) {
+          const skill = match[1].trim().replace(/['"]/g, '');
+          if (skill.length > 0 && skills.length < 6) {
+            skills.push(skill);
+          }
+        }
+        
+        // Vergüllə ayrılmış
+        if (line.includes(',')) {
+          const commaSeparated = line.split(',');
+          commaSeparated.forEach(item => {
+            const skill = item.trim().replace(/['"]/g, '').replace(/^\d+\.\s*/, '');
+            if (skill.length > 0 && skills.length < 6) {
+              skills.push(skill);
+            }
+          });
+        }
+      }
+      
+      return skills.slice(0, 6); // Maksimum 6 skills
+      
+    } catch (error) {
+      console.error('❌ AI cavabını parse etmə xətası:', error);
+      return [];
+    }
   }
 
   private extractLinkedInId(url: string): string {
@@ -113,7 +347,7 @@ class ScrapingDogLinkedInScraper {
     throw new Error(`Keçersiz LinkedIn URL formatı: ${url}`);
   }
 
-  private transformScrapingDogData(rawData: any): LinkedInProfile {
+  private async transformScrapingDogData(rawData: any): Promise<LinkedInProfile> {
     // ScrapingDog returns an array with a single profile object
     const profile = Array.isArray(rawData) ? rawData[0] : rawData;
     
@@ -125,11 +359,18 @@ class ScrapingDogLinkedInScraper {
     console.log('📊 Yalnız vacib sahələr işlənir (server performansı üçün optimize edilib)');
     console.log('✅ Əldə edilən sahələr: Şəxsi Məlumatlar, İş Təcrübəsi, Təhsil, Bacarıqlar, Dillər, Layihələr, Sertifikatlar, Könüllü Təcrübə');
 
+    // AI ilə skills və professional summary generasiya et
+    const [skills, professionalSummary] = await Promise.all([
+      this.extractSkillsWithAI(profile),
+      this.generateProfessionalSummary(profile)
+    ]);
+
     return {
       name: profile.fullName || profile.name || '',
       headline: profile.headline || '',
       location: profile.location || '',
       about: profile.about || '',
+      professionalSummary: professionalSummary,
       
       // Experience mapping with ScrapingDog field names
       experience: (profile.experience || []).map((exp: any) => ({
@@ -148,9 +389,8 @@ class ScrapingDogLinkedInScraper {
         date_range: edu.college_duration || edu.duration || edu.date_range || ''
       })),
       
-      // Skills - ScrapingDog free tier doesn't provide skills, 
-      // but we can extract from experience summaries or about section
-      skills: this.extractSkillsFromProfile(profile),
+      // Skills - Gemini AI ilə profil məlumatlarından çıxarılır
+      skills: skills,
       
       // Languages - direct mapping from ScrapingDog
       languages: (profile.languages || []).map((lang: any) => ({
@@ -207,46 +447,6 @@ class ScrapingDogLinkedInScraper {
       connections: profile.connections || '',
       followers: profile.followers || ''
     };
-  }
-  
-  // Helper method to extract skills from profile content
-  private extractSkillsFromProfile(profile: any): string[] {
-    const skills: Set<string> = new Set();
-    
-    // Extract from about section
-    if (profile.about) {
-      const commonSkills = [
-        'JavaScript', 'TypeScript', 'Java', 'Python', 'React', 'Node.js', 'Next.js',
-        'HTML', 'CSS', 'SQL', 'MongoDB', 'PostgreSQL', 'Docker', 'AWS', 'Azure',
-        'Git', 'Linux', 'Testing', 'Agile', 'Scrum', 'REST API', 'GraphQL',
-        'Spring Boot', 'Angular', 'Vue.js', 'Express.js', 'Kubernetes', 'CI/CD',
-        'Machine Learning', 'AI', 'Data Science', 'DevOps', 'Microservices'
-      ];
-      
-      const aboutText = profile.about.toLowerCase();
-      commonSkills.forEach(skill => {
-        if (aboutText.includes(skill.toLowerCase())) {
-          skills.add(skill);
-        }
-      });
-    }
-    
-    // Extract from experience summaries
-    if (profile.experience && Array.isArray(profile.experience)) {
-      profile.experience.forEach((exp: any) => {
-        if (exp.summary) {
-          const expText = exp.summary.toLowerCase();
-          const techSkills = ['java', 'javascript', 'python', 'react', 'node', 'sql', 'testing', 'automation'];
-          techSkills.forEach(skill => {
-            if (expText.includes(skill)) {
-              skills.add(skill.charAt(0).toUpperCase() + skill.slice(1));
-            }
-          });
-        }
-      });
-    }
-    
-    return Array.from(skills);
   }
 
   async scrapeProfile(linkedinUrl: string, premium: boolean = false): Promise<LinkedInProfile> {
@@ -325,8 +525,8 @@ class ScrapingDogLinkedInScraper {
           console.log(`📊 Qalan sorğu sayı: ${apiData.remaining_requests}`);
         }
 
-        // Profile məlumatlarını transform et
-        const profile = this.transformScrapingDogData(apiData);
+        // Profile məlumatlarını transform et (AI ilə skills çıxarma daxil)
+        const profile = await this.transformScrapingDogData(apiData);
 
         // Minimum məlumat yoxlaması
         if (!profile.name && !profile.headline) {
