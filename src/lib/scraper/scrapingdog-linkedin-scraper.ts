@@ -122,7 +122,8 @@ class ScrapingDogLinkedInScraper {
     }
 
     console.log('🔄 ScrapingDog məlumatları çevrilir...');
-    console.log('📊 Mövcud sahələr:', Object.keys(profile));
+    console.log('📊 Yalnız vacib sahələr işlənir (server performansı üçün optimize edilib)');
+    console.log('✅ Əldə edilən sahələr: Şəxsi Məlumatlar, İş Təcrübəsi, Təhsil, Bacarıqlar, Dillər, Layihələr, Sertifikatlar, Könüllü Təcrübə');
 
     return {
       name: profile.fullName || profile.name || '',
@@ -249,103 +250,169 @@ class ScrapingDogLinkedInScraper {
   }
 
   async scrapeProfile(linkedinUrl: string, premium: boolean = false): Promise<LinkedInProfile> {
-    try {
-      console.log(`🚀 ScrapingDog API ilə LinkedIn profil scraping başlayır: ${linkedinUrl}`);
-      
-      // LinkedIn ID-ni çıxar
-      const linkedinId = this.extractLinkedInId(linkedinUrl);
-      
-      // API parametrləri
-      const params = {
-        api_key: this.apiKey,
-        type: 'profile',
-        linkId: linkedinId,
-        premium: premium ? 'true' : 'false'
-      };
+    const maxRetries = 3;
+    const baseDelay = 1000; // 1 second
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🚀 ScrapingDog API ilə LinkedIn profil scraping başlayır: ${linkedinUrl} (Cəhd: ${attempt}/${maxRetries})`);
+        
+        // LinkedIn ID-ni çıxar
+        const linkedinId = this.extractLinkedInId(linkedinUrl);
+        
+        // API parametrləri - yalnız vacib sahələr (server yükünü azaltmaq üçün)
+        const params = {
+          api_key: this.apiKey,
+          type: 'profile',
+          linkId: linkedinId,
+          premium: premium ? 'true' : 'false',
+          // Yalnız bu sahələri əldə et:
+          // Şəxsi Məlumatlar, İş Təcrübəsi, Təhsil, Bacarıqlar, Dillər, Layihələr, Sertifikatlar, Könüllü Təcrübə
+          fields: 'name,headline,location,about,experience,education,skills,certifications,languages,projects,volunteer_experience'
+        };
 
-      console.log('📡 ScrapingDog API-yə sorğu göndərilir...');
-      console.log('🔧 Parametrlər:', { ...params, api_key: '***hidden***' });
+        console.log('📡 ScrapingDog API-yə sorğu göndərilir...');
+        console.log('🔧 Parametrlər:', { ...params, api_key: '***hidden***' });
 
-      // API sorğusu
-      const response = await axios.get(this.baseUrl, { 
-        params: params,
-        timeout: 60000, // 60 saniyə timeout
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
-      });
-
-      console.log(`📨 API Response Status: ${response.status}`);
-
-      if (response.status !== 200) {
-        throw new Error(`ScrapingDog API xətası: ${response.status} - ${response.statusText}`);
-      }
-
-      const apiData = response.data;
-      console.log('✅ ScrapingDog API-dan məlumat alındı');
-      
-      // API response-un strukturunu yoxla
-      if (!apiData) {
-        throw new Error('ScrapingDog API-dan boş cavab alındı');
-      }
-
-      // Xəta mesajlarını yoxla
-      if (apiData.error || apiData.message) {
-        throw new Error(`ScrapingDog API xətası: ${apiData.error || apiData.message}`);
-      }
-
-      // Rate limit yoxlaması
-      if (apiData.remaining_requests !== undefined) {
-        console.log(`📊 Qalan sorğu sayı: ${apiData.remaining_requests}`);
-      }
-
-      // Profile məlumatlarını transform et
-      const profile = this.transformScrapingDogData(apiData);
-
-      // Minimum məlumat yoxlaması
-      if (!profile.name && !profile.headline) {
-        console.warn('⚠️ Minimum profil məlumatları tapılmadı');
-        console.log('🔍 Raw API response:', JSON.stringify(apiData, null, 2));
-      }
-
-      console.log('✅ LinkedIn profil scraping uğurla tamamlandı!');
-      return profile;
-
-    } catch (error) {
-      console.error('❌ ScrapingDog LinkedIn scraping xətası:', error);
-      
-      if (axios.isAxiosError(error)) {
-        if (error.response) {
-          console.error('📡 API Response Error:', {
-            status: error.response.status,
-            statusText: error.response.statusText,
-            data: error.response.data
-          });
-          
-          // Spesifik xətalar
-          switch (error.response.status) {
-            case 401:
-              throw new Error('ScrapingDog API açarı yanlışdır və ya vaxtı keçmişdir');
-            case 402:
-              throw new Error('ScrapingDog API limitiniz bitib. Premium plan lazımdır');
-            case 403:
-              throw new Error('ScrapingDog API-yə giriş qadağandır');
-            case 404:
-              throw new Error('LinkedIn profili tapılmadı və ya mövcud deyil');
-            case 429:
-              throw new Error('ScrapingDog API limiti keçildi. Bir az gözləyin');
-            case 500:
-              throw new Error('ScrapingDog API server xətası');
-            default:
-              throw new Error(`ScrapingDog API xətası: ${error.response.status} - ${error.response.data?.message || error.response.statusText}`);
+        // Vercel üçün optimize edilmiş timeout
+        const timeout = process.env.VERCEL ? 45000 : 60000; // Vercel-də 45s, local-da 60s
+        
+        // API sorğusu
+        const response = await axios.get(this.baseUrl, { 
+          params: params,
+          timeout: timeout,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/json',
+            'Accept-Encoding': 'gzip, deflate, br'
+          },
+          // Vercel üçün əlavə konfigrasiya
+          validateStatus: function (status) {
+            return status >= 200 && status < 500; // 500+ xətaları throw etmə
           }
-        } else if (error.request) {
-          throw new Error('ScrapingDog API-yə əlaqə yaradıla bilmədi. İnternet bağlantınızı yoxlayın');
+        });
+
+        console.log(`📨 API Response Status: ${response.status}`);
+
+        if (response.status !== 200) {
+          // Rate limit və ya müvəqqəti xətalar üçün retry
+          if (response.status === 429 || response.status >= 500) {
+            if (attempt < maxRetries) {
+              const delay = baseDelay * Math.pow(2, attempt - 1); // Exponential backoff
+              console.log(`⏳ ${delay}ms gözləyir və yenidən cəhd edəcək...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              continue;
+            }
+          }
+          throw new Error(`ScrapingDog API xətası: ${response.status} - ${response.statusText}`);
+        }
+
+        const apiData = response.data;
+        console.log('✅ ScrapingDog API-dan məlumat alındı');
+        
+        // API response-un strukturunu yoxla
+        if (!apiData) {
+          throw new Error('ScrapingDog API-dan boş cavab alındı');
+        }
+
+        // Xəta mesajlarını yoxla
+        if (apiData.error || apiData.message) {
+          throw new Error(`ScrapingDog API xətası: ${apiData.error || apiData.message}`);
+        }
+
+        // Rate limit yoxlaması
+        if (apiData.remaining_requests !== undefined) {
+          console.log(`📊 Qalan sorğu sayı: ${apiData.remaining_requests}`);
+        }
+
+        // Profile məlumatlarını transform et
+        const profile = this.transformScrapingDogData(apiData);
+
+        // Minimum məlumat yoxlaması
+        if (!profile.name && !profile.headline) {
+          console.warn('⚠️ Minimum profil məlumatları tapılmadı');
+          console.log('🔍 Raw API response:', JSON.stringify(apiData, null, 2));
+        }
+
+        console.log('✅ LinkedIn profil scraping uğurla tamamlandı!');
+        return profile;
+
+      } catch (error) {
+        console.error(`❌ ScrapingDog LinkedIn scraping xətası (Cəhd ${attempt}/${maxRetries}):`, error);
+        
+        if (axios.isAxiosError(error)) {
+          if (error.response) {
+            console.error('📡 API Response Error:', {
+              status: error.response.status,
+              statusText: error.response.statusText,
+              data: error.response.data
+            });
+            
+            // Spesifik xətalar
+            switch (error.response.status) {
+              case 401:
+                throw new Error('ScrapingDog API açarı yanlışdır və ya vaxtı keçmişdir');
+              case 402:
+                throw new Error('ScrapingDog API limitiniz bitib. Premium plan lazımdır');
+              case 403:
+                throw new Error('ScrapingDog API-yə giriş qadağandır');
+              case 404:
+                throw new Error('LinkedIn profili tapılmadı və ya mövcud deyil');
+              case 429:
+                // Rate limit - retry etməyə davam et
+                if (attempt < maxRetries) {
+                  const delay = baseDelay * Math.pow(2, attempt);
+                  console.log(`⏳ Rate limit - ${delay}ms gözləyir və yenidən cəhd edəcək...`);
+                  await new Promise(resolve => setTimeout(resolve, delay));
+                  continue;
+                }
+                throw new Error('ScrapingDog API rate limit keçildi. Bir az gözləyin');
+              case 500:
+              case 502:
+              case 503:
+                // Server xətaları - retry et
+                if (attempt < maxRetries) {
+                  const delay = baseDelay * Math.pow(2, attempt);
+                  console.log(`⏳ Server xətası - ${delay}ms gözləyir və yenidən cəhd edəcək...`);
+                  await new Promise(resolve => setTimeout(resolve, delay));
+                  continue;
+                }
+                throw new Error('ScrapingDog API server xətası');
+              default:
+                throw new Error(`ScrapingDog API xətası: ${error.response.status} - ${error.response.data?.message || error.response.statusText}`);
+            }
+          } else if (error.request) {
+            // Network xətası - retry et
+            if (attempt < maxRetries) {
+              const delay = baseDelay * Math.pow(2, attempt);
+              console.log(`⏳ Şəbəkə xətası - ${delay}ms gözləyir və yenidən cəhd edəcək...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              continue;
+            }
+            throw new Error('ScrapingDog API-yə əlaqə yaradıla bilmədi. Şəbəkə bağlantısını yoxlayın');
+          } else if (error.code === 'ENOTFOUND') {
+            throw new Error('ScrapingDog API server tapılmadı. DNS xətası ola bilər');
+          } else if (error.code === 'ECONNABORTED') {
+            // Timeout xətası - retry et
+            if (attempt < maxRetries) {
+              const delay = baseDelay * Math.pow(2, attempt);
+              console.log(`⏳ Timeout xətası - ${delay}ms gözləyir və yenidən cəhd edəcək...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              continue;
+            }
+            throw new Error('ScrapingDog API timeout. Sorğu çox vaxt aldı');
+          }
+        }
+        
+        // Son cəhd idi və hələ də xəta var
+        if (attempt === maxRetries) {
+          throw new Error(`LinkedIn scraping xətası (${maxRetries} cəhddən sonra): ${error instanceof Error ? error.message : 'Naməlum xəta'}`);
         }
       }
-      
-      throw new Error(`LinkedIn scraping xətası: ${error instanceof Error ? error.message : 'Naməlum xəta'}`);
     }
+    
+    // Bu nöqtəyə çatmamalı, amma TypeScript üçün
+    throw new Error('LinkedIn scraping xətası: Bütün cəhdlər uğursuz oldu');
   }
 
   async scrapeOwnProfile(linkedinId: string, premium: boolean = false): Promise<LinkedInProfile> {
