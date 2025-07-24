@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CVera - Professional CV Builder",
-  description: "Create professional CVs with CVera - The ultimate CV builder platform",
+  title: "CVERA - Professional CV Builder",
+  description: "Create professional CVs with CVERA - The ultimate CV builder platform",
 };
 
 export default function RootLayout({

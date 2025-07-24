@@ -1,71 +1,133 @@
-Design and develop a cutting-edge, visually immersive, and 3D-oriented landing page for an online resume builder or personal portfolio platform.
+# CVERA - Professional CV Builder Website Design Prompt
 
-🔵 General Theme:
-Futuristic, clean, and elegant. The experience should evoke trust and creativity, combining professional UX with artistic and technical depth. Use scroll-based transitions and a cinematic intro to grab user attention immediately.
+Create a modern, professional website for "CVERA" - a CV/resume creation platform. The design should be clean, professional, and emphasize career success and professional growth.
 
-👁️‍🗨️ Visual Direction:
-- 3D visuals with depth and parallax (WebGL/Three.js or animated SVG layers)
-- Glassmorphism, soft gradients, neon accents, and smooth hover/mouse interactions
-- Modular and responsive layout with scroll-triggered animations (GSAP or Framer Motion)
-- Dark/light toggle with animated transition
-- Floating/responsive 3D objects (resumes, laptops, documents)
-- Animated cursor (magnetic or trail-follow effect)
+## Header/Navigation
+- Company logo "CVERA" with a professional icon (document or career-related symbol)
+- Navigation menu: About Us, Templates, Features, Pricing, Blog
+- "Create CV" button (prominent call-to-action in bright green)
+- Clean, minimal header with white background
+- Professional, corporate styling
 
-📄 Section Breakdown (Resume Builder / CV-focused site):
+## Hero Section - "Build Your Career Success"
+- Split layout: Left side with illustration, right side with content
+- Illustration elements (modern, minimalist style):
+  - Trophy/achievement icon in bright blue ()
+  - Professional CV/document graphics
+  - Career ladder or growth symbols
+  - Abstract geometric shapes
+  - Professional figure silhouettes
+  - Star accents representing success
+- Main headline: "Build Your Career Success"
+- Subheading: "Create professional CVs that help you land your dream job. Our platform provides expert templates and guidance for career advancement."
+- Primary CTA button: "Start Building Your CV"
+- Light gray/off-white background (#F8F9FA)
 
-1. **Hero Section:**
-   - Animated tagline: “Design your future resume in 3D.”
-   - 3D visual of a resume floating, flipping, or being typed in real-time.
-   - CTA buttons: “Build Your Resume” / “See Templates” (with hover-glow effects)
-   - Background: subtle motion particles or interactive depth field
+## Success Statistics Section
+- Section header: "Our Impact on Careers"
+- Subheader: "Join thousands of professionals who've advanced their careers with CVERA"
+- 5 key metrics in prominent display:
+  - "50K+" (CVs Created)
+  - "85%" (Interview Success Rate)
+  - "200+" (Professional Templates)
+  - "15+" (Industries Covered)
+  - "95%" (User Satisfaction)
+- Clean card-based layout with proper spacing
+- Each metric with brief descriptive text
 
-2. **How It Works Section:**
-   - 3-step process: Choose Template → Customize → Export
-   - Each step shown with animated 3D icon (e.g., document flying into editor)
-   - Timeline-style scroll reveal
+## Platform Evolution Timeline
+- Section header: "Our Journey"
+- Subheader: "From startup to the leading CV creation platform"
+- Vertical timeline with 4 key milestones:
+  - **2019 - The Beginning**: "Launched with basic CV templates to help job seekers create professional resumes"
+  - **2021 - Industry Recognition**: "Received awards for best career tools and expanded template library"
+  - **2023 - Innovation and Growth**: "Introduced AI-powered suggestions and industry-specific templates"
+  - **2024 - Leading the Future**: "Now the top choice for professionals worldwide seeking career advancement"
+- Each milestone in dark card (#2D3748) with bright green star icon
+- Connecting timeline line on the left side
 
-3. **Interactive Resume Demo:**
-   - Embedded interactive resume preview with real-time 3D flip or scroll
-   - Hover over sections to animate skills, experience, etc.
+## Core Features Section
+- Section header: "Why Choose CVERA"
+- 4 feature cards in 2x2 grid layout:
+  - **Professional Templates**: "Access 200+ ATS-friendly templates designed by career experts" (with document/template illustration)
+  - **AI-Powered Suggestions**: "Get personalized content recommendations based on your industry" (with lightbulb/AI illustration)
+  - **Easy Collaboration**: "Share and get feedback from mentors and career advisors" (with collaboration/handshake illustration)
+  - **Real-Time Preview**: "See exactly how your CV will look to employers instantly" (with preview/eye illustration)
+- Light background cards with small colored illustrations
+- Professional, feature-focused descriptions
 
-4. **Templates Gallery:**
-   - Grid or carousel of 3D template thumbnails
-   - On-hover animations (zoom, rotate, glass reflection)
-   - Filter system (modern, minimalist, creative, corporate)
+## Testimonial Section
+- Dark background (#2D3748)
+- Decorative elements: stars, sparkles, professional icons
+- Featured testimonial: "CVERA transformed my job search completely. The professional templates and AI suggestions helped me land my dream role in just 3 weeks!"
+- Attribution: "- Sarah Johnson, Marketing Manager"
+- Bright green accent elements and quote styling
 
-5. **AI-Powered Features Section:**
-   - Show icons for “AI Text Generator”, “Skill Suggestions”, “Grammar Check”, etc.
-   - Animate with Lottie or SVGs with glowing neon borders
+## Recognition & Partnerships
+- Section header: "Trusted by Industry Leaders"
+- Subheader: "Recognized by career experts and trusted by top companies"
+- 4 award/certification badges:
+  - Best Career Tool 2024
+  - HR Excellence Award
+  - Top Resume Builder
+  - Career Innovation Award
+- Professional badge designs in mix of circular and rectangular formats
+- Corporate partnership logos if applicable
 
-6. **User Testimonials:**
-   - Floating card-style reviews with scrolling marquee or 3D slide-in effect
-   - Avatar animation with voice bubble or subtle pop
+## Join Our Community CTA
+- Bright green background section (#7ED321)
+- "Start Your Career Journey" headline
+- Description: "Join thousands of professionals who've advanced their careers with CVERA. Create your professional CV in minutes."
+- "Create Your CV Now" button (dark button on green background)
+- Illustration: diverse professionals celebrating career success
+- Positive, career-focused messaging
 
-7. **Pricing Plans:**
-   - 3D cards for each pricing tier
-   - Hover transition rotates card and shows benefits on the back side
+## Footer
+- Dark background (#2D3748)
+- CVERA logo and branding
+- Contact information:
+  - Email: support@cvera.com
+  - Career guidance resources
+  - Help center link
+- Newsletter signup: "Get career tips and CV advice"
+- Social media links (LinkedIn prominent)
+- Legal links: Privacy Policy, Terms of Service
+- Copyright notice
 
-8. **FAQ Section:**
-   - Accordion-style with micro-animations and icon morphing
-   - Subtle background animation (floating question marks, etc.)
+## Design Specifications
+- **Primary Color**: Bright green (#7ED321) - represents growth and success
+- **Secondary Colors**: Dark gray (#2D3748), white (#FFFFFF), light gray (#F8F9FA)
+- **Typography**: Clean, professional sans-serif fonts (similar to Inter or Roboto)
+- **Illustrations**: Professional, career-focused, minimalist geometric style
+- **Icons**: Career and professional development themed
+- **Layout**: Clean sections with generous whitespace
+- **Cards**: Subtle shadows and rounded corners
+- **Buttons**: Prominent CTAs with hover effects
 
-9. **Call to Action Footer:**
-   - Big bold “Start Building Your Resume” button
-   - Footer design mimics a desktop workspace or virtual terminal (like in a tech UI)
-   - Social media & contact links with glowing icons
+## Content Focus Areas
+- Professional CV creation
+- Career advancement
+- Job search success
+- Template variety
+- Industry expertise
+- ATS compatibility
+- Professional growth
+- Interview success
 
-🔧 Technologies (Optional Dev Layer):
-- HTML5, SCSS or TailwindCSS
-- React.js with Framer Motion for animations
-- Three.js or R3F for 3D components
-- ScrollTrigger or Locomotive Scroll for parallax scroll
-- Optional: LottieFiles for animated icons
+## Key Visual Elements
+- Consistent bright green accent color throughout
+- Professional CV/document illustrations
+- Career growth and success imagery
+- Clean, card-based information architecture
+- Strong typographic hierarchy
+- Balanced whitespace usage
+- Corporate professional color palette
+- Modern, trustworthy design aesthetic
 
-🎨 Design Style Keywords:
-resume · 3D UI · futuristic · clean portfolio · glowing glass · animated resume preview · AI-enhanced experience · WebGL showcase · cinematic scroll
+## Mobile Responsiveness
+- Ensure all sections stack properly on mobile
+- Maintain readability and usability
+- Optimize CTA buttons for touch interaction
+- Preserve visual hierarchy on smaller screens
 
-💡 Bonus Ideas:
-- Add keyboard typing simulation in Hero
-- Include “Resume Score” with animated circular graph
-- Add a 3D floating chatbot to guide users
-
+The overall design should convey professionalism, career success, reliability, and expertise in CV creation while maintaining a modern, accessible, and conversion-focused user experience.

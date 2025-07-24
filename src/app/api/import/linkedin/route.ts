@@ -191,13 +191,46 @@ async function scrapePublicLinkedIn(profileUrl: string): Promise<any | null> {
 // Generate intelligent mock data based on username and URL analysis
 function generateIntelligentMockData(username: string, profileUrl: string): any {
   // Analyze username to generate realistic data
-  const isAzerbaijani = /[əöğüıçş]/.test(username) || profileUrl.includes('.az');
-  const isTech = /dev|tech|engineer|code|program|software/.test(username.toLowerCase());
-  const isBusiness = /manager|business|sales|marketing|ceo|cto/.test(username.toLowerCase());
+  const isAzerbaijani = /[əöğüıçş]/.test(username) || 
+                       profileUrl.includes('.az') ||
+                       /musayev|aliyev|həsənov|quliyev|mammadov|bəkirov|əliyev/.test(username.toLowerCase()) ||
+                       username.toLowerCase().includes('baku') ||
+                       username.toLowerCase().includes('azerbaijan');
   
-  const names = isAzerbaijani 
-    ? ['Əli Həsənov', 'Aysel Mammadova', 'Elşən Quliyev', 'Leyla Əliyeva', 'Rəşad Bəkirov']
-    : ['Alex Johnson', 'Sarah Williams', 'Michael Brown', 'Emma Davis', 'David Wilson'];
+  const isTech = /dev|tech|engineer|code|program|software|create|build|make/.test(username.toLowerCase());
+  const isBusiness = /manager|business|sales|marketing|ceo|cto|director|lead/.test(username.toLowerCase());
+  
+  // Generate name based on username rather than random selection
+  let name: string;
+  if (isAzerbaijani) {
+    if (username.toLowerCase().includes('musayev')) {
+      name = 'Musayev Əli';
+    } else if (username.toLowerCase().includes('aliyev')) {
+      name = 'Əliyev Rəşad';
+    } else if (username.toLowerCase().includes('həsənov')) {
+      name = 'Həsənov Elşən';
+    } else if (username.toLowerCase().includes('quliyev')) {
+      name = 'Quliyev Orxan';
+    } else {
+      const azerbaijaniNames = ['Əli Həsənov', 'Aysel Mammadova', 'Elşən Quliyev', 'Leyla Əliyeva', 'Rəşad Bəkirov'];
+      name = azerbaijaniNames[username.length % azerbaijaniNames.length];
+    }
+  } else {
+    // For non-Azerbaijani users, generate name based on username
+    if (username.toLowerCase().includes('alex')) {
+      name = 'Alex Johnson';
+    } else if (username.toLowerCase().includes('sarah')) {
+      name = 'Sarah Williams';
+    } else if (username.toLowerCase().includes('michael')) {
+      name = 'Michael Brown';
+    } else if (username.toLowerCase().includes('john')) {
+      name = 'John Smith';
+    } else {
+      // Use username as base for name generation
+      const capitalizedUsername = username.charAt(0).toUpperCase() + username.slice(1).toLowerCase().replace(/[^a-zA-Z]/g, '');
+      name = `${capitalizedUsername} Johnson`;
+    }
+  }
   
   const companies = isAzerbaijani
     ? ['SOCAR', 'Kapital Bank', 'Nar Mobile', 'PASHA Holding', 'Azercell']
@@ -207,8 +240,8 @@ function generateIntelligentMockData(username: string, profileUrl: string): any 
     ? ['Azərbaycan Dövlət İqtisad Universiteti', 'Bakı Dövlət Universiteti', 'ADA Universiteti', 'Xəzər Universiteti']
     : ['Stanford University', 'MIT', 'Harvard University', 'University of California'];
 
-  const name = names[Math.floor(Math.random() * names.length)];
-  const company = companies[Math.floor(Math.random() * companies.length)];
+  // Select company based on user type and randomness
+  const company = companies[username.length % companies.length];
   const university = universities[Math.floor(Math.random() * universities.length)];
   
   const techSkills = ['JavaScript', 'React', 'Node.js', 'TypeScript', 'Python', 'AWS', 'Docker'];

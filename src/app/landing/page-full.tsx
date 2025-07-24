@@ -50,7 +50,7 @@ export default function LandingPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent drop-shadow-sm">CVera</span>
+              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent drop-shadow-sm">CVERA</span>
             </div>
 
             {/* Navigation */}
@@ -170,7 +170,7 @@ export default function LandingPage() {
             <div className="text-center mb-16" data-aos="fade-up">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
                 <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  CVera Xüsusiyyətləri
+                  CVERA Xüsusiyyətləri
                 </span>
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
@@ -266,11 +266,11 @@ export default function LandingPage() {
             <div className="text-center mb-16" data-aos="fade-up">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
                 <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  Niyə CVera Seçməlisiniz?
+                  Niyə CVERA Seçməlisiniz?
                 </span>
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Minlərlə istifadəçi artıq CVera ilə dream job-larını tapdılar
+                Minlərlə istifadəçi artıq CVERA ilə dream job-larını tapdılar
               </p>
             </div>
 
@@ -469,7 +469,7 @@ export default function LandingPage() {
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-lg font-bold text-green-800 mb-2">CVera Həlli</h3>
+                    <h3 className="text-lg font-bold text-green-800 mb-2">CVERA Həlli</h3>
                     <p className="text-green-700 text-sm">
                       Şablonlarımız 1-2 səhifəlik optimal uzunluq təmin edir və yalnız vacib məlumatları vurğulayır.
                     </p>
@@ -501,7 +501,7 @@ export default function LandingPage() {
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-lg font-bold text-green-800 mb-2">CVera Həlli</h3>
+                    <h3 className="text-lg font-bold text-green-800 mb-2">CVERA Həlli</h3>
                     <p className="text-green-700 text-sm">
                       Modern və ATS-uyğun şablonlarımız sizi digərlərindən fərqləndirir və professional görünüş təmin edir.
                     </p>
@@ -533,7 +533,7 @@ export default function LandingPage() {
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-lg font-bold text-green-800 mb-2">CVera Həlli</h3>
+                    <h3 className="text-lg font-bold text-green-800 mb-2">CVERA Həlli</h3>
                     <p className="text-green-700 text-sm">
                       LinkedIn importu ilə bütün məlumatlarınız avtomatik doldurulur və heç bir vacib detal qaçmır.
                     </p>
@@ -553,7 +553,7 @@ export default function LandingPage() {
                 Professional CV-nizi Hazırlamağa Başlayın!
               </h2>
               <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
-                Minlərlə insanın seçdiyi CVera ilə siz də dream job-unuzu tapın. 
+                Minlərlə insanın seçdiyi CVERA ilə siz də dream job-unuzu tapın. 
                 LinkedIn import etməkdən tutmuş professional export-a qədər hər şey daxil!
               </p>
               <Link href="/auth/register" className="inline-flex items-center space-x-3 bg-white text-blue-600 px-10 py-4 rounded-2xl font-semibold text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 hover:scale-105">

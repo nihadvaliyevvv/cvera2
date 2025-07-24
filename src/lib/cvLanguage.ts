@@ -1,5 +1,5 @@
 /**
- * Language utilities for CVera application
+ * Language utilities for CVERA application
  * Handles translation between Azerbaijani and English for CV sections
  */
 

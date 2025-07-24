@@ -194,7 +194,7 @@ export default function PricingPage() {
             <Link href="/dashboard" className="flex items-center group">
               <Image 
                 src="/cveranazik.png" 
-                alt="CVera Logo" 
+                alt="CVERA Logo" 
                 width={48}
                 height={48}
                 className="h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"

@@ -52,7 +52,7 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="bg-white rounded-lg shadow p-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-        <p className="text-gray-600">CVera platformunun ümumi statistikası və idarəetməsi</p>
+        <p className="text-gray-600">CVERA platformunun ümumi statistikası və idarəetməsi</p>
       </div>
 
       {/* Stats Grid */}

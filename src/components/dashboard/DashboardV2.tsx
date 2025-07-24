@@ -211,7 +211,7 @@ export default function DashboardV2({ user, onCreateCV, onEditCV }: DashboardV2P
             <Link href="/dashboard" className="flex items-center group">
               <Image
                 src="/cveranazik.png" 
-                alt="CVera Logo" 
+                alt="CVERA Logo" 
                 width={120}
                 height={48}
                 className="h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
