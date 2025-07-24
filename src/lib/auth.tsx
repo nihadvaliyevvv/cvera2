@@ -198,10 +198,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Clear browser cache and force redirect
     if (typeof window !== 'undefined') {
       // Clear any possible cached data
-      window.history.replaceState(null, '', '/');
+      window.history.replaceState(null, '', '/landing');
       
-      // Force complete page reload
-      window.location.replace('/');
+      // Force complete page reload to landing page
+      window.location.replace('/landing');
     }
   }, []);
 

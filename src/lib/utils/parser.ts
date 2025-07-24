@@ -85,20 +85,40 @@ export function parseLinkedInData(rawData: any, url: string): ParsedLinkedInData
       activities: '',
       grade: ''
     })) || [],
-    skills: rawData.skills?.map((skill: string) => ({
-      name: skill,
-      level: 'Intermediate' as const
-    })) || [],
-    languages: rawData.languages?.map((lang: any) => ({
-      name: lang.name,
-      proficiency: lang.proficiency || 'Native'
-    })) || [],
-    certifications: rawData.certifications?.map((cert: any) => ({
-      name: cert.name || '',
-      issuer: cert.issuer || '',
-      date: cert.date || '',
-      description: cert.credential_id || ''
-    })) || [],
-    projects: [] // LinkedIn scraper-də projects yoxdur
+    skills: Array.isArray(rawData.skills) && rawData.skills.length > 0 ? 
+        rawData.skills.map((skill: any) => ({
+          name: typeof skill === 'string' ? skill : skill.name || skill,
+          level: 'Intermediate' as const
+        })) : [],
+      languages: Array.isArray(rawData.languages) && rawData.languages.length > 0 ?
+        rawData.languages.map((lang: any) => ({
+          name: typeof lang === 'string' ? lang : lang.name || '',
+          proficiency: typeof lang === 'string' ? 'Professional' : lang.proficiency || 'Professional'
+        })) : [],
+      certifications: [
+        // Regular certifications
+        ...(Array.isArray(rawData.certifications) ? rawData.certifications.map((cert: any) => ({
+          name: cert.name || cert.title || '',
+          issuer: cert.issuer || cert.organization || cert.authority || '',
+          date: cert.date || cert.duration || '',
+          description: cert.description || ''
+        })) : []),
+        // Awards as certifications (ScrapingDog specific)
+        ...(Array.isArray(rawData.awards) ? rawData.awards.map((award: any) => ({
+          name: award.name || award.title || '',
+          issuer: award.issuer || award.organization || award.authority || '',
+          date: award.date || award.duration || '',
+          description: award.summary || award.description || ''
+        })) : [])
+      ],
+      projects: Array.isArray(rawData.projects) && rawData.projects.length > 0 ?
+        rawData.projects.map((proj: any) => ({
+          name: proj.name || proj.title || '',
+          description: proj.description || proj.summary || '',
+          startDate: proj.startDate || proj.start_date || proj.starts_at || '',
+          endDate: proj.endDate || proj.end_date || proj.ends_at || '',
+          skills: proj.skills || '',
+          url: proj.url || proj.link || ''
+        })) : []
   };
 }

@@ -11,6 +11,7 @@ export interface LinkedInProfile {
   certifications: Certification[];
   languages: Language[];
   profileImage?: string;
+  // Əlavə məlumatlar
   contactInfo?: {
     email: string;
     phone: string;
@@ -20,6 +21,10 @@ export interface LinkedInProfile {
   };
   connections?: string;
   followers?: string;
+  // ScrapingDog-specific fields
+  projects?: Project[];
+  awards?: Award[];
+  volunteerExperience?: VolunteerExperience[];
 }
 
 export interface Experience {
@@ -47,6 +52,31 @@ export interface Certification {
 export interface Language {
   name: string;
   proficiency?: string;
+}
+
+export interface Project {
+  name: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  skills: string;
+  url: string;
+}
+
+export interface Award {
+  name: string;
+  issuer: string;
+  date: string;
+  credential_id?: string;
+}
+
+export interface VolunteerExperience {
+  organization: string;
+  role: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+  cause: string;
 }
 
 class ScrapingDogLinkedInScraper {
@@ -83,99 +113,139 @@ class ScrapingDogLinkedInScraper {
     throw new Error(`Keçersiz LinkedIn URL formatı: ${url}`);
   }
 
-  private transformScrapingDogResponse(data: any): LinkedInProfile {
-    console.log('🔄 ScrapingDog response-u LinkedIn profile formatına çevrilir...');
+  private transformScrapingDogData(rawData: any): LinkedInProfile {
+    // ScrapingDog returns an array with a single profile object
+    const profile = Array.isArray(rawData) ? rawData[0] : rawData;
     
-    // ScrapingDog API returns an array, so take the first element
-    const profileData = Array.isArray(data) ? data[0] : data;
-    
-    if (!profileData) {
-      throw new Error('ScrapingDog API-dan profil məlumatı alınmadı');
+    if (!profile) {
+      throw new Error('ScrapingDog API boş məlumat qaytardı');
     }
-    
-    const profile: LinkedInProfile = {
-      name: profileData.fullName || profileData.full_name || profileData.name || '',
-      headline: profileData.headline || profileData.title || profileData.current_position || '',
-      location: profileData.location || profileData.current_location || '',
-      about: profileData.about || profileData.summary || '',
-      experience: [],
-      education: [],
-      skills: [],
-      certifications: [],
-      languages: [],
-      profileImage: profileData.profile_photo || profileData.profile_picture || profileData.image_url || '',
-      contactInfo: {
-        email: profileData.email || '',
-        phone: profileData.phone || '',
-        website: profileData.website || '',
-        twitter: profileData.twitter || '',
-        linkedin: `https://www.linkedin.com/in/${profileData.public_identifier || ''}` || profileData.linkedin_url || profileData.url || ''
-      },
-      connections: profileData.connections || profileData.connection_count || '',
-      followers: profileData.followers || profileData.follower_count || ''
-    };
 
-    // Experience məlumatlarını transform et
-    if (profileData.experience && Array.isArray(profileData.experience)) {
-      profile.experience = profileData.experience.map((exp: any) => ({
-        position: exp.position || exp.title || exp.job_title || '',
+    console.log('🔄 ScrapingDog məlumatları çevrilir...');
+    console.log('📊 Mövcud sahələr:', Object.keys(profile));
+
+    return {
+      name: profile.fullName || profile.name || '',
+      headline: profile.headline || '',
+      location: profile.location || '',
+      about: profile.about || '',
+      
+      // Experience mapping with ScrapingDog field names
+      experience: (profile.experience || []).map((exp: any) => ({
+        position: exp.position || '',
         company: exp.company_name || exp.company || '',
-        date_range: exp.duration || `${exp.starts_at || ''} - ${exp.ends_at || ''}`.trim(),
+        date_range: exp.duration || `${exp.starts_at || ''} - ${exp.ends_at || ''}`,
         location: exp.location || '',
         description: exp.summary || exp.description || ''
-      }));
-    }
-
-    // Education məlumatlarını transform et
-    if (profileData.education && Array.isArray(profileData.education)) {
-      profile.education = profileData.education.map((edu: any) => ({
-        school: edu.college_name || edu.school || edu.institution || edu.university || '',
-        degree: edu.college_degree || edu.degree || edu.qualification || '',
-        field_of_study: edu.college_degree_field || edu.field_of_study || edu.field || edu.major || '',
-        date_range: edu.college_duration || edu.date_range || edu.duration || edu.dates || ''
-      }));
-    }
-
-    // Skills məlumatlarını transform et - ScrapingDog-da skills ayrıca olmaya bilər
-    if (profileData.skills && Array.isArray(profileData.skills)) {
-      profile.skills = profileData.skills.map((skill: any) => 
-        typeof skill === 'string' ? skill : (skill.name || skill.skill || '')
-      ).filter((skill: string) => skill.length > 0);
-    }
-
-    // Certifications məlumatlarını transform et
-    if (profileData.certification && Array.isArray(profileData.certification)) {
-      profile.certifications = profileData.certification.map((cert: any) => ({
-        name: cert.name || cert.title || cert.certification || '',
-        issuer: cert.issuer || cert.organization || cert.authority || '',
-        date: cert.date || cert.issue_date || cert.issued || cert.duration || '',
-        credential_id: cert.credential_id || cert.id || ''
-      }));
-    }
-
-    // Awards-i certifications kimi əlavə et
-    if (profileData.awards && Array.isArray(profileData.awards)) {
-      const awardsAsCerts = profileData.awards.map((award: any) => ({
-        name: award.name || award.title || '',
-        issuer: award.organization || 'Award',
-        date: award.duration || '',
-        credential_id: ''
-      }));
-      profile.certifications = [...profile.certifications, ...awardsAsCerts];
-    }
-
-    // Languages məlumatlarını transform et
-    if (profileData.languages && Array.isArray(profileData.languages)) {
-      profile.languages = profileData.languages.map((lang: any) => ({
+      })),
+      
+      // Education mapping with ScrapingDog field names
+      education: (profile.education || []).map((edu: any) => ({
+        school: edu.college_name || edu.school || edu.institution || '',
+        degree: edu.college_degree || edu.degree || '',
+        field_of_study: edu.college_degree_field || edu.field_of_study || '',
+        date_range: edu.college_duration || edu.duration || edu.date_range || ''
+      })),
+      
+      // Skills - ScrapingDog free tier doesn't provide skills, 
+      // but we can extract from experience summaries or about section
+      skills: this.extractSkillsFromProfile(profile),
+      
+      // Languages - direct mapping from ScrapingDog
+      languages: (profile.languages || []).map((lang: any) => ({
         name: typeof lang === 'string' ? lang : (lang.name || lang.language || ''),
-        proficiency: typeof lang === 'object' ? (lang.proficiency || lang.level || '') : ''
-      }));
-    }
-
-    console.log('✅ ScrapingDog response uğurla transform edildi');
-    console.log(`📊 Profile summary: ${profile.name}, ${profile.experience.length} exp, ${profile.education.length} edu, ${profile.skills.length} skills`);
+        proficiency: typeof lang === 'string' ? 'Professional' : (lang.proficiency || lang.level || 'Professional')
+      })),
+      
+      // Projects - direct mapping from ScrapingDog
+      projects: (profile.projects || []).map((proj: any) => ({
+        name: proj.title || proj.name || '',
+        description: proj.summary || proj.description || '',
+        startDate: proj.starts_at || proj.start_date || '',
+        endDate: proj.ends_at || proj.end_date || '',
+        skills: '',
+        url: proj.url || proj.link || ''
+      })),
+      
+      // Certifications - ScrapingDog calls it 'certification'
+      certifications: (profile.certification || profile.certifications || []).map((cert: any) => ({
+        name: cert.name || cert.title || '',
+        issuer: cert.organization || cert.authority || cert.issuer || '',
+        date: cert.duration || cert.date || cert.issued_date || '',
+        credential_id: cert.credential_id || ''
+      })),
+      
+      // Awards as certifications (ScrapingDog specific)
+      awards: (profile.awards || []).map((award: any) => ({
+        name: award.name || award.title || '',
+        issuer: award.organization || award.authority || '',
+        date: award.duration || award.date || '',
+        credential_id: ''
+      })),
+      
+      // Volunteer experience - ScrapingDog calls it 'volunteering'
+      volunteerExperience: (profile.volunteering || profile.volunteer_experience || []).map((vol: any) => ({
+        organization: vol.organization || vol.company || '',
+        role: vol.role || vol.position || vol.title || '',
+        startDate: vol.starts_at || vol.start_date || '',
+        endDate: vol.ends_at || vol.end_date || '',
+        description: vol.summary || vol.description || '',
+        cause: vol.cause || vol.field || ''
+      })),
+      
+      profileImage: profile.profile_photo || profile.profileImage || '',
+      
+      contactInfo: {
+        email: profile.email || '',
+        phone: profile.phone || '',
+        website: profile.website || '',
+        twitter: profile.twitter || '',
+        linkedin: profile.public_profile_url || `https://www.linkedin.com/in/${profile.public_identifier}` || ''
+      },
+      
+      connections: profile.connections || '',
+      followers: profile.followers || ''
+    };
+  }
+  
+  // Helper method to extract skills from profile content
+  private extractSkillsFromProfile(profile: any): string[] {
+    const skills: Set<string> = new Set();
     
-    return profile;
+    // Extract from about section
+    if (profile.about) {
+      const commonSkills = [
+        'JavaScript', 'TypeScript', 'Java', 'Python', 'React', 'Node.js', 'Next.js',
+        'HTML', 'CSS', 'SQL', 'MongoDB', 'PostgreSQL', 'Docker', 'AWS', 'Azure',
+        'Git', 'Linux', 'Testing', 'Agile', 'Scrum', 'REST API', 'GraphQL',
+        'Spring Boot', 'Angular', 'Vue.js', 'Express.js', 'Kubernetes', 'CI/CD',
+        'Machine Learning', 'AI', 'Data Science', 'DevOps', 'Microservices'
+      ];
+      
+      const aboutText = profile.about.toLowerCase();
+      commonSkills.forEach(skill => {
+        if (aboutText.includes(skill.toLowerCase())) {
+          skills.add(skill);
+        }
+      });
+    }
+    
+    // Extract from experience summaries
+    if (profile.experience && Array.isArray(profile.experience)) {
+      profile.experience.forEach((exp: any) => {
+        if (exp.summary) {
+          const expText = exp.summary.toLowerCase();
+          const techSkills = ['java', 'javascript', 'python', 'react', 'node', 'sql', 'testing', 'automation'];
+          techSkills.forEach(skill => {
+            if (expText.includes(skill)) {
+              skills.add(skill.charAt(0).toUpperCase() + skill.slice(1));
+            }
+          });
+        }
+      });
+    }
+    
+    return Array.from(skills);
   }
 
   async scrapeProfile(linkedinUrl: string, premium: boolean = false): Promise<LinkedInProfile> {
@@ -230,7 +300,7 @@ class ScrapingDogLinkedInScraper {
       }
 
       // Profile məlumatlarını transform et
-      const profile = this.transformScrapingDogResponse(apiData);
+      const profile = this.transformScrapingDogData(apiData);
 
       // Minimum məlumat yoxlaması
       if (!profile.name && !profile.headline) {

@@ -13,12 +13,12 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error('LinkedIn authorization error:', error);
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/?error=LinkedIn%20autorization%20xətası`);
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/landing?error=LinkedIn%20avtorizasiya%20xətası`);
   }
 
   if (!code) {
     console.error('No authorization code received');
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/?error=Avtorizasiya%20kodu%20alınmadı`);
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/landing?error=Avtorizasiya%20kodu%20alınmadı`);
   }
 
   try {
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
 
     if (!tokenData.access_token) {
       console.error('Token exchange failed:', tokenData);
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/?error=Token%20mübadiləsi%20xətası`);
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/landing?error=Token%20mübadiləsi%20xətası`);
     }
 
     // Get user profile using OpenID Connect userinfo endpoint
@@ -106,8 +106,8 @@ export async function GET(request: NextRequest) {
     // Generate JWT token
     const token = generateJWT({ userId: user.id, email: user.email });
 
-    // Create response with redirect
-    const response = NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/?success=LinkedIn%20ilə%20uğurla%20giriş%20edildi`);
+    // Create response with redirect to dashboard
+    const response = NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard`);
     
     // Set cookies
     response.cookies.set('accessToken', token, {
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('LinkedIn OAuth error:', error);
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/?error=LinkedIn%20giriş%20xətası`);
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/landing?error=LinkedIn%20giriş%20xətası`);
   } finally {
     await prisma.$disconnect();
   }
