@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   if (authError) return authError;
 
   try {
-    const { name, key, service = "linkedin", priority = 0 } = await req.json();
+    const { name, key, service = "linkedin", host, priority = 0 } = await req.json();
 
     if (!name || !key) {
       return NextResponse.json({ error: "Name and key are required" }, { status: 400 });
@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
         name,
         key,
         service,
+        host: host || null,
         priority,
       },
     });
@@ -79,7 +80,7 @@ export async function PUT(req: NextRequest) {
   if (authError) return authError;
 
   try {
-    const { id, name, active, priority } = await req.json();
+    const { id, name, active, priority, host } = await req.json();
 
     if (!id) {
       return NextResponse.json({ error: "API key ID is required" }, { status: 400 });
@@ -89,6 +90,7 @@ export async function PUT(req: NextRequest) {
     if (name !== undefined) updateData.name = name;
     if (active !== undefined) updateData.active = active;
     if (priority !== undefined) updateData.priority = priority;
+    if (host !== undefined) updateData.host = host;
 
     const apiKey = await prisma.apiKey.update({
       where: { id },

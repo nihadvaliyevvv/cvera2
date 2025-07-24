@@ -16,16 +16,16 @@ model User {
   resetToken       String?
   resetTokenExpiry DateTime?
   lastLogin        DateTime?
-  linkedinId       String?         @unique
-  tier             String          @default("Free")
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
   role             String          @default("USER")
+  linkedinId       String?         @unique
+  tier             String          @default("Free")
   cvs              CV[]            @relation("UserCVs")
+  dailyUsage       DailyUsage[]    @relation("UserDailyUsage")
   importSessions   ImportSession[] @relation("UserImportSessions")
   payments         Payment[]       @relation("UserPayments")
   subscriptions    Subscription[]  @relation("UserSubscriptions")
-  dailyUsage       DailyUsage[]    @relation("UserDailyUsage")
 }
 
 model CV {
@@ -93,6 +93,7 @@ model ApiKey {
   deactivatedAt DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  host          String?
 }
 
 model FileGenerationJob {

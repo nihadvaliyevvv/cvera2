@@ -46,39 +46,174 @@ async function scrapeLinkedInProfile(profileUrl: string): Promise<any> {
   console.log(`🔍 LinkedIn profili analiz edilir: ${username}`);
 
   try {
-    // Method 1: Try RapidAPI if available
-    const rapidApiKey = process.env.RAPIDAPI_KEY;
-    const rapidApiHost = process.env.RAPIDAPI_HOST;
-    
-    if (rapidApiKey && rapidApiHost) {
-      console.log("🚀 RapidAPI ilə cəhd edilir...");
-      const response = await fetch(`https://${rapidApiHost}/get-profile`, {
-        method: 'POST',
-        headers: {
-          'X-RapidAPI-Key': rapidApiKey,
-          'X-RapidAPI-Host': rapidApiHost,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          linkedin_url: profileUrl
-        })
-      });
+    // Method 1: Get active API keys from database
+    const prisma = new PrismaClient();
+    const apiKeys = await prisma.apiKey.findMany({
+      where: {
+        active: true,
+        service: 'linkedin'
+      },
+      orderBy: [
+        { priority: 'asc' },
+        { usageCount: 'asc' }
+      ],
+      select: {
+        id: true,
+        name: true,
+        key: true,
+        priority: true,
+        usageCount: true
+      }
+    });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data && data.success) {
-          console.log("✅ RapidAPI-dən data alındı");
-          return transformRapidApiData(data);
+    console.log(`📊 Database-dən ${apiKeys.length} aktiv API key tapıldı`);
+
+    if (apiKeys.length > 0) {
+      // Try each API key with different endpoints
+      for (const apiKey of apiKeys) {
+        const apiHost = 'fresh-linkedin-profile-data.p.rapidapi.com'; // Use the working host
+        console.log(`🔑 API key test edilir: ${apiKey.name} (Host: ${apiHost})`);
+        
+        // Different endpoint patterns to try
+        const endpointTests = [
+          { 
+            endpoint: '/get-profile', 
+            method: 'POST', 
+            body: { linkedin_url: profileUrl },
+            description: 'Standard get-profile endpoint' 
+          },
+          { 
+            endpoint: '/get-linkedin-profile', 
+            method: 'POST', 
+            body: { linkedin_url: profileUrl },
+            description: 'Alternative get-linkedin-profile endpoint' 
+          },
+          { 
+            endpoint: '/profile', 
+            method: 'POST', 
+            body: { url: profileUrl },
+            description: 'Simple profile endpoint with url param' 
+          },
+          { 
+            endpoint: '/profile', 
+            method: 'POST', 
+            body: { linkedin_url: profileUrl },
+            description: 'Simple profile endpoint with linkedin_url param' 
+          },
+          { 
+            endpoint: '/scrape', 
+            method: 'POST', 
+            body: { linkedin_url: profileUrl },
+            description: 'Scrape endpoint' 
+          },
+          { 
+            endpoint: '', 
+            method: 'POST', 
+            body: { linkedin_url: profileUrl },
+            description: 'Root endpoint' 
+          },
+          { 
+            endpoint: '/linkedin', 
+            method: 'POST', 
+            body: { url: profileUrl },
+            description: 'LinkedIn endpoint with url param' 
+          }
+        ];
+
+        // Test each endpoint
+        for (const test of endpointTests) {
+          console.log(`🧪 Test edilir: ${test.method} ${apiHost}${test.endpoint} - ${test.description}`);
+          
+          try {
+            const response = await fetch(`https://${apiHost}${test.endpoint}`, {
+              method: test.method,
+              headers: {
+                'X-RapidAPI-Key': apiKey.key,
+                'X-RapidAPI-Host': apiHost,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(test.body)
+            });
+
+            console.log(`📡 Response: ${response.status} ${response.statusText}`);
+            
+            const responseText = await response.text();
+            console.log(`📄 Response (first 300 chars): ${responseText.substring(0, 300)}`);
+
+            if (response.ok && responseText.trim()) {
+              // Try to parse as JSON
+              try {
+                const data = JSON.parse(responseText);
+                console.log(`📊 Parsed JSON response:`, JSON.stringify(data, null, 2));
+                
+                // Check if this looks like valid profile data
+                if (data && (
+                  data.success || 
+                  data.data || 
+                  data.profile || 
+                  data.name || 
+                  data.firstName || 
+                  data.fullName ||
+                  data.headline ||
+                  data.title
+                )) {
+                  console.log(`✅ İşləyən endpoint tapıldı: ${test.method} ${test.endpoint}`);
+                  
+                  // Update API key usage
+                  await prisma.apiKey.update({
+                    where: { id: apiKey.id },
+                    data: {
+                      usageCount: { increment: 1 },
+                      lastUsed: new Date(),
+                      lastResult: 'success'
+                    }
+                  });
+                  
+                  await prisma.$disconnect();
+                  return transformRapidApiData(data);
+                }
+              } catch (parseError) {
+                console.log(`💭 JSON parse edilmədi, amma response mövcuddur`);
+                
+                // Check if response contains profile-like data even if not JSON
+                if (responseText.includes('linkedin') || 
+                    responseText.includes('name') || 
+                    responseText.includes('profile') ||
+                    responseText.includes('experience') ||
+                    responseText.includes('education')) {
+                  console.log(`📝 Profile məlumatları aşkar edildi, text response-da`);
+                  // Could add text parsing logic here if needed
+                }
+              }
+            } else if (!response.ok) {
+              // Update failed usage
+              await prisma.apiKey.update({
+                where: { id: apiKey.id },
+                data: {
+                  usageCount: { increment: 1 },
+                  lastUsed: new Date(),
+                  lastResult: `HTTP ${response.status}: ${responseText.substring(0, 100)}`
+                }
+              });
+            }
+          } catch (endpointError: any) {
+            console.error(`❌ ${test.endpoint} endpoint xətası:`, endpointError.message);
+          }
         }
       }
     }
 
-    // Method 2: Try public LinkedIn profile scraping
-    console.log("🌐 Public LinkedIn profili analiz edilir...");
-    const publicData = await scrapePublicLinkedIn(profileUrl);
-    if (publicData) {
-      console.log("✅ Public LinkedIn data alındı");
-      return publicData;
+    await prisma.$disconnect();
+
+    // Method 2: Try public LinkedIn profile scraping if enabled
+    // Method 2: Try public LinkedIn profile scraping if enabled
+    if (process.env.FEATURE_PUBLIC_LINKEDIN_SCRAPING === 'true') {
+      console.log("🌐 Public LinkedIn profili analiz edilir...");
+      const publicData = await scrapePublicLinkedIn(profileUrl);
+      if (publicData && publicData.personalInfo?.name) {
+        console.log("✅ Public LinkedIn data alındı");
+        return publicData;
+      }
     }
 
     // Method 3: Generate intelligent mock data based on URL
@@ -347,19 +482,20 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { url } = body;
+    const { url, linkedinUrl } = body;
+    const profileUrl = url || linkedinUrl; // Support both field names
     
-    if (!url || !url.includes('linkedin.com')) {
+    if (!profileUrl || !profileUrl.includes('linkedin.com')) {
       return NextResponse.json({ 
         error: "Düzgün LinkedIn URL daxil edin (məsələn: https://www.linkedin.com/in/username)" 
       }, { status: 400 });
     }
 
-    console.log('🚀 LinkedIn import başladı:', url);
+    console.log('🚀 LinkedIn import başladı:', profileUrl);
     console.log('📊 İstifadəçi ID:', userId);
     
     // Real LinkedIn profile scraping with multiple fallback methods
-    const profileData = await scrapeLinkedInProfile(url);
+    const profileData = await scrapeLinkedInProfile(profileUrl);
     
     if (!profileData) {
       throw new Error("LinkedIn profil məlumatları alına bilmədi");

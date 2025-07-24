@@ -8,6 +8,7 @@ interface ApiKey {
   name: string;
   key: string; // Masked
   service: string;
+  host?: string | null; // RapidAPI host URL
   active: boolean;
   priority: number;
   usageCount: number;
@@ -26,6 +27,7 @@ export default function AdminApiKeys() {
     name: '',
     key: '',
     service: 'linkedin',
+    host: '',
     priority: 0,
   });
 
@@ -75,7 +77,7 @@ export default function AdminApiKeys() {
       }
 
       setShowAddForm(false);
-      setNewKey({ name: '', key: '', service: 'linkedin', priority: 0 });
+      setNewKey({ name: '', key: '', service: 'linkedin', host: '', priority: 0 });
       fetchApiKeys();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add API key');
@@ -235,6 +237,19 @@ export default function AdminApiKeys() {
                   placeholder="0 = highest priority"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Host (Optional)
+                  <span className="text-xs text-gray-500 ml-1">- RapidAPI host URL (defaults to fresh-linkedin-profile-data.p.rapidapi.com)</span>
+                </label>
+                <input
+                  type="text"
+                  value={newKey.host}
+                  onChange={(e) => setNewKey({ ...newKey, host: e.target.value })}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="fresh-linkedin-profile-data.p.rapidapi.com"
+                />
+              </div>
               <div className="flex justify-end space-x-3">
                 <button
                   type="button"
@@ -270,6 +285,9 @@ export default function AdminApiKeys() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Priority
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Host
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Usage
@@ -338,6 +356,18 @@ export default function AdminApiKeys() {
                         onChange={(e) => handleUpdateKey(apiKey.id, { priority: parseInt(e.target.value) })}
                         className="w-20 px-2 py-1 text-sm border border-gray-300 rounded"
                       />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <input
+                        type="text"
+                        value={apiKey.host || ''}
+                        onChange={(e) => handleUpdateKey(apiKey.id, { host: e.target.value || null })}
+                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                        placeholder="default host"
+                      />
+                      <div className="text-xs text-gray-500 mt-1">
+                        {apiKey.host || 'Using default host'}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{apiKey.usageCount}</div>

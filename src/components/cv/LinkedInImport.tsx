@@ -65,8 +65,9 @@ interface LinkedInImportProps {
 }
 
 export default function LinkedInImport({ onImport, onCancel }: LinkedInImportProps) {
-  // Check if you want to re-enable LinkedIn import
-  // First get RapidAPI subscription to "Fresh LinkedIn Profile Data"
+  // LinkedIn import now uses DATABASE API KEYS - NO MOCK DATA
+  // API keys are managed through admin panel at /error/api-keys
+  // Supports multiple key rotation and usage tracking
   
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -103,12 +104,15 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
       if (response.ok && data.success) {
         setImportedData(data.data);
         setError('');
+        console.log('✅ LinkedIn data successfully imported:', data.data);
       } else {
-        setError(data.error || 'LinkedIn import zamanı xəta baş verdi');
+        const errorMsg = data.error || 'LinkedIn import zamanı xəta baş verdi';
+        setError(errorMsg);
+        console.error('❌ LinkedIn import failed:', errorMsg);
       }
     } catch (error: any) {
-      console.error('LinkedIn import error:', error);
-      setError(error.message || 'LinkedIn import zamanı xəta baş verdi');
+      console.error('💥 LinkedIn import network error:', error);
+      setError('Şəbəkə xətası: ' + (error.message || 'LinkedIn import zamanı xəta baş verdi'));
     } finally {
       setLoading(false);
     }
@@ -222,6 +226,10 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                   <ul className="text-blue-700 space-y-1.5 sm:space-y-2 text-sm sm:text-base">
                     <li className="flex items-start space-x-2">
                       <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                      <span>API key-lər admin panelindən <strong>avtomatik</strong> seçilir</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
                       <span>LinkedIn profilinizin <strong>public</strong> olması məcburidir</span>
                     </li>
                     <li className="flex items-start space-x-2">
@@ -230,7 +238,7 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                     </li>
                     <li className="flex items-start space-x-2">
                       <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
-                      <span>Import prosesi <strong>10-30 saniyə</strong> çəkə bilər</span>
+                      <span>Çox API key-dən <strong>ağıllı seçim</strong> və rotation</span>
                     </li>
                     <li className="flex items-start space-x-2">
                       <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
@@ -266,11 +274,11 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
               <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-lg border border-gray-200/50 p-3 sm:p-4 text-center sm:col-span-2 lg:col-span-1">
                 <div className="w-10 sm:w-12 h-10 sm:h-12 bg-emerald-100 rounded-lg sm:rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3">
                   <svg className="w-5 sm:w-6 h-5 sm:h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
                   </svg>
                 </div>
-                <h4 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Təhlükəsiz</h4>
-                <p className="text-gray-600 text-xs sm:text-sm">Məlumatlarınız tam təhlükəsizdir</p>
+                <h4 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Database İdarəsi</h4>
+                <p className="text-gray-600 text-xs sm:text-sm">API key-lər admin panelindən idarə olunur</p>
               </div>
             </div>
           </div>
@@ -367,48 +375,4 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
       </div>
     </div>
   );
-
-  /* Disabled version - if you want to disable again:
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">LinkedIn Import</h2>
-          <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">
-                LinkedIn Import Müvəqqəti Deaktivdir
-              </h3>
-              <div className="mt-2 text-sm text-yellow-700">
-                <p>
-                  LinkedIn profil import funksiyası hal-hazırda API subscription problemləri səbəbindən mövcud deyil.
-                  Profil məlumatlarınızı manual şəkildə daxil edə bilərsiniz.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex justify-end">
-          <button onClick={onCancel} className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors">
-            Bağla
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-  */
 }
