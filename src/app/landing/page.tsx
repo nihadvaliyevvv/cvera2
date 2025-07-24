@@ -70,6 +70,11 @@ export default function LandingPage() {
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
             <div className="flex items-center">
+              <img 
+                src="/cveralogo.svg" 
+                alt="CVERA Logo" 
+                className="h-12 w-auto mr-2"
+              />
               <span className="text-3xl font-bold text-gray-900">CVERA</span>
             </div>
 
@@ -597,10 +602,11 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-4 gap-8">
             {/* Logo and tagline */}
             <div className="lg:col-span-1">
-              <div className="mb-6">
+              <div className="mb-6 flex items-center space-x-3">
+                <img src="/cveralogo.svg" alt="CVERA Logo" className="w-8 h-8" />
                 <span className="text-3xl font-bold">CVERA</span>
-                <p className="text-gray-400 mt-2">Professional CV Platform</p>
               </div>
+              <p className="text-gray-400 mt-2">Professional CV Platform</p>
               
               {/* Social Media */}
               <div className="flex space-x-4">

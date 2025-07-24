@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuth, getUserTier } from '@/lib/auth';
 
 interface LinkedInData {
   sessionId?: string;
@@ -11,6 +12,7 @@ interface LinkedInData {
     phone?: string;
     linkedin: string;
     summary?: string;
+    professionalSummary?: string; // AI-generated professional summary for Medium/Premium users
     website?: string;
     headline?: string;
   };
@@ -69,10 +71,18 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
   // Puppeteer istifadə edərək HTML səhifəsindən məlumatları çəkirik
   // Bütün məlumatlar real-time olaraq LinkedIn səhifəsindən alınır
   
+  const { user } = useAuth();
+  const userTier = user ? getUserTier(user) : 'Free';
+  
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [importedData, setImportedData] = useState<LinkedInData | null>(null);
+  const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
+  const [showAiSummary, setShowAiSummary] = useState(false);
+
+  // Check if user can access AI features
+  const canUseAiFeatures = userTier === 'Medium' || userTier === 'Premium';
 
   const handleImport = async () => {
     if (!url.trim()) {
@@ -119,6 +129,61 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
   const confirmImport = () => {
     if (importedData) {
       onImport(importedData);
+    }
+  };
+
+  // AI Professional Summary Generation for Medium/Premium users
+  const generateAiSummary = async () => {
+    if (!importedData || !canUseAiFeatures) return;
+
+    setAiSummaryLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/ai/generate-summary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          profileData: {
+            name: importedData.personalInfo?.name,
+            headline: importedData.personalInfo?.headline,
+            about: importedData.personalInfo?.summary,
+            experience: importedData.experience,
+            education: importedData.education,
+            skills: importedData.skills
+          }
+        })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // Update imported data with AI-generated summary
+        setImportedData(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            personalInfo: {
+              ...prev.personalInfo,
+              name: prev.personalInfo?.name || '',
+              email: prev.personalInfo?.email || '',
+              linkedin: prev.personalInfo?.linkedin || '',
+              professionalSummary: data.summary
+            }
+          };
+        });
+        setShowAiSummary(true);
+        console.log('✅ AI Professional Summary generated');
+      } else {
+        setError('AI Summary generasiya xətası: ' + (data.error || 'Bilinməyən xəta'));
+      }
+    } catch (error: any) {
+      console.error('💥 AI Summary xətası:', error);
+      setError('AI Summary xətası: ' + (error.message || 'Şəbəkə xətası'));
+    } finally {
+      setAiSummaryLoading(false);
     }
   };
 
@@ -349,6 +414,104 @@ export default function LinkedInImport({ onImport, onCancel }: LinkedInImportPro
                   </div>
                 </div>
               </div>
+
+              {/* AI Professional Summary Section - Medium/Premium Feature */}
+              {canUseAiFeatures && (
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl border border-purple-200/50 p-4 sm:p-6 mt-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h5 className="font-semibold text-gray-900 flex items-center text-sm sm:text-base">
+                      <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                      AI Professional Summary
+                      <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">
+                        {userTier}
+                      </span>
+                    </h5>
+                    
+                    {!showAiSummary && (
+                      <button
+                        onClick={generateAiSummary}
+                        disabled={aiSummaryLoading}
+                        className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 font-medium text-sm flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {aiSummaryLoading ? (
+                          <>
+                            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>Generasiya edilir...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <span>AI Summary Yarat</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+
+                  {showAiSummary && importedData.personalInfo?.professionalSummary ? (
+                    <div className="bg-white rounded-lg p-4 border border-purple-200">
+                      <p className="text-gray-700 leading-relaxed text-sm sm:text-base">
+                        {importedData.personalInfo.professionalSummary}
+                      </p>
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
+                        <div className="flex items-center space-x-4 text-xs text-gray-500">
+                          <span>🤖 AI Generated</span>
+                          <span>📝 CV Ready</span>
+                          <span>🇬🇧 English</span>
+                        </div>
+                        <button
+                          onClick={() => setShowAiSummary(false)}
+                          className="text-purple-600 hover:text-purple-700 text-sm font-medium"
+                        >
+                          Yenidən Yarat
+                        </button>
+                      </div>
+                    </div>
+                  ) : !showAiSummary && !aiSummaryLoading && (
+                    <div className="text-center py-6">
+                      <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                      </div>
+                      <p className="text-gray-600 text-sm mb-2">AI Professional Summary hazır deyil</p>
+                      <p className="text-xs text-gray-500">Yuxarıdakı düyməni basaraq CV üçün professional summary generasiya edin</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Upgrade Notice for Free Users */}
+              {!canUseAiFeatures && (
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200/50 p-4 sm:p-6 mt-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center mr-3">
+                        <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h5 className="font-semibold text-amber-800 text-sm sm:text-base">AI Professional Summary</h5>
+                        <p className="text-amber-700 text-xs sm:text-sm">Medium və ya Premium plan ilə AI-powered CV summary</p>
+                      </div>
+                    </div>
+                    <a 
+                      href="/pricing" 
+                      className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-4 py-2 rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all duration-300 font-medium text-sm"
+                    >
+                      Upgrade Et
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">

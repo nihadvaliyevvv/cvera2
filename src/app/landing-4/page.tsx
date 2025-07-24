@@ -42,7 +42,8 @@ export default function Landing4Page() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
-            <div className="flex items-center">
+            <div className="flex items-center space-x-3">
+              <img src="/cveralogo.svg" alt="CVERA Logo" className="w-10 h-10" />
               <span className="text-3xl font-bold text-black">CVERA</span>
             </div>
 
@@ -364,7 +365,8 @@ export default function Landing4Page() {
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Left Side */}
             <div>
-              <div className="mb-8">
+              <div className="mb-8 flex items-center space-x-3">
+                <img src="/cveralogo.svg" alt="CVERA Logo" className="w-8 h-8" />
                 <span className="text-3xl font-bold">CVERA</span>
               </div>
               

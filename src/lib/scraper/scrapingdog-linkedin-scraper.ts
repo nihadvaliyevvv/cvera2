@@ -142,7 +142,70 @@ Skills:`;
     }
   }
 
+  // API data-dan skills çıxar (AI olmadan)
+  private extractSkillsFromApiData(profile: any): string[] {
+    try {
+      // ScrapingDog API-də skills field-i mövcud deyil
+      // Boş array qaytar, frontend-də manual əlavə edəcəklər
+      console.log('📋 API-dən skills çıxarılır (LinkedIn skills scraping dəstəklənmir)');
+      return [];
+    } catch (error) {
+      console.error('❌ API skills çıxarma xətası:', error);
+      return [];
+    }
+  }
+
   // Gemini AI ilə professional summary generasiya et
+  /**
+   * Generate professional summary using AI - Public method for API endpoints
+   */
+  public async generateProfessionalSummaryPublic(profileText: string): Promise<string> {
+    try {
+      console.log('🤖 Gemini AI ilə Professional Summary generasiya edilir...');
+      
+      const model = this.geminiAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      
+      const prompt = `
+Based on this LinkedIn profile information, create a professional CV summary in English.
+
+Profile Data:
+${profileText}
+
+Requirements:
+1. Write in English only
+2. 3-4 sentences (80-120 words)
+3. Professional tone suitable for CV/Resume
+4. Highlight key expertise, experience level, and value proposition
+5. Include specific technical skills and industry experience
+6. Use active voice and strong action words
+7. Focus on achievements and impact
+8. Make it compelling for employers
+
+Format: Return only the professional summary text, no extra formatting or quotes.
+
+Professional Summary:`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      let summary = response.text().trim();
+      
+      // Clean up the response
+      summary = summary.replace(/^["']|["']$/g, ''); // Remove quotes
+      summary = summary.replace(/^Professional Summary:\s*/i, ''); // Remove prefix if present
+      
+      console.log('✅ Professional Summary generasiya edildi');
+      console.log(`📊 Uzunluq: ${summary.length} simvol`);
+      
+      return summary;
+      
+    } catch (error) {
+      console.error('❌ Gemini AI Professional Summary xətası:', error);
+      // Fallback summary
+      return 'Experienced professional with a strong background in technology and business development. Proven track record of delivering results and driving innovation in fast-paced environments.';
+    }
+  }
+
+  // Original private method for internal usage
   private async generateProfessionalSummary(profile: any): Promise<string> {
     try {
       console.log('📝 Gemini AI ilə Professional Summary generasiya edilir...');
@@ -347,7 +410,7 @@ Professional Summary:`;
     throw new Error(`Keçersiz LinkedIn URL formatı: ${url}`);
   }
 
-  private async transformScrapingDogData(rawData: any): Promise<LinkedInProfile> {
+  private async transformScrapingDogData(rawData: any, generateAI: boolean = false): Promise<LinkedInProfile> {
     // ScrapingDog returns an array with a single profile object
     const profile = Array.isArray(rawData) ? rawData[0] : rawData;
     
@@ -359,11 +422,22 @@ Professional Summary:`;
     console.log('📊 Yalnız vacib sahələr işlənir (server performansı üçün optimize edilib)');
     console.log('✅ Əldə edilən sahələr: Şəxsi Məlumatlar, İş Təcrübəsi, Təhsil, Bacarıqlar, Dillər, Layihələr, Sertifikatlar, Könüllü Təcrübə');
 
-    // AI ilə skills və professional summary generasiya et
-    const [skills, professionalSummary] = await Promise.all([
-      this.extractSkillsWithAI(profile),
-      this.generateProfessionalSummary(profile)
-    ]);
+    // AI ilə skills və professional summary generasiya et (opsional)
+    let skills: string[] = [];
+    let professionalSummary: string = '';
+    
+    if (generateAI) {
+      console.log('🤖 Generating AI content...');
+      [skills, professionalSummary] = await Promise.all([
+        this.extractSkillsWithAI(profile),
+        this.generateProfessionalSummary(profile)
+      ]);
+      console.log('✅ AI content generated');
+    } else {
+      console.log('⚠️  AI content generation skipped (generateAI = false)');
+      // Extract skills from API data or empty array
+      skills = this.extractSkillsFromApiData(profile);
+    }
 
     return {
       name: profile.fullName || profile.name || '',
@@ -449,7 +523,7 @@ Professional Summary:`;
     };
   }
 
-  async scrapeProfile(linkedinUrl: string, premium: boolean = false): Promise<LinkedInProfile> {
+  async scrapeProfile(linkedinUrl: string, premium: boolean = false, generateAI: boolean = false): Promise<LinkedInProfile> {
     const maxRetries = 3;
     const baseDelay = 1000; // 1 second
     
@@ -525,8 +599,8 @@ Professional Summary:`;
           console.log(`📊 Qalan sorğu sayı: ${apiData.remaining_requests}`);
         }
 
-        // Profile məlumatlarını transform et (AI ilə skills çıxarma daxil)
-        const profile = await this.transformScrapingDogData(apiData);
+        // Profile məlumatlarını transform et (AI parametri ilə)
+        const profile = await this.transformScrapingDogData(apiData, generateAI);
 
         // Minimum məlumat yoxlaması
         if (!profile.name && !profile.headline) {
@@ -714,7 +788,8 @@ export async function scrapeLinkedInProfile(url: string, email?: string, passwor
   
   try {
     // ScrapingDog API email/password istəmir, yalnız URL lazımdır
-    const profile = await scrapingDogScraper.scrapeProfile(url, false);
+    // generateAI = false - AI summary manual olaraq yaradılacaq (Medium/Premium feature)
+    const profile = await scrapingDogScraper.scrapeProfile(url, false, false);
     
     console.log('✅ LinkedIn profil scraping tamamlandı');
     return profile;

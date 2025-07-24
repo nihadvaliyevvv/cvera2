@@ -76,7 +76,7 @@ export default function CreateCVPage() {
             {/* Logo */}
             <Link href="/dashboard" className="flex items-center group">
               <Image 
-                src="/cveranazik.png" 
+                src="/cveralogo.svg" 
                 alt="CVERA Logo" 
                 width={48}
                 height={48}
