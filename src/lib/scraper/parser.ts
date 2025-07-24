@@ -1,4 +1,4 @@
-import { LinkedInProfile, Experience, Education } from './linkedin-scraper';
+import { LinkedInProfile, Experience, Education } from './scrapingdog-linkedin-scraper';
 
 export interface ParsedCVData {
   personalInfo: {

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { scrapeLinkedInProfile } from '@/lib/scraper/linkedin-scraper';
+import { scrapeLinkedInProfile } from '@/lib/scraper/scrapingdog-linkedin-scraper';
 import { parseLinkedInData } from '@/lib/utils/parser';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { url, email, password } = body;
+    const { url } = body;
 
     if (!url) {
       return NextResponse.json({ 
@@ -14,22 +14,19 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log('🔍 HTML Scraper ilə LinkedIn profil import edilir:', url);
-    if (email && password) {
-      console.log('🔐 Login məlumatları ilə import ediləcək');
-    }
+    console.log('🔍 ScrapingDog API ilə LinkedIn profil import edilir:', url);
 
-    // HTML scraper istifadə edərək profil məlumatlarını çəkək
-    const profileData = await scrapeLinkedInProfile(url, email, password);
+    // ScrapingDog API istifadə edərək profil məlumatlarını çəkək
+    const profileData = await scrapeLinkedInProfile(url);
 
     if (!profileData || !profileData.name) {
       return NextResponse.json({ 
         success: false, 
-        error: 'Profil məlumatları tapılmadı. Profilin ictimai olduğundan əmin olun.' 
+        error: 'Profil məlumatları tapılmadı. LinkedIn ID və ya URL düzgün olmaya bilər.' 
       }, { status: 404 });
     }
 
-    console.log('✅ HTML Scraper ilə profil uğurla import edildi:', profileData.name);
+    console.log('✅ ScrapingDog API ilə profil uğurla import edildi:', profileData.name);
 
     // Data strukturunu komponentin gözlədiyi formata çevir
     const transformedData = parseLinkedInData(profileData, url);
@@ -37,23 +34,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       data: transformedData,
-      message: `LinkedIn profiliniz HTML scraping ilə uğurla import edildi! 🎉`
+      message: `LinkedIn profiliniz ScrapingDog API ilə uğurla import edildi! 🎉`
     });
 
   } catch (error) {
-    console.error('❌ HTML Scraper xətası:', error);
+    console.error('❌ ScrapingDog API xətası:', error);
     
-    let errorMessage = 'HTML scraping zamanı xəta baş verdi';
+    let errorMessage = 'LinkedIn scraping zamanı xəta baş verdi';
     
     if (error instanceof Error) {
-      if (error.message.includes('Invalid LinkedIn profile URL')) {
-        errorMessage = 'LinkedIn profil URL-i düzgün deyil';
-      } else if (error.message.includes('Browser initialization failed')) {
-        errorMessage = 'Brauzer başlatmaq mümkün olmadı. Puppeteer quraşdırılmayıb.';
-      } else if (error.message.includes('Failed to scrape profile')) {
-        errorMessage = 'Profil məlumatları çəkilə bilmədi. Profil ictimai olmaya bilər və ya LinkedIn anti-bot müdafiəsi aktivdir.';
-      } else if (error.message.includes('timeout')) {
-        errorMessage = 'Səhifə yüklənməsi çox vaxt aldı. Yenidən cəhd edin.';
+      if (error.message.includes('Keçersiz LinkedIn URL formatı')) {
+        errorMessage = 'LinkedIn profil URL-i düzgün formatda deyil';
+      } else if (error.message.includes('API açarı yanlışdır')) {
+        errorMessage = 'API açarı problemi var';
+      } else if (error.message.includes('API limitiniz bitib')) {
+        errorMessage = 'API limiti keçildi. Premium plan lazımdır';
+      } else if (error.message.includes('LinkedIn profili tapılmadı')) {
+        errorMessage = 'LinkedIn profili tapılmadı və ya mövcud deyil';
+      } else if (error.message.includes('API limiti keçildi')) {
+        errorMessage = 'API rate limiti keçildi. Bir az gözləyin';
+      } else if (error.message.includes('əlaqə yaradıla bilmədi')) {
+        errorMessage = 'İnternet bağlantısı problemi';
+      } else {
+        errorMessage = error.message;
       }
     }
 
