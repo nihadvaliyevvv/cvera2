@@ -73,7 +73,7 @@ export default function LandingPage() {
               <img 
                 src="/cveralogo.svg" 
                 alt="CVERA Logo" 
-                className="h-40gi w-auto mr-2"
+                className="h-40 w-auto mr-2"
               />
             
             </div>
