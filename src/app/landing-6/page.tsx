@@ -110,8 +110,7 @@ export default function Landing6Page() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center space-x-4">
-              <img src="/cveralogo.svg" alt="CVERA Logo" className="w-12 h-12" />
-              <span className="text-3xl font-black text-gray-900 tracking-tight">CVERA</span>
+              <img src="/cveralogo.svg" alt="CVERA Logo" className="h-40 w-auto" />
             </div>
 
             <nav className="hidden md:flex items-center space-x-10">

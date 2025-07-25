@@ -70,8 +70,7 @@ export default function Landing5Page() {
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
             <div className="flex items-center space-x-3">
-              <img src="/cveralogo.svg" alt="CVERA Logo" className="w-10 h-10" />
-              <span className="text-3xl font-bold text-gray-900">CVERA</span>
+              <img src="/cveralogo.svg" alt="CVERA Logo" className="h-40 w-auto" />
             </div>
 
             {/* Desktop Navigation */}
@@ -600,7 +599,6 @@ export default function Landing5Page() {
             <div className="lg:col-span-1">
               <div className="mb-6 flex items-center space-x-3">
                 <img src="/cveralogo.svg" alt="CVERA Logo" className="w-8 h-8" />
-                <span className="text-3xl font-bold">CVERA</span>
               </div>
               <p className="text-gray-400 mt-2">Professional CV Platform</p>
               

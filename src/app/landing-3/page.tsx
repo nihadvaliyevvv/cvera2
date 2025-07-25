@@ -44,8 +44,7 @@ export default function Landing3Page() {
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
             <div className="flex items-center space-x-3">
-              <img src="/cveralogo.svg" alt="CVERA Logo" className="w-10 h-10" />
-              <span className="text-3xl font-bold text-black">CVERA</span>
+              <img src="/cveralogo.svg" alt="CVERA Logo" className="h-40 w-auto" />
             </div>
 
             {/* Desktop Navigation */}
@@ -429,7 +428,6 @@ export default function Landing3Page() {
             <div className="md:col-span-2">
               <div className="flex items-center space-x-3 mb-6">
                 <img src="/cveralogo.svg" alt="CVERA Logo" className="w-8 h-8" />
-                <span className="text-2xl font-bold">CVERA</span>
               </div>
               
               <div className="flex flex-wrap gap-6 mb-6">

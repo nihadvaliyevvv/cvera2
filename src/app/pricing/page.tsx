@@ -197,7 +197,7 @@ export default function PricingPage() {
                 alt="CVERA Logo" 
                 width={48}
                 height={48}
-                className="h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                className="h-40 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               />
             </Link>
 

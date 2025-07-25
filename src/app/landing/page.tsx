@@ -73,9 +73,9 @@ export default function LandingPage() {
               <img 
                 src="/cveralogo.svg" 
                 alt="CVERA Logo" 
-                className="h-12 w-auto mr-2"
+                className="h-40gi w-auto mr-2"
               />
-              <span className="text-3xl font-bold text-gray-900">CVERA</span>
+            
             </div>
 
             {/* Desktop Navigation */}
@@ -604,7 +604,6 @@ export default function LandingPage() {
             <div className="lg:col-span-1">
               <div className="mb-6 flex items-center space-x-3">
                 <img src="/cveralogo.svg" alt="CVERA Logo" className="w-8 h-8" />
-                <span className="text-3xl font-bold">CVERA</span>
               </div>
               <p className="text-gray-400 mt-2">Professional CV Platform</p>
               
