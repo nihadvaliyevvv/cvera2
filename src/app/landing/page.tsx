@@ -187,13 +187,10 @@ export default function LandingPage() {
 
           {/* Social Proof Bar */}
           <div className="mt-20 text-center" data-aos="fade-up">
-            <p className="text-gray-500 mb-8 font-medium">Peşəkarlar tərəfindən istifadə olunur</p>
+            <p className="text-gray-500 mb-8 font-medium">Əməkdaşlıqlarımız</p>
             <div className="flex flex-wrap justify-center items-center space-x-12 opacity-60">
-              <div className="text-2xl font-bold text-gray-600">Google</div>
-              <div className="text-2xl font-bold text-gray-600">Microsoft</div>
-              <div className="text-2xl font-bold text-gray-600">Amazon</div>
-              <div className="text-2xl font-bold text-gray-600">SOCAR</div>
-              <div className="text-2xl font-bold text-gray-600">Kapital Bank</div>
+              <div className="text-2xl font-bold text-gray-600">UWORK</div>
+             
             </div>
           </div>
         </div>
@@ -442,8 +439,8 @@ export default function LandingPage() {
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
                 Ən Məşhur
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Pro</h3>
-              <div className="text-4xl font-bold text-gray-900 mb-6">15₼<span className="text-lg font-normal text-gray-500">/ay</span></div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Orta</h3>
+              <div className="text-4xl font-bold text-gray-900 mb-6">2.99₼<span className="text-lg font-normal text-gray-500">/ay</span></div>
               <ul className="space-y-4 mb-8">
                 <li className="flex items-center space-x-3">
                   <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -483,14 +480,14 @@ export default function LandingPage() {
 
             {/* Business Plan */}
             <div className="bg-white rounded-2xl p-8 border-2 border-gray-200" data-aos="fade-up" data-aos-delay="300">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Biznes</h3>
-              <div className="text-4xl font-bold text-gray-900 mb-6">30₼<span className="text-lg font-normal text-gray-500">/ay</span></div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Premium</h3>
+              <div className="text-4xl font-bold text-gray-900 mb-6">4.99₼<span className="text-lg font-normal text-gray-500">/ay</span></div>
               <ul className="space-y-4 mb-8">
                 <li className="flex items-center space-x-3">
                   <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="text-gray-700">Pro-dakı Hər Şey</span>
+                  <span className="text-gray-700">Bütün premium xüsusiyyətlər</span>
                 </li>
                 <li className="flex items-center space-x-3">
                   <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -543,7 +540,7 @@ export default function LandingPage() {
                     <span className="text-white text-sm">👩</span>
                   </div>
                 </div>
-                <span className="text-gray-400 ml-4">+2.000 məmnun müştəri</span>
+                <span className="text-gray-400 ml-4">+100 məmnun müştəri</span>
               </div>
             </div>
 
