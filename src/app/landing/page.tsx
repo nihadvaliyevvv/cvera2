@@ -82,7 +82,7 @@ export default function LandingPage() {
             <nav className="hidden lg:flex items-center space-x-8">
               <span className="text-blue-600 font-bold">Ana Səhifə</span>
               <Link href="/templates" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Şablonlar</Link>
-              <Link href="/features" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Xüsusiyyətlər</Link>
+              <Link href="#features" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Xüsusiyyətlər</Link>
               <Link href="/pricing" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Qiymətlər</Link>
             </nav>
             
@@ -109,7 +109,7 @@ export default function LandingPage() {
             <nav className="px-6 py-6 space-y-4">
               <span className="block text-blue-600 font-bold py-2">Ana Səhifə</span>
               <Link href="/templates" onClick={() => setMobileMenuOpen(false)} className="block text-gray-700 font-medium py-2">Şablonlar</Link>
-              <Link href="/features" onClick={() => setMobileMenuOpen(false)} className="block text-gray-700 font-medium py-2">Xüsusiyyətlər</Link>
+              <Link href="#features" onClick={() => setMobileMenuOpen(false)} className="block text-gray-700 font-medium py-2">Xüsusiyyətlər</Link>
               <Link href="/pricing" onClick={() => setMobileMenuOpen(false)} className="block text-gray-700 font-medium py-2">Qiymətlər</Link>
               <Link href="/auth/register" className="block w-full text-center bg-blue-600 text-white px-6 py-3 rounded-lg font-medium mt-4">
                 CV Yarat
@@ -126,9 +126,9 @@ export default function LandingPage() {
             {/* Left side - Content */}
             <div data-aos="fade-right">
               <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-                Professional{' '}
+                CV-nizi {' '}
                 <span className="relative inline-block">
-                  CV Hazırlayın
+                  Peşəkar Görünüşə Gətirin
                   <svg className="absolute -bottom-2 left-0 w-full h-4" viewBox="0 0 300 20" fill="none">
                     <path d="M5 15c30-10 70-15 140-10s110 10 140 5" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" fill="none"/>
                   </svg>
@@ -286,7 +286,7 @@ export default function LandingPage() {
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-16" data-aos="fade-up">
-            <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">CVERA Xüsusiyyətləri</h2>
+            <h2 id="features" className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">CVERA Xüsusiyyətləri</h2>
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8">

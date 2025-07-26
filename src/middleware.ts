@@ -60,8 +60,23 @@ export function rateLimit(
 }
 
 export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Get auth token from cookies
+  const token = request.cookies.get('auth-token')?.value;
+
+  // If user is authenticated and trying to access home page, redirect to dashboard
+  if (token && pathname === '/') {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
+  // If user is authenticated and trying to access auth pages, redirect to dashboard
+  if (token && (pathname.startsWith('/auth/login') || pathname.startsWith('/auth/register'))) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
   // Apply rate limiting to API routes
-  if (request.nextUrl.pathname.startsWith('/api/')) {
+  if (pathname.startsWith('/api/')) {
     const rateLimitResult = rateLimit(100, 15 * 60 * 1000)(request);
     if (rateLimitResult) {
       return rateLimitResult;
@@ -69,7 +84,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Apply stricter rate limiting to auth endpoints
-  if (request.nextUrl.pathname.startsWith('/api/auth/')) {
+  if (pathname.startsWith('/api/auth/')) {
     const rateLimitResult = rateLimit(20, 15 * 60 * 1000)(request);
     if (rateLimitResult) {
       return rateLimitResult;
@@ -80,5 +95,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/api/:path*',
+  matcher: ['/', '/auth/:path*', '/api/:path*'],
 };
