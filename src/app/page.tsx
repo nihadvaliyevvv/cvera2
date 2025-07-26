@@ -107,16 +107,17 @@ export default function Index2() {
                 </span>
               </div>
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-6 sm:mb-8 leading-tight">
-                <span className="block text-gray-900 mb-2">Karyeranızı</span>
+                <span className="block text-gray-900 mb-2">AI ilə CV Yaratmaq</span>
                 <span className="block relative inline-block">
                   <span className="absolute inset-0 bg-blue-500 transform -skew-y-2 rounded-lg opacity-100"></span>
                   <span className="relative text-white px-2 py-1 transform -skew-y-2 -translate-y-4">
-                    Zirvəyə Çıxarın
+                    Azerbaycanca Professional Resume Yarat
                   </span>
                 </span>
               </h1>
               <p className="text-lg sm:text-xl lg:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4">
-Süni intellekt və LinkedIn məlumatlarınızın birləşməsi sizi müsahibəyə aparacaq!              </p>
+                Süni intellekt texnologiyası ilə <strong>cv yaratmaq</strong> artıq daha asan və sürətlidir! CVERA platforması ilə <strong>online cv yaratmaq</strong>, professional <strong>resume yarat</strong> və LinkedIn məlumatlarınızı saniyələrdə <strong>azerbaycanca cv</strong>-yə çevirin.
+              </p>
             </motion.div>
 
             {/* Professional Window Interface */}
