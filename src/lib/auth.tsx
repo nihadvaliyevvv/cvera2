@@ -7,6 +7,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  avatar?: string; // Add avatar property as optional
   createdAt?: string;
   subscriptions: Array<{
     id: string;

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AuthProvider } from "@/lib/auth";
+import GlobalCursor from "@/components/ui/GlobalCursor";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://cvera.az'),
+  metadataBase: new URL('https://cvera.net'),
   alternates: {
     canonical: '/',
     languages: {
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "AI ilə CV Yaratmaq | CVERA - Azerbaycanca CV Platforması",
     description: "Süni intellekt dəstəyi ilə professional CV yaradın. LinkedIn məlumatlarınızı idxal edin və dəqiqələrdə hazırda iş axtarışına başlayın.",
-    url: 'https://cvera.az',
+    url: 'https://cvera.net',
     siteName: 'CVERA',
     locale: 'az_AZ',
     type: 'website',
@@ -71,8 +72,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased cursor-none`}
       >
+        <GlobalCursor />
         <AuthProvider>
           <main>
             {children}
