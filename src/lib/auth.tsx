@@ -111,6 +111,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Fetch user data after successful login
       await fetchCurrentUser();
+
+      // Redirect to dashboard after successful login
+      if (typeof window !== 'undefined') {
+        window.location.href = '/dashboard';
+      }
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -195,14 +200,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 5. Clear storage again to be extra sure
     clearClientStorage();
     
-    // 6. Force complete navigation with cache clearing
-    // Clear browser cache and force redirect
+    // 6. Redirect to home page after logout
     if (typeof window !== 'undefined') {
-      // Clear any possible cached data
-      window.history.replaceState(null, '', '/landing');
-      
-      // Force complete page reload to landing page
-      window.location.replace('/landing');
+      // Clear any possible cached data and redirect to home
+      window.location.href = '/';
     }
   }, []);
 
