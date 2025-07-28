@@ -9,7 +9,7 @@ const LINKEDIN_CONFIG = {
   clientId: process.env.LINKEDIN_CLIENT_ID!,
   clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
   redirectUri: process.env.LINKEDIN_REDIRECT_URI!,
-  scope: 'r_liteprofile r_emailaddress',
+  scope: 'openid profile email', // Updated to use modern LinkedIn API scopes
 };
 
 export async function GET(request: NextRequest) {
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     const accessToken = tokenData.access_token;
 
     // Get user profile from LinkedIn
-    const profileResponse = await fetch('https://api.linkedin.com/v2/people/~', {
+    const profileResponse = await fetch('https://api.linkedin.com/v2/me', {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
       },

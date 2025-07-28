@@ -4,7 +4,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
   // Capture all query parameters
-  const allParams = {};
+  const allParams: Record<string, string> = {};
   for (const [key, value] of searchParams.entries()) {
     allParams[key] = value;
   }
