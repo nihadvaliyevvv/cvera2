@@ -166,8 +166,8 @@ export async function GET(request: NextRequest) {
     console.log('Generating JWT token...');
     const token = generateJWT({ userId: user.id, email: user.email });
 
-    // Create response with redirect to dashboard
-    const response = NextResponse.redirect(`https://cvera.net/dashboard`);
+    // Create response with redirect to LinkedIn callback page (not directly to dashboard)
+    const response = NextResponse.redirect(`https://cvera.net/auth/linkedin-callback`);
 
     // Set HTTP-only cookie with improved security settings
     response.cookies.set('token', token, {
@@ -179,7 +179,7 @@ export async function GET(request: NextRequest) {
       domain: process.env.NODE_ENV === 'production' ? '.cvera.net' : undefined, // Allow subdomain access in production
     });
 
-    console.log('LinkedIn authentication successful, redirecting to dashboard');
+    console.log('LinkedIn authentication successful, redirecting to callback page');
     return response;
 
   } catch (error) {

@@ -3,8 +3,10 @@ import { verifyJWT } from '@/lib/jwt';
 
 export async function GET(request: NextRequest) {
   try {
-    // Try to get token from cookie
-    const token = request.cookies.get('auth-token')?.value || request.cookies.get('accessToken')?.value;
+    // Try to get token from cookie - check multiple possible cookie names
+    const token = request.cookies.get('token')?.value ||
+                  request.cookies.get('auth-token')?.value ||
+                  request.cookies.get('accessToken')?.value;
 
     if (!token) {
       return NextResponse.json({ error: 'No token found' }, { status: 401 });
