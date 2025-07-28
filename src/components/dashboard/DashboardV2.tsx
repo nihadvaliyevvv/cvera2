@@ -6,6 +6,7 @@ import { apiClient } from '@/lib/api';
 import { User, useAuth } from '@/lib/auth';
 import Link from 'next/link';
 import Image from 'next/image';
+import LinkedInAutoImport from '@/components/LinkedInAutoImport';
 
 interface CV {
   id: string;
@@ -153,7 +154,7 @@ export default function DashboardV2({ user, onCreateCV, onEditCV }: DashboardV2P
         )}
 
         {/* Create CV Button */}
-        <div className="mb-8">
+        <div className="mb-8 flex flex-col sm:flex-row gap-4">
           <button
             onClick={onCreateCV}
             className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200"
@@ -163,6 +164,20 @@ export default function DashboardV2({ user, onCreateCV, onEditCV }: DashboardV2P
             </svg>
             Yeni CV Yarat
           </button>
+
+          {/* LinkedIn Auto Import Button */}
+          <LinkedInAutoImport
+            onImportSuccess={(profileData) => {
+              console.log('LinkedIn profil import edildi:', profileData);
+              // Optionally refresh dashboard data
+              fetchDashboardData();
+            }}
+            onImportError={(error) => {
+              console.error('LinkedIn import xətası:', error);
+              alert(`LinkedIn import xətası: ${error}`);
+            }}
+            className="flex-shrink-0"
+          />
         </div>
 
         {/* CVs Grid */}
