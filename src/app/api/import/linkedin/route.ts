@@ -400,46 +400,104 @@ export async function POST(request: NextRequest) {
   try {
     console.log('🚀 LinkedIn import API çağırıldı');
 
-    // Try to get authentication, but make it more flexible
-    let userId = 'anonymous'; // Default user for testing
+    // STRICT REQUIREMENT: User must be authenticated with LinkedIn
+    let userId = '';
+    let linkedinUsername = '';
 
     const authHeader = request.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
-      const payload = verifyJWT(token);
-      if (payload && payload.userId) {
-        userId = payload.userId;
-      }
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Authentication required. Please login with LinkedIn first.' },
+        { status: 401 }
+      );
     }
 
+    const token = authHeader.substring(7);
+    const payload = verifyJWT(token);
+
+    if (!payload || !payload.userId) {
+      return NextResponse.json(
+        { error: 'Invalid authentication token. Please login again.' },
+        { status: 401 }
+      );
+    }
+
+    userId = payload.userId;
+
+    // Verify user exists and has LinkedIn login
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        loginMethod: true,
+        linkedinUsername: true,
+        linkedinId: true,
+        email: true,
+        name: true
+      }
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found. Please login again.' },
+        { status: 404 }
+      );
+    }
+
+    // STRICT CHECK: User must have logged in with LinkedIn
+    if (user.loginMethod !== 'linkedin' || !user.linkedinUsername) {
+      return NextResponse.json(
+        {
+          error: 'LinkedIn login required. You must login with your LinkedIn account to import your profile.',
+          requiresLinkedInLogin: true
+        },
+        { status: 403 }
+      );
+    }
+
+    linkedinUsername = user.linkedinUsername;
+    console.log(`✅ LinkedIn authenticated user: ${user.name} (${linkedinUsername})`);
+
+    // Parse request body - linkedinUrl is now optional since we use authenticated user's username
     const body = await request.json();
     const { linkedinUrl } = body;
 
-    if (!linkedinUrl) {
-      return NextResponse.json(
-        { error: 'LinkedIn URL is required' },
-        { status: 400 }
-      );
+    let linkedinId = linkedinUsername; // Default to authenticated user's username
+
+    // If a different LinkedIn URL is provided, validate it belongs to the same user
+    if (linkedinUrl) {
+      const extractedId = extractLinkedInId(linkedinUrl);
+      if (!extractedId) {
+        return NextResponse.json(
+          { error: 'Invalid LinkedIn URL format' },
+          { status: 400 }
+        );
+      }
+
+      // Security check: Only allow importing the authenticated user's own profile
+      if (extractedId !== linkedinUsername) {
+        return NextResponse.json(
+          {
+            error: 'You can only import your own LinkedIn profile. Please use your authenticated LinkedIn account.',
+            authenticatedUsername: linkedinUsername,
+            providedUsername: extractedId
+          },
+          { status: 403 }
+        );
+      }
+
+      linkedinId = extractedId;
     }
 
-    // Extract LinkedIn ID from URL
-    const linkedinId = extractLinkedInId(linkedinUrl);
-    if (!linkedinId) {
-      return NextResponse.json(
-        { error: 'Invalid LinkedIn URL format' },
-        { status: 400 }
-      );
-    }
+    console.log(`📋 Importing LinkedIn profile for authenticated user: ${linkedinId}`);
 
-    console.log(`📋 LinkedIn ID extracted: ${linkedinId}`);
-
-    // Scrape LinkedIn profile
+    // Scrape LinkedIn profile using the authenticated user's username
     const profile = await scrapeLinkedInProfile(linkedinId);
 
     if (!profile) {
       await saveImportSession(userId, linkedinId, false);
       return NextResponse.json(
-        { error: 'Failed to scrape LinkedIn profile' },
+        { error: 'Failed to scrape LinkedIn profile. Please try again.' },
         { status: 500 }
       );
     }
@@ -447,11 +505,15 @@ export async function POST(request: NextRequest) {
     // Save successful import session
     await saveImportSession(userId, linkedinId, true, profile);
 
-    console.log('✅ LinkedIn profile successfully imported');
+    console.log('✅ LinkedIn profile successfully imported for authenticated user');
     return NextResponse.json({
       success: true,
       profile: profile,
-      message: 'LinkedIn profile imported successfully'
+      message: 'LinkedIn profile imported successfully',
+      authenticatedUser: {
+        name: user.name,
+        linkedinUsername: user.linkedinUsername
+      }
     });
 
   } catch (error) {

@@ -18,6 +18,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Email və ya şifrə yanlışdır." }, { status: 401 });
     }
     
+    // Check if user has a password (regular login) or uses LinkedIn login
+    if (!user.password) {
+      return NextResponse.json({
+        message: "Bu hesab LinkedIn ilə qeydiyyatdan keçib. LinkedIn ilə daxil olun.",
+        requiresLinkedInLogin: true
+      }, { status: 400 });
+    }
+
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
       return NextResponse.json({ message: "Email və ya şifrə yanlışdır." }, { status: 401 });

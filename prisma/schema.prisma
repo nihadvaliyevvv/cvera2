@@ -11,7 +11,7 @@ model User {
   id               String          @id @default(uuid())
   name             String
   email            String          @unique
-  password         String
+  password         String? // Make password optional for LinkedIn users
   status           String          @default("active")
   resetToken       String?
   resetTokenExpiry DateTime?
@@ -20,6 +20,9 @@ model User {
   updatedAt        DateTime        @updatedAt
   role             String          @default("USER")
   linkedinId       String?         @unique
+  linkedinUsername String? // Add LinkedIn username field
+  loginMethod      String? // Add login method (linkedin, email)
+  emailVerified    DateTime? // Add email verification field
   tier             String          @default("Free")
   cvs              CV[]            @relation("UserCVs")
   dailyUsage       DailyUsage[]    @relation("UserDailyUsage")

@@ -96,6 +96,14 @@ export async function PUT(req: NextRequest) {
         return NextResponse.json({ error: "İstifadəçi tapılmadı" }, { status: 404 });
       }
 
+      // Check if user has a password (LinkedIn users don't have passwords)
+      if (!currentUser.password) {
+        return NextResponse.json({
+          error: "LinkedIn ilə qeydiyyatdan keçən istifadəçilər şifrə dəyişə bilməz. LinkedIn hesabınızdan istifadə edin.",
+          requiresLinkedInLogin: true
+        }, { status: 400 });
+      }
+
       const bcrypt = await import("bcryptjs");
       const isValidPassword = await bcrypt.compare(currentPassword, currentUser.password);
       
