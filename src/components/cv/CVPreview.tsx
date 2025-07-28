@@ -88,7 +88,8 @@ export default function CVPreview({ cv }: CVPreviewProps) {
   const loadTemplate = useCallback(async () => {
     setLoading(true);
     try {
-      const templates = await apiClient.getTemplates();
+      const result = await apiClient.get('/api/templates');
+      const templates = result.data;
       const foundTemplate = templates.find((t: Template) => t.id === cv.templateId);
       setTemplate(foundTemplate || null);
     } catch (err) {

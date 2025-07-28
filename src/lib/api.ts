@@ -10,8 +10,8 @@ export class ApiClient {
       this.baseUrl = window.location.origin;
     } else {
       // Server-side: use environment variable or default
-      this.baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
-                    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
+      this.baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
+                    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` :
                     'http://localhost:3000';
     }
   }
@@ -32,7 +32,7 @@ export class ApiClient {
   private async request(endpoint: string, options: RequestInit = {}) {
     // Handle absolute URLs
     const url = endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint}`;
-    
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> || {}),
@@ -49,166 +49,72 @@ export class ApiClient {
 
     try {
       console.log('Making API request to:', url);
-      console.log('Base URL:', this.baseUrl);
-      console.log('Endpoint:', endpoint);
-      console.log('Request options:', { 
-        ...options, 
-        headers,
-        body: options.body ? JSON.parse(options.body as string) : undefined
-      });
-      
+
       const response = await fetch(url, {
         ...options,
         headers,
       });
 
-      console.log('API response status:', response.status);
-      console.log('API response ok:', response.ok);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch {
-          errorData = { error: errorText };
+      // Handle non-JSON responses (like redirects)
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
-        console.error('API Error Response:', errorData);
-        
-        // Create a detailed error message
-        const errorMessage = errorData.error || `HTTP ${response.status}`;
-        const errorDetails = errorData.details ? ` - ${errorData.details}` : '';
-        
-        throw new Error(`${errorMessage}${errorDetails}`);
+        return { data: null, status: response.status };
       }
 
       const data = await response.json();
-      console.log('API response data:', data);
-      return data;
+
+      if (!response.ok) {
+        // Handle authentication errors
+        if (response.status === 401) {
+          this.clearSession();
+          if (typeof window !== 'undefined') {
+            window.location.href = '/auth/login';
+          }
+          throw new Error('Authentication required');
+        }
+
+        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+      }
+
+      return { data, status: response.status };
     } catch (error) {
       console.error('API request failed:', error);
-      console.error('Request URL:', url);
-      console.error('Base URL:', this.baseUrl);
-      
-      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        // This usually means network connectivity issues or CORS problems
-        throw new Error(`Network error: Unable to connect to ${this.baseUrl}. Please check your internet connection or try again later.`);
-      }
-      
-      // For other fetch errors, provide more context
-      if (error instanceof Error) {
-        throw new Error(`Request failed: ${error.message}`);
-      }
       throw error;
     }
   }
 
-  // Auth endpoints
-  async register(data: { name: string; email: string; password: string }) {
-    return this.request('/api/auth/register', {
+  async get(endpoint: string) {
+    return this.request(endpoint, { method: 'GET' });
+  }
+
+  async post(endpoint: string, data?: any) {
+    return this.request(endpoint, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async login(data: { email: string; password: string }) {
-    return this.request('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async refreshToken() {
-    return this.request('/api/auth/refresh-token', {
-      method: 'POST',
-    });
-  }
-
-  // User endpoints
-  async getCurrentUser() {
-    return this.request('/api/users/me');
-  }
-
-  async updateUser(data: { name?: string; email?: string; password?: string }) {
-    return this.request('/api/users/me', {
+  async put(endpoint: string, data?: any) {
+    return this.request(endpoint, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  // CV endpoints
-  async getCVs() {
-    return this.request('/api/cvs');
+  async delete(endpoint: string) {
+    return this.request(endpoint, { method: 'DELETE' });
   }
 
-  async getCV(id: string) {
-    return this.request(`/api/cvs/${id}`);
-  }
-
-  async createCV(data: { title: string; cv_data: Record<string, unknown> }) {
-    return this.request('/api/cvs', {
-      method: 'POST',
-      body: JSON.stringify(data),
+  async patch(endpoint: string, data?: any) {
+    return this.request(endpoint, {
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : undefined,
     });
-  }
-
-  async updateCV(id: string, data: { title: string; cv_data: Record<string, unknown> }) {
-    return this.request(`/api/cvs/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async deleteCV(id: string) {
-    return this.request(`/api/cvs/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  // Template endpoints
-  async getTemplates() {
-    return this.request('/api/templates');
-  }
-
-  async getUserLimits() {
-    return this.request('/api/users/limits');
-  }
-
-  // LinkedIn import
-  async importLinkedIn(url: string) {
-    return this.request('/api/import/linkedin', {
-      method: 'POST',
-      body: JSON.stringify({ url }),
-    });
-  }
-
-  // File generation
-  async downloadCV(cvId: string, format: 'pdf' | 'docx') {
-    return this.request(`/api/cvs/${cvId}/download`, {
-      method: 'POST',
-      body: JSON.stringify({ format }),
-    });
-  }
-
-  async getJobStatus(jobId: string) {
-    return this.request(`/api/jobs/${jobId}/status`);
-  }
-
-  async getJobResult(jobId: string) {
-    return this.request(`/api/jobs/${jobId}/result`);
-  }
-
-  async logout() {
-    try {
-      await this.request('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-    } finally {
-      this.clearSession();
-    }
   }
 }
 
+// Create and export a singleton instance
 export const apiClient = new ApiClient();

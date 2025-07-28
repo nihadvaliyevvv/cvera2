@@ -31,18 +31,16 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const service = searchParams.get("service") || "linkedin";
 
-    // Get API keys from configuration instead of database
+    // Return hardcoded API keys instead of database query
     const apiKeys = API_KEYS_CONFIG[service as keyof typeof API_KEYS_CONFIG] || [];
 
-    return NextResponse.json({
-      apiKeys: apiKeys.map(key => ({
-        ...key,
-        key: key.key.substring(0, 20) + "...", // Mask the key for security
-      })),
-    });
+    return NextResponse.json({ apiKeys });
   } catch (error) {
-    console.error("Admin API keys fetch error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error("Error fetching API keys:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch API keys" },
+      { status: 500 }
+    );
   }
 }
 

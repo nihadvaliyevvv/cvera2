@@ -37,11 +37,12 @@ export default function TemplateGallery({ onTemplateSelect, onClose, currentUser
     try {
       setLoading(true);
       setError('');
-      const result = await apiClient.getTemplates();
-      
-      // API yeni format qaytarır: { templates: [...], userTier, limits }
-      // və ya köhnə format: [...templates]
-      const templateData = result.templates || result;
+      const result = await apiClient.get('/api/templates');
+
+      // API client returns { data, status } structure
+      // API data format: { templates: [...], userTier, limits } or [...templates]
+      const apiData = result.data;
+      const templateData = apiData.templates || apiData;
       setTemplates(Array.isArray(templateData) ? templateData : []);
     } catch (err) {
       console.error('Template loading error:', err);

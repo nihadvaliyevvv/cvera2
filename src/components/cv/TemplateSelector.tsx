@@ -36,10 +36,12 @@ export default function TemplateSelector({ selectedTemplateId, onTemplateSelect,
     try {
       setLoading(true);
       setError('');
-      const result = await apiClient.getTemplates();
-      
-      // Handle new API response format
-      const templateList = result.templates || result;
+      const result = await apiClient.get('/api/templates');
+
+      // API client returns { data, status } structure
+      // API data format: { templates: [...], userTier, limits } or [...templates]
+      const apiData = result.data;
+      const templateList = apiData.templates || apiData;
       if (Array.isArray(templateList)) {
         setTemplates(templateList);
       } else {

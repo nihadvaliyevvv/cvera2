@@ -286,24 +286,27 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
     setError('');
     
     try {
-      const result = await apiClient.getCV(cvId);
-      
+      const result = await apiClient.get(`/api/cv/${cvId}`);
+
       if (!result || typeof result !== 'object') {
         throw new Error('Invalid CV data structure');
       }
       
-      if (!result.cv_data || typeof result.cv_data !== 'object') {
+      if (!result.data || typeof result.data !== 'object') {
         throw new Error('CV data is missing or corrupted');
       }
-      
-      const templateId = result.cv_data.templateId || result.templateId || '';
-      
+
+      // Use result.data since our API client wraps responses in { data, status }
+      const cvData = result.data;
+
+      const templateId = cvData.templateId || '';
+
       const transformedCV = {
-        id: result.id,
-        title: result.title || '',
+        id: cvData.id,
+        title: cvData.title || '',
         templateId: templateId,
         data: {
-          personalInfo: result.cv_data.personalInfo || {
+          personalInfo: cvData.personalInfo || cvData.cv_data?.personalInfo || {
             fullName: '',
             email: '',
             phone: '',
@@ -311,18 +314,18 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
             linkedin: '',
             summary: ''
           },
-          experience: Array.isArray(result.cv_data.experience) ? result.cv_data.experience : [],
-          education: Array.isArray(result.cv_data.education) ? result.cv_data.education : [],
-          skills: Array.isArray(result.cv_data.skills) ? result.cv_data.skills : [],
-          languages: Array.isArray(result.cv_data.languages) ? result.cv_data.languages : [],
-          projects: Array.isArray(result.cv_data.projects) ? result.cv_data.projects : [],
-          certifications: Array.isArray(result.cv_data.certifications) ? result.cv_data.certifications : [],
-          volunteerExperience: Array.isArray(result.cv_data.volunteerExperience) ? result.cv_data.volunteerExperience : [],
-          publications: Array.isArray(result.cv_data.publications) ? result.cv_data.publications : [],
-          honorsAwards: Array.isArray(result.cv_data.honorsAwards) ? result.cv_data.honorsAwards : [],
-          testScores: Array.isArray(result.cv_data.testScores) ? result.cv_data.testScores : [],
-          recommendations: Array.isArray(result.cv_data.recommendations) ? result.cv_data.recommendations : [],
-          courses: Array.isArray(result.cv_data.courses) ? result.cv_data.courses : []
+          experience: Array.isArray(cvData.experience) ? cvData.experience : Array.isArray(cvData.cv_data?.experience) ? cvData.cv_data.experience : [],
+          education: Array.isArray(cvData.education) ? cvData.education : Array.isArray(cvData.cv_data?.education) ? cvData.cv_data.education : [],
+          skills: Array.isArray(cvData.skills) ? cvData.skills : Array.isArray(cvData.cv_data?.skills) ? cvData.cv_data.skills : [],
+          languages: Array.isArray(cvData.languages) ? cvData.languages : Array.isArray(cvData.cv_data?.languages) ? cvData.cv_data.languages : [],
+          projects: Array.isArray(cvData.projects) ? cvData.projects : Array.isArray(cvData.cv_data?.projects) ? cvData.cv_data.projects : [],
+          certifications: Array.isArray(cvData.certifications) ? cvData.certifications : Array.isArray(cvData.cv_data?.certifications) ? cvData.cv_data.certifications : [],
+          volunteerExperience: Array.isArray(cvData.volunteerExperience) ? cvData.volunteerExperience : Array.isArray(cvData.cv_data?.volunteerExperience) ? cvData.cv_data.volunteerExperience : [],
+          publications: Array.isArray(cvData.publications) ? cvData.publications : Array.isArray(cvData.cv_data?.publications) ? cvData.cv_data.publications : [],
+          honorsAwards: Array.isArray(cvData.honorsAwards) ? cvData.honorsAwards : Array.isArray(cvData.cv_data?.honorsAwards) ? cvData.cv_data.honorsAwards : [],
+          testScores: Array.isArray(cvData.testScores) ? cvData.testScores : Array.isArray(cvData.cv_data?.testScores) ? cvData.cv_data.testScores : [],
+          recommendations: Array.isArray(cvData.recommendations) ? cvData.recommendations : Array.isArray(cvData.cv_data?.recommendations) ? cvData.cv_data.recommendations : [],
+          courses: Array.isArray(cvData.courses) ? cvData.courses : Array.isArray(cvData.cv_data?.courses) ? cvData.cv_data.courses : []
         }
       };
       
@@ -402,19 +405,19 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
 
       let result;
       if (cvId) {
-        result = await apiClient.updateCV(cvId, apiData);
+        result = await apiClient.put(`/api/cv/${cvId}`, apiData);
         setSuccess('CV uğurla yeniləndi!');
       } else {
-        result = await apiClient.createCV(apiData);
+        result = await apiClient.post('/api/cv', apiData);
         setSuccess('CV uğurla yaradıldı!');
       }
       
       setTimeout(() => {
         const cvForSave = {
-          id: result.id,
-          title: result.title,
-          templateId: result.templateId,
-          data: result.cv_data
+          id: result.data.id,
+          title: result.data.title,
+          templateId: result.data.templateId,
+          data: result.data.cv_data
         };
         onSave(cvForSave);
       }, 1500);
@@ -589,7 +592,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                 ) : (
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M8 2v4h8V2h2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h2z"/>
-                  </svg>
+                </svg>
                 )}
                 PDF
               </button>
@@ -850,7 +853,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                   ) : (
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M8 2v4h8V2h2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h2z"/>
-                    </svg>
+                  </svg>
                   )}
                   PDF
                 </button>

@@ -50,7 +50,7 @@ export function rateLimit(
           status: 429,
           headers: {
             'Retry-After': Math.ceil((store[key].resetTime - now) / 1000).toString(),
-          }
+          },
         }
       );
     }
@@ -62,38 +62,24 @@ export function rateLimit(
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Get auth token from cookies
-  const token = request.cookies.get('auth-token')?.value;
-
-  // If user is authenticated and trying to access home page, redirect to dashboard
-  if (token && pathname === '/') {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
-  // If user is authenticated and trying to access auth pages, redirect to dashboard
-  if (token && (pathname.startsWith('/auth/login') || pathname.startsWith('/auth/register'))) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
   // Apply rate limiting to API routes
   if (pathname.startsWith('/api/')) {
-    const rateLimitResult = rateLimit(100, 15 * 60 * 1000)(request);
+    const rateLimitResult = rateLimit()(request);
     if (rateLimitResult) {
       return rateLimitResult;
     }
   }
 
-  // Apply stricter rate limiting to auth endpoints
-  if (pathname.startsWith('/api/auth/')) {
-    const rateLimitResult = rateLimit(20, 15 * 60 * 1000)(request);
-    if (rateLimitResult) {
-      return rateLimitResult;
-    }
-  }
-
+  // Allow all other requests to proceed
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/', '/auth/:path*', '/api/:path*'],
+  matcher: [
+    // Match all request paths except for the ones starting with:
+    // - _next/static (static files)
+    // - _next/image (image optimization files)
+    // - favicon.ico (favicon file)
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
 };
