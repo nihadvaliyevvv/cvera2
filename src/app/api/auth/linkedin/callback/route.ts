@@ -60,12 +60,16 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    console.log('LinkedIn profile response status:', profileResponse.status);
+
     if (!profileResponse.ok) {
-      console.error('Failed to get LinkedIn profile');
+      const errorText = await profileResponse.text();
+      console.error('Failed to get LinkedIn profile:', errorText);
       return NextResponse.redirect(`${process.env.NEXTAUTH_URL || 'https://cvera.net'}/auth/login?error=profile_fetch_failed`);
     }
 
     const profileData = await profileResponse.json();
+    console.log('LinkedIn profile data:', JSON.stringify(profileData, null, 2));
 
     // With OpenID Connect, email is included in the userinfo response
     const email = profileData.email;
@@ -73,7 +77,10 @@ export async function GET(request: NextRequest) {
     const lastName = profileData.family_name || '';
     const linkedinId = profileData.sub; // 'sub' is the LinkedIn user ID in OpenID Connect
 
+    console.log('Extracted user data:', { email, firstName, lastName, linkedinId });
+
     if (!email) {
+      console.error('No email found in LinkedIn profile data');
       return NextResponse.redirect(`${process.env.NEXTAUTH_URL || 'https://cvera.net'}/auth/login?error=no_email_provided`);
     }
 
