@@ -112,9 +112,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Fetch user data after successful login
       await fetchCurrentUser();
 
-      // Redirect to dashboard after successful login
+      // Redirect to dashboard after successful login with full URL
       if (typeof window !== 'undefined') {
-        window.location.href = '/dashboard';
+        window.location.replace('https://cvera.net/dashboard');
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -153,8 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     // 1. Clear user state immediately to prevent UI issues
     setUser(null);
-    setLoading(false);
-    
+
     // 2. Clear all possible client-side storage
     const clearClientStorage = () => {
       localStorage.clear();
@@ -200,10 +199,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 5. Clear storage again to be extra sure
     clearClientStorage();
     
-    // 6. Redirect to home page after logout
+    // 6. Force page reload and redirect to home to completely reset state
     if (typeof window !== 'undefined') {
-      // Clear any possible cached data and redirect to home
-      window.location.href = '/';
+      // Use replace instead of href to prevent back button issues
+      window.location.replace('https://cvera.net');
     }
   }, []);
 

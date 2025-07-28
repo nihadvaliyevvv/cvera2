@@ -65,7 +65,7 @@ class LinkedInScraper {
 
       console.log('LinkedIn scraper başladı:', linkId);
 
-      const response = await axios.get(this.base_url, {
+      const response = await axios.get(this.base_url, { 
         params: params,
         timeout: 30000 // 30 saniyə timeout
       });
@@ -73,7 +73,7 @@ class LinkedInScraper {
       if (response.status === 200) {
         const data = response.data;
         console.log('LinkedIn məlumatları alındı:', data);
-
+        
         // ScrapingDog cavabını bizim formata çevir
         return this.transformScrapingDogResponse(data);
       } else {
@@ -81,13 +81,13 @@ class LinkedInScraper {
       }
     } catch (error: any) {
       console.error('LinkedIn scraper xətası:', error.message);
-
+      
       // Əgər API limitə çatıbsa və ya xəta varsa, mock data qaytar
       if (error.response?.status === 429 || error.response?.status === 403) {
         console.log('API limiti - mock data istifadə edilir');
         return this.getMockProfile(linkId);
       }
-
+      
       throw new Error(`LinkedIn profil məlumatları alına bilmədi: ${error.message}`);
     }
   }
@@ -138,7 +138,7 @@ class LinkedInScraper {
 
   private transformSkills(skills: any[]): string[] {
     if (Array.isArray(skills)) {
-      return skills.map(skill =>
+      return skills.map(skill => 
         typeof skill === 'string' ? skill : (skill.name || skill.skill || '')
       ).filter(Boolean);
     }
@@ -205,12 +205,12 @@ class LinkedInScraper {
       if (match && match[1]) {
         return match[1];
       }
-
+      
       // Əgər artıq sadə username-dirsə
       if (!linkedinUrl.includes('/') && !linkedinUrl.includes('linkedin.com')) {
         return linkedinUrl;
       }
-
+      
       throw new Error('LinkedIn URL formatı düzgün deyil');
     } catch (error) {
       throw new Error(`LinkedIn URL parse edilə bilmədi: ${error}`);

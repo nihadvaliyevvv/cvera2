@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AuthProvider } from "@/lib/auth";
 import GlobalCursor from "@/components/ui/GlobalCursor";
+import MouseCursor from "@/components/ui/MouseCursor";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -75,6 +76,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased cursor-none`}
       >
         <GlobalCursor />
+        <MouseCursor />
         <AuthProvider>
           <main>
             {children}
