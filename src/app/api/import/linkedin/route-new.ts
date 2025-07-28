@@ -164,6 +164,25 @@ async function saveImportSession(userId: string, linkedinId: string, success: bo
   }
 }
 
+async function getActiveApiKeys() {
+  try {
+    // Since apiKey model doesn't exist, return hardcoded API keys for now
+    return [
+      {
+        id: '1',
+        apiKey: '6882894b855f5678d36484c8',
+        service: 'linkedin',
+        host: 'api.scrapingdog.com',
+        active: true,
+        priority: 1
+      }
+    ];
+  } catch (error) {
+    console.error('Error fetching API keys:', error);
+    return [];
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 LinkedIn import API çağırıldı');

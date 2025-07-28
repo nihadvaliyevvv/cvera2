@@ -24,8 +24,12 @@ export default function DashboardPage() {
         console.log('No authentication found, redirecting to home...');
         setRedirecting(true);
 
-        // Use router.replace instead of window.location for better UX
-        router.replace('/');
+        // Clear any existing auth data
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+
+        // Redirect to home page
+        window.location.href = '/';
         return;
       }
 
@@ -33,8 +37,11 @@ export default function DashboardPage() {
       if (token && !user && !loading) {
         console.log('Token exists but authentication failed, clearing and redirecting...');
         localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
         setRedirecting(true);
-        router.replace('/');
+
+        // Redirect to home page
+        window.location.href = '/';
         return;
       }
     };
