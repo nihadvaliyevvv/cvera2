@@ -1,55 +1,57 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const baseUrl = 'https://cvera.net'
+  const lastModified = new Date()
+
   return [
     {
-      url: 'https://cvera.net',
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
+      url: baseUrl,
+      lastModified: lastModified,
+      changeFrequency: 'daily',
       priority: 1,
     },
     {
-      url: 'https://cvera.net/cv/edit',
-      lastModified: new Date(),
+      url: `${baseUrl}/cv/create`,
+      lastModified: lastModified,
       changeFrequency: 'weekly',
       priority: 0.9,
     },
     {
-      url: 'https://cvera.net/templates',
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
+      url: `${baseUrl}/templates`,
+      lastModified: lastModified,
+      changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
-      url: 'https://cvera.net/auth/register',
-      lastModified: new Date(),
+      url: `${baseUrl}/pricing`,
+      lastModified: lastModified,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
-      url: 'https://cvera.net/auth/login',
-      lastModified: new Date(),
+      url: `${baseUrl}/auth/register`,
+      lastModified: lastModified,
       changeFrequency: 'monthly',
       priority: 0.6,
     },
     {
-      url: 'https://cvera.net/dashboard',
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.8,
+      url: `${baseUrl}/auth/login`,
+      lastModified: lastModified,
+      changeFrequency: 'monthly',
+      priority: 0.5,
     },
     {
-      url: 'https://cvera.net/privacy',
-      lastModified: new Date(),
+      url: `${baseUrl}/privacy`,
+      lastModified: lastModified,
       changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
-      url: 'https://cvera.net/terms',
-      lastModified: new Date(),
+      url: `${baseUrl}/terms`,
+      lastModified: lastModified,
       changeFrequency: 'yearly',
       priority: 0.3,
-    }
+    },
   ]
 }
-

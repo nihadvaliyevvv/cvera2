@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/lib/auth';
+import { trackLinkedInImport, trackCVCreation } from '@/components/GoogleAnalytics';
 
 interface LinkedInAutoImportProps {
   onImportSuccess?: (profileData: any) => void;
@@ -25,6 +26,9 @@ export default function LinkedInAutoImport({
       const errorMessage = 'LinkedIn auto-import yalnız LinkedIn ilə giriş edən istifadəçilər üçündür';
       setImportStatus('error');
       onImportError?.(errorMessage);
+
+      // Track failed import attempt
+      trackLinkedInImport(false);
       return;
     }
 
@@ -39,6 +43,10 @@ export default function LinkedInAutoImport({
       setImportStatus('success');
       onImportSuccess?.(result);
 
+      // Track successful LinkedIn import
+      trackLinkedInImport(true);
+      trackCVCreation('linkedin');
+
       // Show success message for 3 seconds
       setTimeout(() => {
         setImportStatus('idle');
@@ -49,6 +57,9 @@ export default function LinkedInAutoImport({
       const errorMessage = error instanceof Error ? error.message : 'LinkedIn import zamanı xəta baş verdi';
       setImportStatus('error');
       onImportError?.(errorMessage);
+
+      // Track failed import
+      trackLinkedInImport(false);
 
       // Show error message for 5 seconds
       setTimeout(() => {

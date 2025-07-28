@@ -4,6 +4,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AuthProvider } from "@/lib/auth";
 import GlobalCursor from "@/components/ui/GlobalCursor";
 import MouseCursor from "@/components/ui/MouseCursor";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
+import TawkToWidget from "@/components/TawkToWidget";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -83,6 +85,8 @@ export default function RootLayout({
           </main>
         </AuthProvider>
         <SpeedInsights />
+        <GoogleAnalytics />
+        <TawkToWidget />
       </body>
     </html>
   );

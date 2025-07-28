@@ -51,11 +51,44 @@ function CreateCVContent() {
     return null;
   }
 
-  const handleLinkedInImport = (profileData: any) => {
+  const handleLinkedInImport = async (profileData: any) => {
     console.log('LinkedIn profil import edildi:', profileData);
     setImportedData(profileData);
-    // Redirect to CV editor with imported data
-    router.push(`/cv/edit/new?import=linkedin&data=${encodeURIComponent(JSON.stringify(profileData))}`);
+
+    try {
+      // Get authentication token
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        alert('Giriş tələb olunur');
+        router.push('/auth/login');
+        return;
+      }
+
+      // Create CV from LinkedIn data
+      const createResponse = await fetch('/api/cv/create-from-linkedin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ profileData })
+      });
+
+      if (!createResponse.ok) {
+        const error = await createResponse.json();
+        throw new Error(error.error || 'CV yaradılarkən xəta baş verdi');
+      }
+
+      const result = await createResponse.json();
+      console.log('✅ CV yaradıldı:', result.cvId);
+
+      // Redirect to CV editor with created CV ID
+      router.push(`/cv/edit/${result.cvId}`);
+
+    } catch (error) {
+      console.error('❌ CV yaratma xətası:', error);
+      alert(`CV yaratma xətası: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   const handleManualCreate = () => {

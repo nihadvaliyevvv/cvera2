@@ -1,372 +1,142 @@
-Based on the provided document, here is a comprehensive overview of how to integrate and utilize the Epoint.az electronic payment platform.
+cvera.net Veb-saytı üçün Kompleks SEO və Texniki Optimizasiya Planı
+Məqsəd: Saytın Azərbaycan axtarış bazarında mövqeyini kəskin şəkildə yaxşılaşdırmaq, istifadəçi təcrübəsini mükəmməlləşdirmək, saytın texniki göstəricilərini dünya standartlarına çatdırmaq və nəticədə hədəf auditoriyadan (CV hazırlamaq istəyənlər) daha çox orqanik trafik cəlb etmək.
 
-Getting Started: Initial Setup
-To begin accepting payments on your site using Epoint, you must first configure your merchant account in the Epoint personal cabinet. You will need to provide the following information:
+I Hissə: Məzmun və Səhifədaxili SEO (On-Page SEO)
+Bu bölmə birbaşa saytın məzmunu və axtarış sistemləri tərəfindən oxunan elementləri ilə bağlıdır.
 
+1. Sayt Başlığı (<title>):
 
-Your website address.
+Problem: Başlıq qeyri-peşəkar və ya SEO üçün optimallaşdırılmamışdır.
 
-A 
+Həll Yolu: Əsas səhifənin <head> teqləri arasına aşağıdakı başlıq yerləşdirilməlidir.
 
-success_url for redirecting users after a successful payment.
+HTML
 
-An 
+<title>Peşəkar CV Hazırlamaq | Pulsuz Onlayn Konstruktor | cvera.net</title>
+2. Meta Təsvir (<meta name="description">):
 
-error_url for redirecting users after a failed payment.
+Problem: Meta təsvir qısa, cəlbedici deyil və Azərbaycan auditoriyası üçün nəzərdə tutulmayıb.
 
-A 
+Həll Yolu: Aşağıdakı meta təsvir <head> teqləri arasına əlavə edilməlidir.
 
-result_url, which is a callback URL where Epoint will send the final payment result.
+HTML
 
-Once this information is verified, you will be issued two essential access keys:
+<meta name="description" content="cvera.net ilə bir neçə dəqiqəyə peşəkar CV yaradın. Onlarla müasir CV formalarından birini seçin, məlumatlarınızı əlavə edin və PDF formatında yükləyin. İndi pulsuz başla!">
+3. H1 Başlığı və Məzmun Uyğunluğu:
 
+Problem: <h1> başlığındakı açar sözlər səhifə mətnində kifayət qədər işlənmir.
 
-public_key: Your unique merchant identifier in the Epoint system.
+Həll Yolu: Səhifənin <h1> başlığı (məsələn, "Ən Müasir CV Formaları ilə Onlayn CV Hazırla") mətnin içində təbii şəkildə izah edilməlidir. Mətn istifadəçiyə həqiqətən də necə peşəkar və müasir CV hazırlaya biləcəyini anlatmalıdır. <h1> başlığındakı ifadə mətnin ilk abzasında mütləq işlənməlidir.
 
+4. Məzmunun Həcmi və Keyfiyyəti:
 
-private_key: A secret key for API access and signing requests.
+Problem: Səhifədə cəmi 232 söz var, bu da çox azdır.
 
-Standard Payment Flow
-The payment process involves redirecting the client to a secure bank page to enter their card details.
+Həll Yolu: Səhifədəki söz sayını minimum 350-400 sözə çatdırın. Məzmunu aşağıdakı mövzularla zənginləşdirin:
 
-Working Principle:
+CV hazırlamağın addım-addım təlimatı.
 
-The client initiates a payment on your application.
+"Niyə cvera.net-i seçməlisiniz?" bölməsi (üstünlüklər: sürətli, asan, fərqli dizaynlar).
 
-Your application sends a request for payment to the Epoint system.
+Tez-tez Verilən Suallar (FAQ) bölməsi (Məsələn: "CV-ni yükləmək ödənişlidirmi?", "Hansı formatda yükləyə bilərəm?").
 
-Epoint confirms the start of the payment with the bank service and returns a 
+5. Teqlərin (Tags) Tənzimlənməsi:
 
-redirect_url to your application.
+Problem: Teqlərin sayı (12) çoxdur və bəziləri təkrarlanır.
 
-Your application redirects the user to this URL.
+Həll Yolu: Teqlərin sayını maksimum 5-6 ədədə endirin. Yalnız ən relevant teqləri saxlayın və təkrarlananları silin.
 
-The user enters their card data on the bank's payment page and confirms the payment.
+Nümunə: CV hazırlamaq, onlayn CV, CV nümunələri, resume azerbaycan, iş üçün CV.
 
+6. Dil və Region İşarələmələri (lang və hreflang):
 
-The user is then redirected back to your 
+Problem: Dil işarələmələri səhvdir və saytın özünə istinad edən hreflang yoxdur.
 
-success_url or error_url depending on the outcome.
+Həll Yolu:
 
+HTML teqini bu şəkildə dəyişin: <html lang="az">
 
-Simultaneously, Epoint sends the detailed payment result to your specified 
+<head> bölməsinə aşağıdakı teqləri əlavə edin:
 
-result_url.
+HTML
 
+<link rel="alternate" hreflang="az" href="https://www.cvera.net/hazirki-sehifenin-unvani" />
+<link rel="alternate" hreflang="x-default" href="https://www.cvera.net/hazirki-sehifenin-unvani" />
+7. Ankor Mətnlərin (Anchor Text) Müxtəlifliyi:
 
-Forming an API Request
-To initiate a payment, you must send a 
+Problem: Bəzi daxili linklərin mətni təkrarlanır.
 
-POST request containing data and signature parameters. You have two options for the endpoint:
+Həll Yolu: Saytda eyni səhifəyə verilən linklərin mətnlərini fərqləndirin. Məsələn, həmişə "CV Yarat" yazmaq əvəzinə, "CV şablonlarına bax", "Konstruktoru sına", "Buradan başla" kimi fərqli mətnlərdən istifadə edin.
 
+II Hissə: Texniki SEO və Veb-Performans
+Bu bölmə saytın "motor" hissəsi ilə bağlıdır və sürət, stabillik və texniki sağlamlığı hədəfləyir.
 
-https://epoint.az/api/1/checkout: Redirect the user directly via a POST form. This is the simpler method.
+1. Saytın Yüklənmə Sürəti (LCP < 2.5 saniyə):
 
+Problem: Saytın əsas məzmunu gec yüklənir. Bu, həm istifadəçiləri qaçırır, həm də Google reytinqini aşağı salır.
 
+Həll Yolu:
 
-https://epoint.az/api/1/request: Send a server-to-server request. The response will be a JSON object containing a 
+Render-Bloklayan Resursları Aradan Qaldırın: Bütün JavaScript (.js) fayllarını <body> teqinin sonuna çəkin və onlara defer atributu əlavə edin: <script src="skript.js" defer></script>. Kritik olmayan CSS fayllarını asinxron yükləyin.
 
-redirect_url to which you must then redirect the user.
+Şəkilləri Optimallaşdırın: Bütün şəkilləri (JPEG, PNG) sıxın (compress) və onları yeni nəsil WebP formatında təqdim edin.
 
+CDN (Content Delivery Network) Qoşun: Cloudflare-in pulsuz planını aktivləşdirin. Bu, saytınızın fayllarını (şəkil, CSS, JS) istifadəçilərə daha yaxın serverlərdən çatdıraraq sürəti artıracaq.
 
-Creating the data and signature Parameters:
+2. Inline CSS Stillerinin Təmizlənməsi:
 
+Problem: HTML teqlərinin içində style="..." kodları yazılıb.
 
-data: This is a base64-encoded JSON string of your payment parameters.
+Həll Yolu: Bütün bu stilləri HTML-dən təmizləyib vahid bir xarici .css faylına köçürün və həmin faylı <head> bölməsindən səhifəyə qoşun.
 
+3. Xüsusi 404 Xəta Səhifəsi Yaratmaq:
 
-Example JSON string: {"public_key": "1000000001", "amount":"30.75","currency":"AZN", "description":"test payment", "order_id":"1"} 
+Problem: Mövcud olmayan səhifəyə daxil olanda istifadəçi üçün faydalı bir səhifə açılmır.
 
+Həll Yolu: Saytın dizaynına uyğun, xüsusi bir 404 səhifəsi yaradın. Bu səhifədə olmalıdır:
 
-Encoded data: eyJwdWJsaWNfa2V5IjoiaTAwMDAwMDAwMSIsImFtb3VudCI6IjMwLjclIiwiY3VycmVuY3 kiOiJBWk4iLCJkZXNjcmlwdGlvbiI6InRlc3QgcGF5bWVudCIsIm9yZGVyX2lkIjoiMSJ9 
+Dostyana bir mesaj: "Təəssüf ki, axtardığınız səhifə tapılmadı."
 
-signature: This is a unique signature to authenticate your request. It is generated by concatenating your 
+Axtarış qutusu.
 
-private_key, the data string, and your private_key again, then applying a SHA1 hash, and finally base64-encoding the result.
+Ana səhifəyə və "CV Yarat" səhifəsinə linklər.
 
+III Hissə: Səhifəxarici SEO və Autoritet
+Bu bölmə saytınızın veb-dəki nüfuzunu artırmağa yönəlib.
 
+1. Xarici Linklərin Əlavə Edilməsi:
 
+Problem: Səhifədən heç bir xarici sayta link verilmir.
 
-Formula: $signature = base64_encode(sha1(private_key + data + private_key, 1));$ 
+Həll Yolu: Mətnin içindən mövzu ilə əlaqəli 1-2 ədəd nüfuzlu xarici sayta link verin. Linklər yeni pəncərədə açılmalıdır (target="_blank").
 
+Nümunə: Azərbaycanın iş elanları portallarına (boss.az, rabota.az) və ya Dövlət Məşğulluq Agentliyinin rəsmi saytına link verə bilərsiniz.
 
-Standard Payment Request Parameters
-Parameter	Required	Type	Description
-public_key	Required	String	
-Your merchant identifier (e.g., 1000000001).
+2. Geri Link (Backlink) Strategiyası:
 
-amount	Required	Number	
-The payment amount (e.g., 100, 20.50).
+Problem: Saytın cəmi 1 geri linki var. Bu, nüfuzunun sıfıra yaxın olduğunu göstərir.
 
-currency	Required	String	
-The currency. The only possible value is 
+Həll Yolu (Uzunmüddətli Fəaliyyət):
 
-AZN.
+Yerli xəbər və ya karyera saytlarında (məsələn, Facemark.az, fins.az kimi portalların karyera bölmələri) qonaq məqalələr dərc etdirib sayta link alın.
 
-language	Required	String	
-Page display language. Possible values: 
+Universitetlərin karyera mərkəzləri ilə əməkdaşlıq edib tələbələr üçün faydalı resurs kimi saytınızı təqdim edin.
 
-az, en, ru.
+3. Sosial Media İnteqrasiyası:
 
-order_id	Required	String	
-A unique transaction ID from your application (max length 255).
+Problem: Sayt sosial şəbəkələrlə əlaqəli deyil.
 
-description	Optional	String	
-Payment description (max length 1000).
+Həll Yolu:
 
-is_installment	Optional	Number	
-Set to 
+Səhifəyə sosial mediada (LinkedIn, Facebook, WhatsApp) paylaşım düymələri əlavə edin.
 
-1 for installment payments, 0 for standard.
+Saytın alt (footer) hissəsində cvera.net-in rəsmi sosial media profillərinə linklər yerləşdirin.
 
-success_redirect_url	Optional	String	
-Overrides the default success URL set in your cabinet.
+IV Hissə: Analitika və Monitorinq
+1. Google Analytics-in Qoşulması:
 
-error_redirect_url	Optional	String	
-Overrides the default error URL set in your cabinet.
+Problem: Saytın ziyarətçi statistikası izlənilmir.
 
-other_attr	Optional	Array	
-For sending additional payment options.
+Həll Yolu: Təcili olaraq Google Analytics 4 hesabı açılsın və onun izləmə kodu (gtag.js) saytın bütün səhifələrinin <head> bölməsinə əlavə edilsin. Bu, bütün dəyişikliklərin nəticəsini ölçmək üçün yeganə yoldur.
 
-
-Экспортировать в Таблицы
-Handling the Callback
-After the payment is processed, Epoint sends a 
-
-POST request to your result_url with data and signature parameters.
-
-To validate the callback:
-
-Generate a signature on your server using the 
-
-data you received and your private_key, following the same formula as before: $base64_encode(sha1(private_key + data + private_key, 1))$.
-
-
-Compare your generated signature with the 
-
-signature received from Epoint. If they match, the response is authentic.
-
-
-To get the payment details, decode the 
-
-data parameter: json_decode(base64_decode(data)).
-
-Payment Result Parameters
-The decoded callback data will contain details such as 
-
-order_id, status (success or failed), bank response code, transaction ID, and rrn (Retrieval Reference Number) for successful transactions.
-
-Checking Payment Status
-You can check a transaction's status at any time by sending a 
-
-POST request to https://epoint.az/api/1/get-status. The request format is the same, requiring 
-
-
-data (containing the transaction parameters) and a signature.
-
-
-Possible Payment Statuses:
-
-
-new: The payment is registered in the Epoint system.
-
-
-success: The payment was successful.
-
-
-returned: The payment has been refunded.
-
-
-error: An error occurred during payment.
-
-
-server_error: There was an error executing the status check.
-
-Card Management (Tokenization)
-Epoint allows you to save customer card details for future payments.
-
-Saving a Card without a Payment
-
-Endpoint: https://epoint.az/api/1/card-registration.
-
-
-Method: POST.
-
-
-Process: Send a request with parameters like public_key and language. The API returns a 
-
-redirect_url where the user enters their card data. Upon successful registration, the callback to your 
-
-
-result_url will include a unique card_id.
-
-
-Saving a Card with the First Payment
-
-Endpoint: https://epoint.az/api/1/card-registration-with-pay.
-
-
-
-Method: POST.
-
-
-
-Process: This combines a standard payment with card registration. The request requires payment parameters (
-
-amount, order_id, currency) in addition to registration parameters. The callback will contain both payment results and the 
-
-
-card_id.
-
-Executing a Payment with a Saved Card
-
-Endpoint: https://epoint.az/api/1/execute-pay.
-
-
-Method: POST.
-
-Process: This is a server-to-server call that does not require user redirection. You send the 
-
-card_id along with payment details (public_key, order_id, amount, currency). The response is returned directly with the transaction status.
-
-
-
-Advanced Payment Operations
-Split Payments
-This feature allows a single payment to be split between two merchants in the Epoint system.
-
-Split Payment Request:
-
-
-Endpoint: https://epoint.az/api/1/split-request.
-
-
-Key Parameters: Requires public_key, total amount, split_user (the second merchant's ID), and split_amount (the amount for the second merchant).
-
-Split Payment with a Saved Card:
-
-
-Endpoint: https://epoint.az/api/1/split-execute-pay.
-
-
-Key Parameters: Requires card_id, split_user, and split_amount in addition to standard payment parameters.
-
-
-
-Save Card with First Split Payment:
-
-
-Endpoint: https://epoint.az/api/1/split-card-registration-with-pay.
-
-
-Process: Combines a split payment with saving the user's card for future use.
-
-Pre-authorization
-This is a two-step process where you first reserve funds on a user's card and later "capture" or complete the payment.
-
-Form Pre-auth Request:
-
-
-Endpoint: https://epoint.az/api/1/pre-auth-request.
-
-Process: Send a standard payment request to this endpoint. The funds will be held but not transferred to your balance. You will receive a 
-
-transaction ID in the response.
-
-Complete Pre-auth Request:
-
-
-Endpoint: https://epoint.az/api/1/pre-auth-complete.
-
-
-Process: To capture the funds, send a new request to this endpoint including the public_key, amount, and the original transaction ID.
-
-Cancel (Reverse) a Transaction
-
-Endpoint: https://epoint.az/api/1/reverse.
-
-
-Method: POST.
-
-Key Parameters: Requires the public_key and the transaction ID you want to cancel. You can optionally specify an 
-
-amount for a partial refund.
-
-Fund Disbursement (Refund)
-
-Endpoint: https://epoint.az/api/1/refund-request.
-
-
-Method: POST.
-
-Process: This is used to transfer funds. It requires the 
-
-card_id of a payout-enabled card, order_id, amount, and currency.
-
-
-Digital Wallets: Apple Pay & Google Pay
-Epoint supports payments via Apple Pay (web and app) and Google Pay (web and mobile apps).
-
-
-Web Integration (Apple Pay & Google Pay):
-
-Make a 
-
-POST request to https://epoint.az/api/1/token/widget with payment details (public_key, amount, order_id) to get a widget_url.
-
-Load this URL in an iframe.
-
-Listen for a message event from the iframe to get the final payment status (
-
-{status: 'success', payment: {...}}).
-
-Google Pay for Mobile Apps:
-
-Follow the official Google Pay documentation to implement native integration.
-
-Provide Epoint with screenshots of your integration for review.
-
-Epoint will then provide you with a Merchant ID to complete the setup.
-
-Other Platform Features
-Wallets API
-This API allows you to work with other available wallet payment methods.
-
-
-Get Wallet List: Send a POST request with your public_key to https://epoint.az/api/1/wallet/status to get a list of available wallets.
-
-
-Create Wallet Payment: Send a POST request with payment details, including the selected wallet_id, to https://epoint.az/api/1/wallet/payment.
-
-Invoices API
-Epoint provides a set of endpoints for managing invoices.
-
-
-/invoices/create: Create a new invoice.
-
-
-/invoices/update: Update an existing invoice.
-
-
-/invoices/view: View details of a specific invoice.
-
-
-/invoices/list: Get a list of all invoices.
-
-
-/invoices/send-sms: Send an invoice link via SMS.
-
-
-/invoices/send-email: Send an invoice link via email.
-
-Heartbeat API
-To monitor the health of the Epoint service, you can send a 
-
-GET request to https://epoint.az/api/heartbeat. A successful response will be 
-
-{"status": "ok"}.
-
-Bank Response Codes
-The document provides an extensive list of bank response codes (e.g., 
-
-000 for Confirmed, 116 for Declined, insufficient funds) that are returned in the payment callback, which can be used for detailed error handling and troubleshooting.
+Bu planı tam şəkildə icra etdikdən sonra cvera.net saytının performansı və axtarış nəticələrindəki mövqeyi əhəmiyyətli dərəcədə yaxşılaşacaq.
