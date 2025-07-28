@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 
 export async function GET(request: NextRequest) {
   try {
@@ -39,9 +41,6 @@ export async function GET(request: NextRequest) {
     }
 
     // Check route files existence
-    const fs = require('fs');
-    const path = require('path');
-
     const routeChecks = {
       authRouteExists: fs.existsSync(path.join(process.cwd(), 'src/app/api/auth/linkedin/route.ts')),
       callbackRouteExists: fs.existsSync(path.join(process.cwd(), 'src/app/api/auth/linkedin/callback/route.ts')),
