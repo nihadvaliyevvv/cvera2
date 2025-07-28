@@ -22,10 +22,10 @@ export default function LinkedInCVCreator() {
   useEffect(() => {
     // Check if user is logged in with LinkedIn
     if (user) {
-      if (user.loginMethod === 'linkedin' && user.linkedinUsername) {
+      if (user.loginMethod === 'linkedin' && user.linkedinId) {
         setLinkedinUser({
           name: user.name,
-          linkedinUsername: user.linkedinUsername,
+          linkedinUsername: user.linkedinId, // Use linkedinId as fallback
           loginMethod: user.loginMethod
         })
       }

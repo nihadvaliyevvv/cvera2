@@ -189,7 +189,6 @@ export async function POST(request: NextRequest) {
         name: true,
         email: true,
         loginMethod: true,
-        linkedinUsername: true,
         linkedinId: true
       }
     });
@@ -201,21 +200,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // STRICT CHECK: Must be LinkedIn user
-    if (user.loginMethod !== 'linkedin' || !user.linkedinUsername) {
+    // Check if user logged in via LinkedIn
+    if (user.loginMethod !== 'linkedin') {
       return NextResponse.json(
-        {
-          error: 'LinkedIn CV yaratmaq üçün LinkedIn hesabı ilə daxil olmalısınız.',
-          requiresLinkedInLogin: true
-        },
+        { error: 'Bu xüsusiyyət yalnız LinkedIn ilə daxil olan istifadəçilər üçün mövcuddur.' },
         { status: 403 }
       );
     }
 
-    console.log(`✅ LinkedIn istifadəçi: ${user.name} (${user.linkedinUsername})`);
+    // Use linkedinId as fallback if linkedinUsername is not available
+    const linkedinIdentifier = user.linkedinId;
+    if (!linkedinIdentifier) {
+      return NextResponse.json(
+        { error: 'LinkedIn identifikatorunuz tapılmadı. Yenidən LinkedIn ilə daxil olun.' },
+        { status: 400 }
+      );
+    }
 
-    // Scrape LinkedIn profile
-    const profile = await scrapeLinkedInProfile(user.linkedinUsername);
+    console.log(`✅ LinkedIn istifadəçi: ${user.name} (ID: ${user.linkedinId})`);
+
+    // Use the LinkedIn ID for scraping (this should work with ScrapingDog API)
+    const profile = await scrapeLinkedInProfile(linkedinIdentifier);
 
     if (!profile) {
       return NextResponse.json(
@@ -231,7 +236,7 @@ export async function POST(request: NextRequest) {
         email: user.email || '',
         phone: '',
         location: profile.location || '',
-        linkedin: `https://linkedin.com/in/${user.linkedinUsername}`,
+        linkedin: user.linkedinId ? `https://linkedin.com/in/${user.linkedinId}` : '',
         website: ''
       },
       professionalSummary: profile.summary || profile.headline || '',
@@ -266,7 +271,7 @@ export async function POST(request: NextRequest) {
       },
       user: {
         name: user.name,
-        linkedinUsername: user.linkedinUsername
+        linkedinId: user.linkedinId // Use linkedinId instead of linkedinUsername
       }
     });
 

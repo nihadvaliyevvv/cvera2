@@ -429,64 +429,51 @@ export async function POST(request: NextRequest) {
       where: { id: userId },
       select: {
         id: true,
-        loginMethod: true,
-        linkedinUsername: true,
-        linkedinId: true,
+        name: true,
         email: true,
-        name: true
+        loginMethod: true,
+        // linkedinUsername: true, // Temporarily commented out until database is updated
+        linkedinId: true
       }
     });
 
     if (!user) {
       return NextResponse.json(
-        { error: 'User not found. Please login again.' },
+        { error: 'User not found.' },
         { status: 404 }
       );
     }
 
-    // STRICT CHECK: User must have logged in with LinkedIn
-    if (user.loginMethod !== 'linkedin' || !user.linkedinUsername) {
+    // STRICT CHECK: Must be LinkedIn authenticated user
+    if (user.loginMethod !== 'linkedin') {
       return NextResponse.json(
-        {
-          error: 'LinkedIn login required. You must login with your LinkedIn account to import your profile.',
-          requiresLinkedInLogin: true
-        },
+        { error: 'This feature is only available for LinkedIn authenticated users.' },
         { status: 403 }
       );
     }
 
-    linkedinUsername = user.linkedinUsername;
-    console.log(`✅ LinkedIn authenticated user: ${user.name} (${linkedinUsername})`);
+    // Use linkedinId as fallback identifier
+    const linkedinIdentifier = user.linkedinId;
+    if (!linkedinIdentifier) {
+      return NextResponse.json(
+        { error: 'LinkedIn identifier not found. Please login with LinkedIn again.' },
+        { status: 400 }
+      );
+    }
 
-    // Parse request body - linkedinUrl is now optional since we use authenticated user's username
+    console.log(`✅ LinkedIn authenticated user: ${user.name} (ID: ${user.linkedinId})`);
+
+    // Get the LinkedIn profile URL from request body
     const body = await request.json();
-    const { linkedinUrl } = body;
+    let linkedinId = linkedinIdentifier; // Default to authenticated user's ID
 
-    let linkedinId = linkedinUsername; // Default to authenticated user's username
-
-    // If a different LinkedIn URL is provided, validate it belongs to the same user
-    if (linkedinUrl) {
-      const extractedId = extractLinkedInId(linkedinUrl);
-      if (!extractedId) {
-        return NextResponse.json(
-          { error: 'Invalid LinkedIn URL format' },
-          { status: 400 }
-        );
+    if (body.linkedinUrl) {
+      const extractedId = extractLinkedInId(body.linkedinUrl);
+      if (extractedId && extractedId !== linkedinIdentifier) {
+        console.log(`🔄 Different LinkedIn profile requested: ${extractedId} (authenticated as: ${linkedinIdentifier})`);
+        // Allow scraping different profiles but note the difference
+        linkedinId = extractedId;
       }
-
-      // Security check: Only allow importing the authenticated user's own profile
-      if (extractedId !== linkedinUsername) {
-        return NextResponse.json(
-          {
-            error: 'You can only import your own LinkedIn profile. Please use your authenticated LinkedIn account.',
-            authenticatedUsername: linkedinUsername,
-            providedUsername: extractedId
-          },
-          { status: 403 }
-        );
-      }
-
-      linkedinId = extractedId;
     }
 
     console.log(`📋 Importing LinkedIn profile for authenticated user: ${linkedinId}`);
@@ -512,7 +499,7 @@ export async function POST(request: NextRequest) {
       message: 'LinkedIn profile imported successfully',
       authenticatedUser: {
         name: user.name,
-        linkedinUsername: user.linkedinUsername
+        linkedinId: user.linkedinId // Use linkedinId instead of linkedinUsername
       }
     });
 

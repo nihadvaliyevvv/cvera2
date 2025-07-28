@@ -10,7 +10,8 @@ export interface User {
   avatar?: string; // Add avatar property as optional
   createdAt?: string;
   loginMethod?: string; // Add login method (linkedin, email)
-  linkedinUsername?: string; // Add LinkedIn username field
+  linkedinId?: string; // Add LinkedIn ID field
+  linkedinUsername?: string; // Add LinkedIn username field (optional until database is updated)
   subscriptions: Array<{
     id: string;
     tier: string;

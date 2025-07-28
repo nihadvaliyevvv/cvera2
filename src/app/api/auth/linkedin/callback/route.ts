@@ -125,6 +125,17 @@ export async function GET(request: NextRequest) {
       where: { email },
     });
 
+    // Try to extract LinkedIn username from profile data if available
+    let linkedinUsername = null;
+    if (profileData && profileData.publicProfileUrl) {
+      // Extract username from LinkedIn public profile URL
+      const urlMatch = profileData.publicProfileUrl.match(/linkedin\.com\/in\/([^/?]+)/);
+      if (urlMatch) {
+        linkedinUsername = urlMatch[1];
+        console.log('Extracted LinkedIn username:', linkedinUsername);
+      }
+    }
+
     if (!user) {
       console.log('Creating new user...');
       user = await prisma.user.create({
@@ -132,6 +143,7 @@ export async function GET(request: NextRequest) {
           email,
           name: `${firstName} ${lastName}`.trim() || email.split('@')[0],
           linkedinId: linkedinId,
+          linkedinUsername: linkedinUsername, // Add the LinkedIn username
           tier: 'Free', // Matches database schema default
           status: 'active',
           loginMethod: 'linkedin',
@@ -144,6 +156,7 @@ export async function GET(request: NextRequest) {
         where: { id: user.id },
         data: {
           linkedinId: linkedinId || user.linkedinId,
+          linkedinUsername: linkedinUsername || user.linkedinUsername, // Update LinkedIn username if available
           loginMethod: 'linkedin',
           lastLogin: new Date(),
         },
