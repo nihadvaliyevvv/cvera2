@@ -215,102 +215,122 @@ export default function DashboardV2({ user, onCreateCV, onEditCV }: DashboardV2P
       />
 
       {/* Enhanced Professional Header */}
-      <header className="bg-white/90 backdrop-blur-md border-b border-gray-200/60 shadow-lg sticky top-0 z-30">
+      <header className="bg-white/95 backdrop-blur-lg border-b border-gray-200/60 shadow-xl sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4 lg:py-6">
             {/* Logo and Brand */}
             <div className="flex items-center space-x-4">
-              <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
+              <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity group">
                 <div className="relative">
-                  <img
-                    src="/cveralogo.svg"
-                    alt="CVERA Logo"
-                    className="h-10 w-auto"
-                  />
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+                    <span className="text-white font-bold text-lg">CV</span>
+                  </div>
                 </div>
                 <div className="hidden sm:block">
-                  <h1 className="text-xl font-bold text-gray-900">CVERA</h1>
-                  <p className="text-xs text-blue-600 font-medium">Professional CV Builder</p>
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">CVERA</h1>
+                  <p className="text-xs text-blue-600 font-medium tracking-wide">AI-Powered CV Builder</p>
                 </div>
               </Link>
             </div>
 
-            {/* Navigation Links */}
+            {/* Enhanced Navigation Links */}
             <nav className="hidden md:flex items-center space-x-8">
-              <Link href="/dashboard" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+              <Link href="/dashboard" className="relative text-gray-700 hover:text-blue-600 font-semibold transition-colors group">
                 Dashboard
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all group-hover:w-full"></span>
               </Link>
-              <Link href="/templates" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+              <Link href="/templates" className="relative text-gray-700 hover:text-blue-600 font-semibold transition-colors group">
                 Şablonlar
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all group-hover:w-full"></span>
               </Link>
-              <Link href="/pricing" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+              <Link href="/pricing" className="relative text-gray-700 hover:text-blue-600 font-semibold transition-colors group">
                 Qiymətlər
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all group-hover:w-full"></span>
               </Link>
             </nav>
 
-            {/* User Profile Section */}
+            {/* Enhanced User Profile Section */}
             <div className="flex items-center space-x-4">
-              {/* User Tier Badge */}
-              <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
+              {/* Enhanced User Tier Badge */}
+              <div className={`px-4 py-2 rounded-full text-sm font-bold shadow-lg ${
                 userTier === 'Premium' 
-                  ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white' 
+                  ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white shadow-yellow-200' 
                   : userTier === 'Pro'
-                  ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white'
-                  : 'bg-gray-100 text-gray-700'
+                  ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white shadow-purple-200'
+                  : userTier === 'Medium' || userTier === 'Orta'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white shadow-blue-200'
+                  : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 shadow-gray-200'
               }`}>
-                {userTier} Plan
+                <div className="flex items-center space-x-2">
+                  {getTierIcon(userTier)}
+                  <span>{userTier} Plan</span>
+                </div>
               </div>
 
-              {/* User Menu */}
+              {/* Enhanced User Menu */}
               <div className="relative group">
-                <button className="flex items-center space-x-3 p-2 rounded-xl hover:bg-gray-100 transition-colors">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold">
+                <button className="flex items-center space-x-3 p-3 rounded-2xl hover:bg-gray-100/80 transition-all duration-200 shadow-sm hover:shadow-md">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="hidden sm:block text-left">
-                    <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
+                    <p className="text-sm font-bold text-gray-900">{user.name}</p>
+                    <p className="text-xs text-gray-500 font-medium">{user.email}</p>
                   </div>
-                  <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
 
-                {/* Dropdown Menu */}
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-1 group-hover:translate-y-0">
-                  <div className="py-2">
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-                      <p className="text-xs text-gray-500">{user.email}</p>
+                {/* Enhanced Dropdown Menu */}
+                <div className="absolute right-0 mt-3 w-64 bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-200/60 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                  <div className="py-3">
+                    <div className="px-6 py-4 border-b border-gray-100">
+                      <p className="text-sm font-bold text-gray-900">{user.name}</p>
+                      <p className="text-xs text-gray-500 font-medium">{user.email}</p>
+                      <div className="mt-2">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
+                          userTier === 'Premium' 
+                            ? 'bg-yellow-100 text-yellow-800' 
+                            : userTier === 'Pro'
+                            ? 'bg-purple-100 text-purple-800'
+                            : userTier === 'Medium' || userTier === 'Orta'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {getTierIcon(userTier)}
+                          <span className="ml-1">{userTier} Plan</span>
+                        </span>
+                      </div>
                     </div>
-                    <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center space-x-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        <span>Profil</span>
-                      </div>
+                    <Link href="/profile" className="flex items-center space-x-3 px-6 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors font-medium">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      <span>Profil Tənzimləmələri</span>
                     </Link>
-                    <Link href="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center space-x-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <span>Tənzimləmələr</span>
-                      </div>
+                    <Link href="/settings" className="flex items-center space-x-3 px-6 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors font-medium">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <span>Hesab Tənzimləmələri</span>
+                    </Link>
+                    <Link href="/billing" className="flex items-center space-x-3 px-6 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors font-medium">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                      </svg>
+                      <span>Ödəniş & Faktura</span>
                     </Link>
                     <div className="border-t border-gray-100 mt-2 pt-2">
                       <button
                         onClick={logout}
-                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        className="flex items-center space-x-3 w-full text-left px-6 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium"
                       >
-                        <div className="flex items-center space-x-2">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                          </svg>
-                          <span>Çıxış</span>
-                        </div>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        <span>Hesabdan Çıx</span>
                       </button>
                     </div>
                   </div>
@@ -321,34 +341,72 @@ export default function DashboardV2({ user, onCreateCV, onEditCV }: DashboardV2P
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main Content with improved design */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {error && (
-          <div className="mb-8 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg shadow-sm">
+          <div className="mb-8 p-4 bg-red-50/90 backdrop-blur-sm border-l-4 border-red-400 rounded-r-xl shadow-lg">
             <div className="flex items-center">
               <svg className="w-5 h-5 text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <p className="text-red-700 font-medium">{error}</p>
+              <p className="text-red-700 font-semibold">{error}</p>
             </div>
           </div>
         )}
 
-        {/* Welcome Section */}
-        <div className="mb-10">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 text-white shadow-xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold mb-2">
-                  Xoş gəlmisiniz, {user.name}! 👋
-                </h1>
-                <p className="text-blue-100 text-lg">
-                  AI ilə professional CV yaradın və karyera yolunuzu uğurla davam etdirin.
-                </p>
+        {/* Enhanced Welcome Section */}
+        <div className="mb-12">
+          <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 rounded-3xl p-8 lg:p-12 text-white shadow-2xl relative overflow-hidden">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <svg className="w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#ffffff" strokeWidth="0.5"/>
+                  </pattern>
+                </defs>
+                <rect width="100" height="100" fill="url(#grid)" />
+              </svg>
+            </div>
+
+            <div className="relative z-10 flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h1 className="text-3xl lg:text-4xl font-bold mb-2">
+                      Xoş gəlmisiniz, {user.name}! 👋
+                    </h1>
+                    <p className="text-blue-100 text-lg lg:text-xl font-medium">
+                      AI ilə professional CV yaradın və karyera yolunuzu uğurla davam etdirin.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Quick Stats */}
+                <div className="flex items-center space-x-6 mt-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">{cvs.length}</div>
+                    <div className="text-blue-200 text-sm">CV Sayı</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">{userLimits?.todayUsage.cvCreated || 0}</div>
+                    <div className="text-blue-200 text-sm">Bu Gün</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">{userTier}</div>
+                    <div className="text-blue-200 text-sm">Plan</div>
+                  </div>
+                </div>
               </div>
+
               <div className="hidden lg:block">
-                <div className="w-32 h-32 bg-white/10 rounded-full flex items-center justify-center">
-                  <svg className="w-16 h-16 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-40 h-40 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <svg className="w-20 h-20 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>

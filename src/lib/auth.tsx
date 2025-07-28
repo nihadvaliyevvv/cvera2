@@ -26,6 +26,7 @@ export interface AuthTokens {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isInitialized: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
@@ -37,40 +38,74 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  const isValidToken = (token: string) => {
+    try {
+      const decoded = jwt.decode(token) as any;
+      if (!decoded || !decoded.exp) return false;
+      return decoded.exp * 1000 > Date.now();
+    } catch {
+      return false;
+    }
+  };
 
   const fetchCurrentUser = useCallback(async () => {
-    // First try to get token from localStorage
-    let token = localStorage.getItem('accessToken');
-    
-    // If no token in localStorage, try to get from cookies via API
-    if (!token) {
-      try {
-        const response = await fetch('/api/auth/token', {
-          credentials: 'include',
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          token = data.accessToken;
-          // Store token in localStorage for future requests
-          if (token) {
-            localStorage.setItem('accessToken', token);
-          }
-        }
-      } catch (error) {
-        console.error('Error getting token from cookie:', error);
-      }
-    }
-
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+    if (typeof window === 'undefined') return;
 
     try {
+      setLoading(true);
+
+      // First try to get token from localStorage
+      let token = localStorage.getItem('accessToken');
+
+      // Validate token before using it
+      if (token && !isValidToken(token)) {
+        console.log('Token expired, removing from localStorage');
+        localStorage.removeItem('accessToken');
+        token = null;
+      }
+
+      // If no valid token in localStorage, try to get from cookies via API
+      if (!token) {
+        try {
+          const response = await fetch('/api/auth/token', {
+            credentials: 'include',
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            token = data.accessToken;
+
+            // Validate token from server
+            if (token && isValidToken(token)) {
+              localStorage.setItem('accessToken', token);
+            } else {
+              token = null;
+            }
+          }
+        } catch (error) {
+          console.error('Error getting token from cookie:', error);
+        }
+      }
+
+      if (!token) {
+        setUser(null);
+        setLoading(false);
+        setIsInitialized(true);
+        return;
+      }
+
+      // Fetch user data with valid token
       const response = await fetch('/api/users/me', {
         headers: {
           Authorization: `Bearer ${token}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
         },
       });
 
@@ -78,6 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userData = await response.json();
         setUser(userData);
       } else {
+        console.log('Failed to fetch user data, removing token');
         localStorage.removeItem('accessToken');
         setUser(null);
       }
@@ -87,6 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
     } finally {
       setLoading(false);
+      setIsInitialized(true);
     }
   }, []);
 
@@ -107,14 +144,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const data = await response.json();
-      localStorage.setItem('accessToken', data.accessToken);
-      
-      // Fetch user data after successful login
-      await fetchCurrentUser();
 
-      // Redirect to dashboard after successful login with full URL
-      if (typeof window !== 'undefined') {
-        window.location.replace('https://cvera.net/dashboard');
+      // Validate token before storing
+      if (data.accessToken && isValidToken(data.accessToken)) {
+        localStorage.setItem('accessToken', data.accessToken);
+
+        // Fetch user data after successful login
+        await fetchCurrentUser();
+
+        // Redirect to dashboard after successful login with replace to prevent back button issues
+        if (typeof window !== 'undefined') {
+          window.location.replace('/dashboard');
+        }
+      } else {
+        throw new Error('Invalid token received');
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -151,68 +194,77 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [login]);
 
   const logout = useCallback(async () => {
-    // 1. Clear user state immediately to prevent UI issues
-    setUser(null);
-
-    // 2. Clear all possible client-side storage
-    const clearClientStorage = () => {
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      // Clear specific tokens just in case
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('auth-token');
-      localStorage.removeItem('user');
-      
-      sessionStorage.removeItem('accessToken');
-      sessionStorage.removeItem('refreshToken');
-      sessionStorage.removeItem('auth-token');
-      sessionStorage.removeItem('user');
-    };
-    
-    clearClientStorage();
-    
-    // 3. Call logout API to clear server-side session/cookies
     try {
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      // 4. Additional cleanup: call token revoke if exists
-      await fetch('/api/auth/revoke', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }).catch(() => {}); // Ignore errors
-      
+      // 1. Clear user state immediately to prevent UI issues
+      setUser(null);
+      setLoading(true);
+
+      // 2. Clear all possible client-side storage
+      const clearClientStorage = () => {
+        localStorage.clear();
+        sessionStorage.clear();
+
+        // Clear specific tokens just in case
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('auth-token');
+        localStorage.removeItem('user');
+
+        sessionStorage.removeItem('accessToken');
+        sessionStorage.removeItem('refreshToken');
+        sessionStorage.removeItem('auth-token');
+        sessionStorage.removeItem('user');
+      };
+
+      clearClientStorage();
+
+      // 3. Call logout API to clear server-side session/cookies
+      try {
+        await Promise.allSettled([
+          fetch('/api/auth/logout', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }),
+          fetch('/api/auth/revoke', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
+        ]);
+      } catch (error) {
+        console.error('Server logout error:', error);
+      }
+
+      // 4. Clear storage again to be extra sure
+      clearClientStorage();
+
+      // 5. Force page reload and redirect to home to completely reset state
+      if (typeof window !== 'undefined') {
+        // Use replace instead of href to prevent back button issues
+        window.location.replace('/');
+      }
     } catch (error) {
-      console.error('Server logout error:', error);
-    }
-    
-    // 5. Clear storage again to be extra sure
-    clearClientStorage();
-    
-    // 6. Force page reload and redirect to home to completely reset state
-    if (typeof window !== 'undefined') {
-      // Use replace instead of href to prevent back button issues
-      window.location.replace('https://cvera.net');
+      console.error('Logout error:', error);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchCurrentUser();
+    if (typeof window !== 'undefined') {
+      fetchCurrentUser();
+    }
   }, [fetchCurrentUser]);
 
   const value = {
     user,
     loading,
+    isInitialized,
     login,
     register,
     logout,

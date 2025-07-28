@@ -1,55 +1,51 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import DashboardV2 from '@/components/dashboard/DashboardV2';
 import { LoadingSpinner } from '@/components/ui/Loading';
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, isInitialized } = useAuth();
   const router = useRouter();
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
-    // More robust authentication check
-    const checkAuth = () => {
-      // Check if we have a token in localStorage
+    // Only run auth check after auth system is fully initialized
+    if (!isInitialized) return;
+
+    const checkAuthAndRedirect = async () => {
+      // Check if we have a valid token in localStorage
       const token = localStorage.getItem('accessToken');
 
-      if (!loading) {
-        if (!user && !token) {
-          // No user and no token - redirect immediately
-          console.log('No authentication found, redirecting to landing...');
-          window.location.href = 'https://cvera.net';
-          return;
-        }
+      // If no user and no token after initialization, redirect to home
+      if (!user && !token && !loading) {
+        console.log('No authentication found, redirecting to home...');
+        setRedirecting(true);
 
-        if (!user && token) {
-          // We have a token but no user data yet - wait a bit more
-          setTimeout(() => {
-            if (!user) {
-              console.log('Token exists but no user data, redirecting...');
-              window.location.href = 'https://cvera.net';
-            }
-          }, 2000);
-        }
+        // Use router.replace instead of window.location for better UX
+        router.replace('/');
+        return;
+      }
+
+      // If we have a token but no user data after initialization, something is wrong
+      if (token && !user && !loading) {
+        console.log('Token exists but authentication failed, clearing and redirecting...');
+        localStorage.removeItem('accessToken');
+        setRedirecting(true);
+        router.replace('/');
+        return;
       }
     };
 
-    checkAuth();
-  }, [user, loading]);
+    // Add a small delay to prevent immediate redirects on page load
+    const timeoutId = setTimeout(checkAuthAndRedirect, 500);
+    return () => clearTimeout(timeoutId);
+  }, [user, loading, isInitialized, router]);
 
-  // Additional check on component mount
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      console.log('No token found on mount, redirecting...');
-      window.location.href = 'https://cvera.net';
-    }
-  }, []);
-
-  // Show loading spinner while authenticating
-  if (loading) {
+  // Show loading spinner while authenticating or initializing
+  if (!isInitialized || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
         <div className="bg-white rounded-3xl shadow-2xl p-8 backdrop-blur-sm border border-white/20">
@@ -60,13 +56,13 @@ export default function DashboardPage() {
     );
   }
 
-  // If not authenticated, show minimal loading while redirect happens
-  if (!user) {
+  // Show loading while redirecting
+  if (redirecting || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
         <div className="bg-white rounded-3xl shadow-2xl p-8 backdrop-blur-sm border border-white/20">
           <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600 text-center">Yönləndirilib...</p>
+          <p className="mt-4 text-gray-600 text-center">Ana səhifəyə yönləndirilib...</p>
         </div>
       </div>
     );
