@@ -11,11 +11,42 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
-      // Immediately redirect to index page when not authenticated
-      window.location.replace('https://cvera.net');
+    // More robust authentication check
+    const checkAuth = () => {
+      // Check if we have a token in localStorage
+      const token = localStorage.getItem('accessToken');
+
+      if (!loading) {
+        if (!user && !token) {
+          // No user and no token - redirect immediately
+          console.log('No authentication found, redirecting to landing...');
+          window.location.href = 'https://cvera.net';
+          return;
+        }
+
+        if (!user && token) {
+          // We have a token but no user data yet - wait a bit more
+          setTimeout(() => {
+            if (!user) {
+              console.log('Token exists but no user data, redirecting...');
+              window.location.href = 'https://cvera.net';
+            }
+          }, 2000);
+        }
+      }
+    };
+
+    checkAuth();
+  }, [user, loading]);
+
+  // Additional check on component mount
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      console.log('No token found on mount, redirecting...');
+      window.location.href = 'https://cvera.net';
     }
-  }, [user, loading, router]);
+  }, []);
 
   // Show loading spinner while authenticating
   if (loading) {
@@ -23,15 +54,22 @@ export default function DashboardPage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
         <div className="bg-white rounded-3xl shadow-2xl p-8 backdrop-blur-sm border border-white/20">
           <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600 text-center">Yüklənir...</p>
+          <p className="mt-4 text-gray-600 text-center">Authentikasiya yoxlanılır...</p>
         </div>
       </div>
     );
   }
 
-  // If not authenticated, return null while redirect happens
+  // If not authenticated, show minimal loading while redirect happens
   if (!user) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 backdrop-blur-sm border border-white/20">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-gray-600 text-center">Yönləndirilib...</p>
+        </div>
+      </div>
+    );
   }
 
   const handleCreateCV = () => {
