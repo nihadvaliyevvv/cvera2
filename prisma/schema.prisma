@@ -20,7 +20,6 @@ model User {
   updatedAt        DateTime        @updatedAt
   role             String          @default("USER")
   linkedinId       String?         @unique
-  linkedinUsername String? // Add LinkedIn username field
   loginMethod      String? // Add login method (linkedin, email)
   emailVerified    DateTime? // Add email verification field
   tier             String          @default("Free")
