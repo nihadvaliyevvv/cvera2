@@ -402,7 +402,6 @@ export async function POST(request: NextRequest) {
 
     // STRICT REQUIREMENT: User must be authenticated with LinkedIn
     let userId = '';
-    let linkedinUsername = '';
 
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
