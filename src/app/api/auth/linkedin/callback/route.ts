@@ -53,8 +53,8 @@ export async function GET(request: NextRequest) {
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
 
-    // Get user profile from LinkedIn
-    const profileResponse = await fetch('https://api.linkedin.com/v2/me', {
+    // Get user profile from LinkedIn using OpenID Connect userinfo endpoint
+    const profileResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
       },
@@ -67,20 +67,11 @@ export async function GET(request: NextRequest) {
 
     const profileData = await profileResponse.json();
 
-    // Get user email from LinkedIn
-    const emailResponse = await fetch('https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))', {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!emailResponse.ok) {
-      console.error('Failed to get LinkedIn email');
-      return NextResponse.redirect(`${process.env.NEXTAUTH_URL || 'https://cvera.net'}/auth/login?error=email_fetch_failed`);
-    }
-
-    const emailData = await emailResponse.json();
-    const email = emailData.elements?.[0]?.['handle~']?.emailAddress;
+    // With OpenID Connect, email is included in the userinfo response
+    const email = profileData.email;
+    const firstName = profileData.given_name || '';
+    const lastName = profileData.family_name || '';
+    const linkedinId = profileData.sub; // 'sub' is the LinkedIn user ID in OpenID Connect
 
     if (!email) {
       return NextResponse.redirect(`${process.env.NEXTAUTH_URL || 'https://cvera.net'}/auth/login?error=no_email_provided`);
@@ -93,14 +84,11 @@ export async function GET(request: NextRequest) {
 
     // Create user if doesn't exist
     if (!user) {
-      const firstName = profileData.localizedFirstName || '';
-      const lastName = profileData.localizedLastName || '';
-
       user = await prisma.user.create({
         data: {
           email,
           name: `${firstName} ${lastName}`.trim(),
-          linkedinId: profileData.id,
+          linkedinId: linkedinId,
           tier: 'FREE',
           status: 'active',
           loginMethod: 'linkedin',
@@ -112,7 +100,7 @@ export async function GET(request: NextRequest) {
         user = await prisma.user.update({
           where: { id: user.id },
           data: {
-            linkedinId: profileData.id,
+            linkedinId: linkedinId,
             loginMethod: 'linkedin',
             lastLogin: new Date(),
           },
