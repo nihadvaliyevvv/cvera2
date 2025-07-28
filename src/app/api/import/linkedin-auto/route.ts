@@ -98,7 +98,39 @@ export async function POST(request: NextRequest) {
 
     console.log(`🔍 Auto-import LinkedIn profili: ${linkedinUsername} (User: ${user.email})`);
 
-    // Scrape LinkedIn profile using stored username
+    // First try the regular LinkedIn scraper endpoint (existing working API)
+    try {
+      console.log('🔄 Trying existing LinkedIn scraper API...');
+      const existingApiResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/linkedin-scraper`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          linkedinUrl: linkedinUsername,
+          premium: false
+        })
+      });
+
+      if (existingApiResponse.ok) {
+        const existingApiData = await existingApiResponse.json();
+        console.log('✅ Existing API successful:', existingApiData.data?.name || 'Unknown');
+
+        return NextResponse.json({
+          success: true,
+          message: 'LinkedIn profil məlumatları uğurla import edildi',
+          profile: transformScrapingDogResponse(existingApiData.data),
+          importedAt: new Date().toISOString(),
+          source: 'linkedin_auto_import_via_existing_api'
+        });
+      }
+    } catch (existingApiError) {
+      const errorMessage = existingApiError instanceof Error ? existingApiError.message : 'Unknown error';
+      console.log('⚠️ Existing API failed, trying direct ScrapingDog...', errorMessage);
+    }
+
+    // If existing API fails, try direct ScrapingDog API with better error handling
+    console.log('🔄 Trying direct ScrapingDog API...');
     const params = {
       api_key: SCRAPINGDOG_CONFIG.api_key,
       type: 'profile',
@@ -106,53 +138,62 @@ export async function POST(request: NextRequest) {
       premium: SCRAPINGDOG_CONFIG.premium,
     };
 
+    console.log('📡 ScrapingDog request params:', params);
+
     const response = await axios.get(SCRAPINGDOG_CONFIG.url, {
       params: params,
       timeout: 30000,
       headers: {
-        'User-Agent': 'CVERA-LinkedIn-Auto-Import/1.0'
+        'User-Agent': 'CVERA-LinkedIn-Auto-Import/1.0',
+        'Accept': 'application/json'
+      },
+      validateStatus: function (status) {
+        // Accept any status code less than 500 to handle 404s gracefully
+        return status < 500;
       }
     });
 
+    console.log('📥 ScrapingDog response status:', response.status);
+    console.log('📥 ScrapingDog response headers:', response.headers);
+
+    if (response.status === 404) {
+      return NextResponse.json({
+        error: `LinkedIn profili tapılmadı: ${linkedinUsername}. LinkedIn profilinizin açıq olduğundan əmin olun.`,
+        notFound: true,
+        linkedinUsername: linkedinUsername
+      }, { status: 404 });
+    }
+
     if (response.status !== 200) {
       console.error(`❌ ScrapingDog API xətası: Status ${response.status}`);
+      console.error('❌ Response data:', response.data);
+
       return NextResponse.json(
-        { error: `LinkedIn profil məlumatları əldə edilə bilmədi: Status ${response.status}` },
+        {
+          error: `LinkedIn profil məlumatları əldə edilə bilmədi: Status ${response.status}`,
+          statusCode: response.status,
+          responseData: response.data
+        },
         { status: response.status }
       );
     }
 
     let data = response.data;
+    console.log('📊 Raw ScrapingDog data keys:', Object.keys(data));
 
     // Handle different response formats from ScrapingDog
     if (Array.isArray(response.data) && response.data.length > 0) {
       data = response.data[0];
+      console.log('✅ Extracted from array format');
     } else if (response.data['0']) {
       data = response.data['0'];
+      console.log('✅ Extracted from "0" key format');
     }
 
     console.log('✅ LinkedIn profil məlumatları alındı:', data.name || data.fullName || 'Unknown');
 
-    // Transform the data to standardized format
-    const profile: LinkedInProfile = {
-      name: data.fullName || data.name || data.first_name + ' ' + data.last_name || '',
-      headline: data.headline || data.sub_title || '',
-      summary: data.about || data.summary || '',
-      location: data.location || data.geo_location || '',
-      experience: Array.isArray(data.experience) ? data.experience.map((exp: any) => ({
-        title: exp.title || exp.position || '',
-        company: exp.company || exp.company_name || '',
-        duration: exp.duration || exp.date_range || '',
-        description: exp.description || exp.summary || ''
-      })) : [],
-      education: Array.isArray(data.education) ? data.education.map((edu: any) => ({
-        school: edu.school || edu.institution || '',
-        degree: edu.degree || '',
-        field: edu.field || edu.field_of_study || '',
-        duration: edu.duration || edu.date_range || ''
-      })) : [],
-      skills: extractSkills(data)
-    };
+    // Transform and return the data
+    const profile = transformScrapingDogResponse(data);
 
     // Update user's profile data in database (optional - store import timestamp)
     await prisma.user.update({
@@ -167,22 +208,59 @@ export async function POST(request: NextRequest) {
       message: 'LinkedIn profil məlumatları uğurla import edildi',
       profile: profile,
       importedAt: new Date().toISOString(),
-      source: 'linkedin_auto_import'
+      source: 'linkedin_auto_import_direct'
     });
 
   } catch (error) {
     console.error('❌ LinkedIn auto-import xətası:', error);
 
     let errorMessage = 'LinkedIn profil import zamanı xəta baş verdi';
+    let statusCode = 500;
+
     if (error instanceof Error) {
       errorMessage = error.message;
+
+      // Handle specific error types
+      if (error.message.includes('timeout')) {
+        errorMessage = 'LinkedIn profil yükləmə müddəti bitdi. Zəhmət olmasa yenidən cəhd edin.';
+        statusCode = 408;
+      } else if (error.message.includes('404')) {
+        errorMessage = 'LinkedIn profili tapılmadı. Profil linkinizi yoxlayın.';
+        statusCode = 404;
+      }
     }
 
     return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
+      {
+        error: errorMessage,
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: statusCode }
     );
   }
+}
+
+// Transform ScrapingDog response to standardized format
+function transformScrapingDogResponse(data: any): LinkedInProfile {
+  return {
+    name: data.fullName || data.name || data.first_name + ' ' + data.last_name || '',
+    headline: data.headline || data.sub_title || '',
+    summary: data.about || data.summary || '',
+    location: data.location || data.geo_location || '',
+    experience: Array.isArray(data.experience) ? data.experience.map((exp: any) => ({
+      title: exp.title || exp.position || '',
+      company: exp.company || exp.company_name || '',
+      duration: exp.duration || exp.date_range || '',
+      description: exp.description || exp.summary || ''
+    })) : [],
+    education: Array.isArray(data.education) ? data.education.map((edu: any) => ({
+      school: edu.school || edu.institution || '',
+      degree: edu.degree || '',
+      field: edu.field || edu.field_of_study || '',
+      duration: edu.duration || edu.date_range || ''
+    })) : [],
+    skills: extractSkills(data)
+  };
 }
 
 // Extract skills from various possible fields in the response
