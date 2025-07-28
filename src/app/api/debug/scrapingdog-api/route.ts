@@ -1,5 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkScrapingDogApiStatus } from '@/lib/scraper/scrapingdog-linkedin-scraper';
+import axios from 'axios';
+
+// ScrapingDog API configuration (matching your instructions)
+const SCRAPINGDOG_CONFIG = {
+  api_key: '6882894b855f5678d36484c8',
+  url: 'https://api.scrapingdog.com/linkedin',
+  premium: 'false'
+};
+
+async function checkScrapingDogApiStatus() {
+  try {
+    const params = {
+      api_key: SCRAPINGDOG_CONFIG.api_key,
+      type: 'profile',
+      linkId: 'musayevcreate', // Test profile as per your instructions
+      premium: SCRAPINGDOG_CONFIG.premium,
+    };
+
+    const response = await axios.get(SCRAPINGDOG_CONFIG.url, {
+      params: params,
+      timeout: 10000
+    });
+
+    if (response.status === 200) {
+      return {
+        status: 'active',
+        remaining_requests: 'available',
+        message: 'ScrapingDog API is working correctly'
+      };
+    } else {
+      return {
+        status: 'error',
+        remaining_requests: 'unknown',
+        message: `Request failed with status code: ${response.status}`
+      };
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      remaining_requests: 'unknown',
+      message: `Error making the request: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
+  }
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -23,16 +66,13 @@ export async function GET(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ API status yoxlama xətası:', error);
+    console.error('❌ ScrapingDog API status yoxlama xətası:', error);
 
     return NextResponse.json({
       success: false,
-      error: `API status yoxlama uğursuz: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      data: {
-        status: 'error',
-        timestamp: new Date().toISOString(),
-        api_provider: 'ScrapingDog'
-      }
+      error: 'API status yoxlanarkən xəta baş verdi',
+      details: process.env.NODE_ENV === 'development' ?
+        (error instanceof Error ? error.message : 'Unknown error') : undefined
     }, { status: 500 });
   }
 }
@@ -57,8 +97,23 @@ export async function POST(req: NextRequest) {
     }
 
     // Test profili scrape et
-    const { scrapeOwnLinkedInProfile } = await import('@/lib/scraper/scrapingdog-linkedin-scraper');
-    const profileData = await scrapeOwnLinkedInProfile(testProfile);
+    const params = {
+      api_key: SCRAPINGDOG_CONFIG.api_key,
+      type: 'profile',
+      linkId: testProfile,
+      premium: SCRAPINGDOG_CONFIG.premium,
+    };
+
+    const response = await axios.get(SCRAPINGDOG_CONFIG.url, {
+      params: params,
+      timeout: 10000
+    });
+
+    if (response.status !== 200) {
+      throw new Error(`Request failed with status code: ${response.status}`);
+    }
+
+    const profileData = response.data;
 
     return NextResponse.json({
       success: true,
