@@ -143,6 +143,7 @@ export async function GET(request: NextRequest) {
           email,
           name: `${firstName} ${lastName}`.trim() || email.split('@')[0],
           linkedinId: linkedinId,
+          linkedinUsername: linkedinUsername, // LinkedIn username-ini saxlayırıq
           tier: 'Free', // Matches database schema default
           status: 'active',
           loginMethod: 'linkedin', // LinkedIn login method
@@ -155,6 +156,7 @@ export async function GET(request: NextRequest) {
         where: { id: user.id },
         data: {
           linkedinId: linkedinId || user.linkedinId,
+          linkedinUsername: linkedinUsername || user.linkedinUsername, // Username-i yeniləyirik
           loginMethod: 'linkedin', // Update login method
           lastLogin: new Date(),
         },

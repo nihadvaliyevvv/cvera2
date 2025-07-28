@@ -34,6 +34,9 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   fetchCurrentUser: () => Promise<void>;
+  // LinkedIn auto-import functionality
+  canAutoImportLinkedIn: () => boolean;
+  importLinkedInProfile: () => Promise<any>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -261,6 +264,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const canAutoImportLinkedIn = useCallback((): boolean => {
+    return user?.loginMethod === 'linkedin' && !!(user?.linkedinUsername || user?.linkedinId);
+  }, [user]);
+
+  const importLinkedInProfile = useCallback(async () => {
+    if (!canAutoImportLinkedIn()) {
+      throw new Error('LinkedIn auto-import yalnız LinkedIn ilə giriş edən istifadəçilər üçündür');
+    }
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      throw new Error('Giriş tələb olunur');
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/import/linkedin-auto', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'LinkedIn profil import xətası');
+      }
+
+      const result = await response.json();
+      console.log('✅ LinkedIn profil uğurla import edildi:', result.profile?.name);
+
+      return result;
+    } catch (error) {
+      console.error('❌ LinkedIn import xətası:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [canAutoImportLinkedIn]);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       fetchCurrentUser();
@@ -275,6 +319,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     register,
     logout,
     fetchCurrentUser,
+    canAutoImportLinkedIn,
+    importLinkedInProfile,
   };
 
   return (

@@ -21,6 +21,7 @@ model User {
   role             String          @default("USER")
   linkedinId       String?         @unique
   loginMethod      String? // Add login method (linkedin, email)
+  linkedinUsername String? // Add LinkedIn username field
   emailVerified    DateTime? // Add email verification field
   tier             String          @default("Free")
   cvs              CV[]            @relation("UserCVs")
