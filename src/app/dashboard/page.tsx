@@ -11,18 +11,13 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Simple auth check - only redirect if definitely not authenticated
+    // Sadə giriş yoxlaması - giriş yoxdursa login səhifəsinə yönləndir
     if (isInitialized && !loading && !user) {
-      // Clear any stale tokens
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-
-      // Use Next.js router for better navigation
-      router.replace('/');
+      router.replace('/auth/login');
     }
   }, [user, loading, isInitialized, router]);
 
-  // Show loading while initializing or if we're about to redirect
+  // Yükləmə zamanı göstərilən ekran
   if (!isInitialized || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
@@ -34,13 +29,13 @@ export default function DashboardPage() {
     );
   }
 
-  // If no user after initialization, show loading (will redirect)
+  // Giriş yoxdursa yönləndirmə zamanı göstərilən ekran
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
         <div className="bg-white rounded-3xl shadow-2xl p-8 backdrop-blur-sm border border-white/20">
           <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600 text-center">Giriş yoxlanılır...</p>
+          <p className="mt-4 text-gray-600 text-center">Giriş səhifəsinə yönləndirilib...</p>
         </div>
       </div>
     );
