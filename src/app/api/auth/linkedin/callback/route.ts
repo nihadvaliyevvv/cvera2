@@ -102,7 +102,8 @@ export async function GET(request: NextRequest) {
           name: `${firstName} ${lastName}`.trim(),
           linkedinId: profileData.id,
           tier: 'FREE',
-          isActive: true,
+          status: 'active',
+          loginMethod: 'linkedin',
         },
       });
     } else {
@@ -112,13 +113,23 @@ export async function GET(request: NextRequest) {
           where: { id: user.id },
           data: {
             linkedinId: profileData.id,
+            loginMethod: 'linkedin',
+            lastLogin: new Date(),
+          },
+        });
+      } else {
+        // Update last login for existing LinkedIn users
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            lastLogin: new Date(),
           },
         });
       }
     }
 
     // Generate JWT token
-    const token = generateJWT(user.id, user.email, user.tier as any);
+    const token = generateJWT({ userId: user.id, email: user.email });
 
     // Create response with redirect to dashboard
     const response = NextResponse.redirect(`${process.env.NEXTAUTH_URL || 'https://cvera.net'}/dashboard`);
