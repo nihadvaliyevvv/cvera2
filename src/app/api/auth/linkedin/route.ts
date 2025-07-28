@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 const LINKEDIN_CONFIG = {
   clientId: process.env.LINKEDIN_CLIENT_ID!,
   clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
-  redirectUri: process.env.LINKEDIN_REDIRECT_URI || `${process.env.NEXTAUTH_URL}/api/auth/linkedin/callback`,
+  redirectUri: process.env.LINKEDIN_REDIRECT_URI!, // Use the correct redirect URI from env
   scope: 'r_liteprofile r_emailaddress',
 };
 

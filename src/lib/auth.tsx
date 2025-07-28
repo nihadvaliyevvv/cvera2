@@ -9,6 +9,8 @@ export interface User {
   email: string;
   avatar?: string; // Add avatar property as optional
   createdAt?: string;
+  loginMethod?: string; // Add login method (linkedin, email)
+  linkedinUsername?: string; // Add LinkedIn username field
   subscriptions: Array<{
     id: string;
     tier: string;
