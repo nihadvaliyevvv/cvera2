@@ -195,63 +195,66 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
+      console.log('🚪 Logout prosesi başlayır...');
+
       // 1. Clear user state immediately to prevent UI issues
       setUser(null);
-      setLoading(true);
 
-      // 2. Clear all possible client-side storage
+      // 2. Clear all possible client-side storage immediately
       const clearClientStorage = () => {
-        localStorage.clear();
-        sessionStorage.clear();
+        if (typeof window !== 'undefined') {
+          localStorage.clear();
+          sessionStorage.clear();
 
-        // Clear specific tokens just in case
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('auth-token');
-        localStorage.removeItem('user');
+          // Clear specific tokens just in case
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('auth-token');
+          localStorage.removeItem('user');
 
-        sessionStorage.removeItem('accessToken');
-        sessionStorage.removeItem('refreshToken');
-        sessionStorage.removeItem('auth-token');
-        sessionStorage.removeItem('user');
+          sessionStorage.removeItem('accessToken');
+          sessionStorage.removeItem('refreshToken');
+          sessionStorage.removeItem('auth-token');
+          sessionStorage.removeItem('user');
+        }
       };
 
       clearClientStorage();
 
-      // 3. Call logout API to clear server-side session/cookies
-      try {
-        await Promise.allSettled([
-          fetch('/api/auth/logout', {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }),
-          fetch('/api/auth/revoke', {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          })
-        ]);
-      } catch (error) {
-        console.error('Server logout error:', error);
-      }
+      // 3. Call logout API to clear server-side session/cookies (but don't wait for it)
+      Promise.allSettled([
+        fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }).catch(() => {}), // Ignore errors
+        fetch('/api/auth/revoke', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }).catch(() => {}) // Ignore errors
+      ]).catch(() => {}); // Ignore all errors
 
       // 4. Clear storage again to be extra sure
       clearClientStorage();
 
-      // 5. Force page reload and redirect to home to completely reset state
+      console.log('✅ Logout tamamlandı, ana səhifəyə yönləndirilib');
+
+      // 5. Immediate redirect without waiting
       if (typeof window !== 'undefined') {
         // Use replace instead of href to prevent back button issues
         window.location.replace('/');
       }
     } catch (error) {
       console.error('Logout error:', error);
-    } finally {
-      setLoading(false);
+      // Even if there's an error, still redirect to home
+      if (typeof window !== 'undefined') {
+        window.location.replace('/');
+      }
     }
   }, []);
 
