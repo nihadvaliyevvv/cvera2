@@ -431,7 +431,6 @@ export async function POST(request: NextRequest) {
         name: true,
         email: true,
         loginMethod: true,
-        // linkedinUsername: true, // Temporarily commented out until database is updated
         linkedinId: true
       }
     });

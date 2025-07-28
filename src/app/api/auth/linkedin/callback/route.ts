@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
           linkedinId: linkedinId,
           tier: 'Free', // Matches database schema default
           status: 'active',
-          loginMethod: 'linkedin',
+          loginMethod: 'linkedin', // LinkedIn login method
         },
       });
       console.log('New user created:', user.id);
@@ -155,7 +155,7 @@ export async function GET(request: NextRequest) {
         where: { id: user.id },
         data: {
           linkedinId: linkedinId || user.linkedinId,
-          loginMethod: 'linkedin',
+          loginMethod: 'linkedin', // Update login method
           lastLogin: new Date(),
         },
       });
