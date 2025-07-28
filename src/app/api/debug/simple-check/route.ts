@@ -17,9 +17,12 @@ export async function GET() {
     });
 
   } catch (error) {
+    // Type-safe error handling
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
     return NextResponse.json({
       error: 'Config check failed',
-      message: error.message
+      message: errorMessage
     }, { status: 500 });
   }
 }

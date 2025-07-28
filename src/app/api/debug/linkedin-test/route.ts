@@ -62,9 +62,13 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Debug route error:', error);
+
+    // Type-safe error handling
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
     return NextResponse.json({
       error: 'Debug route failed',
-      message: error.message
+      message: errorMessage
     }, { status: 500 });
   }
 }

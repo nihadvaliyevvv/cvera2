@@ -24,12 +24,12 @@ export async function GET(request: NextRequest) {
     // Handle OAuth error
     if (error) {
       console.error('LinkedIn OAuth error:', error);
-      return NextResponse.redirect(`https://cvera.net/auth/login?error=linkedin_oauth_failed&details=${error}`);
+      return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=linkedin_oauth_failed&details=${error}`);
     }
 
     if (!code) {
       console.error('No authorization code received');
-      return NextResponse.redirect(`https://cvera.net/auth/login?error=no_code_received`);
+      return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=no_code_received`);
     }
 
     // Exchange code for access token
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
       console.error('LinkedIn token error:', errorText);
-      return NextResponse.redirect(`https://cvera.net/auth/login?error=token_exchange_failed`);
+      return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=token_exchange_failed`);
     }
 
     const tokenData = await tokenResponse.json();
@@ -109,14 +109,14 @@ export async function GET(request: NextRequest) {
       }
     } catch (apiError) {
       console.error('LinkedIn API error:', apiError);
-      return NextResponse.redirect(`https://cvera.net/auth/login?error=profile_fetch_failed`);
+      return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=profile_fetch_failed`);
     }
 
     console.log('Final extracted data:', { email, firstName, lastName, linkedinId });
 
     if (!email) {
       console.error('No email found in LinkedIn response');
-      return NextResponse.redirect(`https://cvera.net/auth/login?error=no_email_provided`);
+      return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=no_email_provided`);
     }
 
     // Database operations
@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
           email,
           name: `${firstName} ${lastName}`.trim() || email.split('@')[0],
           linkedinId: linkedinId,
-          tier: 'Free', // Using 'Free' instead of 'FREE' to match your schema default
+          tier: 'Free', // Matches database schema default
           status: 'active',
           loginMethod: 'linkedin',
         },
@@ -158,13 +158,14 @@ export async function GET(request: NextRequest) {
     // Create response with redirect to dashboard
     const response = NextResponse.redirect(`https://cvera.net/dashboard`);
 
-    // Set HTTP-only cookie
+    // Set HTTP-only cookie with improved security settings
     response.cookies.set('token', token, {
       httpOnly: true,
-      secure: true, // Always secure in production
+      secure: process.env.NODE_ENV === 'production', // Only secure in production
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: 24 * 60 * 60, // 24 hours to match JWT expiration
       path: '/',
+      domain: process.env.NODE_ENV === 'production' ? '.cvera.net' : undefined, // Allow subdomain access in production
     });
 
     console.log('LinkedIn authentication successful, redirecting to dashboard');
@@ -172,7 +173,15 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('LinkedIn OAuth callback error:', error);
-    console.error('Error stack:', error.stack);
-    return NextResponse.redirect(`https://cvera.net/auth/login?error=authentication_failed&debug=${encodeURIComponent(error.message)}`);
+
+    // Type-safe error handling
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
+    if (errorStack) {
+      console.error('Error stack:', errorStack);
+    }
+
+    return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=authentication_failed&debug=${encodeURIComponent(errorMessage)}`);
   }
 }

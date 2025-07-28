@@ -12,7 +12,7 @@ export function verifyJWT(token: string): { userId: string; email: string } | nu
 
 export function generateJWT(payload: { userId: string; email: string }): string {
   return jwt.sign(payload, process.env.JWT_SECRET!, {
-    expiresIn: '1h',
+    expiresIn: '24h', // Extended from 1h to 24h
   });
 }
 
