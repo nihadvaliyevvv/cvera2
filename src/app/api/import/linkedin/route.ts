@@ -60,17 +60,21 @@ function extractLinkedInId(input: string): string | null {
     return cleanInput;
   }
 
-  // Handle various LinkedIn URL formats
+  // Handle various LinkedIn URL formats - improved regex to handle hyphens and special characters
   const patterns = [
-    /linkedin\.com\/in\/([^\/\?&#]+)/i,
-    /linkedin\.com\/pub\/([^\/\?&#]+)/i,
+    /linkedin\.com\/in\/([a-zA-Z0-9\-_.]+)/i,
+    /linkedin\.com\/pub\/([a-zA-Z0-9\-_.]+)/i,
     /linkedin\.com\/profile\/view\?id=([^&]+)/i,
   ];
 
   for (const pattern of patterns) {
     const match = cleanInput.match(pattern);
     if (match && match[1]) {
-      return match[1];
+      // Remove trailing slash and clean the ID
+      let extractedId = match[1].replace(/\/$/, '');
+      // Remove any query parameters or fragments
+      extractedId = extractedId.split('?')[0].split('#')[0];
+      return extractedId;
     }
   }
 

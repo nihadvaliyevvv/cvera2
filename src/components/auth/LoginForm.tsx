@@ -4,12 +4,11 @@ import { useState } from 'react';
 import { useAuth } from '@/lib/auth';
 
 interface LoginFormProps {
-  onSuccess?: () => void;
   onSwitchToRegister: () => void;
   onSwitchToForgot?: () => void;
 }
 
-const LoginForm = ({ onSuccess, onSwitchToRegister, onSwitchToForgot }: LoginFormProps) => {
+const LoginForm = ({ onSwitchToRegister, onSwitchToForgot }: LoginFormProps) => {
   const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
@@ -25,7 +24,8 @@ const LoginForm = ({ onSuccess, onSwitchToRegister, onSwitchToForgot }: LoginFor
 
     try {
       await login(formData.email, formData.password);
-      onSuccess?.();
+      // Don't call onSuccess() - let the auth system handle the redirect automatically
+      // The login function already redirects to dashboard, calling onSuccess might interfere
     } catch (error) {
       console.error('Login failed:', error);
       setError('Giriş uğursuz oldu. E-poçt və ya şifrə yanlışdır.');
