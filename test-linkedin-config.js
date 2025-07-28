@@ -7,8 +7,7 @@ const LINKEDIN_CONFIG = {
 console.log('LinkedIn OAuth Configuration:');
 console.log('Client ID:', LINKEDIN_CONFIG.clientId);
 console.log('Redirect URI:', LINKEDIN_CONFIG.redirectUri);
-console.log('Expected production URI: https://cvera.net/api/auth/callback/linkedin');
-console.log('Expected development URI: http://localhost:3000/api/auth/callback/linkedin');
+console.log('Expected production URI: https://cvera.net/api/auth/linkedin/callback');
 
 // Create the authorization URL to see what's being sent
 const authUrl = new URL('https://www.linkedin.com/oauth/v2/authorization');

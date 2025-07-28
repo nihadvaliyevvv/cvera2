@@ -7,7 +7,6 @@ export async function GET(request: NextRequest) {
   
   // Generate possible redirect URIs
   const possibleRedirectUris = [
-    'http://localhost:3000/api/auth/linkedin/callback',
     'https://cvera.net/api/auth/linkedin/callback',
     `${protocol}://${host}/api/auth/linkedin/callback`,
     process.env.LINKEDIN_REDIRECT_URI
@@ -25,7 +24,6 @@ export async function GET(request: NextRequest) {
     },
     possibleRedirectUris: possibleRedirectUris,
     recommendations: {
-      development: 'http://localhost:3000/api/auth/linkedin/callback',
       production: 'https://cvera.net/api/auth/linkedin/callback',
       vercel: `${protocol}://${host}/api/auth/linkedin/callback`
     },
@@ -33,8 +31,7 @@ export async function GET(request: NextRequest) {
       '1. Go to https://www.linkedin.com/developers/apps',
       '2. Select your app',
       '3. Go to Auth tab',
-      '4. Add these redirect URIs:',
-      '   - http://localhost:3000/api/auth/linkedin/callback (for development)',
+      '4. Add this redirect URI:',
       '   - https://cvera.net/api/auth/linkedin/callback (for production)',
       `   - ${protocol}://${host}/api/auth/linkedin/callback (for current domain)`
     ]
