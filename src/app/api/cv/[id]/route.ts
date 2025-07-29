@@ -5,13 +5,12 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 // GET /api/cv/[id] - Spesifik CV-ni əldə et
-// @ts-ignore - Temporary workaround for Next.js 15 type issue
 export async function GET(
   request: NextRequest,
-  context: any
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
 
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -56,13 +55,12 @@ export async function GET(
 }
 
 // PUT /api/cv/[id] - CV-ni yenilə
-// @ts-ignore - Temporary workaround for Next.js 15 type issue
 export async function PUT(
   request: NextRequest,
-  context: any
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
 
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -124,13 +122,12 @@ export async function PUT(
 }
 
 // DELETE /api/cv/[id] - CV-ni sil
-// @ts-ignore - Temporary workaround for Next.js 15 type issue
 export async function DELETE(
   request: NextRequest,
-  context: any
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
 
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

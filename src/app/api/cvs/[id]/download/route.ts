@@ -9,13 +9,12 @@ import { canExportFormat, incrementDailyUsage } from "@/lib/subscription-limits"
 const prisma = new PrismaClient();
 
 // POST /api/cvs/[id]/download - Initiates the file generation job
-// @ts-ignore - Temporary workaround for Next.js 15 type issue
 export async function POST(
   req: NextRequest,
-  context: any
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -112,7 +111,7 @@ export async function POST(
       );
     }
   } catch (error) {
-    console.error('Download CV error:', error);
+    console.error("Download CV error:", error);
     return NextResponse.json(
       { message: 'Daxili server xətası' },
       { status: 500 }
@@ -123,13 +122,12 @@ export async function POST(
 }
 
 // GET /api/cvs/[id]/download - For future use, currently behaves like POST
-// @ts-ignore - Temporary workaround for Next.js 15 type issue
 export async function GET(
   request: NextRequest,
-  context: any
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
 
     // Future implementation for GET if needed
 

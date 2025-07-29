@@ -24,16 +24,16 @@ async function verifyAdmin(request: NextRequest) {
   return user;
 }
 
-// @ts-ignore - Temporary workaround for Next.js 15 type issue
 export async function PUT(
   request: NextRequest,
-  context: any
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await verifyAdmin(request);
+    const { id } = await context.params;
 
     const { tier } = await request.json();
-    const userId = context.params.id;
+    const userId = id;
 
     // Validate tier
     if (!['Free', 'Medium', 'Premium'].includes(tier)) {
@@ -110,7 +110,7 @@ export async function PUT(
     });
 
   } catch (error) {
-    console.error('Update user tier error:', error);
+    console.error('Update tier error:', error);
     return NextResponse.json({
       success: false,
       message: error instanceof Error ? error.message : 'Server xətası'

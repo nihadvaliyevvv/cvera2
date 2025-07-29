@@ -18,13 +18,12 @@ function getUserIdFromRequest(req: NextRequest): string | null {
 }
 
 // GET /api/jobs/[jobId]/status - Poll for file generation status
-// @ts-ignore - Temporary workaround for Next.js 15 type issue
 export async function GET(
   request: NextRequest,
-  context: any
+  context: { params: Promise<{ jobId: string }> }
 ) {
   try {
-    const { jobId } = context.params;
+    const { jobId } = await context.params;
     const userId = getUserIdFromRequest(request);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -52,6 +51,7 @@ export async function GET(
       updatedAt: job.updatedAt,
     });
   } catch (error) {
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("Error getting job status:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

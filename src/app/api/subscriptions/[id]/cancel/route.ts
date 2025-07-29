@@ -4,13 +4,12 @@ import { verifyJWT } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
-// @ts-ignore - Temporary workaround for Next.js 15 type issue
 export async function POST(
   request: NextRequest,
-  context: any
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -71,9 +70,9 @@ export async function POST(
       message: 'Abunəlik ləğv edildi',
     });
   } catch (error) {
-    console.error('Subscription cancellation error:', error);
+    console.error('Cancel subscription error:', error);
     return NextResponse.json(
-      { message: 'Abunəlik ləğv edilərkən xəta' },
+      { message: 'Daxili server xətası' },
       { status: 500 }
     );
   } finally {

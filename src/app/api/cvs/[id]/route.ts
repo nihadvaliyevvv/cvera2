@@ -52,12 +52,11 @@ async function validateTemplateAccess(userId: string, templateId: string): Promi
 }
 
 // GET /api/cvs/[id] - Get a single CV's data
-// @ts-ignore - Temporary workaround for Next.js 15 type issue
 export async function GET(
   req: NextRequest,
-  context: any
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = context.params;
+  const { id } = await context.params;
   const userId = getUserIdFromRequest(req);
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -102,12 +101,11 @@ export async function GET(
 }
 
 // PUT /api/cvs/[id] - Update CV data
-// @ts-ignore - Temporary workaround for Next.js 15 type issue
 export async function PUT(
   req: NextRequest,
-  context: any
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = context.params;
+  const { id } = await context.params;
   const userId = getUserIdFromRequest(req);
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -174,12 +172,11 @@ export async function PUT(
 }
 
 // DELETE /api/cvs/[id] - Delete a CV
-// @ts-ignore - Temporary workaround for Next.js 15 type issue
 export async function DELETE(
   req: NextRequest,
-  context: any
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = context.params;
+  const { id } = await context.params;
 
   try {
     const userId = getUserIdFromRequest(req);

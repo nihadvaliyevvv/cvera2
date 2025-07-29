@@ -24,14 +24,13 @@ async function verifyAdmin(request: NextRequest) {
   return user;
 }
 
-// @ts-ignore - Temporary workaround for Next.js 15 type issue
 export async function PUT(
   request: NextRequest,
-  context: any
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await verifyAdmin(request);
-    const { id } = context.params;
+    const { id } = await context.params;
     const { isActive } = await request.json();
 
     // Update user status
@@ -51,19 +50,7 @@ export async function PUT(
           status: 'active'
         },
         data: {
-          status: 'suspended',
-          updatedAt: new Date()
-        }
-      });
-    } else {
-      // If reactivating user, reactivate their subscriptions
-      await prisma.subscription.updateMany({
-        where: { 
-          userId: id,
-          status: 'suspended'
-        },
-        data: {
-          status: 'active',
+          status: 'cancelled',
           updatedAt: new Date()
         }
       });
@@ -71,7 +58,7 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      message: `İstifadəçi ${isActive ? 'aktivləşdirildi' : 'deaktivləşdirildi'}`,
+      message: isActive ? 'İstifadəçi aktivləşdirildi' : 'İstifadəçi deaktivləşdirildi',
       user: {
         id: updatedUser.id,
         name: updatedUser.name,

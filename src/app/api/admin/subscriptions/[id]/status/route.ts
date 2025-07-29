@@ -30,14 +30,13 @@ async function verifyAdmin(request: NextRequest) {
   return user;
 }
 
-// @ts-ignore - Temporary workaround for Next.js 15 type issue
 export async function PUT(
   request: NextRequest,
-  context: any
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await verifyAdmin(request);
-    const { id } = context.params;
+    const { id } = await context.params;
 
     const { status } = await request.json();
     const subscriptionId = id;
