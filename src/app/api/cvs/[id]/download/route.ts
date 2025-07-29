@@ -11,10 +11,10 @@ const prisma = new PrismaClient();
 // POST /api/cvs/[id]/download - Initiates the file generation job
 export async function POST(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await context.params;
+    const { id } = await params;
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -124,10 +124,10 @@ export async function POST(
 // GET /api/cvs/[id]/download - For future use, currently behaves like POST
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await context.params;
+    const { id } = await params;
 
     // Future implementation for GET if needed
 

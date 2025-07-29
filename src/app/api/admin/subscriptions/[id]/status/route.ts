@@ -32,11 +32,11 @@ async function verifyAdmin(request: NextRequest) {
 
 export async function PUT(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await verifyAdmin(request);
-    const { id } = await context.params;
+    const { id } = await params;
 
     const { status } = await request.json();
     const subscriptionId = id;

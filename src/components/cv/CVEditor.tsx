@@ -280,52 +280,63 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
     setError('');
     
     try {
-      const result = await apiClient.get(`/api/cv/${cvId}`);
+      console.log('🔄 CVEditor: Loading CV with ID:', cvId);
+      const result = await apiClient.get(`/api/cvs/${cvId}`);
+      console.log('📥 CVEditor: API response:', result);
 
-      if (!result || typeof result !== 'object') {
-        throw new Error('Invalid CV data structure');
+      if (!result) {
+        throw new Error('No response from server');
       }
       
-      if (!result.data || typeof result.data !== 'object') {
+      // Extract the actual CV data from the API client response
+      const cvData = result.data || result;
+      console.log('📋 CVEditor: Processing CV data:', cvData);
+
+      if (!cvData.cv_data || typeof cvData.cv_data !== 'object') {
+        console.error('❌ CVEditor: Invalid cv_data structure:', typeof cvData.cv_data);
         throw new Error('CV data is missing or corrupted');
       }
 
-      // Use result.data since our API client wraps responses in { data, status }
-      const cvData = result.data;
+      const templateId = cvData.templateId || 'professional';
 
-      const templateId = cvData.templateId || '';
+      // Extract the actual CV data from the cv_data field
+      const actualCVData = cvData.cv_data;
+      console.log('🎯 CVEditor: Extracted CV data:', actualCVData);
 
       const transformedCV = {
         id: cvData.id,
-        title: cvData.title || '',
+        title: cvData.title || 'Untitled CV',
         templateId: templateId,
         data: {
-          personalInfo: cvData.personalInfo || cvData.cv_data?.personalInfo || {
+          personalInfo: actualCVData.personalInfo || {
             fullName: '',
             email: '',
             phone: '',
+            address: '',
             website: '',
             linkedin: '',
             summary: ''
           },
-          experience: Array.isArray(cvData.experience) ? cvData.experience : Array.isArray(cvData.cv_data?.experience) ? cvData.cv_data.experience : [],
-          education: Array.isArray(cvData.education) ? cvData.education : Array.isArray(cvData.cv_data?.education) ? cvData.cv_data.education : [],
-          skills: Array.isArray(cvData.skills) ? cvData.skills : Array.isArray(cvData.cv_data?.skills) ? cvData.cv_data.skills : [],
-          languages: Array.isArray(cvData.languages) ? cvData.languages : Array.isArray(cvData.cv_data?.languages) ? cvData.cv_data.languages : [],
-          projects: Array.isArray(cvData.projects) ? cvData.projects : Array.isArray(cvData.cv_data?.projects) ? cvData.cv_data.projects : [],
-          certifications: Array.isArray(cvData.certifications) ? cvData.certifications : Array.isArray(cvData.cv_data?.certifications) ? cvData.cv_data.certifications : [],
-          volunteerExperience: Array.isArray(cvData.volunteerExperience) ? cvData.volunteerExperience : Array.isArray(cvData.cv_data?.volunteerExperience) ? cvData.cv_data.volunteerExperience : [],
-          publications: Array.isArray(cvData.publications) ? cvData.publications : Array.isArray(cvData.cv_data?.publications) ? cvData.cv_data.publications : [],
-          honorsAwards: Array.isArray(cvData.honorsAwards) ? cvData.honorsAwards : Array.isArray(cvData.cv_data?.honorsAwards) ? cvData.cv_data.honorsAwards : [],
-          testScores: Array.isArray(cvData.testScores) ? cvData.testScores : Array.isArray(cvData.cv_data?.testScores) ? cvData.cv_data.testScores : [],
-          recommendations: Array.isArray(cvData.recommendations) ? cvData.recommendations : Array.isArray(cvData.cv_data?.recommendations) ? cvData.cv_data.recommendations : [],
-          courses: Array.isArray(cvData.courses) ? cvData.courses : Array.isArray(cvData.cv_data?.courses) ? cvData.cv_data.courses : []
+          experience: Array.isArray(actualCVData.experience) ? actualCVData.experience : [],
+          education: Array.isArray(actualCVData.education) ? actualCVData.education : [],
+          skills: Array.isArray(actualCVData.skills) ? actualCVData.skills : [],
+          languages: Array.isArray(actualCVData.languages) ? actualCVData.languages : [],
+          projects: Array.isArray(actualCVData.projects) ? actualCVData.projects : [],
+          certifications: Array.isArray(actualCVData.certifications) ? actualCVData.certifications : [],
+          volunteerExperience: Array.isArray(actualCVData.volunteerExperience) ? actualCVData.volunteerExperience : [],
+          publications: Array.isArray(actualCVData.publications) ? actualCVData.publications : [],
+          honorsAwards: Array.isArray(actualCVData.honorsAwards) ? actualCVData.honorsAwards : [],
+          testScores: Array.isArray(actualCVData.testScores) ? actualCVData.testScores : [],
+          recommendations: Array.isArray(actualCVData.recommendations) ? actualCVData.recommendations : [],
+          courses: Array.isArray(actualCVData.courses) ? actualCVData.courses : [],
+          cvLanguage: actualCVData.cvLanguage || getDefaultCVLanguage()
         }
       };
       
+      console.log('✅ CVEditor: Transformed CV for state:', transformedCV);
       setCv(transformedCV);
     } catch (err) {
-      console.error('CV loading error:', err);
+      console.error('❌ CVEditor: CV loading error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(`CV yüklənərkən xəta baş verdi: ${errorMessage}`);
     } finally {

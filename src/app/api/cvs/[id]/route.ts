@@ -54,9 +54,9 @@ async function validateTemplateAccess(userId: string, templateId: string): Promi
 // GET /api/cvs/[id] - Get a single CV's data
 export async function GET(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params;
+  const { id } = await params;
   const userId = getUserIdFromRequest(req);
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -103,9 +103,9 @@ export async function GET(
 // PUT /api/cvs/[id] - Update CV data
 export async function PUT(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params;
+  const { id } = await params;
   const userId = getUserIdFromRequest(req);
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -174,9 +174,9 @@ export async function PUT(
 // DELETE /api/cvs/[id] - Delete a CV
 export async function DELETE(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params;
+  const { id } = await params;
 
   try {
     const userId = getUserIdFromRequest(req);

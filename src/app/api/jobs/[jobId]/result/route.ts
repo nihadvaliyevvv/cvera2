@@ -20,9 +20,9 @@ function getUserIdFromRequest(req: NextRequest): string | null {
 }
 
 // GET /api/jobs/[jobId]/result - Download the generated file
-export async function GET(req: NextRequest, context: { params: Promise<{ jobId: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ jobId: string }> }) {
   try {
-    const { jobId } = await context.params;
+    const { jobId } = await params;
     const userId = getUserIdFromRequest(req);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
