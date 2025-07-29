@@ -253,14 +253,16 @@ export default function DashboardV2({ user, onCreateCV, onEditCV }: DashboardV2P
                     throw new Error(result.error || 'LinkedIn import xətası');
                   }
 
-                  if (result.success && result.data) {
-                    console.log('✅ LinkedIn data uğurla import edildi:', result.data);
-
-                    // Navigate to CV editor with imported data (same as CV create page)
-                    const dataString = encodeURIComponent(JSON.stringify(result.data));
-                    router.push(`/cv/edit/new?import=linkedin&data=${dataString}`);
+                  if (result.success && result.cvId) {
+                    console.log('✅ LinkedIn CV uğurla yaradıldı:', result.cvId);
+                    
+                    // CV-ni dashboarda göstərmək üçün CV siyahısını yenilə
+                    await fetchDashboardData();
+                    
+                    // Yaradılan CV-ni redaktə etmək üçün yönləndir
+                    router.push(`/cv/edit/${result.cvId}`);
                   } else {
-                    throw new Error(result.error || 'LinkedIn məlumatları alınmadı');
+                    throw new Error(result.error || 'CV yaradılmadı');
                   }
 
                 } catch (error) {

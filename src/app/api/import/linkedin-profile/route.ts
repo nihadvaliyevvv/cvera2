@@ -211,9 +211,37 @@ export async function POST(request: NextRequest) {
       console.log(`💾 LinkedIn username saxlanıldı: ${linkedinUsername}`);
     }
 
+    // CV-ni bazada yarat və saxla
+    const newCV = await prisma.cV.create({
+      data: {
+        userId: user.id,
+        title: `${transformedData.personalInfo.fullName} - LinkedIn Import`,
+        templateId: 'professional',
+        cv_data: {
+          personalInfo: transformedData.personalInfo,
+          experience: transformedData.experience,
+          education: transformedData.education,
+          skills: transformedData.skills,
+          languages: transformedData.languages,
+          projects: transformedData.projects,
+          certifications: transformedData.certifications,
+          volunteerExperience: [],
+          publications: [],
+          honorsAwards: [],
+          testScores: [],
+          recommendations: [],
+          courses: [],
+          cvLanguage: 'azerbaijani'
+        }
+      }
+    });
+
+    console.log(`✅ CV uğurla yaradıldı və saxlanıldı: ${newCV.id}`);
+
     return NextResponse.json({
       success: true,
-      message: 'LinkedIn profili uğurla import edildi',
+      message: 'LinkedIn profili uğurla import edildi və CV yaradıldı',
+      cvId: newCV.id,
       data: transformedData,
       rawData: profileData // Debug üçün
     });

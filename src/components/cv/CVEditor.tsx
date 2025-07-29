@@ -417,10 +417,10 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
       
       setTimeout(() => {
         const cvForSave = {
-          id: result.data.id,
-          title: result.data.title,
-          templateId: result.data.templateId,
-          data: result.data.cv_data
+          id: result.data.cv.id,
+          title: result.data.cv.title,
+          templateId: result.data.cv.templateId,
+          data: result.data.cv.cv_data
         };
         onSave(cvForSave);
       }, 1500);
