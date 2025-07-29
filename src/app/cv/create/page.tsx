@@ -51,43 +51,47 @@ function CreateCVContent() {
     return null;
   }
 
-  const handleLinkedInImport = async (profileData: any) => {
-    console.log('LinkedIn profil import edildi:', profileData);
-    setImportedData(profileData);
+  const handleLinkedInImport = async () => {
+    setSelectedMethod('linkedin');
 
     try {
-      // Get authentication token
       const token = localStorage.getItem('accessToken');
       if (!token) {
-        alert('Giriş tələb olunur');
-        router.push('/auth/login');
-        return;
+        throw new Error('Giriş tələb olunur');
       }
 
-      // Create CV from LinkedIn data
-      const createResponse = await fetch('/api/cv/create-from-linkedin', {
+      // Yeni LinkedIn profil import API-ni çağır
+      const response = await fetch('/api/import/linkedin-profile', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ profileData })
+        body: JSON.stringify({
+          linkedinUsername: 'musayevcreate' // Sizin LinkedIn hesabınız
+        })
       });
 
-      if (!createResponse.ok) {
-        const error = await createResponse.json();
-        throw new Error(error.error || 'CV yaradılarkən xəta baş verdi');
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'LinkedIn import xətası');
       }
 
-      const result = await createResponse.json();
-      console.log('✅ CV yaradıldı:', result.cvId);
+      if (result.success && result.data) {
+        console.log('✅ LinkedIn data uğurla import edildi:', result.data);
 
-      // Redirect to CV editor with created CV ID
-      router.push(`/cv/edit/${result.cvId}`);
+        // CV editora göndər
+        const dataString = encodeURIComponent(JSON.stringify(result.data));
+        router.push(`/cv/edit/new?import=linkedin&data=${dataString}`);
+      } else {
+        throw new Error(result.error || 'LinkedIn məlumatları alınmadı');
+      }
 
     } catch (error) {
-      console.error('❌ CV yaratma xətası:', error);
-      alert(`CV yaratma xətası: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('LinkedIn import xətası:', error);
+      alert(`LinkedIn import xətası: ${error instanceof Error ? error.message : 'Naməlum xəta'}`);
+      setSelectedMethod(null);
     }
   };
 

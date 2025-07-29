@@ -22,51 +22,62 @@ export default function LinkedInAutoImport({
   const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
   const handleImport = async () => {
-    if (!canAutoImportLinkedIn()) {
-      const errorMessage = 'LinkedIn auto-import yalnız LinkedIn ilə giriş edən istifadəçilər üçündür';
-      setImportStatus('error');
-      onImportError?.(errorMessage);
-
-      // Track failed import attempt
-      trackLinkedInImport(false);
-      return;
-    }
-
     setImporting(true);
     setImportStatus('idle');
 
     try {
       console.log('🔄 LinkedIn profil import başlayır...');
-      const result = await importLinkedInProfile();
 
-      console.log('✅ LinkedIn profil uğurla import edildi:', result);
-      setImportStatus('success');
-      onImportSuccess?.(result);
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('Giriş tələb olunur');
+      }
 
-      // Track successful LinkedIn import
-      trackLinkedInImport(true);
-      trackCVCreation('linkedin');
+      // Yeni LinkedIn profil import API-ni çağır
+      const response = await fetch('/api/import/linkedin-profile', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          linkedinUsername: 'musayevcreate' // Sizin LinkedIn hesabınız
+        })
+      });
 
-      // Show success message for 3 seconds
-      setTimeout(() => {
-        setImportStatus('idle');
-      }, 3000);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'LinkedIn import xətası');
+      }
+
+      if (result.success && result.data) {
+        console.log('✅ LinkedIn data uğurla import edildi:', result.data);
+        setImportStatus('success');
+        onImportSuccess?.(result.data);
+
+        // Track successful LinkedIn import
+        trackLinkedInImport(true);
+        trackCVCreation('linkedin');
+      } else {
+        throw new Error(result.error || 'LinkedIn məlumatları alınmadı');
+      }
 
     } catch (error) {
       console.error('❌ LinkedIn import xətası:', error);
-      const errorMessage = error instanceof Error ? error.message : 'LinkedIn import zamanı xəta baş verdi';
+      const errorMessage = error instanceof Error ? error.message : 'Naməlum xəta';
       setImportStatus('error');
       onImportError?.(errorMessage);
 
       // Track failed import
       trackLinkedInImport(false);
-
-      // Show error message for 5 seconds
-      setTimeout(() => {
-        setImportStatus('idle');
-      }, 5000);
     } finally {
       setImporting(false);
+
+      // Reset status after 3 seconds
+      setTimeout(() => {
+        setImportStatus('idle');
+      }, 3000);
     }
   };
 
