@@ -7,6 +7,8 @@ const prisma = new PrismaClient();
 // GET /api/cv - Bütün CV-ləri əldə et
 export async function GET(request: NextRequest) {
   try {
+    console.log('🔍 Dashboard API: CV sorğusu başladı');
+
     const authHeader = request.headers.get('authorization');
     console.log('🔍 Dashboard API: Authorization header:', authHeader ? 'Mövcuddur' : 'Yoxdur');
 
@@ -32,6 +34,9 @@ export async function GET(request: NextRequest) {
 
     console.log(`🔍 Dashboard API: ${decoded.userId} user ID-si üçün CV-lər axtarılır...`);
 
+    // Force fresh database connection
+    await prisma.$connect();
+
     const cvs = await prisma.cV.findMany({
       where: { userId: decoded.userId },
       orderBy: { updatedAt: 'desc' },
@@ -45,16 +50,36 @@ export async function GET(request: NextRequest) {
     });
 
     console.log(`✅ Dashboard API: ${cvs.length} CV tapıldı`);
-    console.log('📋 CV-lər:', cvs.map(cv => ({ id: cv.id, title: cv.title })));
+    console.log('📋 CV-lər:', cvs.slice(0, 3).map(cv => ({ id: cv.id, title: cv.title })));
 
-    return NextResponse.json({ cvs });
+    // Ensure proper response format
+    const response = {
+      success: true,
+      cvs: cvs,
+      count: cvs.length
+    };
+
+    console.log('📤 Dashboard API: Response hazırlandı:', { count: response.count });
+
+    return NextResponse.json(response, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache'
+      }
+    });
 
   } catch (error) {
     console.error('❌ Dashboard API xətası:', error);
     return NextResponse.json(
-      { error: 'CV-lər yüklənərkən xəta baş verdi' },
+      {
+        error: 'CV-lər yüklənərkən xəta baş verdi',
+        details: error instanceof Error ? error.message : 'Naməlum xəta'
+      },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 

@@ -55,29 +55,78 @@ export default function DashboardV2({ user, onCreateCV, onEditCV }: DashboardV2P
       setLoading(true);
       console.log('🔍 Dashboard: CV-ləri yükləyirəm...');
 
+      // Check if token exists
+      const token = localStorage.getItem('accessToken');
+      console.log('🔍 Dashboard: Token mövcudluğu:', token ? 'VAR' : 'YOXDUR');
+
+      if (!token) {
+        console.log('❌ Dashboard: Token yoxdur, login səhifəsinə yönləndirəcəm');
+        router.push('/auth/login');
+        return;
+      }
+
+      console.log('📡 Dashboard: API sorğusu göndərilir...');
+
       const [cvsResponse, limitsResponse] = await Promise.all([
         apiClient.get('/api/cv'),
         apiClient.get('/api/user/limits')
       ]);
 
-      console.log('📥 Dashboard: CV API cavabı:', cvsResponse.data);
-      console.log('📥 Dashboard: CV sayı:', cvsResponse.data.cvs?.length || 0);
+      console.log('📥 Dashboard: CV API tam cavabı:', cvsResponse);
+      console.log('📥 Dashboard: CV data strukturu:', cvsResponse.data);
 
-      if (cvsResponse.data.cvs && cvsResponse.data.cvs.length > 0) {
-        console.log('📋 Dashboard: Tapılan CV-lər:', cvsResponse.data.cvs.map((cv: CV) => ({ id: cv.id, title: cv.title })));
+      // Handle different response formats
+      let cvsArray = [];
+      if (cvsResponse.data && cvsResponse.data.cvs) {
+        cvsArray = cvsResponse.data.cvs;
+      } else if (Array.isArray(cvsResponse.data)) {
+        cvsArray = cvsResponse.data;
+      } else {
+        console.log('⚠️ Dashboard: Gözlənilməz response formatı');
+        cvsArray = [];
+      }
+
+      console.log('📥 Dashboard: Çıxarılan CV sayı:', cvsArray.length);
+      console.log('📥 Dashboard: CV array:', cvsArray);
+
+      if (cvsArray.length > 0) {
+        console.log('📋 Dashboard: İlk 3 CV:', cvsArray.slice(0, 3).map((cv: CV) => ({ id: cv.id, title: cv.title })));
       } else {
         console.log('❌ Dashboard: CV tapılmadı və ya boş array');
       }
 
-      setCvs(cvsResponse.data.cvs || []);
+      // Force state update with explicit logging
+      console.log('🔄 Dashboard: setCvs çağırılır, CV sayı:', cvsArray.length);
+      setCvs(cvsArray);
+
+      console.log('🔄 Dashboard: setUserLimits çağırılır');
       setUserLimits(limitsResponse.data);
+
+      // Verify state was set
+      setTimeout(() => {
+        console.log('✅ Dashboard: State update yoxlanır - CV sayı component-də:', cvsArray.length);
+      }, 100);
+
     } catch (error) {
       console.error('❌ Dashboard data fetch error:', error);
 
       // Type-safe error handling
       if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { data?: any } };
+        const axiosError = error as {
+          response?: {
+            data?: any;
+            status?: number;
+            statusText?: string;
+          }
+        };
         console.error('❌ Dashboard error details:', axiosError.response?.data);
+
+        // Handle auth errors
+        if (axiosError.response?.status === 401) {
+          console.log('🔄 Dashboard: 401 xətası - login səhifəsinə yönləndirəcəm');
+          localStorage.removeItem('accessToken');
+          router.push('/auth/login');
+        }
       }
     } finally {
       setLoading(false);
@@ -252,7 +301,22 @@ export default function DashboardV2({ user, onCreateCV, onEditCV }: DashboardV2P
                     return;
                   }
 
-                  // Use the same working LinkedIn import API as CV create page
+                  // Get user's LinkedIn username from auth or user input
+                  let linkedinUsername = user.linkedinUsername;
+
+                  // If user doesn't have linkedinUsername, ask for it
+                  if (!linkedinUsername) {
+                    const userInput = prompt('LinkedIn profilinizin username-ini daxil edin (məsələn: ilgar-musayev):');
+                    linkedinUsername = userInput || undefined;
+                    if (!linkedinUsername) {
+                      alert('LinkedIn username tələb olunur');
+                      return;
+                    }
+                  }
+
+                  console.log('🔍 LinkedIn import: Username:', linkedinUsername);
+
+                  // Use the working LinkedIn import API
                   const response = await fetch('/api/import/linkedin-profile', {
                     method: 'POST',
                     headers: {
@@ -260,7 +324,7 @@ export default function DashboardV2({ user, onCreateCV, onEditCV }: DashboardV2P
                       'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                      linkedinUsername: 'musayevcreate' // Your LinkedIn username
+                      linkedinUsername: linkedinUsername
                     })
                   });
 

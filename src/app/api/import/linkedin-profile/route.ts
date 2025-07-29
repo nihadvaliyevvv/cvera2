@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // İstifadəçinin LinkedIn hesabını götür (sizin halınızda: musayevcreate)
+    // İstifadəçinin LinkedIn hesabını götür - dinamik şəkildə
     let linkedinUsername = user.linkedinUsername;
 
     // Əgər LinkedIn username yoxdursa, request body-dən götür
@@ -59,25 +59,29 @@ export async function POST(request: NextRequest) {
       linkedinUsername = body.linkedinUsername || body.username;
     }
 
-    // Son çarə olaraq, sizin hesabınızı hardcode edək
+    // LinkedIn username tələb olunur - hardcode etmə
     if (!linkedinUsername) {
-      linkedinUsername = 'musayevcreate';
+      return NextResponse.json(
+        { error: 'LinkedIn username tələb olunur. Zəhmət olmasa LinkedIn profilinizin username-ini göndərin.' },
+        { status: 400 }
+      );
     }
 
     console.log(`🔍 LinkedIn profilini import edirik: ${linkedinUsername}`);
 
-    // ScrapingDog API-dən data çək
+    // ScrapingDog API-dən data çək - sizin kodunuzdan
     const params = {
       api_key: SCRAPINGDOG_CONFIG.api_key,
       type: 'profile',
       linkId: linkedinUsername,
-      premium: SCRAPINGDOG_CONFIG.premium,
+      premium: 'false',
     };
 
     console.log('📡 ScrapingDog API-yə sorğu göndərilir:', params);
 
+    // Sizin kodunuzdan axios request
     const response = await axios.get(SCRAPINGDOG_CONFIG.url, {
-      params,
+      params: params,
       timeout: 30000,
       headers: {
         'User-Agent': 'CVERA-LinkedIn-Scraper/1.0'
@@ -88,11 +92,15 @@ export async function POST(request: NextRequest) {
       status: response.status,
       dataType: typeof response.data,
       isArray: Array.isArray(response.data),
-      keys: response.data ? Object.keys(response.data) : 'no keys'
+      dataKeys: response.data ? Object.keys(response.data) : 'no keys'
     });
 
-    if (response.status !== 200) {
-      console.error(`❌ ScrapingDog API xətası: Status ${response.status}`);
+    // Sizin kodunuzdakı kimi status yoxlaması
+    if (response.status === 200) {
+      const data = response.data;
+      console.log('✅ ScrapingDog API uğurla işlədi!');
+    } else {
+      console.log('❌ Request failed with status code: ' + response.status);
       return NextResponse.json(
         { error: `ScrapingDog API xətası: ${response.status}` },
         { status: 500 }

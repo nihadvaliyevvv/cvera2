@@ -58,8 +58,12 @@ export class ApiClient {
       // Handle non-JSON responses (like redirects)
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
+        console.log('Non-JSON response:', response.status, response.statusText);
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          // Try to get text response for better error info
+          const text = await response.text();
+          console.log('Error response text:', text);
+          throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
         }
         return { data: null, status: response.status };
       }
