@@ -430,7 +430,7 @@ export async function POST(request: NextRequest) {
         id: true,
         name: true,
         email: true,
-        loginMethod: true,
+                 loginMethod: true,
         linkedinId: true
       }
     });
