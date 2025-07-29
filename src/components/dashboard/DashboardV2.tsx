@@ -53,15 +53,27 @@ export default function DashboardV2({ user, onCreateCV, onEditCV }: DashboardV2P
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      console.log('🔍 Dashboard: CV-ləri yükləyirəm...');
+
       const [cvsResponse, limitsResponse] = await Promise.all([
         apiClient.get('/api/cv'),
         apiClient.get('/api/user/limits')
       ]);
 
+      console.log('📥 Dashboard: CV API cavabı:', cvsResponse.data);
+      console.log('📥 Dashboard: CV sayı:', cvsResponse.data.cvs?.length || 0);
+
+      if (cvsResponse.data.cvs && cvsResponse.data.cvs.length > 0) {
+        console.log('📋 Dashboard: Tapılan CV-lər:', cvsResponse.data.cvs.map(cv => ({ id: cv.id, title: cv.title })));
+      } else {
+        console.log('❌ Dashboard: CV tapılmadı və ya boş array');
+      }
+
       setCvs(cvsResponse.data.cvs || []);
       setUserLimits(limitsResponse.data);
     } catch (error) {
-      console.error('Dashboard data fetch error:', error);
+      console.error('❌ Dashboard data fetch error:', error);
+      console.error('❌ Dashboard error details:', error.response?.data);
     } finally {
       setLoading(false);
     }

@@ -8,7 +8,10 @@ const prisma = new PrismaClient();
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
+    console.log('🔍 Dashboard API: Authorization header:', authHeader ? 'Mövcuddur' : 'Yoxdur');
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('❌ Dashboard API: Authorization header yoxdur və ya səhvdir');
       return NextResponse.json(
         { error: 'Giriş tələb olunur' },
         { status: 401 }
@@ -17,12 +20,17 @@ export async function GET(request: NextRequest) {
 
     const token = authHeader.substring(7);
     const decoded = verifyJWT(token);
+    console.log('🔍 Dashboard API: JWT decode nəticəsi:', decoded ? `User ID: ${decoded.userId}` : 'Decode xətası');
+
     if (!decoded) {
+      console.log('❌ Dashboard API: JWT token etibarsız');
       return NextResponse.json(
         { error: 'Etibarsız token' },
         { status: 401 }
       );
     }
+
+    console.log(`🔍 Dashboard API: ${decoded.userId} user ID-si üçün CV-lər axtarılır...`);
 
     const cvs = await prisma.cV.findMany({
       where: { userId: decoded.userId },
@@ -36,10 +44,13 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    console.log(`✅ Dashboard API: ${cvs.length} CV tapıldı`);
+    console.log('📋 CV-lər:', cvs.map(cv => ({ id: cv.id, title: cv.title })));
+
     return NextResponse.json({ cvs });
 
   } catch (error) {
-    console.error('CVs fetch error:', error);
+    console.error('❌ Dashboard API xətası:', error);
     return NextResponse.json(
       { error: 'CV-lər yüklənərkən xəta baş verdi' },
       { status: 500 }
