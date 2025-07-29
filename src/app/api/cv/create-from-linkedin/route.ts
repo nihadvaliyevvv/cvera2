@@ -44,6 +44,20 @@ export async function POST(request: NextRequest) {
       profile = profileData.profile;
     }
 
+    console.log('🎯 Processing profile fields:');
+    console.log('- Full name:', profile.full_name);
+    console.log('- About:', profile.about ? 'Present' : 'Missing');
+    console.log('- Experience:', profile.experience ? profile.experience.length + ' items' : 'Missing');
+    console.log('- Education:', profile.education ? profile.education.length + ' items' : 'Missing');
+    console.log('- Awards:', profile.awards ? profile.awards.length + ' items' : 'Missing');
+    console.log('- Skills:', profile.skills ? profile.skills.length + ' items' : 'Missing');
+
+    // Ensure we have at least the full name
+    if (!profile.full_name && !profile.name) {
+      console.log('⚠️ Warning: No name field found in profile data');
+      console.log('Available fields:', Object.keys(profile));
+    }
+
     // Create new CV with properly transformed LinkedIn data
     const cv = await prisma.cV.create({
       data: {
