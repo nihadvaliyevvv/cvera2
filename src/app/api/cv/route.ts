@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
         userId: decoded.userId,
         title: title,
         cv_data: cv_data,
-        templateId: templateId || 'classic'
+        templateId: templateId || 'professional'
       }
     });
 

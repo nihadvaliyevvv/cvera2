@@ -6,7 +6,6 @@ import { apiClient } from '@/lib/api';
 import { User, useAuth } from '@/lib/auth';
 import Link from 'next/link';
 import Image from 'next/image';
-import LinkedInAutoImport from '@/components/LinkedInAutoImport';
 
 interface CV {
   id: string;
@@ -226,10 +225,9 @@ export default function DashboardV2({ user, onCreateCV, onEditCV }: DashboardV2P
               </div>
             </div>
 
-            <LinkedInAutoImport
-              onImportSuccess={async (profileData) => {
-                console.log('LinkedIn profil import edildi:', profileData);
-
+            {/* Replace the LinkedInAutoImport component with direct implementation */}
+            <button
+              onClick={async () => {
                 try {
                   const token = localStorage.getItem('accessToken');
                   if (!token) {
@@ -237,46 +235,48 @@ export default function DashboardV2({ user, onCreateCV, onEditCV }: DashboardV2P
                     return;
                   }
 
-                  const createResponse = await fetch('/api/cv/create-from-linkedin', {
+                  // Use the same working LinkedIn import API as CV create page
+                  const response = await fetch('/api/import/linkedin-profile', {
                     method: 'POST',
                     headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${token}`
+                      'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ profileData })
+                    body: JSON.stringify({
+                      linkedinUsername: 'musayevcreate' // Your LinkedIn username
+                    })
                   });
 
-                  if (!createResponse.ok) {
-                    const error = await createResponse.json();
-                    throw new Error(error.error || 'CV yaradılarkən xəta baş verdi');
+                  const result = await response.json();
+
+                  if (!response.ok) {
+                    throw new Error(result.error || 'LinkedIn import xətası');
                   }
 
-                  const result = await createResponse.json();
-                  console.log('✅ CV yaradıldı:', result.cvId);
+                  if (result.success && result.data) {
+                    console.log('✅ LinkedIn data uğurla import edildi:', result.data);
 
-                  fetchDashboardData();
-                  router.push(`/cv/edit/${result.cvId}`);
+                    // Navigate to CV editor with imported data (same as CV create page)
+                    const dataString = encodeURIComponent(JSON.stringify(result.data));
+                    router.push(`/cv/edit/new?import=linkedin&data=${dataString}`);
+                  } else {
+                    throw new Error(result.error || 'LinkedIn məlumatları alınmadı');
+                  }
 
                 } catch (error) {
-                  console.error('❌ CV yaratma xətası:', error);
-                  alert(`CV yaratma xətası: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                  console.error('❌ LinkedIn import xətası:', error);
+                  alert(`LinkedIn import xətası: ${error instanceof Error ? error.message : 'Naməlum xəta'}`);
                 }
               }}
-              onImportError={(error) => {
-                console.error('LinkedIn import xətası:', error);
-                alert(`LinkedIn import xətası: ${error}`);
-              }}
-              className="w-full"
+              className="w-full bg-blue-600 text-white rounded-xl px-6 py-4 hover:bg-blue-700 transition-all duration-300 font-medium"
             >
-              <button className="w-full bg-blue-600 text-white rounded-xl px-6 py-4 hover:bg-blue-700 transition-all duration-300 font-medium">
-                <div className="flex items-center justify-center">
-                  <span className="text-lg">LinkedIn profilimi import et</span>
-                  <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </button>
-            </LinkedInAutoImport>
+              <div className="flex items-center justify-center">
+                <span className="text-lg">LinkedIn profilimi import et</span>
+                <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </button>
           </div>
 
           {/* Manual CV Creation Card */}
