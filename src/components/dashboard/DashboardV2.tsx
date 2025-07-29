@@ -64,7 +64,7 @@ export default function DashboardV2({ user, onCreateCV, onEditCV }: DashboardV2P
       console.log('📥 Dashboard: CV sayı:', cvsResponse.data.cvs?.length || 0);
 
       if (cvsResponse.data.cvs && cvsResponse.data.cvs.length > 0) {
-        console.log('📋 Dashboard: Tapılan CV-lər:', cvsResponse.data.cvs.map(cv => ({ id: cv.id, title: cv.title })));
+        console.log('📋 Dashboard: Tapılan CV-lər:', cvsResponse.data.cvs.map((cv: CV) => ({ id: cv.id, title: cv.title })));
       } else {
         console.log('❌ Dashboard: CV tapılmadı və ya boş array');
       }
@@ -73,7 +73,12 @@ export default function DashboardV2({ user, onCreateCV, onEditCV }: DashboardV2P
       setUserLimits(limitsResponse.data);
     } catch (error) {
       console.error('❌ Dashboard data fetch error:', error);
-      console.error('❌ Dashboard error details:', error.response?.data);
+
+      // Type-safe error handling
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: any } };
+        console.error('❌ Dashboard error details:', axiosError.response?.data);
+      }
     } finally {
       setLoading(false);
     }
