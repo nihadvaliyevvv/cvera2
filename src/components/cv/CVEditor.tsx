@@ -40,113 +40,107 @@ interface CVEditorProps {
 // Transform LinkedIn data to CV data format
   const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
     console.log('🎯 CVEditor: Transforming LinkedIn data:', linkedInData);
-    console.log('🎯 CVEditor: PersonalInfo available:', linkedInData.personalInfo);
-    console.log('🎯 CVEditor: Skills available:', linkedInData.skills, 'Type:', typeof linkedInData.skills);
-    console.log('🎯 CVEditor: Certifications available:', linkedInData.certifications, 'Length:', Array.isArray(linkedInData.certifications) ? linkedInData.certifications.length : 'N/A');
-    console.log('🎯 CVEditor: VolunteerExperience available:', linkedInData.volunteerExperience, 'Length:', Array.isArray(linkedInData.volunteerExperience) ? linkedInData.volunteerExperience.length : 'N/A');
-    console.log('🎯 CVEditor: HonorsAwards available:', linkedInData.honorsAwards, 'Length:', Array.isArray(linkedInData.honorsAwards) ? linkedInData.honorsAwards.length : 'N/A');
-    
+
+    // Handle array format from ScrapingDog API
+    let profileData = linkedInData;
+    if (Array.isArray(linkedInData) && linkedInData.length > 0) {
+      profileData = linkedInData[0];
+      console.log('✅ Extracted profile data from array format');
+    }
+
     const transformedData = {
       personalInfo: {
-        fullName: linkedInData.personalInfo?.name || linkedInData.name || linkedInData.fullName || '',
-        email: linkedInData.personalInfo?.email || linkedInData.email || '',
-        phone: linkedInData.personalInfo?.phone || linkedInData.phone || '',
-        address: linkedInData.personalInfo?.address || linkedInData.address || linkedInData.location || '',
-        website: linkedInData.personalInfo?.website || linkedInData.website || linkedInData.public_profile_url || '',
-        linkedin: linkedInData.personalInfo?.linkedin || linkedInData.linkedin || linkedInData.public_profile_url || '',
-        summary: linkedInData.personalInfo?.summary || linkedInData.personalInfo?.headline || linkedInData.headline || linkedInData.summary || ''
+        fullName: profileData.full_name || profileData.name || profileData.fullName || '',
+        email: profileData.email || '',
+        phone: profileData.phone || '',
+        address: profileData.location || profileData.address || '',
+        website: profileData.public_profile_url || profileData.website || '',
+        linkedin: profileData.public_profile_url || profileData.linkedin || '',
+        summary: profileData.about || profileData.headline || profileData.summary || ''
       },
-      experience: (linkedInData.experience || []).map((exp: any) => ({
-        position: exp.title || exp.position || '',
-        company: exp.company || exp.company_name || '',
-        startDate: exp.start_date || exp.startDate || '',
-        endDate: exp.end_date || exp.endDate || 'Present',
-        description: exp.description || '',
+      experience: (profileData.experience || []).map((exp: any) => ({
+        position: exp.position || exp.title || '',
+        company: exp.company_name || exp.company || '',
+        startDate: exp.starts_at || exp.start_date || exp.startDate || '',
+        endDate: exp.ends_at || exp.end_date || exp.endDate || '',
+        description: exp.summary || exp.description || '',
         location: exp.location || ''
       })),
-      education: (linkedInData.education || []).map((edu: any) => ({
-        degree: edu.degree || edu.field_of_study || '',
-        institution: edu.school || edu.institution || '',
-        year: edu.end_date || edu.year || '',
-        description: edu.description || '',
+      education: (profileData.education || []).map((edu: any) => ({
+        degree: edu.college_degree || edu.degree || '',
+        institution: edu.college_name || edu.school || edu.institution || '',
+        year: edu.college_duration || edu.duration || edu.year || '',
+        description: edu.college_activity || edu.description || '',
         gpa: edu.gpa || ''
       })),
-      skills: linkedInData.skills ? 
-        (Array.isArray(linkedInData.skills) ? 
-          linkedInData.skills.map((skill: any) => ({
-            name: typeof skill === 'string' ? skill : skill.name || '',
+      skills: profileData.skills ?
+        (Array.isArray(profileData.skills) ?
+          profileData.skills.map((skill: any) => ({
+            name: typeof skill === 'string' ? skill : skill.name || skill.skill || '',
             level: 'Intermediate' as const
-          })) : 
-          (typeof linkedInData.skills === 'string' && linkedInData.skills.trim() ?
-            linkedInData.skills.split('|').map((skill: string) => ({
-              name: skill.trim(),
-              level: 'Intermediate' as const
-            })) : []
-          )
+          })) : []
         ) : [],
-      languages: (linkedInData.languages || []).map((lang: any) => ({
-        name: typeof lang === 'string' ? lang : lang.name || '',
+      languages: (profileData.languages || []).map((lang: any) => ({
+        name: typeof lang === 'string' ? lang : lang.name || lang.language || '',
         proficiency: typeof lang === 'string' ? 'Professional' : lang.proficiency || 'Professional'
       })),
-      projects: (linkedInData.projects || []).map((proj: any) => ({
+      projects: (profileData.projects || []).map((proj: any) => ({
         name: proj.title || proj.name || '',
-        description: proj.description || '',
-        startDate: proj.start_date || proj.startDate || '',
+        description: proj.description || proj.summary || '',
+        startDate: proj.duration || proj.start_date || proj.startDate || '',
         endDate: proj.end_date || proj.endDate || '',
         skills: proj.skills || '',
-        url: proj.url || ''
+        url: proj.link || proj.url || ''
       })),
-      certifications: Array.isArray(linkedInData.certifications) ? 
-        linkedInData.certifications.map((cert: any) => ({
-          name: cert.name || cert.title || cert.certification || '',
-          issuer: cert.authority || cert.issuer || cert.organization || '',
-          date: cert.start_date || cert.date || cert.issued_date || '',
-          description: cert.description || ''
-        })) : [],
-      volunteerExperience: Array.isArray(linkedInData.volunteerExperience) ? 
-        linkedInData.volunteerExperience.map((vol: any) => ({
-          organization: vol.organization || vol.company || '',
-          role: vol.role || vol.title || vol.position || '',
-          startDate: vol.start_date || vol.startDate || vol.date_range || '',
-          endDate: vol.end_date || vol.endDate || '',
-          description: vol.description || '',
-          cause: vol.cause || vol.topic || ''
-        })) : [],
-      publications: (linkedInData.publications || []).map((pub: any) => ({
+      certifications: (profileData.certification || profileData.certifications || []).map((cert: any) => ({
+        name: cert.name || cert.title || cert.certification || '',
+        issuer: cert.authority || cert.issuer || cert.organization || '',
+        date: cert.start_date || cert.date || cert.issued_date || '',
+        description: cert.description || ''
+      })),
+      volunteerExperience: (profileData.volunteering || profileData.volunteerExperience || []).map((vol: any) => ({
+        organization: vol.organization || vol.company || '',
+        role: vol.role || vol.title || vol.position || '',
+        startDate: vol.start_date || vol.startDate || vol.date_range || '',
+        endDate: vol.end_date || vol.endDate || '',
+        description: vol.description || '',
+        cause: vol.cause || vol.topic || ''
+      })),
+      publications: (profileData.publications || []).map((pub: any) => ({
         title: pub.title || pub.name || '',
         publisher: pub.publisher || pub.publication || '',
         date: pub.date || pub.published_date || '',
         description: pub.description || '',
         url: pub.url || ''
       })),
-      honorsAwards: Array.isArray(linkedInData.honorsAwards) ? 
-        linkedInData.honorsAwards.map((award: any) => ({
-          title: award.title || award.name || '',
-          issuer: award.issuer || award.authority || '',
-          date: award.date || award.issued_date || '',
-          description: award.description || ''
-        })) : [],
-      testScores: (linkedInData.testScores || linkedInData.test_scores || []).map((test: any) => ({
+      honorsAwards: (profileData.awards || profileData.honorsAwards || []).map((award: any) => ({
+        title: award.name || award.title || '',
+        issuer: award.organization || award.issuer || award.authority || '',
+        date: award.duration || award.date || award.issued_date || '',
+        description: award.summary || award.description || ''
+      })),
+      testScores: (profileData.testScores || profileData.test_scores || []).map((test: any) => ({
         name: test.name || test.title || '',
         score: test.score || '',
         date: test.date || '',
         description: test.description || ''
       })),
-      recommendations: (linkedInData.recommendations || []).map((rec: any) => ({
+      recommendations: (profileData.recommendations || []).map((rec: any) => ({
         recommender: rec.recommender || rec.name || '',
         relation: rec.relation || rec.relationship || '',
         text: rec.text || rec.recommendation || '',
         date: rec.date || ''
       })),
-      courses: (linkedInData.courses || []).map((course: any) => ({
+      courses: (profileData.courses || []).map((course: any) => ({
         name: course.name || course.title || '',
         institution: course.institution || course.provider || '',
         date: course.date || course.completion_date || '',
         description: course.description || ''
-      }))
+      })),
+      cvLanguage: 'azerbaijani' as CVLanguage
     };
     
-    console.log('Transformed data:', transformedData);
+    console.log('✅ CVEditor: Transformed data:', transformedData);
     return transformedData;
   };
 
