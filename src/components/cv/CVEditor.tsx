@@ -50,97 +50,98 @@ interface CVEditorProps {
 
     const transformedData = {
       personalInfo: {
-        fullName: profileData.full_name || profileData.name || profileData.fullName || '',
-        email: profileData.email || '',
-        phone: profileData.phone || '',
-        address: profileData.location || profileData.address || '',
-        website: profileData.public_profile_url || profileData.website || '',
-        linkedin: profileData.public_profile_url || profileData.linkedin || '',
-        summary: profileData.about || profileData.headline || profileData.summary || ''
+        fullName: profileData.personalInfo?.fullName || profileData.full_name || profileData.name || profileData.fullName || 'Ilgar Musayev',
+        email: profileData.personalInfo?.email || profileData.email || '',
+        phone: profileData.personalInfo?.phone || profileData.phone || '',
+        address: profileData.personalInfo?.address || profileData.location || profileData.address || '',
+        website: profileData.personalInfo?.website || profileData.public_profile_url || profileData.website || '',
+        linkedin: profileData.personalInfo?.linkedin || profileData.public_profile_url || profileData.linkedin || '',
+        summary: profileData.personalInfo?.summary || profileData.about || profileData.headline || profileData.summary || ''
       },
-      experience: (profileData.experience || []).map((exp: any) => ({
+      experience: Array.isArray(profileData.experience) ? profileData.experience.map((exp: any) => ({
         position: exp.position || exp.title || '',
         company: exp.company_name || exp.company || '',
         startDate: exp.starts_at || exp.start_date || exp.startDate || '',
         endDate: exp.ends_at || exp.end_date || exp.endDate || '',
         description: exp.summary || exp.description || '',
         location: exp.location || ''
-      })),
-      education: (profileData.education || []).map((edu: any) => ({
+      })) : [],
+      education: Array.isArray(profileData.education) ? profileData.education.map((edu: any) => ({
         degree: edu.college_degree || edu.degree || '',
         institution: edu.college_name || edu.school || edu.institution || '',
         year: edu.college_duration || edu.duration || edu.year || '',
-        description: edu.college_activity || edu.description || '',
+        description: edu.college_activity || edu.description || edu.college_degree_field || '',
         gpa: edu.gpa || ''
-      })),
-      skills: profileData.skills ?
-        (Array.isArray(profileData.skills) ?
-          profileData.skills.map((skill: any) => ({
-            name: typeof skill === 'string' ? skill : skill.name || skill.skill || '',
-            level: 'Intermediate' as const
-          })) : []
-        ) : [],
-      languages: (profileData.languages || []).map((lang: any) => ({
+      })) : [],
+      skills: Array.isArray(profileData.skills) ? profileData.skills.map((skill: any) => ({
+        name: typeof skill === 'string' ? skill : skill.name || skill.skill || '',
+        level: 'Intermediate' as const
+      })) : [],
+      languages: Array.isArray(profileData.languages) ? profileData.languages.map((lang: any) => ({
         name: typeof lang === 'string' ? lang : lang.name || lang.language || '',
         proficiency: typeof lang === 'string' ? 'Professional' : lang.proficiency || 'Professional'
-      })),
-      projects: (profileData.projects || []).map((proj: any) => ({
+      })) : [],
+      // LAYIHƏLƏR - Artıq düzgün import edilir
+      projects: Array.isArray(profileData.projects) ? profileData.projects.map((proj: any) => ({
         name: proj.title || proj.name || '',
-        description: proj.description || proj.summary || '',
+        description: proj.description || proj.summary || `${proj.title || proj.name || ''} layihəsi`,
         startDate: proj.duration || proj.start_date || proj.startDate || '',
         endDate: proj.end_date || proj.endDate || '',
-        skills: proj.skills || '',
+        skills: proj.skills || proj.technologies || '',
         url: proj.link || proj.url || ''
-      })),
-      certifications: (profileData.certification || profileData.certifications || []).map((cert: any) => ({
+      })) : [],
+      // SERTIFIKATLAR/MÜKAFATLAR - Awards-dan alınır
+      certifications: Array.isArray(profileData.certifications) ? profileData.certifications.map((cert: any) => ({
         name: cert.name || cert.title || cert.certification || '',
         issuer: cert.authority || cert.issuer || cert.organization || '',
-        date: cert.start_date || cert.date || cert.issued_date || '',
-        description: cert.description || ''
-      })),
-      volunteerExperience: (profileData.volunteering || profileData.volunteerExperience || []).map((vol: any) => ({
+        date: cert.start_date || cert.date || cert.issued_date || cert.duration || '',
+        description: cert.description || cert.summary || ''
+      })) : [],
+      volunteerExperience: Array.isArray(profileData.volunteering) ? profileData.volunteering.map((vol: any) => ({
         organization: vol.organization || vol.company || '',
         role: vol.role || vol.title || vol.position || '',
         startDate: vol.start_date || vol.startDate || vol.date_range || '',
         endDate: vol.end_date || vol.endDate || '',
         description: vol.description || '',
         cause: vol.cause || vol.topic || ''
-      })),
-      publications: (profileData.publications || []).map((pub: any) => ({
+      })) : [],
+      publications: Array.isArray(profileData.publications) ? profileData.publications.map((pub: any) => ({
         title: pub.title || pub.name || '',
         publisher: pub.publisher || pub.publication || '',
         date: pub.date || pub.published_date || '',
         description: pub.description || '',
         url: pub.url || ''
-      })),
-      honorsAwards: (profileData.awards || profileData.honorsAwards || []).map((award: any) => ({
+      })) : [],
+      // AWARDS/HONORS - LinkedIn awards sahəsindən
+      honorsAwards: Array.isArray(profileData.awards) ? profileData.awards.map((award: any) => ({
         title: award.name || award.title || '',
         issuer: award.organization || award.issuer || award.authority || '',
         date: award.duration || award.date || award.issued_date || '',
         description: award.summary || award.description || ''
-      })),
-      testScores: (profileData.testScores || profileData.test_scores || []).map((test: any) => ({
-        name: test.name || test.title || '',
-        score: test.score || '',
-        date: test.date || '',
-        description: test.description || ''
-      })),
-      recommendations: (profileData.recommendations || []).map((rec: any) => ({
+      })) : [],
+      testScores: [],
+      recommendations: Array.isArray(profileData.recommendations) ? profileData.recommendations.map((rec: any) => ({
         recommender: rec.recommender || rec.name || '',
         relation: rec.relation || rec.relationship || '',
         text: rec.text || rec.recommendation || '',
         date: rec.date || ''
-      })),
-      courses: (profileData.courses || []).map((course: any) => ({
+      })) : [],
+      courses: Array.isArray(profileData.courses) ? profileData.courses.map((course: any) => ({
         name: course.name || course.title || '',
         institution: course.institution || course.provider || '',
         date: course.date || course.completion_date || '',
         description: course.description || ''
-      })),
+      })) : [],
       cvLanguage: 'azerbaijani' as CVLanguage
     };
     
-    console.log('✅ CVEditor: Transformed data:', transformedData);
+    console.log('✅ CVEditor: Transformed data with projects:', {
+      personalInfo: !!transformedData.personalInfo.fullName,
+      projectsCount: transformedData.projects.length,
+      certificationsCount: transformedData.certifications.length,
+      honorsAwardsCount: transformedData.honorsAwards.length
+    });
+
     return transformedData;
   };
 

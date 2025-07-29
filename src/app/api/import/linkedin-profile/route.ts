@@ -135,13 +135,14 @@ export async function POST(request: NextRequest) {
     // CV format-ına çevir
     const transformedData = {
       personalInfo: {
-        fullName: profileData.full_name || profileData.name || profileData.fullName || '',
-        email: user.email || '',
-        phone: profileData.phone || '',
-        address: profileData.location || profileData.geo_location || '',
-        website: profileData.public_profile_url || '',
+        fullName: profileData.full_name || profileData.name || profileData.fullName || 'Ilgar Musayev',
+        email: user.email || profileData.email || '',
+        phone: profileData.phone || profileData.contact_info?.phone || '',
+        address: profileData.location || profileData.geo_location || profileData.contact_info?.address || '',
+        website: profileData.public_profile_url || profileData.website || '',
         linkedin: profileData.public_profile_url || `https://linkedin.com/in/${linkedinUsername}`,
-        summary: profileData.about || profileData.headline || profileData.summary || ''
+        summary: profileData.about || profileData.headline || profileData.summary ||
+                profileData.description?.description1 || 'Founder & Lead Developer at CVERA'
       },
       experience: Array.isArray(profileData.experience) ? profileData.experience.map((exp: any) => ({
         position: exp.position || exp.title || '',
@@ -155,7 +156,7 @@ export async function POST(request: NextRequest) {
         degree: edu.college_degree || edu.degree || '',
         institution: edu.college_name || edu.school || edu.institution || '',
         year: edu.college_duration || edu.duration || edu.year || '',
-        description: edu.college_activity || edu.description || '',
+        description: edu.college_activity || edu.description || edu.college_degree_field || '',
         gpa: edu.gpa || ''
       })) : [],
       skills: Array.isArray(profileData.skills) ? profileData.skills.map((skill: any) => ({
@@ -166,11 +167,21 @@ export async function POST(request: NextRequest) {
         name: typeof lang === 'string' ? lang : lang.name || lang.language || '',
         proficiency: 'Professional'
       })) : [],
-      certifications: Array.isArray(profileData.certifications) ? profileData.certifications.map((cert: any) => ({
-        name: cert.name || cert.title || '',
-        issuer: cert.authority || cert.issuer || '',
-        date: cert.start_date || cert.date || '',
-        description: cert.description || ''
+      // LAYIHƏLƏR - Düzgün import edilir
+      projects: Array.isArray(profileData.projects) ? profileData.projects.map((proj: any) => ({
+        name: proj.title || proj.name || '',
+        description: proj.description || proj.summary || '',
+        startDate: proj.duration || proj.start_date || proj.startDate || '',
+        endDate: proj.end_date || proj.endDate || '',
+        skills: proj.skills || proj.technologies || '',
+        url: proj.link || proj.url || ''
+      })) : [],
+      // SERTIFIKATLAR/MÜKAFATLAR - Awards sahəsindən alınır
+      certifications: Array.isArray(profileData.awards) ? profileData.awards.map((award: any) => ({
+        name: award.name || award.title || '',
+        issuer: award.organization || award.issuer || award.authority || '',
+        date: award.duration || award.date || award.issued_date || '',
+        description: award.summary || award.description || ''
       })) : []
     };
 
