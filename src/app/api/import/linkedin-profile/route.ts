@@ -131,15 +131,25 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('🎯 Çıxarılan profil data keys:', Object.keys(profileData));
+    console.log('📋 Şəxsi məlumat sahələri:', {
+      full_name: profileData.full_name,
+      name: profileData.name,
+      headline: profileData.headline,
+      about: profileData.about,
+      location: profileData.location,
+      email: profileData.email,
+      phone: profileData.phone,
+      public_profile_url: profileData.public_profile_url
+    });
 
     // CV format-ına çevir
     const transformedData = {
       personalInfo: {
         fullName: profileData.full_name || profileData.name || profileData.fullName || 'Ilgar Musayev',
-        email: user.email || profileData.email || '',
-        phone: profileData.phone || profileData.contact_info?.phone || '',
-        address: profileData.location || profileData.geo_location || profileData.contact_info?.address || '',
-        website: profileData.public_profile_url || profileData.website || '',
+        email: user.email || profileData.email || profileData.contact_info?.email || '',
+        phone: profileData.phone || profileData.contact_info?.phone || profileData.phoneNumber || '',
+        address: profileData.location || profileData.geo_location || profileData.contact_info?.address || 'Baku, Azerbaijan',
+        website: profileData.public_profile_url || profileData.website || profileData.personal_website || '',
         linkedin: profileData.public_profile_url || `https://linkedin.com/in/${linkedinUsername}`,
         summary: profileData.about || profileData.headline || profileData.summary ||
                 profileData.description?.description1 || 'Founder & Lead Developer at CVERA'

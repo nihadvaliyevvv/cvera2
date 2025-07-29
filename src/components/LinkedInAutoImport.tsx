@@ -17,7 +17,7 @@ export default function LinkedInAutoImport({
   className = '',
   children
 }: LinkedInAutoImportProps) {
-  const { user, canAutoImportLinkedIn, importLinkedInProfile, loading } = useAuth();
+  const { user, loading } = useAuth(); // canAutoImportLinkedIn funksiyasını çıxardıq
   const [importing, setImporting] = useState(false);
   const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
@@ -53,6 +53,8 @@ export default function LinkedInAutoImport({
 
       if (result.success && result.data) {
         console.log('✅ LinkedIn data uğurla import edildi:', result.data);
+
+        // Şəxsi məlumatları da daxil olmaqla bütün data göndər
         setImportStatus('success');
         onImportSuccess?.(result.data);
 
@@ -81,10 +83,10 @@ export default function LinkedInAutoImport({
     }
   };
 
-  // Don't show the button if user can't auto-import
-  if (!canAutoImportLinkedIn()) {
-    return null;
-  }
+  // Artıq canAutoImportLinkedIn yoxlaması yoxdur - hər kəs üçün işləyir
+  // if (!canAutoImportLinkedIn()) {
+  //   return null;
+  // }
 
   const isDisabled = importing || loading;
   const buttonText = importing
