@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { getLabel } from '@/lib/cvLanguage';
 
 interface PersonalInfo {
-  name: string;
+  fullName: string; // Changed from 'name' to 'fullName'
   email: string;
   phone: string;
   website?: string;
@@ -185,8 +185,8 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
           </label>
           <input
             type="text"
-            value={data.name}
-            onChange={(e) => handleChange('name', e.target.value)}
+            value={data.fullName}
+            onChange={(e) => handleChange('fullName', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             placeholder={getLabel('fullName', 'azerbaijani')}
             required

@@ -1,7 +1,3 @@
-const axios = require('axios');
-
-const api_key = '6882894b855f5678d36484c8';
-const url = 'https://api.scrapingdog.com/linkedin';
 
 const params = {
   api_key: api_key,

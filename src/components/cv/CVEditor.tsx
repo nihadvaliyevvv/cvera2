@@ -53,7 +53,6 @@ interface CVEditorProps {
         fullName: profileData.personalInfo?.fullName || profileData.full_name || profileData.name || profileData.fullName || 'Ilgar Musayev',
         email: profileData.personalInfo?.email || profileData.email || '',
         phone: profileData.personalInfo?.phone || profileData.phone || '',
-        address: profileData.personalInfo?.address || profileData.location || profileData.address || '',
         website: profileData.personalInfo?.website || profileData.public_profile_url || profileData.website || '',
         linkedin: profileData.personalInfo?.linkedin || profileData.public_profile_url || profileData.linkedin || '',
         summary: profileData.personalInfo?.summary || profileData.about || profileData.headline || profileData.summary || ''
@@ -166,7 +165,6 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
           fullName: '',
           email: '',
           phone: '',
-          address: '',
           website: '',
           linkedin: '',
           summary: ''
@@ -313,7 +311,6 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
             fullName: '',
             email: '',
             phone: '',
-            address: '',
             website: '',
             linkedin: '',
             summary: ''
@@ -735,7 +732,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                   {activeSection === 'personal' && (
                     <PersonalInfoSection
                       data={{
-                        name: cv.data.personalInfo.fullName,
+                        fullName: cv.data.personalInfo.fullName,
                         email: cv.data.personalInfo.email,
                         phone: cv.data.personalInfo.phone,
                         website: cv.data.personalInfo.website,
@@ -746,7 +743,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                       userTier={userTier}
                       cvData={cv.data}
                       onChange={(data: any) => updateCVData('personalInfo', {
-                        fullName: data.name,
+                        fullName: data.fullName,
                         email: data.email,
                         phone: data.phone,
                         website: data.website,

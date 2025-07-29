@@ -83,11 +83,6 @@ export default function LinkedInAutoImport({
     }
   };
 
-  // Artıq canAutoImportLinkedIn yoxlaması yoxdur - hər kəs üçün işləyir
-  // if (!canAutoImportLinkedIn()) {
-  //   return null;
-  // }
-
   const isDisabled = importing || loading;
   const buttonText = importing
     ? 'LinkedIn məlumatları yüklənir...'
