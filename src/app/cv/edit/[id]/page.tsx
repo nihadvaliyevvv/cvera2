@@ -38,6 +38,20 @@ export default function EditCVPage() {
     }
   }
 
+  // Extract user tier from subscriptions
+  const getUserTier = () => {
+    if (!user?.subscriptions || user.subscriptions.length === 0) {
+      return 'Free';
+    }
+
+    // Find the most recent active subscription
+    const activeSubscription = user.subscriptions
+      .filter(sub => sub.status === 'active')
+      .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())[0];
+
+    return activeSubscription?.tier || 'Free';
+  };
+
   // Debug logging
   console.log('Edit page debug:', {
     importType,
@@ -45,7 +59,8 @@ export default function EditCVPage() {
     dataParam: dataParam ? 'present' : 'null',
     hasSessionData: !!sessionImportData,
     linkedInData: linkedInData ? 'present' : 'null',
-    linkedInDataSample: linkedInData ? JSON.stringify(linkedInData).substring(0, 200) : 'null'
+    linkedInDataSample: linkedInData ? JSON.stringify(linkedInData).substring(0, 200) : 'null',
+    userTier: getUserTier()
   });
 
   useEffect(() => {
@@ -203,14 +218,32 @@ export default function EditCVPage() {
         <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-gradient-to-bl from-emerald-200/20 to-teal-200/20 rounded-full blur-3xl"></div>
       </div>
 
+      {/* Navigation Header */}
+      <nav className="relative z-10 bg-white/80 backdrop-blur-md border-b border-gray-200/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Dashboard'a Qayıt
+            </Link>
+            <h1 className="text-lg font-semibold text-gray-900">
+              {isNewCV ? 'Yeni CV Yarat' : 'CV Redaktə Et'}
+            </h1>
+            <div className="w-24"></div> {/* Spacer for centering */}
+          </div>
+        </div>
+      </nav>
+
       {/* Main Content */}
       <div className="relative z-10">
         <CVEditor
           cvId={isNewCV ? undefined : cvId}
           onSave={handleSave}
           onCancel={handleCancel}
-          initialData={linkedInData}
-          userTier={user?.subscriptions?.[0]?.tier || 'Free'}
+          initialData={linkedInData} // This is the key fix - passing LinkedIn data
+          userTier={getUserTier()} // Fixed: use function to extract tier from subscriptions
         />
       </div>
     </div>
