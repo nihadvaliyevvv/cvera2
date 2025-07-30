@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -14,10 +14,114 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
+  // Password validation function
+  const validatePassword = (password: string) => {
+    const errors: string[] = [];
+
+    if (password.length < 8) {
+      errors.push('Şifrə ən azı 8 simvoldan ibarət olmalıdır');
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      errors.push('Şifrə ən azı bir böyük hərf ehtiva etməlidir');
+    }
+
+    if (!/[a-z]/.test(password)) {
+      errors.push('Şifrə ən azı bir kiçik hərf ehtiva etməlidir');
+    }
+
+    return errors;
+  };
+
+  useEffect(() => {
+    // Set custom validation messages for Azerbaijani immediately
+    const setCustomValidationMessages = () => {
+      const emailInput = document.getElementById('email') as HTMLInputElement;
+      const passwordInput = document.getElementById('password') as HTMLInputElement;
+
+      if (emailInput) {
+        // Set initial custom validity to override browser default
+        emailInput.setCustomValidity('');
+
+        emailInput.oninvalid = function(e) {
+          const target = e.target as HTMLInputElement;
+          if (target.validity.valueMissing) {
+            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+          } else if (target.validity.typeMismatch) {
+            target.setCustomValidity('Zəhmət olmasa düzgün email ünvanı daxil edin');
+          } else {
+            target.setCustomValidity('Zəhmət olmasa bu sahəni düzgün doldurun');
+          }
+        };
+
+        emailInput.oninput = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+
+        // Force validation message update on focus
+        emailInput.onfocus = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+      }
+
+      if (passwordInput) {
+        // Set initial custom validity to override browser default
+        passwordInput.setCustomValidity('');
+
+        passwordInput.oninvalid = function(e) {
+          const target = e.target as HTMLInputElement;
+          if (target.validity.valueMissing) {
+            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+          } else if (target.validity.tooShort) {
+            target.setCustomValidity('Şifrə ən azı 8 simvoldan ibarət olmalıdır');
+          } else if (target.validity.patternMismatch) {
+            target.setCustomValidity('Şifrə ən azı bir böyük hərf ehtiva etməlidir');
+          } else {
+            target.setCustomValidity('Zəhmət olmasa bu sahəni düzgün doldurun');
+          }
+        };
+        
+        passwordInput.oninput = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+        
+        // Force validation message update on focus
+        passwordInput.onfocus = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+      }
+
+      // Form submit button validation enhancement
+      const form = document.querySelector('form');
+      if (form) {
+        form.addEventListener('submit', function(e) {
+          const inputs = form.querySelectorAll('input[required]');
+          inputs.forEach((input: any) => {
+            if (!input.value.trim()) {
+              input.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+            }
+          });
+        });
+      }
+    };
+
+    // Set messages immediately and also after a small delay to ensure DOM is ready
+    setCustomValidationMessages();
+    const timer = setTimeout(setCustomValidationMessages, 50);
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Validate password for login (only basic validation needed)
+    if (formData.password.length < 1) {
+      setError('Şifrə tələb olunur');
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch('/api/auth/login', {
@@ -53,7 +157,7 @@ export default function LoginPage() {
         <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-blue-100 to-blue-50 rounded-full transform rotate-12 opacity-30"></div>
         <div className="absolute top-1/3 -left-48 w-80 h-80 bg-gradient-to-tr from-blue-50 to-transparent rounded-full transform -rotate-45 opacity-20"></div>
         <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-gradient-to-bl from-blue-100 to-transparent rounded-full transform rotate-45 opacity-25"></div>
-        
+
         {/* Diagonal lines */}
         <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
           <defs>
@@ -63,7 +167,7 @@ export default function LoginPage() {
           </defs>
           <rect width="100%" height="100%" fill="url(#diagonal-lines-login)"/>
         </svg>
-        
+
         {/* Additional floating elements */}
         <div className="absolute top-1/4 right-1/3 w-32 h-32 bg-blue-100 rounded-full opacity-10 transform rotate-45"></div>
         <div className="absolute bottom-1/3 left-1/4 w-24 h-24 bg-blue-50 rounded-full opacity-15 transform -rotate-12"></div>
@@ -200,7 +304,7 @@ export default function LoginPage() {
                     {showPassword ? (
                       <svg className="w-5 h-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                      </svg>
+                    </svg>
                     ) : (
                       <svg className="w-5 h-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />

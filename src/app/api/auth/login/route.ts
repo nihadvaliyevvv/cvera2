@@ -13,29 +13,29 @@ export async function POST(req: NextRequest) {
     // Validate email format
     const emailValidation = validateEmail(email);
     if (!emailValidation.isValid) {
-      return NextResponse.json({
-        message: emailValidation.error
+      return NextResponse.json({ 
+        message: emailValidation.error 
       }, { status: 400 });
     }
 
     if (!password) {
-      return NextResponse.json({
-        message: "Şifrə tələb olunur."
+      return NextResponse.json({ 
+        message: "Şifrə tələb olunur." 
       }, { status: 400 });
     }
-
+    
     // Normalize email for lookup (case-insensitive)
     const normalizedEmail = email.trim().toLowerCase();
-    const user = await prisma.user.findUnique({
-      where: { email: normalizedEmail }
+    const user = await prisma.user.findUnique({ 
+      where: { email: normalizedEmail } 
     });
-
+    
     if (!user) {
-      return NextResponse.json({
-        message: "E-poçt və ya şifrə yanlışdır."
+      return NextResponse.json({ 
+        message: "E-poçt və ya şifrə yanlışdır." 
       }, { status: 401 });
     }
-
+    
     // Check if user has a password (regular login) or uses LinkedIn login
     if (!user.password) {
       return NextResponse.json({
@@ -46,11 +46,11 @@ export async function POST(req: NextRequest) {
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
-      return NextResponse.json({
-        message: "E-poçt və ya şifrə yanlışdır."
+      return NextResponse.json({ 
+        message: "E-poçt və ya şifrə yanlışdır." 
       }, { status: 401 });
     }
-
+    
     // Update last login
     await prisma.user.update({
       where: { id: user.id },

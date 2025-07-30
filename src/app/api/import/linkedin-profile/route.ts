@@ -153,14 +153,14 @@ export async function POST(request: NextRequest) {
     // CV format-ına çevir
     const transformedData = {
       personalInfo: {
-        fullName: profileData.full_name || profileData.name || profileData.fullName || 'Ilgar Musayev',
+        fullName: profileData.full_name || profileData.name || profileData.fullName || user.name || '',
         email: user.email || profileData.email || profileData.contact_info?.email || '',
         phone: profileData.phone || profileData.contact_info?.phone || profileData.phoneNumber || '',
-        address: profileData.location || profileData.geo_location || profileData.contact_info?.address || 'Baku, Azerbaijan',
+        address: profileData.location || profileData.geo_location || profileData.contact_info?.address || '',
         website: profileData.public_profile_url || profileData.website || profileData.personal_website || '',
         linkedin: profileData.public_profile_url || `https://linkedin.com/in/${linkedinUsername}`,
         summary: profileData.about || profileData.headline || profileData.summary ||
-                profileData.description?.description1 || 'Founder & Lead Developer at CVERA'
+                profileData.description?.description1 || ''
       },
       experience: Array.isArray(profileData.experience) ? profileData.experience.map((exp: any) => ({
         position: exp.position || exp.title || '',
@@ -179,11 +179,11 @@ export async function POST(request: NextRequest) {
       })) : [],
       skills: Array.isArray(profileData.skills) ? profileData.skills.map((skill: any) => ({
         name: typeof skill === 'string' ? skill : skill.name || skill.skill || '',
-        level: 'Intermediate'
+        level: 'Orta səviyyə'
       })) : [],
       languages: Array.isArray(profileData.languages) ? profileData.languages.map((lang: any) => ({
         name: typeof lang === 'string' ? lang : lang.name || lang.language || '',
-        proficiency: 'Professional'
+        proficiency: 'Peşəkar səviyyə'
       })) : [],
       // LAYIHƏLƏR - Düzgün import edilir
       projects: Array.isArray(profileData.projects) ? profileData.projects.map((proj: any) => ({

@@ -15,7 +15,7 @@ async function main() {
     },
     {
       id: 'modern',
-      name: 'Modern Creative',
+      name: 'Modern Creative', 
       tier: 'Medium',
       previewUrl: '/templates/modern-preview.jpg',
       description: 'Creative modern design with stylish elements'
@@ -23,7 +23,7 @@ async function main() {
     {
       id: 'elegant',
       name: 'Elegant Professional',
-      tier: 'Premium',
+      tier: 'Premium', 
       previewUrl: '/templates/elegant-professional-preview.jpg',
       description: 'Sophisticated elegant design for senior positions'
     },
@@ -31,7 +31,7 @@ async function main() {
       id: 'executive',
       name: 'Executive Elite',
       tier: 'Premium',
-      previewUrl: '/templates/executive-elite-preview.jpg',
+      previewUrl: '/templates/executive-elite-preview.jpg', 
       description: 'Premium executive template for leadership roles'
     }
   ];

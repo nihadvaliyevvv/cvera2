@@ -50,7 +50,7 @@ interface CVEditorProps {
 
     const transformedData = {
       personalInfo: {
-        fullName: profileData.personalInfo?.fullName || profileData.full_name || profileData.name || profileData.fullName || 'Ilgar Musayev',
+        fullName: profileData.personalInfo?.fullName || profileData.full_name || profileData.name || profileData.fullName || '',
         email: profileData.personalInfo?.email || profileData.email || '',
         phone: profileData.personalInfo?.phone || profileData.phone || '',
         website: profileData.personalInfo?.website || profileData.public_profile_url || profileData.website || '',

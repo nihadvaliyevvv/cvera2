@@ -6,7 +6,7 @@ async function checkAndUpdateLinkedInUser() {
   try {
     // Find user by email (replace with your email)
     const userEmail = 'musayevcreate@gmail.com'; // Your email here
-
+    
     const user = await prisma.user.findUnique({
       where: { email: userEmail },
       select: {
@@ -21,18 +21,18 @@ async function checkAndUpdateLinkedInUser() {
 
     if (user) {
       console.log('Current user data:', user);
-
+      
       // If linkedinUsername is missing, add it
       if (user.loginMethod === 'linkedin' && !user.linkedinUsername) {
         console.log('Adding LinkedIn username...');
-
+        
         const updatedUser = await prisma.user.update({
           where: { id: user.id },
           data: {
             linkedinUsername: 'musayevcreate' // Your LinkedIn username
           }
         });
-
+        
         console.log('Updated user:', updatedUser);
       } else {
         console.log('User already has LinkedIn username or not logged in via LinkedIn');

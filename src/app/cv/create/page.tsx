@@ -53,7 +53,7 @@ function CreateCVContent() {
 
   const handleLinkedInImport = async () => {
     setSelectedMethod('linkedin');
-
+    
     try {
       const token = localStorage.getItem('accessToken');
       if (!token) {
@@ -73,21 +73,21 @@ function CreateCVContent() {
       });
 
       const result = await response.json();
-
+      
       if (!response.ok) {
         throw new Error(result.error || 'LinkedIn import xətası');
       }
 
       if (result.success && result.data) {
         console.log('✅ LinkedIn data uğurla import edildi:', result.data);
-
+        
         // CV editora göndər
         const dataString = encodeURIComponent(JSON.stringify(result.data));
         router.push(`/cv/edit/new?import=linkedin&data=${dataString}`);
       } else {
         throw new Error(result.error || 'LinkedIn məlumatları alınmadı');
       }
-
+      
     } catch (error) {
       console.error('LinkedIn import xətası:', error);
       alert(`LinkedIn import xətası: ${error instanceof Error ? error.message : 'Naməlum xəta'}`);
