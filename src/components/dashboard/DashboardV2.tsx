@@ -166,7 +166,13 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
                   <p className="text-sm font-medium text-blue-700 mb-2">Abunəlik</p>
                   <div className="flex items-center justify-between">
                     <p className="text-2xl font-bold text-blue-900">
-                      {userLimits?.userTier === 'Free' ? 'Pulsuz' : userLimits?.userTier || 'Pulsuz'}
+                      {(() => {
+                        const tier = userLimits?.userTier;
+                        if (tier === 'Free') return 'Pulsuz';
+                        if (tier === 'Medium' || tier === 'Pro') return 'Orta';
+                        if (tier === 'Premium' || tier === 'Business') return 'Premium';
+                        return 'Pulsuz';
+                      })()}
                     </p>
                     <button
                       onClick={() => router.push('/pricing')}

@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth';
 import Link from 'next/link';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import Footer from '@/components/Footer';
 
 export default function LandingPage() {
   const { user } = useAuth();
@@ -185,20 +186,7 @@ export default function LandingPage() {
       </div>
 
       {/* Footer */}
-      <footer className="relative z-10 bg-white backdrop-blur-xl border-t border-gray-200 mt-20 shadow-lg shadow-gray-100/20">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
-          <div className="text-center">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">CVera ile Karyeranızı İrəliləyin</h3>
-            <p className="text-gray-600 mb-8 max-w-md mx-auto">
-              Professional CV yaradın və LinkedIn inteqrasiyası ilə daha çox iş imkanlarına çatın.
-            </p>
-            <Link href="/auth/register" className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300">
-              İndi Başla
-            </Link>
-            <p className="text-gray-500 text-sm mt-8">© 2025 CVera.net - Bütün hüquqlar qorunur</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
