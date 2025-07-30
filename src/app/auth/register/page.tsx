@@ -232,8 +232,18 @@ export default function RegisterPage() {
   };
 
   const handleLinkedInRegister = () => {
-    // Add from=register parameter to trigger cache clearing
-    window.location.href = '/api/auth/linkedin?from=register';
+    // Open LinkedIn logout in a new window to clear session
+    const logoutWin = window.open(
+      "https://www.linkedin.com/m/logout/",
+      "_blank",
+      "width=600,height=400"
+    );
+
+    // Close the logout window after 1.5 seconds and redirect to LinkedIn auth
+    setTimeout(() => {
+      logoutWin?.close();
+      window.location.href = "/api/auth/linkedin?from=register";
+    }, 1500);
   };
 
   return (
