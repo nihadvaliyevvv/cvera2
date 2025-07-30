@@ -23,16 +23,26 @@ export async function GET(request: NextRequest) {
     // Generate a unique state parameter for security
     authUrl.searchParams.set('state', Math.random().toString(36).substring(7) + Date.now().toString(36));
 
-    // Create response with LinkedIn redirect
-    const response = NextResponse.redirect(authUrl.toString());
-
     if (fromPage === 'register') {
       // REGISTRATION: Force complete re-authentication (MANDATORY)
       authUrl.searchParams.set('prompt', 'login');
       authUrl.searchParams.set('max_age', '0');
 
       console.log('REGISTRATION: Forcing LinkedIn re-authentication with prompt=login');
+    } else {
+      // LOGIN: Normal LinkedIn OAuth flow (less aggressive)
+      console.log('LOGIN: Using normal LinkedIn OAuth flow');
+      // No additional parameters - let LinkedIn handle normal auth flow
+    }
 
+    console.log('Redirecting to LinkedIn OAuth');
+    console.log('From page:', fromPage || 'login');
+    console.log('Auth URL:', authUrl.toString());
+
+    // Create response with LinkedIn redirect AFTER setting all URL parameters
+    const response = NextResponse.redirect(authUrl.toString());
+
+    if (fromPage === 'register') {
       // Clear LinkedIn-related cookies for registration
       const linkedinCookies = [
         'li_at', 'JSESSIONID', 'bcookie', 'bscookie', 'li_mc', 'li_sugr',
@@ -72,15 +82,9 @@ export async function GET(request: NextRequest) {
       response.headers.set('Expires', '0');
 
       console.log('LinkedIn session clearing completed for REGISTRATION');
-    } else {
-      // LOGIN: Normal LinkedIn OAuth flow (less aggressive)
-      console.log('LOGIN: Using normal LinkedIn OAuth flow');
-      // No additional parameters - let LinkedIn handle normal auth flow
     }
 
-    console.log('Redirecting to LinkedIn OAuth');
-    console.log('From page:', fromPage || 'login');
-    console.log('Auth URL:', authUrl.toString());
+    // ...existing code for mutation observer and setTimeout...
 
     return response;
 
