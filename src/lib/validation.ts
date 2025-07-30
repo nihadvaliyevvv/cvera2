@@ -138,7 +138,7 @@ export function validatePassword(password: string): ValidationResult {
  */
 export function validateName(name: string): ValidationResult {
   const trimmedName = name.trim();
-
+  
   if (!trimmedName) {
     return { isValid: false, error: 'Ad Soyad tələb olunur' };
   }

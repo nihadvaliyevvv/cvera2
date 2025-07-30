@@ -160,7 +160,7 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) => {
     // Show loading state
     setLoading(true);
     setError('');
-    
+
     try {
       // LinkedIn OAuth login
       window.location.href = '/api/auth/linkedin';

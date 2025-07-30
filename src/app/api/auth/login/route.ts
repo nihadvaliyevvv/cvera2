@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
         message: "Şifrə tələb olunur."
       }, { status: 400 });
     }
-    
+
     // Normalize email for lookup (case-insensitive)
     const normalizedEmail = email.trim().toLowerCase();
     const user = await prisma.user.findUnique({
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
         message: "E-poçt və ya şifrə yanlışdır."
       }, { status: 401 });
     }
-    
+
     // Check if user has a password (regular login) or uses LinkedIn login
     if (!user.password) {
       return NextResponse.json({
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
         message: "E-poçt və ya şifrə yanlışdır."
       }, { status: 401 });
     }
-    
+
     // Update last login
     await prisma.user.update({
       where: { id: user.id },

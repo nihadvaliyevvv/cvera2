@@ -102,7 +102,7 @@ const LoginForm = ({ onSwitchToRegister, onSwitchToForgot }: LoginFormProps) => 
     // Show loading state
     setLoading(true);
     setError('');
-    
+
     try {
       // LinkedIn OAuth login
       window.location.href = '/api/auth/linkedin';

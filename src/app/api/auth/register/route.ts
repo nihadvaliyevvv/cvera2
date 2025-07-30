@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
         message: "Bu e-poçt ünvanı artıq mövcuddur. Başqa e-poçt ünvanı istifadə edin."
       }, { status: 409 });
     }
-    
+
     const hashedPassword = await bcrypt.hash(password, parseInt(process.env.BCRYPT_ROUNDS || "12"));
     
     const user = await prisma.user.create({
@@ -55,11 +55,11 @@ export async function POST(req: NextRequest) {
         password: hashedPassword
       },
     });
-    
-    return NextResponse.json({ 
-      id: user.id, 
-      name: user.name, 
-      email: user.email 
+
+    return NextResponse.json({
+      id: user.id,
+      name: user.name,
+      email: user.email
     }, { status: 201 });
   } catch (error) {
     console.error('Register error:', error);
