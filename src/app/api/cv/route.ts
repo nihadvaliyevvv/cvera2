@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyJWT } from '@/lib/jwt';
 import { PrismaClient } from '@prisma/client';
+import { checkCVCreationLimit, incrementCVUsage, getLimitMessage } from '@/lib/cvLimits';
 
 const prisma = new PrismaClient();
 
@@ -103,6 +104,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check CV creation limits before proceeding
+    const limits = await checkCVCreationLimit(decoded.userId);
+
+    if (!limits.canCreate) {
+      return NextResponse.json(
+        {
+          error: 'CV yaratma limiti dolmuşdur',
+          message: getLimitMessage(limits),
+          limits: {
+            currentCount: limits.currentCount,
+            limit: limits.limit,
+            tierName: limits.tierName,
+            resetTime: limits.resetTime
+          }
+        },
+        { status: 403 }
+      );
+    }
+
     const { title, cv_data, templateId } = await request.json();
 
     if (!title || !cv_data) {
@@ -121,13 +141,26 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    // Increment usage counter after successful CV creation
+    await incrementCVUsage(decoded.userId);
+
     console.log('✅ CV yaradıldı:', cv.id);
+
+    // Get updated limits for response
+    const updatedLimits = await checkCVCreationLimit(decoded.userId);
 
     return NextResponse.json({
       success: true,
-      cvId: cv.id,  // Bu sahə lazımdır - frontend bunu gözləyir
+      cvId: cv.id,
       cv: cv,
-      message: 'CV uğurla yaradıldı'
+      message: 'CV uğurla yaradıldı',
+      limits: {
+        currentCount: updatedLimits.currentCount,
+        limit: updatedLimits.limit,
+        tierName: updatedLimits.tierName,
+        canCreateMore: updatedLimits.canCreate,
+        limitMessage: getLimitMessage(updatedLimits)
+      }
     });
 
   } catch (error) {

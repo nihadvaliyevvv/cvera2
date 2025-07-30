@@ -521,7 +521,9 @@ export default function LandingPage() {
               <blockquote className="text-xl text-gray-300 leading-relaxed mb-8">
                 "CV-im ilə həftələrlə mübarizə apardım. CVERA ilə bir saatdan az müddətdə professional CV yaratdım və növbəti həftə üç müsahibə dəvəti aldım. Tam oyun dəyişdirici!"
               </blockquote>
-              
+
+
+
               {/* User avatars */}
               <div className="flex items-center space-x-2">
                 <div className="flex -space-x-2">
