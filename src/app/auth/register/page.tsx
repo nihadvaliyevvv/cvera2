@@ -358,6 +358,15 @@ export default function RegisterPage() {
                     placeholder="Adınız"
                     value={formData.firstName}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    onInvalid={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      if (target.validity.valueMissing) {
+                        target.setCustomValidity('Ad tələb olunur');
+                      } else {
+                        target.setCustomValidity('Düzgün ad daxil edin');
+                      }
+                    }}
+                    onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                   />
                 </div>
 
@@ -374,6 +383,15 @@ export default function RegisterPage() {
                     placeholder="Soyadınız"
                     value={formData.lastName}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    onInvalid={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      if (target.validity.valueMissing) {
+                        target.setCustomValidity('Soyad tələb olunur');
+                      } else {
+                        target.setCustomValidity('Düzgün soyad daxil edin');
+                      }
+                    }}
+                    onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                   />
                 </div>
               </div>
@@ -392,6 +410,17 @@ export default function RegisterPage() {
                   placeholder="example@email.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onInvalid={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    if (target.validity.valueMissing) {
+                      target.setCustomValidity('Email tələb olunur');
+                    } else if (target.validity.typeMismatch) {
+                      target.setCustomValidity('Düzgün email ünvanı daxil edin');
+                    } else {
+                      target.setCustomValidity('Etibarlı email ünvanı daxil edin');
+                    }
+                  }}
+                  onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                 />
               </div>
 
@@ -412,6 +441,19 @@ export default function RegisterPage() {
                     placeholder="Şifrənizi daxil edin"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    onInvalid={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      if (target.validity.valueMissing) {
+                        target.setCustomValidity('Şifrə tələb olunur');
+                      } else if (target.validity.tooShort) {
+                        target.setCustomValidity('Şifrə ən azı 8 simvoldan ibarət olmalıdır');
+                      } else if (target.validity.patternMismatch) {
+                        target.setCustomValidity('Şifrə böyük və kiçik hərf ehtiva etməlidir');
+                      } else {
+                        target.setCustomValidity('Güclü şifrə daxil edin');
+                      }
+                    }}
+                    onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                   />
                   <button
                     type="button"
@@ -421,7 +463,7 @@ export default function RegisterPage() {
                     {showPassword ? (
                       <svg className="w-5 h-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                      </svg>
+                    </svg>
                     ) : (
                       <svg className="w-5 h-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -436,40 +478,16 @@ export default function RegisterPage() {
                   <div className="mt-2 space-y-1">
                     <div className="text-xs text-gray-600">Şifrə tələbləri:</div>
                     <div className="space-y-1">
-                      <div className={`flex items-center text-xs ${formData.password.length >= 8 ? 'text-green-600' : 'text-red-500'}`}>
-                        {formData.password.length >= 8 ? (
-                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        ) : (
-                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        )}
+                      <div className={`text-xs flex items-center ${formData.password.length >= 8 ? 'text-green-600' : 'text-red-500'}`}>
+                        <div className={`w-2 h-2 rounded-full mr-2 ${formData.password.length >= 8 ? 'bg-green-500' : 'bg-red-500'}`}></div>
                         Ən azı 8 simvol
                       </div>
-                      <div className={`flex items-center text-xs ${/[A-Z]/.test(formData.password) ? 'text-green-600' : 'text-red-500'}`}>
-                        {/[A-Z]/.test(formData.password) ? (
-                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        ) : (
-                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        )}
+                      <div className={`text-xs flex items-center ${/[A-Z]/.test(formData.password) ? 'text-green-600' : 'text-red-500'}`}>
+                        <div className={`w-2 h-2 rounded-full mr-2 ${/[A-Z]/.test(formData.password) ? 'bg-green-500' : 'bg-red-500'}`}></div>
                         Ən azı bir böyük hərf
                       </div>
-                      <div className={`flex items-center text-xs ${/[a-z]/.test(formData.password) ? 'text-green-600' : 'text-red-500'}`}>
-                        {/[a-z]/.test(formData.password) ? (
-                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        ) : (
-                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        )}
+                      <div className={`text-xs flex items-center ${/[a-z]/.test(formData.password) ? 'text-green-600' : 'text-red-500'}`}>
+                        <div className={`w-2 h-2 rounded-full mr-2 ${/[a-z]/.test(formData.password) ? 'bg-green-500' : 'bg-red-500'}`}></div>
                         Ən azı bir kiçik hərf
                       </div>
                     </div>
@@ -489,9 +507,18 @@ export default function RegisterPage() {
                     autoComplete="new-password"
                     required
                     className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm hover:border-gray-400"
-                    placeholder="Şifrənizi təkrar daxil edin"
+                    placeholder="Şifrənizi yenidən daxil edin"
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    onInvalid={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      if (target.validity.valueMissing) {
+                        target.setCustomValidity('Şifrə təsdiqi tələb olunur');
+                      } else {
+                        target.setCustomValidity('Şifrələr uyğun gəlmir');
+                      }
+                    }}
+                    onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                   />
                   <button
                     type="button"
@@ -514,69 +541,93 @@ export default function RegisterPage() {
                   <p className="mt-1 text-xs text-red-500">Şifrələr uyğun gəlmir</p>
                 )}
               </div>
+
+              {/* Terms and Conditions */}
+              <div className="flex items-start">
+                <div className="flex items-center h-5">
+                  <input
+                    id="terms"
+                    name="terms"
+                    type="checkbox"
+                    required
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    onInvalid={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      if (target.validity.valueMissing) {
+                        target.setCustomValidity('İstifadə qaydalarını qəbul etməlisiniz');
+                      }
+                    }}
+                    onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
+                  />
+                </div>
+                <div className="ml-3 text-sm">
+                  <label htmlFor="terms" className="text-gray-600">
+                    <Link href="/terms" className="text-blue-600 hover:text-blue-500">
+                      İstifadə qaydaları
+                    </Link>
+                    {' '}və{' '}
+                    <Link href="/privacy" className="text-blue-600 hover:text-blue-500">
+                      Məxfilik siyasəti
+                    </Link>
+                    ni qəbul edirəm
+                  </label>
+                </div>
+              </div>
             </div>
 
-            <div className="flex items-center">
-              <input
-                id="terms"
-                name="terms"
-                type="checkbox"
-                required
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
-              />
-              <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
-                <Link href="/terms" className="text-blue-600 hover:text-blue-700">İstifadə qaydaları</Link>nı və{' '}
-                <Link href="/privacy" className="text-blue-600 hover:text-blue-700">məxfilik siyasəti</Link>ni qəbul edirəm
-              </label>
-            </div>
-
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98] font-medium text-base"
             >
               {loading ? (
-                <div className="flex items-center justify-center space-x-2">
+                <div className="flex items-center space-x-2">
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>Qeydiyyat edilir...</span>
+                  <span>Qeydiyyat...</span>
                 </div>
               ) : (
-                'Hesab yarat'
+                'Qeydiyyatdan keç'
               )}
             </button>
 
+            {/* Divider */}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500 font-medium">və ya</span>
+                <span className="px-2 bg-white text-gray-500">və ya</span>
               </div>
             </div>
 
+            {/* LinkedIn Register Button */}
             <button
               type="button"
               onClick={handleLinkedInRegister}
-              className="w-full flex items-center justify-center space-x-3 py-3 px-4 border border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md"
+              className="w-full flex justify-center items-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform hover:scale-[1.02] active:scale-[0.98] font-medium text-base"
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#0077B5">
+              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="#0077B5">
                 <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
               </svg>
-              <span className="text-gray-700 font-medium">LinkedIn ilə qeydiyyat</span>
+              LinkedIn ilə qeydiyyat
             </button>
+          </form>
 
-            <p className="text-center text-sm text-gray-600">
+          {/* Login Link */}
+          <div className="text-center">
+            <p className="text-sm text-gray-600">
               Artıq hesabınız var?{' '}
-              <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-700">
-                Giriş edin
+              <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
+                Daxil olun
               </Link>
             </p>
-          </form>
+          </div>
         </div>
       </div>
     </div>

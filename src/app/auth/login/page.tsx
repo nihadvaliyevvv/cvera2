@@ -42,7 +42,7 @@ export default function LoginPage() {
       if (emailInput) {
         // Set initial custom validity to override browser default
         emailInput.setCustomValidity('');
-
+        
         emailInput.oninvalid = function(e) {
           const target = e.target as HTMLInputElement;
           if (target.validity.valueMissing) {
@@ -53,11 +53,11 @@ export default function LoginPage() {
             target.setCustomValidity('Zəhmət olmasa bu sahəni düzgün doldurun');
           }
         };
-
+        
         emailInput.oninput = function(e) {
           (e.target as HTMLInputElement).setCustomValidity('');
         };
-
+        
         // Force validation message update on focus
         emailInput.onfocus = function(e) {
           (e.target as HTMLInputElement).setCustomValidity('');
@@ -67,7 +67,7 @@ export default function LoginPage() {
       if (passwordInput) {
         // Set initial custom validity to override browser default
         passwordInput.setCustomValidity('');
-
+        
         passwordInput.oninvalid = function(e) {
           const target = e.target as HTMLInputElement;
           if (target.validity.valueMissing) {
@@ -157,7 +157,7 @@ export default function LoginPage() {
         <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-blue-100 to-blue-50 rounded-full transform rotate-12 opacity-30"></div>
         <div className="absolute top-1/3 -left-48 w-80 h-80 bg-gradient-to-tr from-blue-50 to-transparent rounded-full transform -rotate-45 opacity-20"></div>
         <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-gradient-to-bl from-blue-100 to-transparent rounded-full transform rotate-45 opacity-25"></div>
-
+        
         {/* Diagonal lines */}
         <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
           <defs>
@@ -167,7 +167,7 @@ export default function LoginPage() {
           </defs>
           <rect width="100%" height="100%" fill="url(#diagonal-lines-login)"/>
         </svg>
-
+        
         {/* Additional floating elements */}
         <div className="absolute top-1/4 right-1/3 w-32 h-32 bg-blue-100 rounded-full opacity-10 transform rotate-45"></div>
         <div className="absolute bottom-1/3 left-1/4 w-24 h-24 bg-blue-50 rounded-full opacity-15 transform -rotate-12"></div>

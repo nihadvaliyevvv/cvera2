@@ -1,287 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyJWT } from '@/lib/jwt';
-import { PrismaClient } from '@prisma/client';
-import axios from 'axios';
-
-const prisma = new PrismaClient();
-
-// ScrapingDog API configuration (sizin təlimatınıza uyğun)
-const SCRAPINGDOG_CONFIG = {
-  api_key: '6882894b855f5678d36484c8',
-  url: 'https://api.scrapingdog.com/linkedin',
-  premium: 'false'
-};
+import { linkedInImportService } from '@/lib/services/linkedin-import';
 
 export async function POST(request: NextRequest) {
   try {
-    // İstifadəçi autentifikasiyasını yoxla
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Verify JWT token
+    const token = request.headers.get('authorization')?.replace('Bearer ', '');
+    if (!token) {
       return NextResponse.json(
-        { error: 'Giriş tələb olunur' },
+        { error: 'Authorization token required' },
         { status: 401 }
       );
     }
 
-    const token = authHeader.substring(7);
     const decoded = verifyJWT(token);
-    if (!decoded) {
+    if (!decoded?.userId) {
       return NextResponse.json(
-        { error: 'Etibarsız token' },
+        { error: 'Invalid or expired token' },
         { status: 401 }
       );
     }
 
-    // İstifadəçini bazadan götür
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        linkedinUsername: true
-      }
-    });
-
-    if (!user) {
+    // Get LinkedIn URL/username from request
+    const { linkedinUrl } = await request.json();
+    if (!linkedinUrl?.trim()) {
       return NextResponse.json(
-        { error: 'İstifadəçi tapılmadı' },
-        { status: 404 }
-      );
-    }
-
-    // İstifadəçinin LinkedIn hesabını götür - dinamik şəkildə
-    let linkedinUsername = user.linkedinUsername;
-
-    // Əgər LinkedIn username yoxdursa, request body-dən götür
-    if (!linkedinUsername) {
-      const body = await request.json();
-      linkedinUsername = body.linkedinUsername || body.username;
-    }
-
-    // LinkedIn username tələb olunur - hardcode etmə
-    if (!linkedinUsername) {
-      return NextResponse.json(
-        { error: 'LinkedIn username tələb olunur. Zəhmət olmasa LinkedIn profilinizin username-ini göndərin.' },
+        { error: 'LinkedIn URL or username is required' },
         { status: 400 }
       );
     }
 
-    console.log(`🔍 LinkedIn profilini import edirik: ${linkedinUsername}`);
+    // Import LinkedIn profile using the new service
+    const result = await linkedInImportService.importLinkedInProfile(
+      decoded.userId,
+      linkedinUrl.trim()
+    );
 
-    // ScrapingDog API-dən data çək - sizin kodunuzdan
-    const params = {
-      api_key: SCRAPINGDOG_CONFIG.api_key,
-      type: 'profile',
-      linkId: linkedinUsername,
-      premium: 'false',
-    };
-
-    console.log('📡 ScrapingDog API-yə sorğu göndərilir:', params);
-
-    // Sizin kodunuzdan axios request
-    const response = await axios.get(SCRAPINGDOG_CONFIG.url, {
-      params: params,
-      timeout: 30000,
-      headers: {
-        'User-Agent': 'CVERA-LinkedIn-Scraper/1.0'
-      }
-    });
-
-    console.log('📥 ScrapingDog cavabı:', {
-      status: response.status,
-      dataType: typeof response.data,
-      isArray: Array.isArray(response.data),
-      dataKeys: response.data ? Object.keys(response.data) : 'no keys'
-    });
-
-    // Sizin kodunuzdakı kimi status yoxlaması
-    if (response.status === 200) {
-      const data = response.data;
-      console.log('✅ ScrapingDog API uğurla işlədi!');
-    } else {
-      console.log('❌ Request failed with status code: ' + response.status);
+    if (!result.success) {
       return NextResponse.json(
-        { error: `ScrapingDog API xətası: ${response.status}` },
-        { status: 500 }
+        { 
+          error: result.error,
+          remainingImports: result.remainingImports 
+        },
+        { status: 400 }
       );
     }
-
-    let profileData = response.data;
-
-    // Array formatını yoxla və düzəlt
-    if (Array.isArray(response.data)) {
-      if (response.data.length > 0) {
-        profileData = response.data[0];
-        console.log('✅ Array formatından profil data çıxarıldı');
-      } else {
-        console.error('❌ Boş array qayıdı');
-        return NextResponse.json(
-          { error: 'LinkedIn profilində data tapılmadı' },
-          { status: 404 }
-        );
-      }
-    }
-
-    // Object formatını yoxla
-    if (profileData['0']) {
-      profileData = profileData['0'];
-      console.log('✅ "0" key formatından profil data çıxarıldı');
-    }
-
-    // Data struktur yoxlaması
-    if (!profileData || typeof profileData !== 'object') {
-      console.error('❌ Etibarsız profil data:', profileData);
-      return NextResponse.json(
-        { error: 'LinkedIn profilindən etibarlı data alınmadı' },
-        { status: 500 }
-      );
-    }
-
-    console.log('🎯 Çıxarılan profil data keys:', Object.keys(profileData));
-    console.log('📋 Şəxsi məlumat sahələri:', {
-      full_name: profileData.full_name,
-      name: profileData.name,
-      headline: profileData.headline,
-      about: profileData.about,
-      location: profileData.location,
-      email: profileData.email,
-      phone: profileData.phone,
-      public_profile_url: profileData.public_profile_url
-    });
-
-    // CV format-ına çevir
-    const transformedData = {
-      personalInfo: {
-        fullName: profileData.full_name || profileData.name || profileData.fullName || user.name || '',
-        email: user.email || profileData.email || profileData.contact_info?.email || '',
-        phone: profileData.phone || profileData.contact_info?.phone || profileData.phoneNumber || '',
-        address: profileData.location || profileData.geo_location || profileData.contact_info?.address || '',
-        website: profileData.public_profile_url || profileData.website || profileData.personal_website || '',
-        linkedin: profileData.public_profile_url || `https://linkedin.com/in/${linkedinUsername}`,
-        summary: profileData.about || profileData.headline || profileData.summary ||
-                profileData.description?.description1 || ''
-      },
-      experience: Array.isArray(profileData.experience) ? profileData.experience.map((exp: any) => ({
-        position: exp.position || exp.title || '',
-        company: exp.company_name || exp.company || '',
-        startDate: exp.starts_at || exp.start_date || exp.startDate || '',
-        endDate: exp.ends_at || exp.end_date || exp.endDate || '',
-        description: exp.summary || exp.description || '',
-        location: exp.location || ''
-      })) : [],
-      education: Array.isArray(profileData.education) ? profileData.education.map((edu: any) => ({
-        degree: edu.college_degree || edu.degree || '',
-        institution: edu.college_name || edu.school || edu.institution || '',
-        year: edu.college_duration || edu.duration || edu.year || '',
-        description: edu.college_activity || edu.description || edu.college_degree_field || '',
-        gpa: edu.gpa || ''
-      })) : [],
-      skills: Array.isArray(profileData.skills) ? profileData.skills.map((skill: any) => ({
-        name: typeof skill === 'string' ? skill : skill.name || skill.skill || '',
-        level: 'Orta səviyyə'
-      })) : [],
-      languages: Array.isArray(profileData.languages) ? profileData.languages.map((lang: any) => ({
-        name: typeof lang === 'string' ? lang : lang.name || lang.language || '',
-        proficiency: 'Peşəkar səviyyə'
-      })) : [],
-      // LAYIHƏLƏR - Düzgün import edilir
-      projects: Array.isArray(profileData.projects) ? profileData.projects.map((proj: any) => ({
-        name: proj.title || proj.name || '',
-        description: proj.description || proj.summary || '',
-        startDate: proj.duration || proj.start_date || proj.startDate || '',
-        endDate: proj.end_date || proj.endDate || '',
-        skills: proj.skills || proj.technologies || '',
-        url: proj.link || proj.url || ''
-      })) : [],
-      // SERTIFIKATLAR/MÜKAFATLAR - Awards sahəsindən alınır
-      certifications: Array.isArray(profileData.awards) ? profileData.awards.map((award: any) => ({
-        name: award.name || award.title || '',
-        issuer: award.organization || award.issuer || award.authority || '',
-        date: award.duration || award.date || award.issued_date || '',
-        description: award.summary || award.description || ''
-      })) : []
-    };
-
-    console.log('✅ Data CV formatına çevrildi:', {
-      hasPersonalInfo: !!transformedData.personalInfo.fullName,
-      experienceCount: transformedData.experience.length,
-      educationCount: transformedData.education.length,
-      skillsCount: transformedData.skills.length
-    });
-
-    // LinkedIn username-i bazada saxla
-    if (linkedinUsername && linkedinUsername !== user.linkedinUsername) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { linkedinUsername }
-      });
-      console.log(`💾 LinkedIn username saxlanıldı: ${linkedinUsername}`);
-    }
-
-    // CV-ni bazada yarat və saxla
-    const newCV = await prisma.cV.create({
-      data: {
-        userId: user.id,
-        title: `${transformedData.personalInfo.fullName} - LinkedIn Import`,
-        templateId: 'professional',
-        cv_data: {
-          personalInfo: transformedData.personalInfo,
-          experience: transformedData.experience,
-          education: transformedData.education,
-          skills: transformedData.skills,
-          languages: transformedData.languages,
-          projects: transformedData.projects,
-          certifications: transformedData.certifications,
-          volunteerExperience: [],
-          publications: [],
-          honorsAwards: [],
-          testScores: [],
-          recommendations: [],
-          courses: [],
-          cvLanguage: 'azerbaijani'
-        }
-      }
-    });
-
-    console.log(`✅ CV uğurla yaradıldı və saxlanıldı: ${newCV.id}`);
 
     return NextResponse.json({
       success: true,
-      message: 'LinkedIn profili uğurla import edildi və CV yaradıldı',
-      cvId: newCV.id,
-      data: transformedData,
-      rawData: profileData // Debug üçün
+      message: 'LinkedIn profile data retrieved successfully',
+      cvId: result.cvId,
+      profileData: result.profile,
+      remainingImports: result.remainingImports
     });
 
   } catch (error) {
-    console.error('❌ LinkedIn import xətası:', error);
-
-    if (axios.isAxiosError(error)) {
-      console.error('Axios xətası:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message
-      });
-
-      return NextResponse.json(
-        {
-          error: 'LinkedIn API-yə qoşulma xətası',
-          details: error.message,
-          status: error.response?.status
-        },
-        { status: 500 }
-      );
-    }
-
+    console.error('LinkedIn profile API error:', error);
     return NextResponse.json(
-      {
-        error: 'LinkedIn import xətası',
-        details: error instanceof Error ? error.message : 'Naməlum xəta'
-      },
+      { error: 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
