@@ -24,12 +24,12 @@ export async function GET(request: NextRequest) {
     // Handle OAuth error
     if (error) {
       console.error('LinkedIn OAuth error:', error);
-      return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=linkedin_oauth_failed&details=${error}`);
+      return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=linkedin_oauth_ugursuz&details=${error}`);
     }
 
     if (!code) {
       console.error('No authorization code received');
-      return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=no_code_received`);
+      return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=avtorizasiya_kodu_alinmadi`);
     }
 
     // Exchange code for access token
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
       console.error('LinkedIn token error:', errorText);
-      return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=token_exchange_failed`);
+      return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=token_deyisimi_ugursuz`);
     }
 
     const tokenData = await tokenResponse.json();

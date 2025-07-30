@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { generateJWT, generateRefreshToken } from "@/lib/jwt";
+import { validateEmail } from "@/lib/validation";
 
 const prisma = new PrismaClient();
 
@@ -9,13 +10,30 @@ export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
     
-    if (!email || !password) {
-      return NextResponse.json({ message: "Email və şifrə tələb olunur." }, { status: 400 });
+    // Validate email format
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      return NextResponse.json({
+        message: emailValidation.error
+      }, { status: 400 });
+    }
+
+    if (!password) {
+      return NextResponse.json({
+        message: "Şifrə tələb olunur."
+      }, { status: 400 });
     }
     
-    const user = await prisma.user.findUnique({ where: { email } });
+    // Normalize email for lookup (case-insensitive)
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail }
+    });
+
     if (!user) {
-      return NextResponse.json({ message: "Email və ya şifrə yanlışdır." }, { status: 401 });
+      return NextResponse.json({
+        message: "E-poçt və ya şifrə yanlışdır."
+      }, { status: 401 });
     }
     
     // Check if user has a password (regular login) or uses LinkedIn login
@@ -28,7 +46,9 @@ export async function POST(req: NextRequest) {
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
-      return NextResponse.json({ message: "Email və ya şifrə yanlışdır." }, { status: 401 });
+      return NextResponse.json({
+        message: "E-poçt və ya şifrə yanlışdır."
+      }, { status: 401 });
     }
     
     // Update last login
@@ -46,7 +66,9 @@ export async function POST(req: NextRequest) {
       user: {
         id: user.id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        tier: user.tier,
+        linkedinUsername: user.linkedinUsername
       }
     });
     

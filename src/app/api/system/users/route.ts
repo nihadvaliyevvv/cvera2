@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error("Admin users fetch error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Daxili server xətası" }, { status: 500 });
   }
 }
 
@@ -83,7 +83,7 @@ export async function PATCH(req: NextRequest) {
     const { userId, action, data } = await req.json();
 
     if (!userId || !action) {
-      return NextResponse.json({ error: "User ID and action are required" }, { status: 400 });
+      return NextResponse.json({ error: "İstifadəçi ID və əməliyyat tələb olunur" }, { status: 400 });
     }
 
     const user = await prisma.user.findUnique({
@@ -91,13 +91,13 @@ export async function PATCH(req: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json({ error: "İstifadəçi tapılmadı" }, { status: 404 });
     }
 
     switch (action) {
       case "updateStatus":
         if (!data.status || !["active", "suspended", "deactivated"].includes(data.status)) {
-          return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+          return NextResponse.json({ error: "Etibarsız status" }, { status: 400 });
         }
         
         await prisma.user.update({
@@ -150,6 +150,6 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: true, message: "User updated successfully" });
   } catch (error) {
     console.error("Admin user update error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Daxili server xətası" }, { status: 500 });
   }
 }

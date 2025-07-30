@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth';
+import { validateEmail } from '@/lib/validation';
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
@@ -16,19 +17,82 @@ const LoginForm = ({ onSwitchToRegister, onSwitchToForgot }: LoginFormProps) => 
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({
+    email: '',
+    password: ''
+  });
+
+  // Real-time email validation
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const email = e.target.value;
+    setFormData(prev => ({ ...prev, email }));
+
+    // Clear previous error
+    setFieldErrors(prev => ({ ...prev, email: '' }));
+
+    // Validate email if not empty
+    if (email.trim()) {
+      const validation = validateEmail(email);
+      if (!validation.isValid) {
+        setFieldErrors(prev => ({ ...prev, email: validation.error! }));
+      }
+    }
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const password = e.target.value;
+    setFormData(prev => ({ ...prev, password }));
+
+    // Clear previous error
+    setFieldErrors(prev => ({ ...prev, password: '' }));
+
+    // Basic validation
+    if (password && password.length < 6) {
+      setFieldErrors(prev => ({ ...prev, password: 'Şifrə ən azı 6 simvoldan ibarət olmalıdır' }));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setFieldErrors({ email: '', password: '' });
+
+    // Validate email before submitting
+    const emailValidation = validateEmail(formData.email);
+    if (!emailValidation.isValid) {
+      setFieldErrors(prev => ({ ...prev, email: emailValidation.error! }));
+      setLoading(false);
+      return;
+    }
+
+    // Basic password validation
+    if (!formData.password) {
+      setFieldErrors(prev => ({ ...prev, password: 'Şifrə tələb olunur' }));
+      setLoading(false);
+      return;
+    }
 
     try {
-      await login(formData.email, formData.password);
+      await login(formData.email.trim().toLowerCase(), formData.password);
       // Don't call onSuccess() - let the auth system handle the redirect automatically
       // The login function already redirects to dashboard, calling onSuccess might interfere
     } catch (error) {
       console.error('Login failed:', error);
-      setError('Giriş uğursuz oldu. E-poçt və ya şifrə yanlışdır.');
+      if (error instanceof Error) {
+        // Check for specific error types and provide appropriate Azerbaijani messages
+        if (error.message.includes('401') || error.message.includes('Invalid credentials')) {
+          setError('E-poçt və ya şifrə yanlışdır. Zəhmət olmasa yenidən cəhd edin.');
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          setError('İnternet bağlantısı problemi. Zəhmət olmasa yenidən cəhd edin.');
+        } else if (error.message.includes('blocked') || error.message.includes('suspended')) {
+          setError('Hesabınız müvəqqəti bloklanıb. Dəstək ilə əlaqə saxlayın.');
+        } else {
+          setError('Giriş zamanı xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.');
+        }
+      } else {
+        setError('Giriş zamanı xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.');
+      }
     } finally {
       setLoading(false);
     }
@@ -39,8 +103,13 @@ const LoginForm = ({ onSwitchToRegister, onSwitchToForgot }: LoginFormProps) => 
     setLoading(true);
     setError('');
     
-    // LinkedIn OAuth login
-    window.location.href = '/api/auth/linkedin';
+    try {
+      // LinkedIn OAuth login
+      window.location.href = '/api/auth/linkedin';
+    } catch (error) {
+      setError('LinkedIn ilə giriş zamanı xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.');
+      setLoading(false);
+    }
   };
 
   return (
@@ -49,7 +118,8 @@ const LoginForm = ({ onSwitchToRegister, onSwitchToForgot }: LoginFormProps) => 
       <button
         type="button"
         onClick={handleLinkedInLogin}
-        className="w-full flex justify-center items-center gap-3 py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+        disabled={loading}
+        className="w-full flex justify-center items-center gap-3 py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#0077B5">
           <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
@@ -69,69 +139,81 @@ const LoginForm = ({ onSwitchToRegister, onSwitchToForgot }: LoginFormProps) => 
 
       {/* Email/Password Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          E-poçt
-        </label>
-        <input
-          id="email"
-          type="email"
-          required
-          value={formData.email}
-          onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-        />
-      </div>
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            E-poçt
+          </label>
+          <input
+            id="email"
+            type="email"
+            required
+            value={formData.email}
+            onChange={handleEmailChange}
+            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+              fieldErrors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
+            }`}
+          />
+          {fieldErrors.email && (
+            <p className="mt-2 text-sm text-red-600">{fieldErrors.email}</p>
+          )}
+        </div>
 
-      <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-          Şifrə
-        </label>
-        <input
-          id="password"
-          type="password"
-          required
-          value={formData.password}
-          onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-        />
-      </div>
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            Şifrə
+          </label>
+          <input
+            id="password"
+            type="password"
+            required
+            value={formData.password}
+            onChange={handlePasswordChange}
+            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+              fieldErrors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
+            }`}
+          />
+          {fieldErrors.password && (
+            <p className="mt-2 text-sm text-red-600">{fieldErrors.password}</p>
+          )}
+        </div>
 
-      {error && (
-        <div className="text-red-600 text-sm">{error}</div>
-      )}
+        {error && (
+          <div className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-md p-3">
+            {error}
+          </div>
+        )}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-      >
-        {loading ? 'Giriş edilir...' : 'Giriş'}
-      </button>
+        <button
+          type="submit"
+          disabled={loading || Object.values(fieldErrors).some(error => error !== '')}
+          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? 'Giriş edilir...' : 'Giriş'}
+        </button>
 
-      <div className="flex flex-col space-y-3">
-        {onSwitchToForgot && (
+        <div className="flex flex-col space-y-3">
+          {onSwitchToForgot && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={onSwitchToForgot}
+                className="text-sm text-blue-600 hover:text-blue-500"
+              >
+                Şifrəni unutmusan?
+              </button>
+            </div>
+          )}
+
           <div className="text-center">
             <button
               type="button"
-              onClick={onSwitchToForgot}
+              onClick={onSwitchToRegister}
               className="text-sm text-blue-600 hover:text-blue-500"
             >
-              Şifrəni unutmusan?
+              Hesabınız yoxdur? Qeydiyyatdan keçin
             </button>
           </div>
-        )}
-        
-        <div className="text-center">
-          <button
-            type="button"
-            onClick={onSwitchToRegister}
-            className="text-sm text-blue-600 hover:text-blue-500"
-          >
-            Hesabınız yoxdur? Qeydiyyatdan keçin
-          </button>
         </div>
-      </div>
       </form>
     </div>
   );

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function POST() {
   const response = NextResponse.json({ 
-    message: "Successfully logged out",
+    message: "Uğurla çıxış edildi",
     timestamp: new Date().toISOString()
   });
   

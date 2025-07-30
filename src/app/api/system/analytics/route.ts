@@ -105,6 +105,6 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error("Admin analytics fetch error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Daxili server xətası" }, { status: 500 });
   }
 }

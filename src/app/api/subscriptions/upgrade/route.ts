@@ -16,14 +16,14 @@ function getUserIdFromRequest(req: NextRequest): string | null {
 export async function POST(req: NextRequest) {
   const userId = getUserIdFromRequest(req);
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Giriş tələb olunur" }, { status: 401 });
   }
 
   try {
     const { tier } = await req.json();
     
     if (!tier || !['Free', 'Medium', 'Premium'].includes(tier)) {
-      return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
+      return NextResponse.json({ error: "Etibarsız paket" }, { status: 400 });
     }
 
     // Check if user already has an active subscription
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
     }
 
   } catch (error) {
-    console.error('Subscription upgrade error:', error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error("Subscription upgrade error:", error);
+    return NextResponse.json({ error: "Daxili server xətası" }, { status: 500 });
   }
 }

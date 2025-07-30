@@ -146,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Login failed');
+        throw new Error(error.error || 'Giriş uğursuz oldu');
       }
 
       const data = await response.json();
@@ -163,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           window.location.replace('/dashboard');
         }
       } else {
-        throw new Error('Invalid token received');
+        throw new Error('Yanlış token alındı');
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -186,7 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Registration failed');
+        throw new Error(error.error || 'Qeydiyyat uğursuz oldu');
       }
 
       // After registration, automatically log in
@@ -333,7 +333,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth yalnız AuthProvider daxilində istifadə edilməlidir');
   }
   return context;
 }

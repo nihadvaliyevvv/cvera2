@@ -89,8 +89,8 @@ export default function DashboardV2({ user, onCreateCV, onEditCV }: DashboardV2P
       console.log('📥 Dashboard: Çıxarılan CV sayı:', cvsArray.length);
       console.log('📥 Dashboard: CV array:', cvsArray);
 
-      if (cvsArray.length > 0) {
-        console.log('📋 Dashboard: İlk 3 CV:', cvsArray.slice(0, 3).map((cv: CV) => ({ id: cv.id, title: cv.title })));
+      if (cvsResponse.data.cvs && cvsResponse.data.cvs.length > 0) {
+        console.log('📋 Dashboard: Tapılan CV-lər:', cvsResponse.data.cvs.map((cv: any) => ({ id: cv.id, title: cv.title })));
       } else {
         console.log('❌ Dashboard: CV tapılmadı və ya boş array');
       }
@@ -107,7 +107,7 @@ export default function DashboardV2({ user, onCreateCV, onEditCV }: DashboardV2P
         console.log('✅ Dashboard: State update yoxlanır - CV sayı component-də:', cvsArray.length);
       }, 100);
 
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('❌ Dashboard data fetch error:', error);
 
       // Type-safe error handling
@@ -302,7 +302,7 @@ export default function DashboardV2({ user, onCreateCV, onEditCV }: DashboardV2P
                   }
 
                   // Get user's LinkedIn username from auth or user input
-                  let linkedinUsername = user.linkedinUsername;
+                  let linkedinUsername: string | undefined = user.linkedinUsername;
 
                   // If user doesn't have linkedinUsername, ask for it
                   if (!linkedinUsername) {

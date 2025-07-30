@@ -63,7 +63,7 @@ export class ApiClient {
           // Try to get text response for better error info
           const text = await response.text();
           console.log('Error response text:', text);
-          throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+          throw new Error(`HTTP xətası! status: ${response.status} - ${response.statusText}`);
         }
         return { data: null, status: response.status };
       }
@@ -77,15 +77,15 @@ export class ApiClient {
           if (typeof window !== 'undefined') {
             window.location.href = '/auth/login';
           }
-          throw new Error('Authentication required');
+          throw new Error('Autentifikasiya tələb olunur');
         }
 
-        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+        throw new Error(data.error || `HTTP xətası! status: ${response.status}`);
       }
 
       return { data, status: response.status };
     } catch (error) {
-      console.error('API request failed:', error);
+      console.error('API sorğusu uğursuz oldu:', error);
       throw error;
     }
   }

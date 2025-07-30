@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     const userId = getUserIdFromRequest(req);
     if (!userId) {
       return NextResponse.json(
-        { error: "Unauthorized - Token required" },
+        { error: "Giriş tələb olunur - Token lazımdır" },
         { status: 401 }
       );
     }
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: "User not found" },
+        { error: "İstifadəçi tapılmadı" },
         { status: 404 }
       );
     }
@@ -105,12 +105,11 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ AI Summary API error:', error);
-    
+    console.error('AI Summary API error:', error);
     return NextResponse.json(
-      { 
-        error: "Internal server error",
-        message: "AI summary yaradarkən xəta baş verdi. Yenidən cəhd edin."
+      {
+        error: "Daxili server xətası",
+        details: error instanceof Error ? error.message : "Naməlum xəta"
       },
       { status: 500 }
     );

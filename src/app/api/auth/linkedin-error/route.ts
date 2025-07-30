@@ -7,44 +7,44 @@ export async function GET(request: NextRequest) {
     const details = searchParams.get('details');
     const debug = searchParams.get('debug');
 
-    // Map LinkedIn OAuth errors to user-friendly messages
+    // Map LinkedIn OAuth errors to user-friendly messages in Azerbaijani
     const errorMessages: Record<string, { title: string; message: string; suggestion: string }> = {
-      'linkedin_oauth_failed': {
-        title: 'LinkedIn Login Failed',
-        message: 'There was an issue connecting to your LinkedIn account. Please try again.',
-        suggestion: 'Make sure you allow access to your LinkedIn profile when prompted.'
+      'linkedin_oauth_ugursuz': {
+        title: 'LinkedIn Girişi Uğursuz Oldu',
+        message: 'LinkedIn hesabınızla əlaqə qurarkən problem yaşandı. Zəhmət olmasa yenidən cəhd edin.',
+        suggestion: 'LinkedIn profilinizə giriş icazəsi verildiyindən əmin olun.'
       },
-      'no_code_received': {
-        title: 'Authorization Issue',
-        message: 'We didn\'t receive authorization from LinkedIn.',
-        suggestion: 'Please try the LinkedIn login process again.'
+      'avtorizasiya_kodu_alinmadi': {
+        title: 'Avtorizasiya Problemi',
+        message: 'LinkedIn-dən avtorizasiya kodu alınmadı.',
+        suggestion: 'Zəhmət olmasa LinkedIn giriş prosesini yenidən başladın.'
       },
-      'token_exchange_failed': {
-        title: 'Authentication Error',
-        message: 'Failed to complete LinkedIn authentication.',
-        suggestion: 'This might be a temporary issue. Please try again in a few moments.'
+      'token_deyisimi_ugursuz': {
+        title: 'Autentifikasiya Xətası',
+        message: 'LinkedIn autentifikasiyası tamamlana bilmədi.',
+        suggestion: 'Bu müvəqqəti problem ola bilər. Bir neçə dəqiqədən sonra yenidən cəhd edin.'
       },
       'profile_fetch_failed': {
-        title: 'Profile Access Error',
-        message: 'We couldn\'t access your LinkedIn profile information.',
-        suggestion: 'Please ensure your LinkedIn profile is public or try again.'
+        title: 'Profil Giriş Xətası',
+        message: 'LinkedIn profil məlumatlarınıza daxil ola bilmədik.',
+        suggestion: 'LinkedIn profilinizin açıq olduğundan əmin olun və ya yenidən cəhd edin.'
       },
       'no_email_provided': {
-        title: 'Email Required',
-        message: 'We need access to your email address to create your account.',
-        suggestion: 'Please make sure your LinkedIn email is accessible and try again.'
+        title: 'E-poçt Tələb Olunur',
+        message: 'Hesabınızı yaratmaq üçün e-poçt ünvanınıza ehtiyacımız var.',
+        suggestion: 'LinkedIn e-poçt ünvanınızın əlçatan olduğundan əmin olun və yenidən cəhd edin.'
       },
       'authentication_failed': {
-        title: 'Login Failed',
-        message: 'An unexpected error occurred during login.',
-        suggestion: 'Please try again or contact support if the issue persists.'
+        title: 'Giriş Uğursuz Oldu',
+        message: 'Giriş zamanı gözlənilməz xəta baş verdi.',
+        suggestion: 'Zəhmət olmasa yenidən cəhd edin və ya problem davam edərsə dəstək ilə əlaqə saxlayın.'
       }
     };
 
     const errorInfo = (error && errorMessages[error]) || {
-      title: 'Login Issue',
-      message: 'An unknown error occurred during LinkedIn login.',
-      suggestion: 'Please try again or use email login instead.'
+      title: 'Giriş Problemi',
+      message: 'LinkedIn girişi zamanı bilinməyən xəta baş verdi.',
+      suggestion: 'Zəhmət olmasa yenidən cəhd edin və ya e-poçt ilə giriş edin.'
     };
 
     // Log the error for debugging
@@ -87,13 +87,13 @@ export async function GET(request: NextRequest) {
         <h1>${errorInfo.title}</h1>
         <p>${errorInfo.message}</p>
         <div class="suggestion">
-            <strong>💡 Suggestion:</strong> ${errorInfo.suggestion}
+            <strong>💡 Təklif:</strong> ${errorInfo.suggestion}
         </div>
         <div class="buttons">
-            <a href="/api/auth/linkedin" class="btn btn-primary">Try LinkedIn Again</a>
-            <a href="/auth/login" class="btn btn-secondary">Use Email Login</a>
+            <a href="/api/auth/linkedin" class="btn btn-primary">Yenidən LinkedIn ilə Cəhd Et</a>
+            <a href="/auth/login" class="btn btn-secondary">E-poçt ilə Giriş Et</a>
         </div>
-        ${debug ? `<div class="details">Error Details: ${debug}</div>` : ''}
+        ${debug ? `<div class="details">Xəta Təfərrüatları: ${debug}</div>` : ''}
     </div>
 </body>
 </html>`;

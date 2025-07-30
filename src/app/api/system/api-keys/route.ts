@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error("Error fetching API keys:", error);
     return NextResponse.json(
-      { error: "Failed to fetch API keys" },
+      { error: "API açarları götürülmədi" },
       { status: 500 }
     );
   }
@@ -55,14 +55,14 @@ export async function POST(req: NextRequest) {
 
     if (!service || !key || !provider) {
       return NextResponse.json({
-        error: 'Service, key, and provider are required'
+        error: 'Servis, açar və təminatçı tələb olunur'
       }, { status: 400 });
     }
 
     // For now, return success message since we're using static configuration
     // In the future, this could save to database if apiKey model is added
     return NextResponse.json({
-      message: 'API key configuration noted. Currently using static configuration.',
+      message: 'API açar konfiqurasiyası qeyd edildi. Hazırda statik konfiqurasiya istifadə olunur.',
       key: {
         id: `${provider.toLowerCase()}-${Date.now()}`,
         service,
@@ -76,6 +76,6 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     console.error("Admin API key add error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Daxili server xətası" }, { status: 500 });
   }
 }

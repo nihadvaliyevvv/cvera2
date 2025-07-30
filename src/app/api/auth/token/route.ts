@@ -9,13 +9,13 @@ export async function GET(request: NextRequest) {
                   request.cookies.get('accessToken')?.value;
 
     if (!token) {
-      return NextResponse.json({ error: 'No token found' }, { status: 401 });
+      return NextResponse.json({ error: 'Token tapılmadı' }, { status: 401 });
     }
 
     // Verify token
     const payload = verifyJWT(token);
     if (!payload) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+      return NextResponse.json({ error: 'Etibarsız token' }, { status: 401 });
     }
 
     // Return token for frontend to store in localStorage
@@ -26,6 +26,6 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Get token error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Daxili server xətası' }, { status: 500 });
   }
 }

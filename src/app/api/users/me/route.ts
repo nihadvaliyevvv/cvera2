@@ -16,7 +16,7 @@ function getUserIdFromRequest(req: NextRequest): string | null {
 export async function GET(req: NextRequest) {
   const userId = getUserIdFromRequest(req);
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Giriş tələb olunur" }, { status: 401 });
   }
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -26,6 +26,8 @@ export async function GET(req: NextRequest) {
       email: true,
       loginMethod: true,
       linkedinId: true,
+      linkedinUsername: true,
+      tier: true,
       createdAt: true,
       updatedAt: true,
       subscriptions: {
@@ -44,7 +46,7 @@ export async function GET(req: NextRequest) {
     },
   });
   if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+    return NextResponse.json({ error: "İstifadəçi tapılmadı" }, { status: 404 });
   }
   return NextResponse.json(user);
 }
@@ -52,7 +54,7 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const userId = getUserIdFromRequest(req);
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Giriş tələb olunur" }, { status: 401 });
   }
 
   try {
