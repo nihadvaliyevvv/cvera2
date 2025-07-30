@@ -25,8 +25,12 @@ const LoginForm = ({ onSwitchToRegister, onSwitchToForgot }: LoginFormProps) => 
   // Form validasiya mesajlarını Azərbaycan dilinə çevirmək
   useEffect(() => {
     const setCustomValidationMessages = () => {
-      const emailInput = document.getElementById('email') as HTMLInputElement;
-      const passwordInput = document.getElementById('password') as HTMLInputElement;
+      // Daha spesifik selektorlar istifadə edək
+      const form = document.querySelector('form');
+      if (!form) return;
+
+      const emailInput = form.querySelector('#email') as HTMLInputElement;
+      const passwordInput = form.querySelector('#password') as HTMLInputElement;
 
       if (emailInput) {
         emailInput.setCustomValidity('');
@@ -39,6 +43,9 @@ const LoginForm = ({ onSwitchToRegister, onSwitchToForgot }: LoginFormProps) => 
           }
         };
         emailInput.oninput = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+        emailInput.onfocus = function(e) {
           (e.target as HTMLInputElement).setCustomValidity('');
         };
       }
@@ -56,12 +63,20 @@ const LoginForm = ({ onSwitchToRegister, onSwitchToForgot }: LoginFormProps) => 
         passwordInput.oninput = function(e) {
           (e.target as HTMLInputElement).setCustomValidity('');
         };
+        passwordInput.onfocus = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
       }
     };
 
-    setCustomValidationMessages();
-    const timer = setTimeout(setCustomValidationMessages, 50);
-    return () => clearTimeout(timer);
+    // Bir az gecikmə ilə çağır ki, DOM elementi tam yüklənsin
+    const timer1 = setTimeout(setCustomValidationMessages, 100);
+    const timer2 = setTimeout(setCustomValidationMessages, 500);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
   }, []);
 
   // Real-time email validation
@@ -191,9 +206,21 @@ const LoginForm = ({ onSwitchToRegister, onSwitchToForgot }: LoginFormProps) => 
             required
             value={formData.email}
             onChange={handleEmailChange}
+            onInvalid={(e) => {
+              const target = e.target as HTMLInputElement;
+              if (target.validity.valueMissing) {
+                target.setCustomValidity('E-poçt tələb olunur');
+              } else if (target.validity.typeMismatch) {
+                target.setCustomValidity('Düzgün e-poçt ünvanı daxil edin');
+              } else {
+                target.setCustomValidity('Etibarlı e-poçt ünvanı daxil edin');
+              }
+            }}
+            onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
             className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
               fieldErrors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
             }`}
+            placeholder="example@email.com"
           />
           {fieldErrors.email && (
             <p className="mt-2 text-sm text-red-600">{fieldErrors.email}</p>
@@ -208,11 +235,24 @@ const LoginForm = ({ onSwitchToRegister, onSwitchToForgot }: LoginFormProps) => 
             id="password"
             type="password"
             required
+            minLength={6}
             value={formData.password}
             onChange={handlePasswordChange}
+            onInvalid={(e) => {
+              const target = e.target as HTMLInputElement;
+              if (target.validity.valueMissing) {
+                target.setCustomValidity('Şifrə tələb olunur');
+              } else if (target.validity.tooShort) {
+                target.setCustomValidity('Şifrə ən azı 6 simvoldan ibarət olmalıdır');
+              } else {
+                target.setCustomValidity('Düzgün şifrə daxil edin');
+              }
+            }}
+            onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
             className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
               fieldErrors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
             }`}
+            placeholder="Şifrənizi daxil edin"
           />
           {fieldErrors.password && (
             <p className="mt-2 text-sm text-red-600">{fieldErrors.password}</p>

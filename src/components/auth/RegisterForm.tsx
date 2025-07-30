@@ -26,46 +26,95 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) => {
     confirmPassword: ''
   });
 
-  // Azərbaycan dilində sistem mesajları tətbiq et
+  // Form validasiya mesajlarını Azərbaycan dilinə çevirmək
   useEffect(() => {
-    const applyValidationMessages = () => {
-      const fields: { id: string; type?: string }[] = [
-        { id: 'name' },
-        { id: 'email', type: 'email' },
-        { id: 'password', type: 'password' },
-        { id: 'confirmPassword' },
-      ];
+    const setCustomValidationMessages = () => {
+      // Daha spesifik selektorlar istifadə edək
+      const form = document.querySelector('form');
+      if (!form) return;
 
-      fields.forEach(({ id, type }) => {
-        const input = document.getElementById(id) as HTMLInputElement | null;
-        if (!input) return;
+      const nameInput = form.querySelector('#name') as HTMLInputElement;
+      const emailInput = form.querySelector('#email') as HTMLInputElement;
+      const passwordInput = form.querySelector('#password') as HTMLInputElement;
+      const confirmPasswordInput = form.querySelector('#confirmPassword') as HTMLInputElement;
 
-        input.setCustomValidity('');
-
-        input.oninvalid = (e) => {
+      if (nameInput) {
+        nameInput.setCustomValidity('');
+        nameInput.oninvalid = function(e) {
           const target = e.target as HTMLInputElement;
           if (target.validity.valueMissing) {
             target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
-          } else if (type === 'email' && target.validity.typeMismatch) {
-            target.setCustomValidity('Zəhmət olmasa düzgün email ünvanı daxil edin');
-          } else if (type === 'password' && target.validity.tooShort) {
-            target.setCustomValidity('Şifrə ən azı 8 simvoldan ibarət olmalıdır');
-          } else {
-            target.setCustomValidity('Zəhmət olmasa düzgün məlumat daxil edin');
           }
         };
-
-        input.oninput = (e) => {
+        nameInput.oninput = function(e) {
           (e.target as HTMLInputElement).setCustomValidity('');
         };
-      });
+        nameInput.onfocus = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+      }
+
+      if (emailInput) {
+        emailInput.setCustomValidity('');
+        emailInput.oninvalid = function(e) {
+          const target = e.target as HTMLInputElement;
+          if (target.validity.valueMissing) {
+            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+          } else if (target.validity.typeMismatch) {
+            target.setCustomValidity('Zəhmət olmasa düzgün email ünvanı daxil edin');
+          }
+        };
+        emailInput.oninput = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+        emailInput.onfocus = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+      }
+
+      if (passwordInput) {
+        passwordInput.setCustomValidity('');
+        passwordInput.oninvalid = function(e) {
+          const target = e.target as HTMLInputElement;
+          if (target.validity.valueMissing) {
+            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+          } else if (target.validity.tooShort) {
+            target.setCustomValidity('Şifrə ən azı 8 simvoldan ibarət olmalıdır');
+          }
+        };
+        passwordInput.oninput = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+        passwordInput.onfocus = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+      }
+
+      if (confirmPasswordInput) {
+        confirmPasswordInput.setCustomValidity('');
+        confirmPasswordInput.oninvalid = function(e) {
+          const target = e.target as HTMLInputElement;
+          if (target.validity.valueMissing) {
+            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+          }
+        };
+        confirmPasswordInput.oninput = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+        confirmPasswordInput.onfocus = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+      }
     };
 
-    const timer = setTimeout(() => {
-      applyValidationMessages();
-    }, 200);
+    // Bir az gecikmə ilə çağır ki, DOM elementi tam yüklənsin
+    const timer1 = setTimeout(setCustomValidationMessages, 100);
+    const timer2 = setTimeout(setCustomValidationMessages, 500);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
   }, []);
 
   // Real-time validation
@@ -228,11 +277,24 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) => {
                 id="name"
                 type="text"
                 required
+                minLength={2}
                 value={formData.name}
                 onChange={handleNameChange}
+                onInvalid={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  if (target.validity.valueMissing) {
+                    target.setCustomValidity('Ad Soyad tələb olunur');
+                  } else if (target.validity.tooShort) {
+                    target.setCustomValidity('Ad Soyad ən azı 2 simvoldan ibarət olmalıdır');
+                  } else {
+                    target.setCustomValidity('Düzgün Ad Soyad daxil edin');
+                  }
+                }}
+                onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                 className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
                     fieldErrors.name ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
                 }`}
+                placeholder="Adınızı və soyadınızı daxil edin"
             />
             {fieldErrors.name && <p className="mt-2 text-sm text-red-600">{fieldErrors.name}</p>}
           </div>
@@ -247,9 +309,21 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) => {
                 required
                 value={formData.email}
                 onChange={handleEmailChange}
+                onInvalid={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  if (target.validity.valueMissing) {
+                    target.setCustomValidity('E-poçt tələb olunur');
+                  } else if (target.validity.typeMismatch) {
+                    target.setCustomValidity('Düzgün e-poçt ünvanı daxil edin');
+                  } else {
+                    target.setCustomValidity('Etibarlı e-poçt ünvanı daxil edin');
+                  }
+                }}
+                onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                 className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
                     fieldErrors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
                 }`}
+                placeholder="example@email.com"
             />
             {fieldErrors.email && <p className="mt-2 text-sm text-red-600">{fieldErrors.email}</p>}
           </div>
@@ -262,11 +336,24 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) => {
                 id="password"
                 type="password"
                 required
+                minLength={8}
                 value={formData.password}
                 onChange={handlePasswordChange}
+                onInvalid={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  if (target.validity.valueMissing) {
+                    target.setCustomValidity('Şifrə tələb olunur');
+                  } else if (target.validity.tooShort) {
+                    target.setCustomValidity('Şifrə ən azı 8 simvoldan ibarət olmalıdır');
+                  } else {
+                    target.setCustomValidity('Güclü şifrə daxil edin');
+                  }
+                }}
+                onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                 className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
                     fieldErrors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
                 }`}
+                placeholder="Ən azı 8 simvoldan ibarət şifrə"
             />
             {fieldErrors.password && <p className="mt-2 text-sm text-red-600">{fieldErrors.password}</p>}
           </div>
@@ -281,9 +368,19 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) => {
                 required
                 value={formData.confirmPassword}
                 onChange={handleConfirmPasswordChange}
+                onInvalid={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  if (target.validity.valueMissing) {
+                    target.setCustomValidity('Şifrə təsdiqi tələb olunur');
+                  } else {
+                    target.setCustomValidity('Şifrələr uyğun gəlmir');
+                  }
+                }}
+                onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                 className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
                     fieldErrors.confirmPassword ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
                 }`}
+                placeholder="Şifrəni təkrar daxil edin"
             />
             {fieldErrors.confirmPassword && (
                 <p className="mt-2 text-sm text-red-600">{fieldErrors.confirmPassword}</p>
