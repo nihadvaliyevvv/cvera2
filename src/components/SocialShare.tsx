@@ -53,7 +53,7 @@ export default function SocialShare({
       {/* LinkedIn */}
       <button
         onClick={() => handleShare('linkedin')}
-        className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        className="p-2 bg-[#58b4e4] text-white rounded-lg hover:bg-[#4da3d3] transition-colors"
         title="LinkedIn-də paylaş"
       >
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -64,7 +64,7 @@ export default function SocialShare({
       {/* Facebook */}
       <button
         onClick={() => handleShare('facebook')}
-        className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        className="p-2 bg-[#58b4e4] text-white rounded-lg hover:bg-[#4da3d3] transition-colors"
         title="Facebook-da paylaş"
       >
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -86,7 +86,7 @@ export default function SocialShare({
       {/* Telegram */}
       <button
         onClick={() => handleShare('telegram')}
-        className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+        className="p-2 bg-[#58b4e4] text-white rounded-lg hover:bg-[#4da3d3] transition-colors"
         title="Telegram-da paylaş"
       >
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

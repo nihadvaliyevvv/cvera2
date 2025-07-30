@@ -9,7 +9,7 @@ const LINKEDIN_CONFIG = {
   clientId: process.env.LINKEDIN_CLIENT_ID!,
   clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
   redirectUri: process.env.LINKEDIN_REDIRECT_URI!,
-  scope: 'openid profile email', // Updated to use modern LinkedIn API scopes
+  scope: 'openid profile email',
 };
 
 export async function GET(request: NextRequest) {
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     const accessToken = tokenData.access_token;
     console.log('Access token received:', accessToken ? 'YES' : 'NO');
 
-    // Try multiple LinkedIn API endpoints for better compatibility
+    // Get LinkedIn profile data
     let profileData = null;
     let email = null;
     let firstName = '';
@@ -119,16 +119,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=no_email_provided`);
     }
 
-    // Database operations
-    console.log('Checking user in database...');
+    // Enhanced database operations - check for existing user by email OR linkedinId
+    console.log('Checking user in database by email and LinkedIn ID...');
+
+    // First, try to find user by email
     let user = await prisma.user.findUnique({
       where: { email },
     });
 
+    // If no user found by email, try to find by LinkedIn ID
+    if (!user && linkedinId) {
+      user = await prisma.user.findUnique({
+        where: { linkedinId },
+      });
+    }
+
     // Try to extract LinkedIn username from profile data if available
     let linkedinUsername = null;
     if (profileData && profileData.publicProfileUrl) {
-      // Extract username from LinkedIn public profile URL
       const urlMatch = profileData.publicProfileUrl.match(/linkedin\.com\/in\/([^/?]+)/);
       if (urlMatch) {
         linkedinUsername = urlMatch[1];
@@ -137,48 +145,55 @@ export async function GET(request: NextRequest) {
     }
 
     if (!user) {
-      console.log('Creating new user...');
+      // Create new user - this is registration
+      console.log('Creating new user (LinkedIn registration)...');
       user = await prisma.user.create({
         data: {
           email,
           name: `${firstName} ${lastName}`.trim() || email.split('@')[0],
           linkedinId: linkedinId,
-          linkedinUsername: linkedinUsername, // LinkedIn username-ini saxlayırıq
-          tier: 'Free', // Matches database schema default
+          linkedinUsername: linkedinUsername,
+          tier: 'Free',
           status: 'active',
-          loginMethod: 'linkedin', // LinkedIn login method
-        },
-      });
-      console.log('New user created:', user.id);
-    } else {
-      console.log('Updating existing user...');
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          linkedinId: linkedinId || user.linkedinId,
-          linkedinUsername: linkedinUsername || user.linkedinUsername, // Username-i yeniləyirik
-          loginMethod: 'linkedin', // Update login method
+          loginMethod: 'linkedin',
+          emailVerified: new Date(), // Auto-verify LinkedIn users
           lastLogin: new Date(),
         },
       });
-      console.log('User updated:', user.id);
+      console.log('New user created (registration):', user.id);
+    } else {
+      // Update existing user - this is login
+      console.log('Updating existing user (LinkedIn login)...');
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          // Update LinkedIn data if not present or if changed
+          linkedinId: linkedinId || user.linkedinId,
+          linkedinUsername: linkedinUsername || user.linkedinUsername,
+          loginMethod: 'linkedin', // Update to LinkedIn login method
+          lastLogin: new Date(),
+          // Update name if it was missing or LinkedIn provides better data
+          name: user.name || `${firstName} ${lastName}`.trim() || email.split('@')[0],
+        },
+      });
+      console.log('Existing user updated (login):', user.id);
     }
 
     // Generate JWT token
     console.log('Generating JWT token...');
     const token = generateJWT({ userId: user.id, email: user.email });
 
-    // Create response with redirect to LinkedIn callback page (not directly to dashboard)
+    // Create response with redirect to LinkedIn callback page
     const response = NextResponse.redirect(`https://cvera.net/auth/linkedin-callback`);
 
-    // Set HTTP-only cookie with improved security settings
+    // Set secure HTTP-only cookie
     response.cookies.set('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Only secure in production
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 24 * 60 * 60, // 24 hours to match JWT expiration
+      maxAge: 24 * 60 * 60, // 24 hours
       path: '/',
-      domain: process.env.NODE_ENV === 'production' ? '.cvera.net' : undefined, // Allow subdomain access in production
+      domain: process.env.NODE_ENV === 'production' ? '.cvera.net' : undefined,
     });
 
     console.log('LinkedIn authentication successful, redirecting to callback page');
@@ -187,7 +202,6 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('LinkedIn OAuth callback error:', error);
 
-    // Type-safe error handling
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const errorStack = error instanceof Error ? error.stack : undefined;
 
@@ -196,5 +210,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=authentication_failed&debug=${encodeURIComponent(errorMessage)}`);
+  } finally {
+    await prisma.$disconnect();
   }
 }

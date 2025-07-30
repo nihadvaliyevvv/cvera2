@@ -7,7 +7,7 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gray-900 text-white">
+    <footer className="bg-white text-gray-900 border-t border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo və məlumat */}
@@ -16,9 +16,9 @@ export default function Footer() {
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
                 <span className="text-white font-bold text-lg">CV</span>
               </div>
-              <span className="text-2xl font-bold text-white">CVera</span>
+              <span className="text-2xl font-bold text-gray-900">CVera</span>
             </Link>
-            <p className="text-gray-300 mb-6 max-w-md">
+            <p className="text-gray-600 mb-6 max-w-md">
               AI ilə CV yaratmaq artıq daha asan! Peşəkar CV-lər yaradın və karyera yolunuzda uğurla irəliləyin.
             </p>
 
@@ -35,25 +35,25 @@ export default function Footer() {
 
           {/* Xidmətlər */}
           <div>
-            <h3 className="text-lg font-semibold text-white mb-4">Xidmətlər</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Xidmətlər</h3>
             <ul className="space-y-3">
               <li>
-                <Link href="/cv/create" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/cv/create" className="text-gray-600 hover:text-blue-600 transition-colors">
                   CV Yaratmaq
                 </Link>
               </li>
               <li>
-                <Link href="/templates" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/templates" className="text-gray-600 hover:text-blue-600 transition-colors">
                   CV Şablonları
                 </Link>
               </li>
               <li>
-                <Link href="/pricing" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/pricing" className="text-gray-600 hover:text-blue-600 transition-colors">
                   Qiymətləndirilmə
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/dashboard" className="text-gray-600 hover:text-blue-600 transition-colors">
                   Dashboard
                 </Link>
               </li>
@@ -62,25 +62,25 @@ export default function Footer() {
 
           {/* Şirkət */}
           <div>
-            <h3 className="text-lg font-semibold text-white mb-4">Şirkət</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Şirkət</h3>
             <ul className="space-y-3">
               <li>
-                <Link href="/terms" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/terms" className="text-gray-600 hover:text-blue-600 transition-colors">
                   İstifadə Şərtləri
                 </Link>
               </li>
               <li>
-                <Link href="/privacy" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/privacy" className="text-gray-600 hover:text-blue-600 transition-colors">
                   Məxfilik Siyasəti
                 </Link>
               </li>
               <li>
-                <a href="mailto:support@cvera.net" className="text-gray-300 hover:text-white transition-colors">
+                <a href="mailto:support@cvera.net" className="text-gray-600 hover:text-blue-600 transition-colors">
                   Dəstək
                 </a>
               </li>
               <li>
-                <a href="mailto:info@cvera.net" className="text-gray-300 hover:text-white transition-colors">
+                <a href="mailto:info@cvera.net" className="text-gray-600 hover:text-blue-600 transition-colors">
                   Əlaqə
                 </a>
               </li>
@@ -89,17 +89,17 @@ export default function Footer() {
         </div>
 
         {/* Rəsmi Sosial Media Linklər */}
-        <div className="border-t border-gray-800 pt-8 mt-8">
+        <div className="border-t border-gray-200 pt-8 mt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-6 mb-4 md:mb-0">
-              <span className="text-gray-300 text-sm">Bizi izləyin:</span>
+              <span className="text-gray-600 text-sm">Bizi izləyin:</span>
 
               {/* LinkedIn Rəsmi */}
               <a
                 href="https://www.linkedin.com/company/cvera-net"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-300 hover:text-blue-400 transition-colors"
+                className="text-gray-600 hover:text-blue-400 transition-colors"
                 title="LinkedIn-də izləyin"
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -112,7 +112,7 @@ export default function Footer() {
                 href="https://www.facebook.com/cvera.net"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-300 hover:text-blue-600 transition-colors"
+                className="text-gray-600 hover:text-blue-600 transition-colors"
                 title="Facebook-da izləyin"
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -125,7 +125,7 @@ export default function Footer() {
                 href="https://www.instagram.com/cvera.net"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-300 hover:text-pink-400 transition-colors"
+                className="text-gray-600 hover:text-pink-400 transition-colors"
                 title="Instagram-da izləyin"
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -140,7 +140,7 @@ export default function Footer() {
                 href="https://twitter.com/cvera_net"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-300 hover:text-blue-400 transition-colors"
+                className="text-gray-600 hover:text-[#58b4e4] transition-colors"
                 title="Twitter-də izləyin"
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">

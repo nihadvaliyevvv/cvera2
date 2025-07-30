@@ -216,21 +216,13 @@ export default function CVYaratmaqPage() {
         </main>
 
         {/* Footer */}
-        <footer className="bg-gray-900 text-white py-12 mt-16">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <Link href="/" className="inline-flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">CV</span>
-                </div>
-                <span className="text-xl font-bold">CVERA</span>
-              </Link>
-              <p className="text-gray-400 mb-6">Azerbaycan üçün ən yaxşı CV yaratmaq platforması</p>
-              <div className="flex justify-center space-x-6">
-                <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">Məxfilik</Link>
-                <Link href="/terms" className="text-gray-400 hover:text-white transition-colors">Şərtlər</Link>
-                <Link href="/" className="text-gray-400 hover:text-white transition-colors">Əlaqə</Link>
-              </div>
+        <footer className="bg-white text-gray-900 py-12 mt-16 border-t border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 text-center">
+            <p className="text-gray-600 mb-4">© 2025 CVera.net - Professional CV Yaratmaq Platforması</p>
+            <div className="flex justify-center space-x-6">
+              <a href="/terms" className="text-gray-600 hover:text-blue-600 transition-colors">İstifadə Şərtləri</a>
+              <a href="/privacy" className="text-gray-600 hover:text-blue-600 transition-colors">Məxfilik Siyasəti</a>
+              <a href="/contact" className="text-gray-600 hover:text-blue-600 transition-colors">Əlaqə</a>
             </div>
           </div>
         </footer>

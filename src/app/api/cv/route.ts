@@ -121,8 +121,11 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    console.log('✅ CV yaradıldı:', cv.id);
+
     return NextResponse.json({
       success: true,
+      cvId: cv.id,  // Bu sahə lazımdır - frontend bunu gözləyir
       cv: cv,
       message: 'CV uğurla yaradıldı'
     });

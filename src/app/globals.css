@@ -16,25 +16,14 @@
   --warning-color: #f59e0b;
 }
 
-/* Landing page navigation hover effects */
-.nav-link {
-  transition: color 0.3s ease;
-}
-
-.nav-link:hover {
-  color: var(--brand-blue);
+/* Hide default cursor and show only custom blue cursor */
+* {
+  cursor: none !important;
 }
 
 /* Smooth scroll behavior */
 html {
   scroll-behavior: smooth;
-}
-
-/* Animation for SVG dash effect */
-@keyframes dash {
-  to {
-    stroke-dashoffset: -30;
-  }
 }
 
 /* Force light mode - remove dark mode */
@@ -48,7 +37,7 @@ body {
 
 /* Main content should account for header */
 main {
-  min-height: calc(100vh - 80px); /* Adjust based on header height */
+  min-height: calc(100vh - 80px);
 }
 
 /* Custom scrollbar for better UX */
@@ -69,50 +58,10 @@ main {
   background: #94a3b8;
 }
 
-/* Smooth transitions */
-* {
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
-}
-
-/* Focus styles */
+/* Focus styles only */
 input:focus, textarea:focus, select:focus {
   outline: none;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-/* Button hover effects */
-.btn-primary {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.btn-primary:hover {
-  background-color: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
-}
-
-/* Card styles */
-.card {
-  background: var(--card-background);
-  border: 1px solid var(--border-color);
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Typography improvements */

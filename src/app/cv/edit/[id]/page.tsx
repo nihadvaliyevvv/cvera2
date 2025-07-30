@@ -8,6 +8,8 @@ import { apiClient } from '@/lib/api';
 import CVEditor from '@/components/cv/CVEditor';
 import { LoadingSpinner } from '@/components/ui/Loading';
 import { CVData } from '@/types/cv';
+import StandardHeader from '@/components/ui/StandardHeader';
+import Footer from '@/components/Footer';
 
 export default function EditCVPage() {
   const router = useRouter();
@@ -210,42 +212,46 @@ export default function EditCVPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      {/* Enhanced Background Effects */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-200/30 to-indigo-200/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 -left-48 w-80 h-80 bg-gradient-to-tr from-purple-200/20 to-pink-200/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-gradient-to-bl from-emerald-200/20 to-teal-200/20 rounded-full blur-3xl"></div>
-      </div>
-
-      {/* Navigation Header */}
-      <nav className="relative z-10 bg-white/80 backdrop-blur-md border-b border-gray-200/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Dashboard'a Qayıt
-            </Link>
-            <h1 className="text-lg font-semibold text-gray-900">
-              {isNewCV ? 'Yeni CV Yarat' : 'CV Redaktə Et'}
-            </h1>
-            <div className="w-24"></div> {/* Spacer for centering */}
-          </div>
+    <>
+      <StandardHeader />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        {/* Enhanced Background Effects */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-200/30 to-indigo-200/20 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 -left-48 w-80 h-80 bg-gradient-to-tr from-purple-200/20 to-pink-200/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-gradient-to-bl from-emerald-200/20 to-teal-200/20 rounded-full blur-3xl"></div>
         </div>
-      </nav>
 
-      {/* Main Content */}
-      <div className="relative z-10">
-        <CVEditor
-          cvId={isNewCV ? undefined : cvId}
-          onSave={handleSave}
-          onCancel={handleCancel}
-          initialData={linkedInData} // This is the key fix - passing LinkedIn data
-          userTier={getUserTier()} // Fixed: use function to extract tier from subscriptions
-        />
+        {/* Navigation Header */}
+        <nav className="relative z-10 bg-white/80 backdrop-blur-md border-b border-gray-200/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Dashboard'a Qayıt
+              </Link>
+              <h1 className="text-lg font-semibold text-gray-900">
+                {isNewCV ? 'Yeni CV Yarat' : 'CV Redaktə Et'}
+              </h1>
+              <div className="w-24"></div> {/* Spacer for centering */}
+            </div>
+          </div>
+        </nav>
+
+        {/* Main Content */}
+        <div className="relative z-10">
+          <CVEditor
+            cvId={isNewCV ? undefined : cvId}
+            onSave={handleSave}
+            onCancel={handleCancel}
+            initialData={linkedInData} // This is the key fix - passing LinkedIn data
+            userTier={getUserTier()} // Fixed: use function to extract tier from subscriptions
+          />
+        </div>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 }

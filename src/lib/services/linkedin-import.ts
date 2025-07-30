@@ -14,6 +14,8 @@ export const LINKEDIN_LIMITS = {
 
 export interface LinkedInProfile {
   name: string;
+  firstName: string;
+  lastName: string;
   headline: string;
   summary: string;
   location: string;
@@ -174,9 +176,34 @@ export class LinkedInImportService {
         data = data['0'];
       }
 
-      // Transform to our standard format
+      // Transform to our standard format with better name parsing
+      let firstName = '';
+      let lastName = '';
+      let fullName = '';
+
+      // Try to get first and last name separately
+      if (data.first_name && data.last_name) {
+        firstName = data.first_name.trim();
+        lastName = data.last_name.trim();
+        fullName = `${firstName} ${lastName}`.trim();
+      }
+      // If we have fullName but not separate names, try to split
+      else if (data.fullName || data.name) {
+        fullName = (data.fullName || data.name).trim();
+        const nameParts = fullName.split(' ');
+        if (nameParts.length >= 2) {
+          firstName = nameParts[0];
+          lastName = nameParts.slice(1).join(' ');
+        } else {
+          firstName = fullName;
+          lastName = '';
+        }
+      }
+
       const profile: LinkedInProfile = {
-        name: data.fullName || data.name || `${data.first_name || ''} ${data.last_name || ''}`.trim(),
+        name: fullName,
+        firstName: firstName,
+        lastName: lastName,
         headline: data.headline || data.sub_title || '',
         summary: data.about || data.summary || '',
         location: data.location || data.geo_location || '',
@@ -286,9 +313,11 @@ export class LinkedInImportService {
 
     const cvData = {
       personalInfo: {
+
         fullName: profile.name,
         email: '', // Will be filled by user later
         phone: '', // Will be filled by user later
+        address: profile.location,
         location: profile.location,
         linkedin: `https://linkedin.com/in/${linkedinUsername}`,
         summary: professionalSummary
@@ -306,6 +335,7 @@ export class LinkedInImportService {
         userId,
         title: `${profile.name} - LinkedIn Import`,
         cv_data: cvData,
+        templateId: 'professional',
         createdAt: new Date()
       }
     });

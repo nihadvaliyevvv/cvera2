@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 import { getLabel } from '@/lib/cvLanguage';
 
 interface PersonalInfo {
-  fullName: string; // Changed from 'name' to 'fullName'
+  firstName?: string;    // Ad sahəsi əlavə edildi
+  lastName?: string;     // Soyad sahəsi əlavə edildi
+  fullName: string;      // Tam ad - mövcud sahə
   email: string;
   phone: string;
   website?: string;
@@ -67,7 +69,16 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
   }, []);
 
   const handleChange = (field: keyof PersonalInfo, value: string) => {
-    onChange({ ...data, [field]: value });
+    const updatedData = { ...data, [field]: value };
+
+    // firstName və ya lastName dəyişdikdə fullName-i avtomatik yenilə
+    if (field === 'firstName' || field === 'lastName') {
+      const firstName = field === 'firstName' ? value : data.firstName || '';
+      const lastName = field === 'lastName' ? value : data.lastName || '';
+      updatedData.fullName = `${firstName} ${lastName}`.trim();
+    }
+
+    onChange(updatedData);
   };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -221,18 +232,35 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            {getLabel('fullName', 'azerbaijani')} <span className="text-red-500">*</span>
+            Ad <span className="text-red-500">*</span>
           </label>
           <input
-            id="fullName"
+            id="firstName"
             type="text"
-            value={data.fullName}
-            onChange={(e) => handleChange('fullName', e.target.value)}
+            value={data.firstName || ''}
+            onChange={(e) => handleChange('firstName', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            placeholder={getLabel('fullName', 'azerbaijani')}
+            placeholder="Adınız"
             required
           />
         </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Soyad <span className="text-red-500">*</span>
+          </label>
+          <input
+            id="lastName"
+            type="text"
+            value={data.lastName || ''}
+            onChange={(e) => handleChange('lastName', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            placeholder="Soyadınız"
+            required
+          />
+        </div>
+
+
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">

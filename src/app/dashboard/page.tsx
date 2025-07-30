@@ -43,10 +43,6 @@ export default function DashboardPage() {
     );
   }
 
-  const handleCreateCV = () => {
-    router.push('/cv/create');
-  };
-
   const handleEditCV = (cvId: string) => {
     router.push(`/cv/edit/${cvId}`);
   };
@@ -54,7 +50,6 @@ export default function DashboardPage() {
   return (
     <DashboardV2
       user={user}
-      onCreateCV={handleCreateCV}
       onEditCV={handleEditCV}
     />
   );

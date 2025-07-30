@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AuthProvider } from "@/lib/auth";
-import GlobalCursor from "@/components/ui/GlobalCursor";
-import MouseCursor from "@/components/ui/MouseCursor";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import TawkToWidget from "@/components/TawkToWidget";
+import SimpleCursor from "@/components/ui/SimpleCursor";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -75,10 +74,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased cursor-none`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <GlobalCursor />
-        <MouseCursor />
         <AuthProvider>
           <main>
             {children}
@@ -87,6 +84,7 @@ export default function RootLayout({
         <SpeedInsights />
         <GoogleAnalytics />
         <TawkToWidget />
+        <SimpleCursor />
       </body>
     </html>
   );

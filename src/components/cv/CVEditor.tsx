@@ -162,6 +162,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
       templateId: '',
       data: {
         personalInfo: {
+          firstName: '',
           fullName: '',
           email: '',
           phone: '',

@@ -232,7 +232,8 @@ export default function RegisterPage() {
   };
 
   const handleLinkedInRegister = () => {
-    window.location.href = '/api/auth/linkedin';
+    // Add from=register parameter to trigger cache clearing
+    window.location.href = '/api/auth/linkedin?from=register';
   };
 
   return (

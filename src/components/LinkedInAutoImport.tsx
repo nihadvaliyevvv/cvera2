@@ -1,4 +1,4 @@
-'use client';
+ 'use client';
 
 import React, { useState } from 'react';
 import { useAuth } from '@/lib/auth';
@@ -111,7 +111,7 @@ export default function LinkedInAutoImport({
                 ? 'bg-green-500 text-white cursor-default'
                 : importStatus === 'error'
                   ? 'bg-red-500 text-white cursor-pointer hover:bg-red-600'
-                  : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl'
+                  : 'bg-[#58b4e4] text-white hover:bg-[#4da3d3] shadow-lg hover:shadow-xl'
             }
             disabled:transform-none disabled:hover:scale-100
             ${className}
