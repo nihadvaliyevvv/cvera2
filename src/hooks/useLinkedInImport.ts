@@ -1,20 +1,9 @@
-import { useState, useCallback } from 'react';
-
-export interface LinkedInImportLimits {
-  canImport: boolean;
-  remainingImports: number;
-  userTier: string;
-  limits: {
-    Free: number;
-    Medium: number;
-    Premium: string;
-  };
-}
+import { useState } from 'react';
 
 export interface LinkedInImportResult {
   success: boolean;
   cvId?: string;
-  profile?: {
+  profileData?: {
     name: string;
     headline: string;
     location: string;
@@ -23,108 +12,41 @@ export interface LinkedInImportResult {
     skillsCount?: number;
   };
   error?: string;
-  remainingImports?: number;
+  message?: string;
 }
 
-export interface UseLinkedInImportReturn {
-  importProfile: (linkedinUrl: string) => Promise<LinkedInImportResult>;
-  checkLimits: () => Promise<LinkedInImportLimits | null>;
-  isLoading: boolean;
-  error: string | null;
-  limits: LinkedInImportLimits | null;
-}
-
-export function useLinkedInImport(): UseLinkedInImportReturn {
+export const useLinkedInImport = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [limits, setLimits] = useState<LinkedInImportLimits | null>(null);
 
-  const getAuthToken = () => {
-    return localStorage.getItem('token');
-  };
+  const importProfile = async (linkedinUrl: string): Promise<LinkedInImportResult> => {
+    setIsLoading(true);
+    setError(null);
 
-  const checkLimits = useCallback(async (): Promise<LinkedInImportLimits | null> => {
     try {
-      setError(null);
-
-      const token = getAuthToken();
+      const token = localStorage.getItem('accessToken');
       if (!token) {
-        setError('Authentication required');
-        return null;
-      }
-
-      const response = await fetch('/api/import/linkedin', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to check import limits');
-        return null;
-      }
-
-      const limitsData: LinkedInImportLimits = await response.json();
-      setLimits(limitsData);
-      return limitsData;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to check import limits';
-      setError(errorMessage);
-      return null;
-    }
-  }, []);
-
-  const importProfile = useCallback(async (linkedinUrl: string): Promise<LinkedInImportResult> => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('Authentication required');
-      }
-
-      if (!linkedinUrl?.trim()) {
-        throw new Error('LinkedIn URL or username is required');
+        throw new Error('Giriş tələb olunur');
       }
 
       const response = await fetch('/api/import/linkedin', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          linkedinUrl: linkedinUrl.trim()
-        }),
+        body: JSON.stringify({ linkedinUrl })
       });
 
-      const data = await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to import LinkedIn profile');
+        throw new Error(result.error || 'Import zamanı xəta baş verdi');
       }
 
-      // Update limits after successful import
-      if (data.remainingImports !== undefined && limits) {
-        setLimits({
-          ...limits,
-          remainingImports: data.remainingImports,
-          canImport: data.remainingImports > 0 || limits.userTier === 'Premium'
-        });
-      }
-
-      return {
-        success: true,
-        cvId: data.cvId,
-        profile: data.profile,
-        remainingImports: data.remainingImports
-      };
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to import LinkedIn profile';
+      return result;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Bilinməyən xəta baş verdi';
       setError(errorMessage);
       return {
         success: false,
@@ -133,13 +55,11 @@ export function useLinkedInImport(): UseLinkedInImportReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [limits]);
+  };
 
   return {
     importProfile,
-    checkLimits,
     isLoading,
-    error,
-    limits
+    error
   };
-}
+};
