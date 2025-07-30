@@ -1,603 +1,592 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
-import Link from 'next/link';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
-import Footer from '@/components/Footer';
+import { useEffect, useState } from 'react'
+import AOS from 'aos'
+import 'aos/dist/aos.css'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+import Footer from "@/components/Footer";
 
-export default function LandingPage() {
-  const { user } = useAuth();
-  const router = useRouter();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeFeature, setActiveFeature] = useState(0);
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: ''
-  });
-
-  useEffect(() => {
-    if (user) {
-      router.push('/dashboard');
-    }
-  }, [user, router]);
+export default function Index2() {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
     AOS.init({
-      duration: 800,
-      offset: 100,
+      duration: 1000,
+      once: false,
       easing: 'ease-out-cubic',
-      once: true,
-      anchorPlacement: 'top-bottom'
-    });
-  }, []);
+      mirror: true,
+      anchorPlacement: 'top-bottom',
+      offset: 120,
+    })
 
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Form submission:', formData);
-    router.push('/auth/register');
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
-
-  const features = [
-    {
-      title: "Sürətli Yaradılış",
-      description: "LinkedIn profilinizi import edib dəqiqələr içində professional CV hazırlayın."
-    },
-    {
-      title: "Professional Şablonlar", 
-      description: "Modern və cəlbedici CV şablonları arasından seçim edin və fərqlənin."
-    },
-    {
-      title: "Çoxlu Format",
-      description: "PDF və DOCX formatlarında CV-nizi yüksək keyfiyyətlə ixrac edin."
+    // Mouse tracking for cursor effect
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY })
     }
-  ];
+
+    window.addEventListener('mousemove', handleMouseMove)
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+    }
+  }, [])
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        delayChildren: 0.3,
+        staggerChildren: 0.2
+      }
+    }
+  }
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-white font-sans" style={{fontFamily: 'Inter, system-ui, sans-serif'}}>
-      {/* Header */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            {/* Logo */}
-            <div className="flex items-center">
-              <img 
-                src="/cveralogo.svg" 
-                alt="CVERA Logo" 
-                className="h-40 w-auto mr-2"
-              />
-            
-            </div>
+      <div className="min-h-screen bg-white cursor-none">
+        {/* Custom Cursor */}
+        <div
+            className="fixed top-0 left-0 w-6 h-6 bg-blue-500 rounded-full pointer-events-none z-50 mix-blend-multiply transition-transform duration-75 ease-out"
+            style={{
+              transform: `translate(${mousePosition.x - 12}px, ${mousePosition.y - 12}px)`,
+            }}
+        />
+        <div
+            className="fixed top-0 left-0 w-12 h-12 border-2 border-blue-300 rounded-full pointer-events-none z-50 transition-transform duration-150 ease-out"
+            style={{
+              transform: `translate(${mousePosition.x - 24}px, ${mousePosition.y - 24}px)`,
+            }}
+        />
 
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-8">
-              <span className="text-blue-600 font-bold">Ana Səhifə</span>
-              <Link href="/templates" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Şablonlar</Link>
-              <Link href="#features" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Xüsusiyyətlər</Link>
-              <Link href="/pricing" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Qiymətlər</Link>
-            </nav>
-            
-            <Link href="/auth/register" className="hidden lg:block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium transition-all duration-300">
-              CV Yarat
-            </Link>
-            
-            {/* Mobile menu button */}
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden p-2 rounded-lg text-gray-900">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {mobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
-            </button>
+        {/* Hero Section */}
+        <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-blue-100">
+          {/* Geometric Background Pattern */}
+          <div className="absolute inset-0 opacity-5">
+            <svg className="w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                  <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#2563eb" strokeWidth="0.5"/>
+                </pattern>
+              </defs>
+              <rect width="100" height="100" fill="url(#grid)" />
+            </svg>
           </div>
-        </div>
 
-        {/* Mobile Navigation Menu */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden bg-white border-t border-gray-100">
-            <nav className="px-6 py-6 space-y-4">
-              <span className="block text-blue-600 font-bold py-2">Ana Səhifə</span>
-              <Link href="/templates" onClick={() => setMobileMenuOpen(false)} className="block text-gray-700 font-medium py-2">Şablonlar</Link>
-              <Link href="#features" onClick={() => setMobileMenuOpen(false)} className="block text-gray-700 font-medium py-2">Xüsusiyyətlər</Link>
-              <Link href="/pricing" onClick={() => setMobileMenuOpen(false)} className="block text-gray-700 font-medium py-2">Qiymətlər</Link>
-              <Link href="/auth/register" className="block w-full text-center bg-blue-600 text-white px-6 py-3 rounded-lg font-medium mt-4">
-                CV Yarat
-              </Link>
-            </nav>
+          {/* Floating geometric elements */}
+          <div className="absolute inset-0">
+            <div className="absolute top-20 left-16 w-32 h-32 border-2 border-blue-200 rounded-full animate-pulse"></div>
+            <div className="absolute top-40 right-20 w-16 h-16 bg-blue-100 transform rotate-45 animate-bounce"></div>
+            <div className="absolute bottom-32 left-32 w-24 h-24 border border-blue-300 transform rotate-12 animate-pulse"></div>
+            <div className="absolute top-64 right-40 w-8 h-8 bg-blue-200 rounded-full animate-ping"></div>
           </div>
-        )}
-      </header>
 
-      {/* Hero Section */}
-      <section className="pt-20 pb-16 bg-gradient-to-br from-blue-50 to-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left side - Content */}
-            <div data-aos="fade-right">
-              <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-                CV-nizi {' '}
-                <span className="relative inline-block">
-                  Peşəkar Görünüşə Gətirin
-                  <svg className="absolute -bottom-2 left-0 w-full h-4" viewBox="0 0 300 20" fill="none">
-                    <path d="M5 15c30-10 70-15 140-10s110 10 140 5" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" fill="none"/>
-                  </svg>
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-32 relative z-10">
+            <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={containerVariants}
+                className="text-center"
+            >
+              {/* Main Heading */}
+              <motion.div
+                  variants={itemVariants}
+                  className="mb-12 sm:mb-16"
+                  data-aos="fade-up"
+              >
+                <div className="inline-block mb-4 sm:mb-6">
+                <span className="px-4 sm:px-6 py-2 bg-blue-100 text-blue-800 font-semibold rounded-full text-xs sm:text-sm tracking-wide uppercase">
+                  Peşəkar Karyera Platforması
                 </span>
-              </h1>
-              <p className="text-xl text-gray-600 mb-8 leading-relaxed max-w-lg">
-                LinkedIn profilinizi avtomatik import edin və professional CV-nizi dəqiqələr içində yaradın.
-              </p>
-              <div className="flex items-center space-x-4">
-                <Link href="/auth/register" className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300">
-                  <span>Pulsuz Başlayın</span>
-                  <div className="ml-3 w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z"/>
-                    </svg>
+                </div>
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-6 sm:mb-8 leading-tight">
+                  <span className="block text-gray-900 mb-2">Karyeranızı</span>
+                  <span className="block relative inline-block">
+                  <span className="absolute inset-0 bg-blue-500 transform -skew-y-2 rounded-lg opacity-100"></span>
+                  <span className="relative text-white px-2 py-1 transform -skew-y-2 -translate-y-4">
+                    Zirvəyə Çıxarın
+                  </span>
+                </span>
+                </h1>
+                <p className="text-lg sm:text-xl lg:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4">
+                  Süni intellekt və LinkedIn məlumatlarınızın birləşməsi sizi müsahibəyə aparacaq!              </p>
+              </motion.div>
+
+              {/* Professional Window Interface */}
+              <motion.div
+                  variants={itemVariants}
+                  data-aos="zoom-in"
+                  data-aos-delay="400"
+                  className="relative max-w-7xl mx-auto mb-16 sm:mb-20"
+              >
+                {/* Main Interface Container */}
+                <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-blue-100 overflow-hidden mx-4 sm:mx-0">
+                  {/* Interface Header */}
+                  <div className="bg-gradient-to-r from-blue-50 to-white px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 border-b border-blue-100 flex items-center justify-between">
+                    <div className="flex items-center gap-2 sm:gap-4">
+                      <div className="flex gap-1 sm:gap-2">
+                        <div className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-300 rounded-full"></div>
+                        <div className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-400 rounded-full"></div>
+                        <div className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-500 rounded-full"></div>
+                      </div>
+                      <div className="flex items-center">
+                        <img
+                            src="/cveralogo.svg"
+                            alt="CV Era Logo"
+                            className="h-20 sm:h-20 w-auto"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 sm:gap-3 text-blue-600">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-xs sm:text-sm font-medium hidden sm:inline">Secure Platform</span>
+                    </div>
                   </div>
+
+                  {/* Interface Content */}
+                  <div className="p-6 sm:p-8 lg:p-12 xl:p-20">
+                    <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-20 items-center">
+                      {/* Left Side - Features */}
+                      <div className="space-y-8 sm:space-y-12">
+                        <div className="text-center lg:text-left">
+                          <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">
+                            Bizi Fərqləndirən Xüsusiyyətlər
+                          </h3>
+                          <p className="text-gray-600 text-base sm:text-lg">
+                            İndustrial standartlara uyğun CV yaratma platforması
+                          </p>
+                        </div>
+
+                        <div className="space-y-6 sm:space-y-8">
+                          <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 group text-center sm:text-left" data-aos="fade-right" data-aos-delay="600">
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 mx-auto sm:mx-0 flex-shrink-0">
+                              <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                              </svg>
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex flex-col sm:flex-row items-center sm:items-center gap-3 sm:gap-4 mb-3 justify-center sm:justify-start">
+                                <div className="flex flex-col order-2 sm:order-1">
+                                  <div className="h-0.5 w-6 sm:w-8 bg-blue-600 mx-auto sm:mx-0"></div>
+                                  <div className="h-0.5 w-8 sm:w-12 bg-blue-600 mt-1 mx-auto sm:mx-0"></div>
+                                </div>
+                                <h4 className="font-bold text-gray-900 text-lg sm:text-xl order-1 sm:order-2">Süni İntellekt Dəstəyi</h4>
+                              </div>
+                              <p className="text-gray-600 leading-relaxed text-base sm:text-lg">
+                                Milyonlarla uğurlu CV məlumatını toplayaraq inkişaf edən süni intellekt sistemi ilə CV-nizi optimallaşdırırıq
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 group text-center sm:text-left" data-aos="fade-right" data-aos-delay="700">
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 mx-auto sm:mx-0 flex-shrink-0">
+                              <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                              </svg>
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex flex-col sm:flex-row items-center sm:items-center gap-3 sm:gap-4 mb-3 justify-center sm:justify-start">
+                                <div className="flex flex-col order-2 sm:order-1">
+                                  <div className="h-0.5 w-6 sm:w-8 bg-blue-600 mx-auto sm:mx-0"></div>
+                                  <div className="h-0.5 w-8 sm:w-12 bg-blue-600 mt-1 mx-auto sm:mx-0"></div>
+                                </div>
+                                <h4 className="font-bold text-gray-900 text-lg sm:text-xl order-1 sm:order-2">Premium Şablon Kolleksiyası</h4>
+                              </div>
+                              <p className="text-gray-600 leading-relaxed text-base sm:text-lg">
+                                HR mütəxəssisləri və peşəkar dizaynerlər tərəfindən hazırlanmış premium şablonlar sizi gözləyir
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 group text-center sm:text-left" data-aos="fade-right" data-aos-delay="800">
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 mx-auto sm:mx-0 flex-shrink-0">
+                              <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                              </svg>
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex flex-col sm:flex-row items-center sm:items-center gap-3 sm:gap-4 mb-3 justify-center sm:justify-start">
+                                <div className="flex flex-col order-2 sm:order-1">
+                                  <div className="h-0.5 w-6 sm:w-8 bg-blue-600 mx-auto sm:mx-0"></div>
+                                  <div className="h-0.5 w-8 sm:w-12 bg-blue-600 mt-1 mx-auto sm:mx-0"></div>
+                                </div>
+                                <h4 className="font-bold text-gray-900 text-lg sm:text-xl order-1 sm:order-2">LinkedIn-dən İdxal Sistemi</h4>
+                              </div>
+                              <p className="text-gray-600 leading-relaxed text-base sm:text-lg">
+                                LinkedIn linkinizi yazın və saniyələr ərzində peşəkar CV-nizi hazırlayın
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Side - CV Preview */}
+                      <div className="relative order-first lg:order-last" data-aos="fade-left" data-aos-delay="900">
+                        <div className="relative bg-gradient-to-br from-blue-50 to-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-10 border-2 border-dashed border-blue-200 shadow-inner">
+                          {/* Background Pattern */}
+                          <div className="absolute inset-4 opacity-5">
+                            <div className="w-full h-full" style={{
+                              backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%232563eb' fill-opacity='0.1'%3E%3Ccircle cx='10' cy='10' r='1'/%3E%3C/g%3E%3C/svg%3E")`,
+                            }} />
+                          </div>
+
+                          {/* Computer with CV Display */}
+                          <div className="relative z-10 transform hover:scale-105 transition-transform duration-500">
+                            {/* Computer Monitor */}
+                            <div className="bg-gray-800 rounded-t-2xl p-3 sm:p-4">
+                              <div className="flex items-center gap-2 mb-3">
+                                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                              </div>
+
+                              {/* Screen Content - Wavy Paper CV */}
+                              <div className="bg-gray-100 rounded-lg p-2 sm:p-4 aspect-[4/3] sm:aspect-[3/2] lg:aspect-[4/3] flex items-center justify-center overflow-hidden">
+                                {/* Wavy Paper CV */}
+                                <div className="relative w-full max-w-xs sm:max-w-sm h-40 sm:h-48 lg:h-56">
+                                  {/* Paper with wavy edges */}
+                                  <div className="relative bg-white h-full shadow-lg overflow-hidden"
+                                       style={{
+                                         clipPath: 'polygon(0% 5%, 3% 0%, 7% 3%, 12% 0%, 17% 4%, 22% 1%, 27% 5%, 32% 2%, 37% 6%, 42% 1%, 47% 4%, 52% 0%, 57% 5%, 62% 2%, 67% 6%, 72% 1%, 77% 4%, 82% 0%, 87% 5%, 92% 2%, 97% 6%, 100% 3%, 100% 95%, 97% 100%, 93% 97%, 88% 100%, 83% 96%, 78% 99%, 73% 95%, 68% 98%, 63% 94%, 58% 99%, 53% 96%, 48% 100%, 43% 95%, 38% 98%, 33% 94%, 28% 99%, 23% 96%, 18% 100%, 13% 95%, 8% 98%, 3% 94%, 0% 97%)'
+                                       }}>
+                                    <div className="p-3 sm:p-4 h-full flex flex-col">
+                                      {/* CV Header */}
+                                      <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
+                                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                          <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                          </svg>
+                                        </div>
+                                        <div className="flex-1">
+                                          <div className="h-2 bg-gray-800 rounded mb-1 w-16 sm:w-20"></div>
+                                          <div className="h-1.5 bg-blue-600 rounded w-12 sm:w-16"></div>
+                                        </div>
+                                      </div>
+
+                                      {/* CV Sections */}
+                                      <div className="space-y-2 sm:space-y-3 flex-1">
+                                        {/* Experience Section */}
+                                        <div>
+                                          <div className="h-2 bg-blue-700 rounded mb-1 w-10 sm:w-12"></div>
+                                          <div className="space-y-1">
+                                            <div className="h-1 bg-gray-300 rounded w-full"></div>
+                                            <div className="h-1 bg-gray-300 rounded w-4/5"></div>
+                                            <div className="h-1 bg-gray-300 rounded w-3/5"></div>
+                                          </div>
+                                        </div>
+
+                                        {/* Skills Section */}
+                                        <div>
+                                          <div className="h-2 bg-blue-700 rounded mb-1 w-8 sm:w-10"></div>
+                                          <div className="flex gap-1">
+                                            <div className="h-3 sm:h-4 bg-blue-100 rounded px-1 flex-1"></div>
+                                            <div className="h-3 sm:h-4 bg-blue-100 rounded px-1 flex-1"></div>
+                                          </div>
+                                        </div>
+
+                                        {/* Education Section */}
+                                        <div>
+                                          <div className="h-2 bg-blue-700 rounded mb-1 w-9 sm:w-11"></div>
+                                          <div className="space-y-1">
+                                            <div className="h-1 bg-gray-300 rounded w-full"></div>
+                                            <div className="h-1 bg-gray-300 rounded w-3/4"></div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Paper texture lines */}
+                                    <div className="absolute inset-0 pointer-events-none opacity-10">
+                                      <div className="h-full w-full" style={{
+                                        backgroundImage: 'repeating-linear-gradient(transparent, transparent 8px, #e5e7eb 8px, #e5e7eb 9px)',
+                                      }}></div>
+                                    </div>
+                                  </div>
+
+                                  {/* Paper shadow */}
+                                  <div className="absolute inset-0 -z-10 transform translate-x-1 translate-y-1 bg-gray-300 opacity-30 h-full"
+                                       style={{
+                                         clipPath: 'polygon(0% 5%, 3% 0%, 7% 3%, 12% 0%, 17% 4%, 22% 1%, 27% 5%, 32% 2%, 37% 6%, 42% 1%, 47% 4%, 52% 0%, 57% 5%, 62% 2%, 67% 6%, 72% 1%, 77% 4%, 82% 0%, 87% 5%, 92% 2%, 97% 6%, 100% 3%, 100% 95%, 97% 100%, 93% 97%, 88% 100%, 83% 96%, 78% 99%, 73% 95%, 68% 98%, 63% 94%, 58% 99%, 53% 96%, 48% 100%, 43% 95%, 38% 98%, 33% 94%, 28% 99%, 23% 96%, 18% 100%, 13% 95%, 8% 98%, 3% 94%, 0% 97%)'
+                                       }}>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Computer Base - Hidden on mobile */}
+                            <div className="bg-gray-700 rounded-b-lg h-3 sm:h-4 relative">
+                              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-6 sm:w-8 h-1.5 sm:h-2 bg-gray-600 rounded-t"></div>
+                            </div>
+
+                            {/* Computer Stand - Hidden on very small screens */}
+                            <div className="hidden sm:flex justify-center">
+                              <div className="w-0.5 sm:w-1 h-4 sm:h-6 bg-gray-600"></div>
+                            </div>
+                            <div className="bg-gray-600 rounded-lg h-2 sm:h-3 w-16 sm:w-20 mx-auto hidden sm:block"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* CTA Buttons - Responsive */}
+              <motion.div
+                  variants={itemVariants}
+                  data-aos="fade-up"
+                  data-aos-delay="1000"
+                  className="flex flex-col sm:flex-row gap-4 sm:gap-6 lg:gap-8 justify-center items-center mb-12 sm:mb-16 px-4"
+              >
+                <Link href="/auth/register">
+                  <button className="group relative w-full sm:w-auto px-8 sm:px-10 lg:px-12 py-4 sm:py-5 lg:py-6 bg-blue-600 text-white font-bold rounded-xl sm:rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-3 hover:scale-105 transition-all duration-300 overflow-hidden text-lg sm:text-xl">
+                    <div className="absolute inset-0 bg-blue-700 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
+                    <span className="relative flex items-center justify-center gap-3 sm:gap-4">
+                    CV Hazırlamağa Başlayın
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 group-hover:translate-x-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </span>
+                  </button>
                 </Link>
-              </div>
-            </div>
 
-            {/* Right side - Illustration */}
-            <div className="relative" data-aos="fade-left">
-              <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-3xl p-12 relative overflow-hidden">
-                {/* Professional with tablet illustration */}
-                <div className="relative z-10">
-                  <div className="bg-white rounded-2xl p-6 shadow-xl transform rotate-3 mb-8">
-                    <div className="flex items-center space-x-4 mb-4">
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-xl">👨‍💼</span>
-                      </div>
-                      <div>
-                        <div className="h-3 bg-gray-300 rounded w-24 mb-1"></div>
-                        <div className="h-2 bg-gray-200 rounded w-20"></div>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="h-2 bg-blue-600 rounded w-full"></div>
-                      <div className="h-2 bg-blue-400 rounded w-4/5"></div>
-                      <div className="h-2 bg-blue-200 rounded w-3/5"></div>
-                    </div>
-                  </div>
-                  
-                  {/* Decorative elements */}
-                  <div className="absolute top-8 right-8 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
-                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <Link href="/templates">
+                  <button className="group w-full sm:w-auto px-8 sm:px-10 lg:px-12 py-4 sm:py-5 lg:py-6 bg-white text-blue-600 font-bold rounded-xl sm:rounded-2xl border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50 transform hover:-translate-y-3 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl text-lg sm:text-xl">
+                  <span className="flex items-center justify-center gap-2 sm:gap-3">
+                    Şablonlar
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </span>
+                  </button>
+                </Link>
+              </motion.div>
+
+              {/* Trust Indicators - Responsive */}
+              <motion.div
+                  variants={itemVariants}
+                  data-aos="fade-up"
+                  data-aos-delay="1200"
+                  className="flex flex-wrap justify-center items-center gap-4 sm:gap-6 lg:gap-8 text-gray-600 px-4"
+              >
+                <div className="flex items-center gap-2 sm:gap-3 bg-white rounded-lg sm:rounded-xl px-3 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 shadow-lg border border-blue-100">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
                   </div>
-                  
-                  <div className="absolute bottom-4 left-4 w-12 h-12 bg-white rounded-lg transform -rotate-12 shadow-md"></div>
-                  <div className="absolute top-1/2 right-2 w-8 h-8 bg-white rounded-full shadow-md"></div>
+                  <span className="font-semibold text-sm sm:text-base">100-lərlə məmnun müştəri</span>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Social Proof Bar */}
-          <div className="mt-20 text-center" data-aos="fade-up">
-            <p className="text-gray-500 mb-8 font-medium">Əməkdaşlıqlarımız</p>
-            <div className="flex flex-wrap justify-center items-center space-x-12 opacity-60">
-              <div className="text-2xl font-bold text-gray-600">UWORK</div>
-             
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Everything You Need Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16" data-aos="fade-up">
-            <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">Mükəmməl CV üçün Hər Şey</h2>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left side - Feature snippets */}
-            <div data-aos="fade-right">
-              <div className="space-y-6">
-                <div className="flex items-center space-x-4 p-6 bg-gray-50 rounded-xl">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                <div className="flex items-center gap-2 sm:gap-3 bg-white rounded-lg sm:rounded-xl px-3 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 shadow-lg border border-blue-100">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                     </svg>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 mb-1">Sürətli Yaradılış</h3>
-                    <div className="flex text-yellow-400">
-                      {'★'.repeat(5)}
-                    </div>
-                  </div>
+                  <span className="font-semibold text-sm sm:text-base">Yüksək təhlükəsizlik</span>
                 </div>
-
-                <div className="flex items-center space-x-4 p-6 bg-gray-50 rounded-xl">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                <div className="flex items-center gap-2 sm:gap-3 bg-white rounded-lg sm:rounded-xl px-3 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 shadow-lg border border-blue-100">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
                     </svg>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 mb-1">Professional Şablonlar</h3>
-                    <div className="flex text-yellow-400">
-                      {'★'.repeat(5)}
-                    </div>
-                  </div>
+                  <span className="font-semibold text-sm sm:text-base">"İşıq" sürəti ilə hazırlama</span>
                 </div>
+              </motion.div>
+            </motion.div>
+          </div>
+        </section>
 
-                <div className="flex items-center space-x-4 p-6 bg-gray-50 rounded-xl">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 mb-1">Çoxlu Format</h3>
-                    <div className="flex text-yellow-400">
-                      {'★'.repeat(4)}★
-                    </div>
-                  </div>
-                </div>
+        {/* Features Section - Responsive */}
+        <section className="py-16 sm:py-24 lg:py-32 bg-white">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16 sm:mb-20 lg:mb-24" data-aos="fade-up">
+              <div className="inline-block mb-4 sm:mb-6">
+              <span className="px-4 sm:px-6 py-2 bg-blue-100 text-blue-800 font-semibold rounded-full text-xs sm:text-sm tracking-wide uppercase">
+                Platformanın Digər Xüsusiyyətləri Haqqında
+              </span>
               </div>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 sm:mb-8">
+                Sehrli <span className="text-blue-600">Toxunuşlar</span>
+              </h2>
+              <p className="text-lg sm:text-xl lg:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4">
+                Müasir texnologiyalar və Sİ gücü ilə karyeranız üçün ən yaxşı nəticəni əldə edin
+              </p>
             </div>
 
-            {/* Right side - Accordion */}
-            <div data-aos="fade-left">
-              <div className="space-y-4">
-                {features.map((feature, index) => (
-                  <div key={index} className="border border-gray-200 rounded-xl overflow-hidden">
-                    <button
-                      onClick={() => setActiveFeature(activeFeature === index ? -1 : index)}
-                      className={`w-full text-left p-6 flex items-center justify-between ${
-                        activeFeature === index ? 'bg-blue-50 border-b border-blue-100' : 'bg-white'
-                      }`}
-                    >
-                      <span className={`font-semibold ${activeFeature === index ? 'text-blue-600' : 'text-gray-900'}`}>
-                        {feature.title}
-                      </span>
-                      <svg className={`w-5 h-5 transition-transform ${activeFeature === index ? 'rotate-180 text-blue-600' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                    {activeFeature === index && (
-                      <div className="p-6 pt-0 bg-blue-50">
-                        <p className="text-gray-700 leading-relaxed">{feature.description}</p>
-                      </div>
-                    )}
-                  </div>
-                ))}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10 lg:gap-12">
+              {/* Feature 1 */}
+              <div className="group text-center hover:bg-blue-50 p-6 sm:p-8 lg:p-10 rounded-2xl sm:rounded-3xl transition-all duration-500 hover:shadow-2xl hover:-translate-y-4 border border-transparent hover:border-blue-100" data-aos="fade-up" data-aos-delay="200">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-blue-600 rounded-2xl sm:rounded-3xl flex items-center justify-center mx-auto mb-6 sm:mb-8 group-hover:scale-110 transition-transform duration-500 shadow-2xl">
+                  <svg className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">Süni İntellekt</h3>
+                <p className="text-gray-600 leading-relaxed text-base sm:text-lg">
+                  Gün keçdikcə daha da çox süni intellekt ilə inteqrasiya olunmuş yeniliklər əlavə ediləcəkdir.
+                </p>
+              </div>
+
+              {/* Feature 2 */}
+              <div className="group text-center hover:bg-blue-50 p-6 sm:p-8 lg:p-10 rounded-2xl sm:rounded-3xl transition-all duration-500 hover:shadow-2xl hover:-translate-y-4 border border-transparent hover:border-blue-100" data-aos="fade-up" data-aos-delay="400">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-blue-600 rounded-2xl sm:rounded-3xl flex items-center justify-center mx-auto mb-6 sm:mb-8 group-hover:scale-110 transition-transform duration-500 shadow-2xl">
+                  <svg className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">Göz Oxşayan İnterfeys</h3>
+                <p className="text-gray-600 leading-relaxed text-base sm:text-lg">
+                  Modern və minimal dizayn prinsipləri əsasında hazırlanmış interfeys ilə CVERA-dan zövq alacaqsınız.
+                </p>
+              </div>
+
+              {/* Feature 3 */}
+              <div className="group text-center hover:bg-blue-50 p-6 sm:p-8 lg:p-10 rounded-2xl sm:rounded-3xl transition-all duration-500 hover:shadow-2xl hover:-translate-y-4 border border-transparent hover:border-blue-100 sm:col-span-2 lg:col-span-1" data-aos="fade-up" data-aos-delay="600">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-blue-600 rounded-2xl sm:rounded-3xl flex items-center justify-center mx-auto mb-6 sm:mb-8 group-hover:scale-110 transition-transform duration-500 shadow-2xl">
+                  <svg className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">Hiss Olunan Sürət</h3>
+                <p className="text-gray-600 leading-relaxed text-base sm:text-lg">
+                  Cloud texnologiyası ilə saniyələr ərzində PDF formatında professional CV əldə edin
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* How It Works Section */}
+        <div className="container mx-auto px-4 mb-20">
+          <div id="how-it-works" className="scroll-mt-20">
+            <div className="text-center mb-16" data-aos="fade-up">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                <span className="bg-gradient-to-r from-blue-600 to-blue-600 bg-clip-text text-transparent">
+                  Necə İşləyir?
+                </span>
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                3 addımda professional CV-nizi hazırlayın
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="text-center relative" data-aos="slide-up" data-aos-delay="100">
+                <div className="bg-gradient-to-br from-brown-500 to-blue-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg relative z-10">
+                  <span className="text-2xl font-bold text-white">1</span>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4">Qeydiyyatdan Keçin</h3>
+                <p className="text-gray-600 mb-4">
+                  Email və şifrə ilə qeydiyyatdan keçin və ya LinkedIn hesabınızla daxil olun
+                </p>
+
+                {/* Arrow to next step */}
+                <div className="hidden md:block absolute top-10 -right-4 text-gray-300 z-0">
+                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd"></path>
+                  </svg>
+                </div>
+              </div>
+
+              <div className="text-center relative" data-aos="slide-up" data-aos-delay="200">
+                <div className="bg-gradient-to-br from-blue-500 to-brown-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg relative z-10">
+                  <span className="text-2xl font-bold text-white">2</span>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4">LinkedIn Import</h3>
+                <p className="text-gray-600 mb-4">
+                  LinkedIn profilinizi avtomatik olaraq import edin və məlumatlarınızı tamamlayın
+                </p>
+
+                {/* Arrow to next step */}
+                <div className="hidden md:block absolute top-10 -right-4 text-gray-300 z-0">
+                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd"></path>
+                  </svg>
+                </div>
+              </div>
+
+              <div className="text-center" data-aos="slide-up" data-aos-delay="300">
+                <div className="bg-gradient-to-br from-brown-500 to-blue-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                  <span className="text-2xl font-bold text-white">3</span>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4">CV-ni Ixrac Edin</h3>
+                <p className="text-gray-600 mb-4">
+                  Şablon seçin və professional CV-nizi PDF və ya DOCX formatında yükləyin
+                </p>
+
               </div>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* Our Features Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16" data-aos="fade-up">
-            <h2 id="features" className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">CVERA Xüsusiyyətləri</h2>
+
+        {/* Stats Section - Responsive */}
+        <section className="py-16 sm:py-24 lg:py-32 bg-gradient-to-br from-blue-600 to-blue-800 text-white relative overflow-hidden">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <svg className="w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="stats-pattern" width="20" height="20" patternUnits="userSpaceOnUse">
+                  <circle cx="10" cy="10" r="1" fill="white"/>
+                </pattern>
+              </defs>
+              <rect width="100" height="100" fill="url(#stats-pattern)" />
+            </svg>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-8">
-            <div className="bg-white rounded-2xl p-8 border border-gray-200" data-aos="fade-up" data-aos-delay="100">
-              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Real Vaxt Önizləmə</h3>
-              <p className="text-gray-600 leading-relaxed">Dəyişikliklərinizi canlı olaraq görün. Nə görürsünüzsə o da alırsınız.</p>
-            </div>
-
-            <div className="bg-blue-50 rounded-2xl p-8 border-2 border-blue-200 relative" data-aos="fade-up" data-aos-delay="200">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                Ən Məşhur
-              </div>
-              <div className="w-16 h-16 bg-blue-200 rounded-2xl flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Premium Şablonlar</h3>
-              <p className="text-gray-600 leading-relaxed">Sizi işə götürmək üçün hazırlanmış ekskluziv, modern şablonlara tam giriş.</p>
-            </div>
-
-            <div className="bg-white rounded-2xl p-8 border border-gray-200" data-aos="fade-up" data-aos-delay="300">
-              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">PDF və Docx Yükləmə</h3>
-              <p className="text-gray-600 leading-relaxed">Hazır CV-nizi bir kliklə PDF və Word formatlarında, çoxlu formatlarda yükləyin.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* What Benefits Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16" data-aos="fade-up">
-            <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">Niyə CVERA Seçməlisiniz?</h2>
+          {/* Geometric Elements - Responsive */}
+          <div className="absolute inset-0">
+            <div className="absolute top-10 sm:top-20 left-10 sm:left-20 w-20 h-20 sm:w-32 sm:h-32 lg:w-40 lg:h-40 border border-white/20 rounded-full hidden sm:block animate-pulse"></div>
+            <div className="absolute bottom-10 sm:bottom-20 right-10 sm:right-20 w-16 h-16 sm:w-24 sm:h-24 lg:w-32 lg:h-32 bg-white/10 transform rotate-45 hidden sm:block animate-bounce"></div>
+            <div className="absolute top-1/2 left-1/4 w-12 h-12 sm:w-16 sm:h-16 lg:w-24 lg:h-24 border-2 border-white/20 transform rotate-12 hidden lg:block animate-spin" style={{animationDuration: '8s'}}></div>
+            <div className="absolute top-1/4 right-1/3 w-8 h-8 sm:w-12 sm:h-12 lg:w-16 lg:h-16 bg-white/10 rounded-full animate-ping"></div>
+            <div className="absolute bottom-1/3 left-1/3 w-6 h-6 sm:w-10 sm:h-10 lg:w-14 lg:h-14 border border-white/30 transform rotate-45 animate-bounce" style={{animationDelay: '1s'}}></div>
+            <div className="absolute top-2/3 right-1/4 w-4 h-4 sm:w-8 sm:h-8 lg:w-12 lg:h-12 bg-white/20 rounded-full animate-pulse" style={{animationDelay: '2s'}}></div>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left side - Benefits list */}
-            <div data-aos="fade-right">
-              <div className="space-y-6">
-                {[
-                  "Daha çox müsahibə dəvəti alın",
-                  "Digərlərindən fərqlənin", 
-                  "Saatlarla vaxt və səy qənaət edin",
-                  "Müraciətinizdə özünüzə güvənin",
-                  "Professional və mütəşəkkil görünün"
-                ].map((benefit, index) => (
-                  <div key={index} className="flex items-center space-x-4">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-lg text-gray-700 font-medium">{benefit}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
-            {/* Right side - Laptop illustration */}
-            <div className="relative" data-aos="fade-left">
-              <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-3xl p-8">
-                <div className="bg-gray-800 rounded-2xl p-4 shadow-2xl">
-                  {/* Laptop screen */}
-                  <div className="bg-white rounded-lg p-6 aspect-video">
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full"></div>
-                        <div className="flex-1 space-y-2">
-                          <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-                          <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="h-3 bg-blue-600 rounded w-full"></div>
-                        <div className="h-3 bg-blue-400 rounded w-5/6"></div>
-                        <div className="h-3 bg-blue-200 rounded w-4/6"></div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 mt-4">
-                        <div className="space-y-2">
-                          <div className="h-2 bg-gray-300 rounded"></div>
-                          <div className="h-2 bg-gray-200 rounded w-3/4"></div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="h-2 bg-gray-300 rounded"></div>
-                          <div className="h-2 bg-gray-200 rounded w-2/3"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Laptop base */}
-                  <div className="h-4 bg-gray-700 rounded-b-xl"></div>
-                </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 text-center">
+              <div data-aos="fade-up" data-aos-delay="200" className="bg-white/10 backdrop-blur-lg rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-10 hover:bg-white/20 transition-all duration-300 hover:scale-105 border border-white/20">
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-2 sm:mb-4">150+</div>
+                <div className="text-blue-100 text-sm sm:text-lg lg:text-xl font-semibold">Yaradılmış CV</div>
+                <div className="text-blue-200 text-xs sm:text-sm mt-1 sm:mt-2">Bu il</div>
+              </div>
+              <div data-aos="fade-up" data-aos-delay="400" className="bg-white/10 backdrop-blur-lg rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-10 hover:bg-white/20 transition-all duration-300 hover:scale-105 border border-white/20">
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-2 sm:mb-4">98%</div>
+                <div className="text-blue-100 text-sm sm:text-lg lg:text-xl font-semibold">Uğur Dərəcəsi</div>
+                <div className="text-blue-200 text-xs sm:text-sm mt-1 sm:mt-2">İş qəbulu</div>
+              </div>
+              <div data-aos="fade-up" data-aos-delay="600" className="bg-white/10 backdrop-blur-lg rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-10 hover:bg-white/20 transition-all duration-300 hover:scale-105 border border-white/20">
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-2 sm:mb-4">24/7</div>
+                <div className="text-blue-100 text-sm sm:text-lg lg:text-xl font-semibold">Dəstək Xidməti</div>
+                <div className="text-blue-200 text-xs sm:text-sm mt-1 sm:mt-2">Canlı Dəstək</div>
+              </div>
+              <div data-aos="fade-up" data-aos-delay="800" className="bg-white/10 backdrop-blur-lg rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-10 hover:bg-white/20 transition-all duration-300 hover:scale-105 border border-white/20">
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-2 sm:mb-4">10+</div>
+                <div className="text-blue-100 text-sm sm:text-lg lg:text-xl font-semibold">Şablon Seçimi</div>
+                <div className="text-blue-200 text-xs sm:text-sm mt-1 sm:mt-2">Hər sahə üçün</div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Choose Plan Section */}
-      <section className="py-20 bg-gradient-to-br from-blue-50 via-white to-blue-100">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16" data-aos="fade-up">
-            <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">Sizə Uyğun Paket Seçin</h2>
-          </div>
-
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Free Plan */}
-            <div className="bg-white rounded-2xl p-8 border-2 border-gray-200" data-aos="fade-up" data-aos-delay="100">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Pulsuz</h3>
-              <div className="text-4xl font-bold text-gray-900 mb-6">0₼<span className="text-lg font-normal text-gray-500">/ay</span></div>
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-center space-x-3">
-                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-gray-700">1 CV</span>
-                </li>
-                <li className="flex items-center space-x-3">
-                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-gray-700">Əsas Şablonlar</span>
-                </li>
-                <li className="flex items-center space-x-3">
-                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-gray-700">CVERA Brendinqi</span>
-                </li>
-              </ul>
-              <Link href="/auth/register" className="w-full block text-center border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300">
-                Başlayın
-              </Link>
-            </div>
-
-            {/* Pro Plan - Most Popular */}
-            <div className="bg-white rounded-2xl p-8 border-2 border-blue-600 relative" data-aos="fade-up" data-aos-delay="200">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                Ən Məşhur
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Orta</h3>
-              <div className="text-4xl font-bold text-gray-900 mb-6">2.99₼<span className="text-lg font-normal text-gray-500">/ay</span></div>
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-center space-x-3">
-                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-gray-700">Limitsiz CV</span>
-                </li>
-                <li className="flex items-center space-x-3">
-                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-gray-700">Bütün Premium Şablonlar</span>
-                </li>
-                <li className="flex items-center space-x-3">
-                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-gray-700">LinkedIn İnteqrasiyası</span>
-                </li>
-                <li className="flex items-center space-x-3">
-                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-gray-700">Brendinqsiz</span>
-                </li>
-                <li className="flex items-center space-x-3">
-                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-gray-700">PDF və Docx İxrac</span>
-                </li>
-              </ul>
-              <Link href="/auth/register" className="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300">
-                Başlayın
-              </Link>
-            </div>
-
-            {/* Business Plan */}
-            <div className="bg-white rounded-2xl p-8 border-2 border-gray-200" data-aos="fade-up" data-aos-delay="300">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Premium</h3>
-              <div className="text-4xl font-bold text-gray-900 mb-6">4.99₼<span className="text-lg font-normal text-gray-500">/ay</span></div>
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-center space-x-3">
-                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-gray-700">Bütün premium xüsusiyyətlər</span>
-                </li>
-                <li className="flex items-center space-x-3">
-                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-gray-700">Komanda Əməkdaşlığı</span>
-                </li>
-                <li className="flex items-center space-x-3">
-                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-gray-700">Prioritet Dəstək</span>
-                </li>
-              </ul>
-              <Link href="/contact" className="w-full block text-center border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300">
-                Əlaqə Saxlayın
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials & Sign Up Section */}
-      <section className="py-20 bg-gray-900">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left side - Testimonial */}
-            <div data-aos="fade-right">
-              <h2 className="text-4xl font-bold text-white mb-8">İnsanlar CVERA Haqqında Nə Deyir</h2>
-              <blockquote className="text-xl text-gray-300 leading-relaxed mb-8">
-                "CV-im ilə həftələrlə mübarizə apardım. CVERA ilə bir saatdan az müddətdə professional CV yaratdım və növbəti həftə üç müsahibə dəvəti aldım. Tam oyun dəyişdirici!"
-              </blockquote>
-
-
-
-              {/* User avatars */}
-              <div className="flex items-center space-x-2">
-                <div className="flex -space-x-2">
-                  <div className="w-10 h-10 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center">
-                    <span className="text-white text-sm">👩</span>
-                  </div>
-                  <div className="w-10 h-10 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                    <span className="text-white text-sm">👨</span>
-                  </div>
-                  <div className="w-10 h-10 bg-purple-500 rounded-full border-2 border-white flex items-center justify-center">
-                    <span className="text-white text-sm">👩</span>
-                  </div>
-                  <div className="w-12 h-12 bg-blue-600 rounded-full border-4 border-white flex items-center justify-center relative z-10">
-                    <span className="text-white">👨</span>
-                  </div>
-                  <div className="w-10 h-10 bg-red-500 rounded-full border-2 border-white flex items-center justify-center">
-                    <span className="text-white text-sm">👩</span>
-                  </div>
-                </div>
-                <span className="text-gray-400 ml-4">+100 məmnun müştəri</span>
-              </div>
-            </div>
-
-            {/* Right side - Sign up form */}
-            <div className="bg-white rounded-2xl p-8" data-aos="fade-left">
-              <h3 className="text-3xl font-bold text-gray-900 mb-8">Səyahətinizə Başlayın</h3>
-              <form onSubmit={handleFormSubmit} className="space-y-6">
-                <div>
-                  <input 
-                    type="text"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleInputChange}
-                    placeholder="Ad Soyad"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                </div>
-                <div>
-                  <input 
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    placeholder="Email Ünvan"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                </div>
-                <div>
-                  <input 
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    placeholder="Şifrə"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                </div>
-                <button 
-                  type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300"
-                >
-                  Pulsuz Hesab Yaradın
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <Footer />
-    </div>
-  );
+        {/* Footer */}
+        <Footer />
+      </div>
+  )
 }
