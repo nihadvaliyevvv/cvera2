@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface ResetPasswordFormProps {
@@ -14,6 +14,46 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const router = useRouter();
+
+  // Form validasiya mesajlarını Azərbaycan dilinə çevirmək
+  useEffect(() => {
+    const setCustomValidationMessages = () => {
+      const passwordInput = document.getElementById('password') as HTMLInputElement;
+      const confirmPasswordInput = document.getElementById('confirmPassword') as HTMLInputElement;
+
+      if (passwordInput) {
+        passwordInput.setCustomValidity('');
+        passwordInput.oninvalid = function(e) {
+          const target = e.target as HTMLInputElement;
+          if (target.validity.valueMissing) {
+            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+          } else if (target.validity.tooShort) {
+            target.setCustomValidity('Şifrə ən azı 8 simvoldan ibarət olmalıdır');
+          }
+        };
+        passwordInput.oninput = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+      }
+
+      if (confirmPasswordInput) {
+        confirmPasswordInput.setCustomValidity('');
+        confirmPasswordInput.oninvalid = function(e) {
+          const target = e.target as HTMLInputElement;
+          if (target.validity.valueMissing) {
+            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+          }
+        };
+        confirmPasswordInput.oninput = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+      }
+    };
+
+    setCustomValidationMessages();
+    const timer = setTimeout(setCustomValidationMessages, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

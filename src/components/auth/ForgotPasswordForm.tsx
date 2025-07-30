@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { apiClient } from '@/lib/api';
 
 interface ForgotPasswordFormProps {
@@ -12,6 +12,32 @@ export default function ForgotPasswordForm({ onSwitchToLogin }: ForgotPasswordFo
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+
+  // Form validasiya mesajlarını Azərbaycan dilinə çevirmək
+  useEffect(() => {
+    const setCustomValidationMessages = () => {
+      const emailInput = document.getElementById('email') as HTMLInputElement;
+
+      if (emailInput) {
+        emailInput.setCustomValidity('');
+        emailInput.oninvalid = function (e) {
+          const target = e.target as HTMLInputElement;
+          if (target.validity.valueMissing) {
+            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+          } else if (target.validity.typeMismatch) {
+            target.setCustomValidity('Zəhmət olmasa düzgün email ünvanı daxil edin');
+          }
+        };
+        emailInput.oninput = function (e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+      }
+    };
+
+    setCustomValidationMessages();
+    const timer = setTimeout(setCustomValidationMessages, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,13 +85,9 @@ export default function ForgotPasswordForm({ onSwitchToLogin }: ForgotPasswordFo
         />
       </div>
 
-      {error && (
-        <div className="text-red-600 text-sm">{error}</div>
-      )}
+      {error && <div className="text-red-600 text-sm">{error}</div>}
 
-      {message && (
-        <div className="text-green-600 text-sm">{message}</div>
-      )}
+      {message && <div className="text-green-600 text-sm">{message}</div>}
 
       <button
         type="submit"

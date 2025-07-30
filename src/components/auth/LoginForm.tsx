@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { validateEmail } from '@/lib/validation';
 
@@ -21,6 +21,48 @@ const LoginForm = ({ onSwitchToRegister, onSwitchToForgot }: LoginFormProps) => 
     email: '',
     password: ''
   });
+
+  // Form validasiya mesajlarını Azərbaycan dilinə çevirmək
+  useEffect(() => {
+    const setCustomValidationMessages = () => {
+      const emailInput = document.getElementById('email') as HTMLInputElement;
+      const passwordInput = document.getElementById('password') as HTMLInputElement;
+
+      if (emailInput) {
+        emailInput.setCustomValidity('');
+        emailInput.oninvalid = function(e) {
+          const target = e.target as HTMLInputElement;
+          if (target.validity.valueMissing) {
+            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+          } else if (target.validity.typeMismatch) {
+            target.setCustomValidity('Zəhmət olmasa düzgün email ünvanı daxil edin');
+          }
+        };
+        emailInput.oninput = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+      }
+
+      if (passwordInput) {
+        passwordInput.setCustomValidity('');
+        passwordInput.oninvalid = function(e) {
+          const target = e.target as HTMLInputElement;
+          if (target.validity.valueMissing) {
+            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+          } else if (target.validity.tooShort) {
+            target.setCustomValidity('Şifrə ən azı 6 simvoldan ibarət olmalıdır');
+          }
+        };
+        passwordInput.oninput = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+      }
+    };
+
+    setCustomValidationMessages();
+    const timer = setTimeout(setCustomValidationMessages, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Real-time email validation
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getLabel } from '@/lib/cvLanguage';
 
 interface PersonalInfo {
@@ -25,6 +25,46 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
   const [aiGenerating, setAiGenerating] = useState(false);
   const isPremium = userTier === 'Premium';
   const canUseAI = userTier === 'Premium' || userTier === 'Medium';
+
+  // Form validasiya mesajlarını Azərbaycan dilinə çevirmək
+  useEffect(() => {
+    const setCustomValidationMessages = () => {
+      const fullNameInput = document.getElementById('fullName') as HTMLInputElement;
+      const emailInput = document.getElementById('email') as HTMLInputElement;
+
+      if (fullNameInput) {
+        fullNameInput.setCustomValidity('');
+        fullNameInput.oninvalid = function(e) {
+          const target = e.target as HTMLInputElement;
+          if (target.validity.valueMissing) {
+            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+          }
+        };
+        fullNameInput.oninput = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+      }
+
+      if (emailInput) {
+        emailInput.setCustomValidity('');
+        emailInput.oninvalid = function(e) {
+          const target = e.target as HTMLInputElement;
+          if (target.validity.valueMissing) {
+            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+          } else if (target.validity.typeMismatch) {
+            target.setCustomValidity('Zəhmət olmasa düzgün email ünvanı daxil edin');
+          }
+        };
+        emailInput.oninput = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+      }
+    };
+
+    setCustomValidationMessages();
+    const timer = setTimeout(setCustomValidationMessages, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleChange = (field: keyof PersonalInfo, value: string) => {
     onChange({ ...data, [field]: value });
@@ -184,6 +224,7 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
             {getLabel('fullName', 'azerbaijani')} <span className="text-red-500">*</span>
           </label>
           <input
+            id="fullName"
             type="text"
             value={data.fullName}
             onChange={(e) => handleChange('fullName', e.target.value)}
@@ -198,6 +239,7 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
             {getLabel('email', 'azerbaijani')} <span className="text-gray-400 text-xs">({getLabel('optional', 'azerbaijani')})</span>
           </label>
           <input
+            id="email"
             type="email"
             value={data.email}
             onChange={(e) => handleChange('email', e.target.value)}

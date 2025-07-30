@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { validateEmail, validatePassword, validateName } from '@/lib/validation';
 
@@ -25,6 +25,76 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) => {
     password: '',
     confirmPassword: ''
   });
+
+  // Form validasiya mesajlarını Azərbaycan dilinə çevirmək
+  useEffect(() => {
+    const setCustomValidationMessages = () => {
+      const nameInput = document.getElementById('name') as HTMLInputElement;
+      const emailInput = document.getElementById('email') as HTMLInputElement;
+      const passwordInput = document.getElementById('password') as HTMLInputElement;
+      const confirmPasswordInput = document.getElementById('confirmPassword') as HTMLInputElement;
+
+      if (nameInput) {
+        nameInput.setCustomValidity('');
+        nameInput.oninvalid = function(e) {
+          const target = e.target as HTMLInputElement;
+          if (target.validity.valueMissing) {
+            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+          }
+        };
+        nameInput.oninput = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+      }
+
+      if (emailInput) {
+        emailInput.setCustomValidity('');
+        emailInput.oninvalid = function(e) {
+          const target = e.target as HTMLInputElement;
+          if (target.validity.valueMissing) {
+            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+          } else if (target.validity.typeMismatch) {
+            target.setCustomValidity('Zəhmət olmasa düzgün email ünvanı daxil edin');
+          }
+        };
+        emailInput.oninput = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+      }
+
+      if (passwordInput) {
+        passwordInput.setCustomValidity('');
+        passwordInput.oninvalid = function(e) {
+          const target = e.target as HTMLInputElement;
+          if (target.validity.valueMissing) {
+            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+          } else if (target.validity.tooShort) {
+            target.setCustomValidity('Şifrə ən azı 8 simvoldan ibarət olmalıdır');
+          }
+        };
+        passwordInput.oninput = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+      }
+
+      if (confirmPasswordInput) {
+        confirmPasswordInput.setCustomValidity('');
+        confirmPasswordInput.oninvalid = function(e) {
+          const target = e.target as HTMLInputElement;
+          if (target.validity.valueMissing) {
+            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+          }
+        };
+        confirmPasswordInput.oninput = function(e) {
+          (e.target as HTMLInputElement).setCustomValidity('');
+        };
+      }
+    };
+
+    setCustomValidationMessages();
+    const timer = setTimeout(setCustomValidationMessages, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Real-time validation
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
