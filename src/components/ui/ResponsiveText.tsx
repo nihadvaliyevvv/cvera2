@@ -5,7 +5,7 @@ interface ResponsiveTextProps {
   children: React.ReactNode;
   variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'body' | 'caption';
   className?: string;
-  as?: keyof JSX.IntrinsicElements;
+  as?: React.ElementType;
 }
 
 const ResponsiveText: React.FC<ResponsiveTextProps> = ({
@@ -36,7 +36,7 @@ const ResponsiveText: React.FC<ResponsiveTextProps> = ({
     caption: 'span'
   };
 
-  const Component = as || defaultElements[variant] as keyof JSX.IntrinsicElements;
+  const Component = as || defaultElements[variant] as React.ElementType;
 
   return (
     <Component
