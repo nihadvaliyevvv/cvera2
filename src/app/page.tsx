@@ -124,7 +124,7 @@ export default function Index2() {
                 </span>
                 </h1>
                 <p className="text-lg sm:text-xl lg:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4">
-                  Süni intellektlə sürəli və fərdi CV hazırlayaraq karyeranızı zirvəyə daşıyın!              </p>
+                  Süni intellektlə sürətli və fərdi CV hazırlayaraq karyeranızı zirvəyə daşıyın!              </p>
               </motion.div>
 
               {/* Professional Window Interface */}

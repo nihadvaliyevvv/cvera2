@@ -34,12 +34,49 @@ export default function Footer() {
             <p className="text-gray-600 mb-6 max-w-md">
               LinkedIn və Süni İntellekt ilə fərdiləşdirilmiş və yüksək keyfiyyətli CV yaradın, karyera yolunda uğur qazanın.
             </p>
+
+
+            {/* Sosial Media İkonları */}
+            <div className="col-span-1 md:col-span-2 flex items-center space-x-4">
+              <span className="text-gray-600 text-sm">Bizi izləyin:</span>
+
+              {/* LinkedIn Rəsmi */}
+              <a
+                  href="https://www.linkedin.com/company/cveranet"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-600 hover:text-blue-400 transition-colors"
+                  title="LinkedIn-də izləyin"
+              >
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+              </a>
+
+
+              {/* Instagram Rəsmi */}
+              <a
+                  href="https://www.instagram.com/cveranet"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-600 hover:text-pink-400 transition-colors"
+                  title="Instagram-da izləyin"
+              >
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12.017 0C8.396 0 7.989.013 7.041.048 4.928.097 3.105 1.92 3.056 4.032.013 7.989 0 8.396 0 12.017c0 3.624.013 4.09.048 5.014.097 2.112 1.92 3.935 4.032 3.984C7.989 23.987 8.396 24 12.017 24c3.624 0 4.09-.013 5.014-.048 2.112-.097 3.935-1.92 3.984-4.032C23.987 16.011 24 15.604 24 12.017c0-3.624-.013-4.09-.048-5.014C23.905 4.928 22.082 3.105 19.97 3.056 16.011.013 15.604 0 12.017 0zm0 2.171c3.556 0 3.98.015 5.382.087 1.3.06 2.006.276 2.476.458.622.242 1.067.532 1.534.999.466.466.756.911.998 1.534.182.47.398 1.176.458 2.476.072 1.402.087 1.826.087 5.382 0 3.556-.015 3.98-.087 5.382-.06 1.3-.276 2.006-.458 2.476-.242.622-.532 1.067-.999 1.534-.466.466-.911.756-1.534.998-.47.182-1.176.398-2.476.458-1.402.072-1.826.087-5.382.087-3.556 0-3.98-.015-5.382-.087-1.3-.06-2.006-.276-2.476-.458-.622-.242-1.067-.532-1.534-.999-.466-.466-.756-.911-.998-1.534-.182-.47-.398-1.176-.458-2.476-.072-1.402-.087-1.826-.087-5.382 0-3.556.015-3.98.087-5.382.06-1.3.276-2.006.458-2.476.242-.622.532-1.067.999-1.534.466-.466.911-.756 1.534-.998.47-.182 1.176-.398 2.476-.458 1.402-.072 1.826-.087 5.382-.087z"/>
+                  <path d="M12.017 5.838A6.179 6.179 0 1 0 18.196 12.017 6.179 6.179 0 0 0 12.017 5.838zm0 10.188a4.009 4.009 0 1 1 4.009-4.009 4.009 4.009 0 0 1-4.009 4.009z"/>
+                  <circle cx="18.406" cy="5.594" r="1.44"/>
+                </svg>
+              </a>
+            </div>
           </div>
 
-          {/* Mobile: Xidmətlər və Ümumi eyni sətrdə, Desktop: hər ikisi sağda */}
+
+
+              {/* Mobile: Xidmətlər və Ümumi eyni sətrdə, Desktop: hər ikisi sağda */}
           <div className="col-span-1 md:col-span-2 grid grid-cols-2 md:grid-cols-2 gap-6">
             {/* Xidmətlər */}
-            <div className="text-left md:text-right">
+            <div className="text-left md:text-right md:ml-auto md:relative md:right-[-190px] " >
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Xidmətlər</h3>
               <ul className="space-y-3">
                 <li>
@@ -61,7 +98,7 @@ export default function Footer() {
             </div>
 
             {/* Ümumi */}
-            <div className="text-left md:text-right">
+            <div className="text-right md:text-right">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Ümumi</h3>
               <ul className="space-y-3">
                 <li>
@@ -86,50 +123,21 @@ export default function Footer() {
 
         {/* Rəsmi Sosial Media Linklər */}
         <div className="border-t border-gray-200 pt-8 mt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-6 mb-4 md:mb-0">
-              <span className="text-gray-600 text-sm">Bizi izləyin:</span>
-
-              {/* LinkedIn Rəsmi */}
-              <a
-                href="https://www.linkedin.com/company/cveranet"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-600 hover:text-blue-400 transition-colors"
-                title="LinkedIn-də izləyin"
-              >
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                </svg>
-              </a>
+          <div className="justify-between items-center">
 
 
-              {/* Instagram Rəsmi */}
-              <a
-                href="https://www.instagram.com/cveranet"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-600 hover:text-pink-400 transition-colors"
-                title="Instagram-da izləyin"
-              >
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12.017 0C8.396 0 7.989.013 7.041.048 4.928.097 3.105 1.92 3.056 4.032.013 7.989 0 8.396 0 12.017c0 3.624.013 4.09.048 5.014.097 2.112 1.92 3.935 4.032 3.984C7.989 23.987 8.396 24 12.017 24c3.624 0 4.09-.013 5.014-.048 2.112-.097 3.935-1.92 3.984-4.032C23.987 16.011 24 15.604 24 12.017c0-3.624-.013-4.09-.048-5.014C23.905 4.928 22.082 3.105 19.97 3.056 16.011.013 15.604 0 12.017 0zm0 2.171c3.556 0 3.98.015 5.382.087 1.3.06 2.006.276 2.476.458.622.242 1.067.532 1.534.999.466.466.756.911.998 1.534.182.47.398 1.176.458 2.476.072 1.402.087 1.826.087 5.382 0 3.556-.015 3.98-.087 5.382-.06 1.3-.276 2.006-.458 2.476-.242.622-.532 1.067-.999 1.534-.466.466-.911.756-1.534.998-.47.182-1.176.398-2.476.458-1.402.072-1.826.087-5.382.087-3.556 0-3.98-.015-5.382-.087-1.3-.06-2.006-.276-2.476-.458-.622-.242-1.067-.532-1.534-.999-.466-.466-.756-.911-.998-1.534-.182-.47-.398-1.176-.458-2.476-.072-1.402-.087-1.826-.087-5.382 0-3.556.015-3.98.087-5.382.06-1.3.276-2.006.458-2.476.242-.622.532-1.067.999-1.534.466-.466.911-.756 1.534-.998.47-.182 1.176-.398 2.476-.458 1.402-.072 1.826-.087 5.382-.087z"/>
-                  <path d="M12.017 5.838A6.179 6.179 0 1 0 18.196 12.017 6.179 6.179 0 0 0 12.017 5.838zm0 10.188a4.009 4.009 0 1 1 4.009-4.009 4.009 4.009 0 0 1-4.009 4.009z"/>
-                  <circle cx="18.406" cy="5.594" r="1.44"/>
-                </svg>
-              </a>
-
-
-            </div>
-
-            <div className="text-center md:text-right">
+            <div className="text-center ">
               <p className="text-gray-400 text-sm">
                 © {currentYear} cvera.net | Bütün hüquqlar qorunur.
               </p>
-              <p className="text-gray-500 text-xs mt-1">
+              <p className="text-gray-500  text-center  text-xs mt-1">
                 LinkedIn və Süni İntellekt inteqrasiyalı CV yaratma platforması.
               </p>
             </div>
+
+<br/>
+            <br/>
+
           </div>
         </div>
       </div>
