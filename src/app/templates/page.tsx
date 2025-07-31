@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import StandardHeader from '@/components/ui/StandardHeader';
@@ -30,6 +30,34 @@ export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const router = useRouter();
+
+  // Authentication kontrolü
+  useEffect(() => {
+    checkAuthentication();
+  }, []);
+
+  const checkAuthentication = async () => {
+    try {
+      const response = await fetch('/api/auth/me');
+      if (response.ok) {
+        setIsAuthenticated(true);
+        loadTemplates();
+      } else {
+        // Kullanıcı giriş yapmamış, login sayfasına yönlendir
+        router.push('/auth/login');
+        return;
+      }
+    } catch (error) {
+      console.error('Auth check error:', error);
+      router.push('/auth/login');
+      return;
+    } finally {
+      setAuthLoading(false);
+    }
+  };
 
   useEffect(() => {
     AOS.init({
@@ -38,25 +66,45 @@ export default function TemplatesPage() {
       easing: 'ease-out-cubic',
       once: true,
     });
-    
-    loadTemplates();
   }, []);
 
   const loadTemplates = async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/templates');
-      if (!response.ok) throw new Error('Templates yüklənərkən xəta baş verdi');
-      
+      if (!response.ok) {
+        setError('Templates yüklənərkən xəta baş verdi');
+        return;
+      }
+
       const data: TemplateApiResponse = await response.json();
-      setTemplates(data.templates || []);
-    } catch (err) {
-      console.error('Template loading error:', err);
-      setError(err instanceof Error ? err.message : 'Şablonlar yüklənərkən xəta baş verdi');
+      setTemplates(data.templates);
+      setError(''); // Clear any previous errors
+    } catch (error) {
+      console.error('Template loading error:', error);
+      setError('Templates yüklənərkən xəta baş verdi');
     } finally {
       setLoading(false);
     }
   };
+
+  // Authentication kontrolü devam ediyorsa loading göster
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Yüklənir...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Kullanıcı authenticated değilse bu component render edilmeyecek
+  // çünkü zaten login sayfasına yönlendirilmiş olacak
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const categories = [
     { id: 'all', name: 'Hamısı', count: templates.length },

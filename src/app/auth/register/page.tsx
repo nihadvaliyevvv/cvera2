@@ -410,7 +410,7 @@ export default function RegisterPage() {
 
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
+                  E-poçt ünvanı
                 </label>
                 <input
                   id="email"
@@ -419,7 +419,7 @@ export default function RegisterPage() {
                   autoComplete="email"
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm hover:border-gray-400"
-                  placeholder="example@email.com"
+                  placeholder="numune@cvera.net"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   onInvalid={(e) => {
@@ -462,7 +462,7 @@ export default function RegisterPage() {
                       } else if (target.validity.patternMismatch) {
                         target.setCustomValidity('Şifrə böyük və kiçik hərf ehtiva etməlidir');
                       } else {
-                        target.setCustomValidity('Güclü şifrə daxil edin');
+                        target.setCustomValidity('Güclü şifrə daxil etməlisiniz');
                       }
                     }}
                     onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
@@ -604,7 +604,7 @@ export default function RegisterPage() {
                   <span>Qeydiyyat...</span>
                 </div>
               ) : (
-                'Qeydiyyatdan keç'
+                'Qeydiyyatdan keçin'
               )}
             </button>
 

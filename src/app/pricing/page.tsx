@@ -22,9 +22,10 @@ const plans: PricingPlan[] = [
     name: 'Pulsuz',
     price: 0,
     features: [
-      'Gündə 2 CV yaratma limiti',
+      'Ümumi 2 CV yaratma ',
       'Pulsuz şablonlar (Basic və Resumonk Bold)',
       'Yalnız PDF formatında yükləmə',
+      'LinkedIn profilindən idxal',
       'E-poçt dəstəyi'
     ]
   },
@@ -33,11 +34,15 @@ const plans: PricingPlan[] = [
     name: 'Orta',
     price: 2.99,
     features: [
-      'Gündə 5 CV yaratma limiti',
+      'Gündə 5 CV yaratma ',
       'Pulsuz və Orta səviyyə şablonlar',
       'PDF və DOCX formatında yükləmə',
       'Saytda texniki dəstək',
-      'LinkedIn profilindən idxal'
+      'LinkedIn profilindən idxal',
+      'AI ilə CV təkmilləşdirmə',
+      'Professional şablon kolleksiyası',
+
+      'Prioritet dəstək xidməti'
     ],
     popular: true
   },
@@ -49,9 +54,12 @@ const plans: PricingPlan[] = [
       'Limitsiz CV yaratma',
       'Bütün şablonlar (Premium daxil)',
       'PDF və DOCX formatında yükləmə',
-      'CV-də şəkil yerləşdirmə imkanı',
-      'Prioritet dəstək xidməti',
-      'LinkedIn profilindən idxal'
+      'Saytda texniki dəstək',
+      'LinkedIn profilindən idxal',
+      'AI ilə CV təkmilləşdirmə',
+      'Professional şablon kolleksiyası',
+
+      'Prioritet dəstək xidməti'
     ]
   }
 ];
@@ -66,7 +74,7 @@ export default function PricingPage() {
     try {
       const token = localStorage.getItem('accessToken');
       if (!token) {
-        router.push('/login');
+        router.push('/auth/login');
         return;
       }
 
@@ -114,6 +122,14 @@ export default function PricingPage() {
       const plan = plans.find(p => p.id === planId);
       if (!plan) return;
 
+      // Plan tipini API-nin gözlədiyi formata çevir
+      let apiPlanType = plan.name;
+      if (plan.id === 'medium') {
+        apiPlanType = 'Medium'; // 'Orta' əvəzinə 'Medium' göndər
+      } else if (plan.id === 'premium') {
+        apiPlanType = 'Premium'; // Zaten doğru
+      }
+
       const response = await fetch('/api/payments', {
         method: 'POST',
         headers: {
@@ -121,7 +137,7 @@ export default function PricingPage() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          planType: plan.name,
+          planType: apiPlanType,
           amount: plan.price
         })
       });
@@ -235,9 +251,10 @@ export default function PricingPage() {
               return (
                 <div
                   key={plan.id}
-                  className={`relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/50 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 ${
+                  className={ `relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/50 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 flex flex-col ${
                     plan.popular ? 'ring-2 ring-blue-500 scale-105' : ''
                   }`}
+                  style={{ minHeight: '700px' }} // Minimum hündürlük təyin edirik
                 >
                   {plan.popular && (
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
@@ -247,7 +264,7 @@ export default function PricingPage() {
                     </div>
                   )}
 
-                  <div className="p-8">
+                  <div className="p-8 flex flex-col h-full">
                     {/* Plan Header */}
                     <div className="text-center mb-8">
                       <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center ${
@@ -284,56 +301,64 @@ export default function PricingPage() {
                       </div>
                     </div>
 
-                    {/* Features List */}
-                    <ul className="space-y-4 mb-8">
-                      {plan.features.map((feature, index) => (
-                        <li key={index} className="flex items-start">
-                          <div className="flex-shrink-0 w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                            <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </div>
-                          <span className="text-gray-700 text-sm leading-6">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    {/* Features List - flex-grow ile genişləyir */}
+                    <div className="flex-grow">
+                      <ul className="space-y-3">
+                        {plan.features.map((feature, index) => (
+                          <li key={index} className="flex items-start">
+                            <div className="flex-shrink-0 w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mr-3 mt-1">
+                              <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                            <span className="text-gray-700 text-sm leading-relaxed">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
 
-                    {/* Action Button */}
-                    <button
-                      onClick={() => handleUpgrade(plan.id)}
-                      disabled={loading === plan.id || isCurrentPlan || isDowngrade}
-                      className={`w-full py-4 px-6 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 ${
-                        isCurrentPlan
-                          ? 'bg-green-100 text-green-800 cursor-not-allowed'
-                          : isDowngrade
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : plan.popular
-                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
-                          : plan.id === 'premium'
-                          ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:from-yellow-600 hover:to-orange-600'
-                          : 'bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-700 hover:to-gray-800'
-                      }`}
-                    >
-                      {loading === plan.id ? (
-                        <div className="flex items-center justify-center">
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                          Yüklənir...
-                        </div>
-                      ) : isCurrentPlan ? (
-                        <div className="flex items-center justify-center">
-                          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                          Hazırki Plan
-                        </div>
-                      ) : isDowngrade ? (
-                        'Aşağı Səviyyə'
-                      ) : plan.price === 0 ? (
-                        'Pulsuz Başla'
-                      ) : (
-                        currentPlanId === 'free' ? 'Premium-a Yüksəl' : 'Planı Dəyişin'
-                      )}
-                    </button>
+                    {/* Action Button - həmişə aşağıda */}
+                    <div className="mt-8 pt-6 border-t border-gray-200">
+                      <button
+                        onClick={() => handleUpgrade(plan.id)}
+                        disabled={loading === plan.id || isCurrentPlan || isDowngrade}
+                        className={`w-full py-4 px-6 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 ${
+                          isCurrentPlan
+                            ? 'bg-green-100 text-green-800 cursor-not-allowed'
+                            : isDowngrade
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : plan.popular
+                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
+                            : plan.id === 'premium'
+                            ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:from-yellow-600 hover:to-orange-600'
+                            : 'bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-700 hover:to-gray-800'
+                        }`}
+                      >
+                        {loading === plan.id ? (
+                          <div className="flex items-center justify-center">
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                            Yüklənir...
+                          </div>
+                        ) : isCurrentPlan ? (
+                          <div className="flex items-center justify-center">
+                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            Hazırki Plan
+                          </div>
+                        ) : isDowngrade ? (
+                          'Aşağı Səviyyə'
+                        ) : plan.price === 0 ? (
+                          'Pulsuz Başla'
+                        ) : plan.id === 'medium' ? (
+                          'Orta Plan-a Yüksəlt'
+                        ) : plan.id === 'premium' ? (
+                          'Premium Plan-a Yüksəlt'
+                        ) : (
+                          'Planı Dəyişin'
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

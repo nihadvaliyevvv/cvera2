@@ -16,11 +16,21 @@ interface CV {
 }
 
 interface UserLimits {
-  userTier: string;
+  tier: string;
   limits: {
-    dailyCVLimit: number | string;
-    allowedTemplates: string[];
+    cvCount: number;
+    templatesAccess: string[];
+    dailyLimit: number;
+    aiFeatures: boolean;
+    limitType: string;
   };
+  usage: {
+    cvCount: number;
+    dailyUsage: number;
+    hasReachedLimit: boolean;
+    remainingLimit: number;
+  };
+  subscription: any | null;
 }
 
 interface DashboardV2Props {
@@ -167,7 +177,7 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
                   <div className="flex items-center justify-between">
                     <p className="text-2xl font-bold text-blue-900">
                       {(() => {
-                        const tier = userLimits?.userTier;
+                        const tier = userLimits?.tier;
                         if (tier === 'Free') return 'Pulsuz';
                         if (tier === 'Medium' || tier === 'Pro') return 'Orta';
                         if (tier === 'Premium' || tier === 'Business') return 'Premium';
@@ -189,8 +199,24 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
             <div className="bg-blue-50 rounded-2xl shadow-lg p-6 border border-blue-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-700">Günlük Limit</p>
-                  <p className="text-2xl font-bold text-blue-900">{userLimits?.limits.dailyCVLimit || '∞'}</p>
+                  <p className="text-sm font-medium text-blue-700">
+                    {userLimits?.limits.limitType === 'total' ? 'Ümumi Limit' :
+                     userLimits?.limits.limitType === 'daily' ? 'Günlük Limit' :
+                     'Limit'}
+                  </p>
+                  <p className="text-2xl font-bold text-blue-900">
+                    {userLimits?.limits.limitType === 'total'
+                      ? `${userLimits?.usage.remainingLimit}/${userLimits?.limits.cvCount}`
+                      : userLimits?.limits.limitType === 'daily'
+                        ? `${userLimits?.usage.remainingLimit}/${userLimits?.limits.dailyLimit}`
+                        : '∞'
+                    }
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {userLimits?.limits.limitType === 'total' ? '' :
+                     userLimits?.limits.limitType === 'daily' ? 'Bu gün qalan' :
+                     'Limitsiz'}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
