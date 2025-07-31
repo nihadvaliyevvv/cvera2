@@ -94,7 +94,7 @@ export default function Index2() {
                       animate={{opacity: 1, scale: 1, rotateY: 0}}
                       transition={{duration: 0.8, delay: 0.4}}
                   >
-               <span className="relative text-white px-4 py-2 transform -skew-y-2 block rounded-lg drop-shadow-lg font-bold " >
+               <span className="relative text-white px-4 py-2 transform -skew-y-2 block rounded-lg drop-shadow-lg font-bold text-2xl sm:text-3xl md:text-4xl lg:text-6xl xl:text-8xl" >
                       CVERA ilə yaradın!
                     </span>
 
