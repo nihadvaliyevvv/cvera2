@@ -34,54 +34,53 @@ export default function Footer() {
             <p className="text-gray-600 mb-6 max-w-md">
               LinkedIn və Süni İntellekt ilə fərdiləşdirilmiş və yüksək keyfiyyətli CV yaradın, karyera yolunda uğur qazanın.
             </p>
-
-
           </div>
 
-          {/* Xidmətlər */}
-          <div className="text-right">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Xidmətlər</h3>
-            <ul className="space-y-3">
-              <li>
-                <Link href="/cv/create" className="text-gray-600 hover:text-blue-600 transition-colors">
-                  CV Yaratmaq
-                </Link>
-              </li>
-              <li>
-                <Link href="/templates" className="text-gray-600 hover:text-blue-600 transition-colors">
-                  CV Şablonları
-                </Link>
-              </li>
-              <li>
-                <Link href="/pricing" className="text-gray-600 hover:text-blue-600 transition-colors">
-                  Qiymətləndirilmə
-                </Link>
-              </li>
+          {/* Mobile: Xidmətlər və Ümumi eyni sətrdə, Desktop: hər ikisi sağda */}
+          <div className="col-span-1 md:col-span-2 grid grid-cols-2 md:grid-cols-2 gap-6">
+            {/* Xidmətlər */}
+            <div className="text-left md:text-right">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Xidmətlər</h3>
+              <ul className="space-y-3">
+                <li>
+                  <Link href="/cv/create" className="text-gray-600 hover:text-blue-600 transition-colors">
+                    CV Yaratmaq
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/templates" className="text-gray-600 hover:text-blue-600 transition-colors">
+                    CV Şablonları
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/pricing" className="text-gray-600 hover:text-blue-600 transition-colors">
+                    Qiymətləndirilmə
+                  </Link>
+                </li>
+              </ul>
+            </div>
 
-            </ul>
-          </div>
-
-          {/* Şirkət */}
-          <div className="text-right">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Ümumi</h3>
-            <ul className="space-y-3">
-              <li>
-                <Link href="/terms" className="text-gray-600 hover:text-blue-600 transition-colors">
-                  İstifadə Şərtləri
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy" className="text-gray-600 hover:text-blue-600 transition-colors">
-                  Məxfilik Siyasəti
-                </Link>
-              </li>
-
-              <li>
-                <a href="mailto:info@cvera.net" className="text-gray-600 hover:text-blue-600 transition-colors">
-                  Əlaqə
-                </a>
-              </li>
-            </ul>
+            {/* Ümumi */}
+            <div className="text-left md:text-right">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Ümumi</h3>
+              <ul className="space-y-3">
+                <li>
+                  <Link href="/terms" className="text-gray-600 hover:text-blue-600 transition-colors">
+                    İstifadə Şərtləri
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy" className="text-gray-600 hover:text-blue-600 transition-colors">
+                    Məxfilik Siyasəti
+                  </Link>
+                </li>
+                <li>
+                  <a href="mailto:info@cvera.net" className="text-gray-600 hover:text-blue-600 transition-colors">
+                    Əlaqə
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
