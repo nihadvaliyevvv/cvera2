@@ -88,8 +88,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link href="/error/dashboard" className="flex items-center space-x-3 text-xl font-semibold text-gray-900">
-                <img src="/cveralogo.svg" alt="CVERA Logo" className="w-8 h-8" />
-                <span>CVera İdarə Paneli</span>
+                <img src="/cveralogo.png" alt="CVERA Logo" className="w-8 h-8" />
+                <span>CVERA İdarə Paneli</span>
               </Link>
               <div className="ml-6 flex space-x-4">
                 <Link

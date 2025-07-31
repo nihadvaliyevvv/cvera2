@@ -139,7 +139,7 @@ export default function Index2() {
                       </div>
                       <div className="flex items-center">
                         <img
-                            src="/cveralogo.svg"
+                            src="/cveralogo.png"
                             alt="CV Era Logo"
                             className="h-20 sm:h-20 w-auto"
                         />

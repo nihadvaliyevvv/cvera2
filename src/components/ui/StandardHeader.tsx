@@ -24,13 +24,12 @@ export default function StandardHeader() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg border border-white/30">
-              <span className="text-white font-bold text-lg">CV</span>
-            </div>
-            <div>
-              <span className="text-xl font-bold text-white">CVera</span>
-              <p className="text-xs text-blue-100 -mt-1">Professional CV Builder</p>
-            </div>
+            <img
+              src="/cveralogo-2.png"
+              alt="CVera Logo"
+              className="h-10 w-auto"
+            />
+
           </Link>
 
           {/* Navigation Menu */}

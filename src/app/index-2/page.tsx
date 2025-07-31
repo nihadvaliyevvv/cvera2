@@ -138,7 +138,7 @@ Süni intellekt və LinkedIn məlumatlarınızın birləşməsi sizi müsahibəy
                     </div>
                     <div className="flex items-center">
                       <img
-                        src="/cveralogo.svg"
+                        src="/cveralogo-2.png"
                         alt="CV Era Logo"
                         className="h-20 sm:h-20 w-auto"
                       />

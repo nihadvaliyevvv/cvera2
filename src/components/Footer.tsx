@@ -25,12 +25,14 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo və məlumat */}
           <div className="col-span-1 md:col-span-2">
-            <Link href="/" className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-lg">CV</span>
-              </div>
-              <span className="text-2xl font-bold text-gray-900">CVera</span>
-            </Link>
+
+              <img
+                src="/cveralogo.png"
+                alt="CVera Logo"
+                className="h-12 w-auto"
+              />
+            <br/>
+
             <p className="text-gray-600 mb-6 max-w-md">
               LinkedIn və Süni İntellekt ilə fərdiləşdirilmiş və yüksək keyfiyyətli CV yaradın, karyera yolunda uğur qazanın.
             </p>

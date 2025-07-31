@@ -95,7 +95,7 @@ export default function LandingPage() {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center space-x-3">
-              <img src="/cveralogo.svg" alt="CVERA Logo" className="h-40 w-auto" />
+              <img src="/cveralogo.png" alt="CVERA Logo" className="h-40 w-auto" />
             </div>
 
             {/* Navigation */}
