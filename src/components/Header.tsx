@@ -18,27 +18,26 @@ export default function Header({ showAuthButtons = true, currentPage }: HeaderPr
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16 md:h-20">
+    <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50 w-full">
+      <div className="w-full max-w-none mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16 md:h-20 w-full">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center space-x-2">
               <img
                 src="/cveralogo.png"
                 alt="CVERA"
-                className="h-5 w-auto sm:h-5 md:h-5 lg:h-6"
-                style={{ width: '150px', height: 'auto' }} // Logo ölçüs
+                className="h-8 w-12 sm:h-10 md:h-12"
+                style={{ width: '150px', height: 'auto' }} // Logo ölçüsünü tənzimləmək üçün
               />
 
             </Link>
           </div>
 
 
-
           {/* Desktop Auth Buttons */}
           {showAuthButtons && (
-            <div className="hidden md:flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-4 flex-shrink-0">
               {currentPage !== 'login' && (
                 <Link
                   href="/auth/login"
@@ -59,7 +58,7 @@ export default function Header({ showAuthButtons = true, currentPage }: HeaderPr
           )}
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex-shrink-0">
             <button
               onClick={toggleMobileMenu}
               className="text-gray-700 hover:text-blue-600 p-2"
@@ -86,11 +85,11 @@ export default function Header({ showAuthButtons = true, currentPage }: HeaderPr
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200">
+          <div className="md:hidden py-4 border-t border-gray-200 w-full">
             <div className="flex flex-col space-y-4">
 
               {showAuthButtons && (
-                <div className="border-t border-gray-200 pt-4 mt-4">
+                <div className="border-t border-gray-200 pt-4 mt-4 space-y-3">
                   {currentPage !== 'login' && (
                     <Link
                       href="/auth/login"
@@ -99,12 +98,11 @@ export default function Header({ showAuthButtons = true, currentPage }: HeaderPr
                     >
                       Giriş
                     </Link>
-
-                  )}<br />
+                  )} <br/>
                   {currentPage !== 'register' && (
                     <Link
                       href="/auth/register"
-                      className="block bg-blue-600 hover:bg-blue-700  text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200 mx-4 text-center"
+                      className="block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors duration-200 mx-4 text-center"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Qeydiyyat

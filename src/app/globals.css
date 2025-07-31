@@ -17,9 +17,52 @@
 }
 
 /* Responsive base styles */
+/* Yalnız desktop-də custom cursor */
+@media (min-width: 1025px) and (hover: hover) and (pointer: fine) {
+  * {
+    cursor: none !important;
+    box-sizing: border-box;
+  }
+}
+
+/* Bütün cihazlarda default cursor */
 * {
-  cursor: none !important;
   box-sizing: border-box;
+  cursor: auto !important;
+}
+
+/* Mobil və tablet cihazlarda cursor-u tamamilə deaktiv et */
+@media (max-width: 1024px) {
+  * {
+    cursor: auto !important;
+  }
+}
+
+/* Touch cihazlarda cursor-u deaktiv et */
+@media (hover: none) {
+  * {
+    cursor: auto !important;
+  }
+}
+
+/* Coarse pointer (finger touch) cihazlarda */
+@media (pointer: coarse) {
+  * {
+    cursor: auto !important;
+  }
+}
+
+/* Mobile Safari spesifik */
+@media screen and (max-device-width: 480px) {
+  * {
+    cursor: auto !important;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
 }
 
 /* Ensure viewport responsiveness */
@@ -55,7 +98,7 @@ main {
   margin: 0;
 }
 
-/* Container responsive styles */
+/* Container responsive styles - ALWAYS 100% width on desktop */
 .container {
   width: 100%;
   max-width: 100%;
@@ -67,7 +110,8 @@ main {
 
 @media (min-width: 640px) {
   .container {
-    max-width: 640px;
+    width: 100%; /* Always 100% width */
+    max-width: 100%;
     padding-left: 2rem;
     padding-right: 2rem;
   }
@@ -75,43 +119,53 @@ main {
 
 @media (min-width: 768px) {
   .container {
-    max-width: 768px;
+    width: 100%; /* Always 100% width */
+    max-width: 100%;
   }
 }
 
 @media (min-width: 1024px) {
   .container {
-    max-width: 1024px;
-    padding-left: 4rem;
-    padding-right: 4rem;
+    width: 100%; /* Always 100% width */
+    max-width: 100%;
+    padding-left: 3rem;
+    padding-right: 3rem;
   }
 }
 
 @media (min-width: 1280px) {
   .container {
-    max-width: 1280px;
-    padding-left: 5rem;
-    padding-right: 5rem;
+    width: 100%; /* Always 100% width */
+    max-width: 100%;
+    padding-left: 4rem;
+    padding-right: 4rem;
   }
 }
 
 @media (min-width: 1536px) {
   .container {
-    max-width: 1536px;
-    padding-left: 6rem;
-    padding-right: 6rem;
+    width: 100%; /* Always 100% width */
+    max-width: 100%;
+    padding-left: 5rem;
+    padding-right: 5rem;
   }
 }
 
 @media (min-width: 1920px) {
   .container {
-    max-width: 1920px;
+    width: 100%; /* Always 100% width */
+    max-width: 100%;
+    padding-left: 6rem;
+    padding-right: 6rem;
   }
 }
 
 @media (min-width: 2560px) {
   .container {
-    max-width: 2560px;
+    width: 100%; /* Always 100% width */
+    max-width: 100%;
+    padding-left: 8rem;
+    padding-right: 8rem;
   }
 }
 
@@ -122,6 +176,43 @@ main {
   overflow-x: hidden;
   word-wrap: break-word;
   overflow-wrap: break-word;
+}
+
+/* Force full width sections */
+.full-width-section {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .full-width-section {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .full-width-section {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+/* Desktop-first responsive wrapper */
+.desktop-full-width {
+  width: 100%;
+  max-width: 100vw;
+  margin: 0;
+  padding: 0;
+}
+
+@media (min-width: 1024px) {
+  .desktop-full-width {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+  }
 }
 
 /* Responsive images and media */

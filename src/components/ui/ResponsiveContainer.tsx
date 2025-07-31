@@ -7,24 +7,26 @@ interface ResponsiveContainerProps {
   as?: React.ElementType;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | 'full';
   padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+  forceFullWidth?: boolean; // New prop to force 100% width on desktop
 }
 
 const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
   children,
   className,
   as: Component = 'div',
-  maxWidth = 'xl',
-  padding = 'md'
+  maxWidth = 'full', // Changed default to 'full'
+  padding = 'md',
+  forceFullWidth = true // Default to true for desktop full width
 }) => {
   const maxWidthClasses = {
-    sm: 'max-w-screen-sm',
-    md: 'max-w-screen-md',
-    lg: 'max-w-screen-lg',
-    xl: 'max-w-screen-xl',
-    '2xl': 'max-w-screen-2xl',
-    '3xl': 'max-w-screen-3xl',
-    '4xl': 'max-w-screen-4xl',
-    full: 'max-w-full'
+    sm: forceFullWidth ? 'w-full' : 'max-w-screen-sm',
+    md: forceFullWidth ? 'w-full' : 'max-w-screen-md',
+    lg: forceFullWidth ? 'w-full' : 'max-w-screen-lg',
+    xl: forceFullWidth ? 'w-full' : 'max-w-screen-xl',
+    '2xl': forceFullWidth ? 'w-full' : 'max-w-screen-2xl',
+    '3xl': forceFullWidth ? 'w-full' : 'max-w-screen-3xl',
+    '4xl': forceFullWidth ? 'w-full' : 'max-w-screen-4xl',
+    full: 'w-full max-w-full'
   };
 
   const paddingClasses = {
@@ -42,6 +44,8 @@ const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
         maxWidthClasses[maxWidth],
         paddingClasses[padding],
         'overflow-x-hidden',
+        // Force full width on desktop when enabled
+        forceFullWidth && 'lg:w-full lg:max-w-full xl:w-full xl:max-w-full 2xl:w-full 2xl:max-w-full',
         className
       )}
     >
