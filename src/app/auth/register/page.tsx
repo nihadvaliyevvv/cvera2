@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Header from '@/components/Header';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -248,80 +249,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex relative overflow-hidden">
-      {/* Background Diagonal Pattern */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <svg className="absolute inset-0 w-full h-full opacity-30" preserveAspectRatio="none">
-          <defs>
-            <pattern id="diagonal-lines-register" patternUnits="userSpaceOnUse" width="100" height="100">
-              <path d="M 0,100 l 100,-100 M -25,25 l 50,-50 M 75,125 l 50,-50" stroke="rgb(59, 130, 246)" strokeWidth="1" opacity="0.1"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#diagonal-lines-register)"/>
-        </svg>
-        <div className="absolute top-1/4 right-1/3 w-32 h-32 bg-blue-100 rounded-full opacity-10 transform rotate-45"></div>
-        <div className="absolute bottom-1/3 left-1/4 w-24 h-24 bg-blue-50 rounded-full opacity-15 transform -rotate-12"></div>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
+      <Header currentPage="register" />
 
-      {/* Left Side - Illustration */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 relative overflow-hidden z-10">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <svg className="absolute inset-0 w-full h-full opacity-10" preserveAspectRatio="none">
-          <defs>
-            <pattern id="overlay-diagonal-register" patternUnits="userSpaceOnUse" width="50" height="50">
-              <path d="M 0,50 l 50,-50 M -12.5,12.5 l 25,-25 M 37.5,62.5 l 25,-25" stroke="white" strokeWidth="1"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#overlay-diagonal-register)"/>
-        </svg>
-        
-        <div className="relative z-10 flex items-center justify-center w-full p-12">
-          <div className="max-w-md text-center">
-            <div className="w-96 h-96 mx-auto mb-8 relative">
-              <div className="w-full h-full bg-blue-300 rounded-3xl relative overflow-hidden shadow-2xl">
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-48 h-64 bg-amber-100 rounded-t-full shadow-lg">
-                  <div className="absolute top-8 left-1/2 transform -translate-x-1/2 w-20 h-24 bg-amber-200 rounded-full">
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-24 h-16 bg-amber-800 rounded-full"></div>
-                    <div className="absolute top-6 left-3 w-2 h-3 bg-gray-800 rounded-full"></div>
-                    <div className="absolute top-6 right-3 w-2 h-3 bg-gray-800 rounded-full"></div>
-                    <div className="absolute top-10 left-1/2 transform -translate-x-1/2 w-8 h-4 border-b-2 border-gray-800 rounded-full"></div>
-                  </div>
-                  <div className="absolute top-24 left-1/2 transform -translate-x-1/2 w-32 h-40 bg-gray-700 rounded-t-3xl">
-                    <div className="absolute top-4 -left-8 w-16 h-6 bg-amber-200 rounded-full transform -rotate-12"></div>
-                    <div className="absolute top-4 -right-8 w-16 h-6 bg-amber-200 rounded-full transform rotate-12">
-                      <div className="absolute -bottom-2 right-2 w-6 h-4 bg-amber-200 rounded transform rotate-12"></div>
-                    </div>
-                  </div>
-                </div>
-                <div className="absolute top-16 left-12 w-12 h-12 bg-green-400 rounded-full flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                  </svg>
-                </div>
-                <div className="absolute bottom-20 right-8 w-16 h-20 bg-white rounded transform rotate-12 shadow-lg">
-                  <div className="w-full h-2 bg-blue-300 rounded-t mt-2"></div>
-                  <div className="w-4/5 h-1 bg-gray-200 rounded mx-auto mt-1"></div>
-                  <div className="w-3/5 h-1 bg-gray-200 rounded mx-auto mt-1"></div>
-                  <div className="w-4/5 h-1 bg-gray-200 rounded mx-auto mt-1"></div>
-                </div>
-                <div className="absolute top-12 right-8 w-8 h-8 bg-white/30 rounded-full"></div>
-                <div className="absolute top-32 left-8 w-6 h-6 bg-white/20 rounded-full"></div>
-                <div className="absolute bottom-32 left-16 w-4 h-4 bg-white/25 rounded-full"></div>
-              </div>
-            </div>
-            
-            <h1 className="text-4xl font-bold text-white mb-4 drop-shadow-lg">
-              Xoş gəlmisiniz!
-            </h1>
-            <p className="text-xl text-blue-100 max-w-md leading-relaxed drop-shadow-sm">
-              Hesab yaradın və professional CV-nizi hazırlamağa başlayın
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Side - Register Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 lg:p-12 relative z-10">
+      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-md space-y-8 bg-white rounded-2xl shadow-2xl p-8 md:p-10 border border-gray-100 backdrop-blur-sm bg-white/95">
           {/* Logo */}
           <div className="text-center lg:text-left">

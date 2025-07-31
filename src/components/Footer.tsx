@@ -29,7 +29,8 @@ export default function Footer() {
               <img
                 src="/cveralogo.png"
                 alt="CVera Logo"
-                className="h-12 w-auto"
+                className="h-5 w-auto"
+                style={{ width: '150px', height: 'auto' }} // Logo ölçüsünü tənzimləmək üçün
               />
             <br/>
 

@@ -5,7 +5,8 @@ import AOS from 'aos'
 import 'aos/dist/aos.css'
 import {motion} from 'framer-motion'
 import Link from 'next/link'
-import Footer from "@/components/Footer";
+import Footer from "@/components/Footer"
+import Header from "@/components/Header"
 
 
 export default function Index2() {
@@ -41,6 +42,8 @@ export default function Index2() {
 
   return (
       <div className="min-h-screen bg-white">
+        <Header currentPage="home" />
+
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-blue-100">
           {/* Geometric Background Pattern */}
@@ -125,11 +128,7 @@ export default function Index2() {
                         <div className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-500 rounded-full"></div>
                       </div>
                       <div className="flex items-center">
-                        <img
-                            src="/cveralogo.png"
-                            alt="CV Era Logo"
-                            className="h-8 sm:h-8 w-auto"
-                        />
+
                       </div>
                     </div>
                     <div className="flex items-center gap-2 sm:gap-3 text-blue-600">

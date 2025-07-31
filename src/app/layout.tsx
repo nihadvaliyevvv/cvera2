@@ -71,6 +71,13 @@ export const metadata: Metadata = {
     google: 'your-google-verification-code',
     yandex: 'your-yandex-verification-code',
   },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+    viewportFit: 'cover',
+  },
 };
 
 export default function RootLayout({
@@ -79,12 +86,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="az" className="scroll-smooth">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+        <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} antialiased overflow-x-hidden`}
       >
         <AuthProvider>
-          <main>
+          <main className="page-content">
             {children}
           </main>
         </AuthProvider>
