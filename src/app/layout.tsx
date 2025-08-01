@@ -4,7 +4,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AuthProvider } from "@/lib/auth";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import TawkToWidget from "@/components/TawkToWidget";
-import SimpleCursor from "@/components/ui/SimpleCursor";
+import CustomCursor from "@/components/ui/CustomCursor";
+import AOSProvider from "@/components/providers/AOSProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -95,14 +96,16 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} antialiased overflow-x-hidden`}
       >
         <AuthProvider>
-          <main className="page-content min-h-screen">
-            {children}
-          </main>
+          <AOSProvider>
+            <main className="page-content min-h-screen">
+              {children}
+            </main>
+          </AOSProvider>
         </AuthProvider>
         <SpeedInsights />
         <GoogleAnalytics />
         <TawkToWidget />
-        <SimpleCursor />
+        <CustomCursor />
       </body>
     </html>
   );

@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer'; // Footer əlavə edirik
 
 export default function LoginPage() {
   // All hooks must be called at the top level, before any early returns
-  const { user, loading: authLoading, isInitialized } = useAuth();
+  const { user, loading: authLoading, isInitialized, fetchCurrentUser } = useAuth();
   const router = useRouter();
 
   // All useState hooks must be called in the same order every time
@@ -198,15 +199,34 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
+        // Token-i localStorage-a saxla
         localStorage.setItem('accessToken', data.token);
-        router.push('/cv-list');
+
+        // Auth context-ini manual olaraq yenilə ki, dərhal user məlumatları yükləsin
+        try {
+          await fetchCurrentUser();
+        } catch (error) {
+          console.log('Auth context yenilənmədi, amma davam edirik');
+        }
+
+        // Loading state-i bir az daha uzat ki, auth context yenilənsə
+        setTimeout(() => {
+          setLoading(false);
+          // window.location.href istifadə et ki, tam səhifə yenilənsə və auth context düzgün yüklənsə
+          window.location.href = '/dashboard';
+        }, 500);
+
+        return; // handleSubmit-i burada bitir
       } else {
         setError(data.error || 'Giriş zamanı xəta baş verdi');
       }
     } catch (error) {
       setError('Şəbəkə xətası baş verdi');
     } finally {
-      setLoading(false);
+      // Yalnız error vəziyyətində loading-i dərhal dayandır
+      if (!localStorage.getItem('accessToken')) {
+        setLoading(false);
+      }
     }
   };
 
@@ -325,6 +345,8 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      <Footer /> {/* Footer əlavə edirik */}
     </div>
   );
 }

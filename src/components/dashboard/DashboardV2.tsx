@@ -45,6 +45,9 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
   const router = useRouter();
   const { logout } = useAuth();
 
+  // Use user prop to display user info if needed
+  console.log('Dashboard user:', user?.email);
+
   const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
@@ -107,18 +110,9 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
 
       // Type-safe error handling
       if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as {
-          response?: {
-            data?: any;
-            status?: number;
-            statusText?: string;
-          }
-        };
-        console.error('❌ Dashboard error details:', axiosError.response?.data);
-
-        if (axiosError.response?.status === 401) {
-          console.log('🔄 Dashboard: 401 error, logout edilir');
-          logout();
+        const apiError = error as any;
+        if (apiError.response?.status === 401) {
+          console.log('🔐 Dashboard: 401 unauthorized, login səhifəsinə yönləndirəcəm');
           router.push('/auth/login');
           return;
         }
@@ -126,7 +120,7 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
     } finally {
       setLoading(false);
     }
-  }, [router, logout]);
+  }, [router]);
 
   useEffect(() => {
     fetchDashboardData();

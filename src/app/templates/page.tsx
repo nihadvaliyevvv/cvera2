@@ -34,6 +34,26 @@ export default function TemplatesPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const router = useRouter();
 
+  const loadTemplates = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/templates');
+      if (!response.ok) {
+        setError('Templates yüklənərkən xəta baş verdi');
+        return;
+      }
+
+      const data: TemplateApiResponse = await response.json();
+      setTemplates(data.templates);
+      setError(''); // Clear any previous errors
+    } catch (error) {
+      console.error('Template loading error:', error);
+      setError('Templates yüklənərkən xəta baş verdi');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const checkAuthentication = useCallback(async () => {
     try {
       const response = await fetch('/api/auth/me');
@@ -52,7 +72,7 @@ export default function TemplatesPage() {
     } finally {
       setAuthLoading(false);
     }
-  }, [router]);
+  }, [router, loadTemplates]);
 
   // Authentication kontrolü
   useEffect(() => {
@@ -67,26 +87,6 @@ export default function TemplatesPage() {
       once: true,
     });
   }, []);
-
-  const loadTemplates = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/templates');
-      if (!response.ok) {
-        setError('Templates yüklənərkən xəta baş verdi');
-        return;
-      }
-
-      const data: TemplateApiResponse = await response.json();
-      setTemplates(data.templates);
-      setError(''); // Clear any previous errors
-    } catch (error) {
-      console.error('Template loading error:', error);
-      setError('Templates yüklənərkən xəta baş verdi');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Authentication kontrolü devam ediyorsa loading göster
   if (authLoading) {
@@ -112,14 +112,7 @@ export default function TemplatesPage() {
     return null;
   }
 
-  const categories = [
-    { id: 'all', name: 'Hamısı', count: templates.length },
-    { id: 'Free', name: 'Pulsuz', count: templates.filter(t => t.tier === 'Free').length },
-    { id: 'Medium', name: 'Orta', count: templates.filter(t => t.tier === 'Medium').length },
-    { id: 'Premium', name: 'Premium', count: templates.filter(t => t.tier === 'Premium').length },
-  ];
-
-  const filteredTemplates = selectedCategory === 'all' 
+  const filteredTemplates = selectedCategory === 'all'
     ? templates 
     : templates.filter(template => template.tier === selectedCategory);
 

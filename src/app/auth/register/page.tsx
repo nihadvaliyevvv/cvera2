@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer'; // Footer əlavə edirik
 
 export default function RegisterPage() {
   // All hooks must be called at the top level, before any early returns
@@ -200,6 +201,7 @@ export default function RegisterPage() {
       });
 
       if (response.ok) {
+        // Qeydiyyat uğurlu oldu, indi login et
         const loginResponse = await fetch('/api/auth/login', {
           method: 'POST',
           headers: {
@@ -212,8 +214,21 @@ export default function RegisterPage() {
         });
 
         if (loginResponse.ok) {
-          router.push('/dashboard');
+          const loginData = await loginResponse.json();
+
+          // Token-i localStorage-a saxla
+          localStorage.setItem('accessToken', loginData.token);
+
+          // Loading state-i bir az uzat və sonra dashboard-a yönləndir
+          setTimeout(() => {
+            setLoading(false);
+            // window.location.href istifadə et ki, tam səhifə yenilənsə
+            window.location.href = '/dashboard';
+          }, 500);
+
+          return; // handleSubmit-i burada bitir
         } else {
+          // Login uğursuz olsa, login səhifəsinə yönləndir
           router.push('/auth/login?message=registered');
         }
       } else {
@@ -223,7 +238,10 @@ export default function RegisterPage() {
     } catch (error) {
       setError('Sistem xətası baş verdi');
     } finally {
-      setLoading(false);
+      // Yalnız error vəziyyətində loading-i dərhal dayandır
+      if (!localStorage.getItem('accessToken')) {
+        setLoading(false);
+      }
     }
   };
 
@@ -437,6 +455,9 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
