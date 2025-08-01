@@ -128,12 +128,12 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
 
   const handleLogout = async () => {
     try {
-      await logout();
-      // Remove the router.push since logout() already handles redirection
+      logout(); // Remove await - logout function handles everything internally
+      // Remove any additional redirects - logout() already handles redirection
     } catch (error) {
       console.error('Logout error:', error);
-      // Only redirect manually if logout function fails
-      router.push('/');
+      // Fallback redirect only if logout completely fails
+      window.location.href = '/auth/login';
     }
   };
 

@@ -36,92 +36,43 @@ export default function RegisterPage() {
   // Set custom validation messages for Azerbaijani
   useEffect(() => {
     const setCustomValidationMessages = () => {
-      const firstNameInput = document.getElementById('firstName') as HTMLInputElement;
-      const lastNameInput = document.getElementById('lastName') as HTMLInputElement;
-      const emailInput = document.getElementById('email') as HTMLInputElement;
-      const passwordInput = document.getElementById('password') as HTMLInputElement;
-      const confirmPasswordInput = document.getElementById('confirmPassword') as HTMLInputElement;
+      // Get all required inputs
+      const inputs = document.querySelectorAll('input[required]') as NodeListOf<HTMLInputElement>;
 
-      if (firstNameInput) {
-        firstNameInput.setCustomValidity('');
-        firstNameInput.oninvalid = function(e) {
-          const target = e.target as HTMLInputElement;
+      inputs.forEach((input) => {
+        // Clear any existing custom validity
+        input.setCustomValidity('');
+
+        // Set initial custom validity for empty fields
+        if (!input.value.trim()) {
+          input.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+        }
+
+        // Handle validation on input
+        input.oninput = function() {
+          (this as HTMLInputElement).setCustomValidity('');
+        };
+
+        // Handle validation on invalid event
+        input.oninvalid = function() {
+          const target = this as HTMLInputElement;
+
           if (target.validity.valueMissing) {
             target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
-          } else {
-            target.setCustomValidity('Zəhmət olmasa bu sahəni düzgün doldurun');
-          }
-        };
-        firstNameInput.oninput = function(e) {
-          (e.target as HTMLInputElement).setCustomValidity('');
-        };
-      }
-
-      if (lastNameInput) {
-        lastNameInput.setCustomValidity('');
-        lastNameInput.oninvalid = function(e) {
-          const target = e.target as HTMLInputElement;
-          if (target.validity.valueMissing) {
-            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
-          } else {
-            target.setCustomValidity('Zəhmət olmasa bu sahəni düzgün doldurun');
-          }
-        };
-        lastNameInput.oninput = function(e) {
-          (e.target as HTMLInputElement).setCustomValidity('');
-        };
-      }
-
-      if (emailInput) {
-        emailInput.setCustomValidity('');
-        emailInput.oninvalid = function(e) {
-          const target = e.target as HTMLInputElement;
-          if (target.validity.valueMissing) {
-            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
-          } else if (target.validity.typeMismatch) {
+          } else if (target.type === 'email' && target.validity.typeMismatch) {
             target.setCustomValidity('Zəhmət olmasa düzgün email ünvanı daxil edin');
+          } else if (target.id === 'password' && target.validity.tooShort) {
+            target.setCustomValidity('Şifrə ən azı 8 simvoldan ibarət olmalıdır');
           } else {
             target.setCustomValidity('Zəhmət olmasa bu sahəni düzgün doldurun');
           }
         };
-        emailInput.oninput = function(e) {
-          (e.target as HTMLInputElement).setCustomValidity('');
-        };
-      }
-
-      if (passwordInput) {
-        passwordInput.setCustomValidity('');
-        passwordInput.oninvalid = function(e) {
-          const target = e.target as HTMLInputElement;
-          if (target.validity.valueMissing) {
-            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
-          } else {
-            target.setCustomValidity('Zəhmət olmasa şifrə tələblərini yerinə yetirin');
-          }
-        };
-        passwordInput.oninput = function(e) {
-          (e.target as HTMLInputElement).setCustomValidity('');
-        };
-      }
-
-      if (confirmPasswordInput) {
-        confirmPasswordInput.setCustomValidity('');
-        confirmPasswordInput.oninvalid = function(e) {
-          const target = e.target as HTMLInputElement;
-          if (target.validity.valueMissing) {
-            target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
-          } else {
-            target.setCustomValidity('Şifrələr uyğun gəlmir');
-          }
-        };
-        confirmPasswordInput.oninput = function(e) {
-          (e.target as HTMLInputElement).setCustomValidity('');
-        };
-      }
+      });
     };
 
-    setCustomValidationMessages();
-    const timer = setTimeout(setCustomValidationMessages, 50);
+    // Apply validation with delay to ensure DOM is ready
+    const timer = setTimeout(setCustomValidationMessages, 500);
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -161,10 +112,48 @@ export default function RegisterPage() {
     return errors;
   };
 
+  // Name validation function - only letters, spaces and certain characters allowed
+  const validateName = (name: string, fieldName: string) => {
+    const errors: string[] = [];
+
+    if (name.trim().length < 2) {
+      errors.push(`${fieldName} ən azı 2 simvoldan ibarət olmalıdır`);
+    }
+
+    // Only allow letters (including Azerbaijani), spaces, hyphens, and apostrophes
+    const nameRegex = /^[a-zA-ZəğĞıİöÖşŞüÜçÇ\s'-]+$/;
+    if (!nameRegex.test(name)) {
+      errors.push(`${fieldName} yalnız hərflər ehtiva etməlidir (rəqəm və xüsusi simvollar qadağandır)`);
+    }
+
+    // Check for consecutive spaces or special characters
+    if (/\s{2,}/.test(name) || /[-']{2,}/.test(name)) {
+      errors.push(`${fieldName} ardıcıl boşluq və ya xüsusi simvollar ehtiva edə bilməz`);
+    }
+
+    return errors;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Validate names
+    const firstNameErrors = validateName(formData.firstName, 'Ad');
+    const lastNameErrors = validateName(formData.lastName, 'Soyad');
+
+    if (firstNameErrors.length > 0) {
+      setError(firstNameErrors.join(', '));
+      setLoading(false);
+      return;
+    }
+
+    if (lastNameErrors.length > 0) {
+      setError(lastNameErrors.join(', '));
+      setLoading(false);
+      return;
+    }
 
     // Validate password
     const passwordValidationErrors = validatePassword(formData.password);
@@ -268,11 +257,11 @@ export default function RegisterPage() {
       {/* Main Content with Responsive Container */}
       <div className="w-full max-w-full mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-20 2xl:px-24 py-8 sm:py-12 lg:py-16">
         <div className="max-w-md mx-auto">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100" style={{ borderWidth: '2px', borderColor: '#3b82f6' }}>
             {/* Register Form Header */}
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Hesab yaradın</h1>
-              <p className="text-gray-600">Peşəkar CV yaratmağa başlayın</p>
+
             </div>
 
             {/* Error Message */}
@@ -296,7 +285,12 @@ export default function RegisterPage() {
                     type="text"
                     required
                     value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    onChange={(e) => {
+                      // Only allow letters, spaces, hyphens and apostrophes in real-time
+                      const value = e.target.value;
+                      const filteredValue = value.replace(/[^a-zA-ZəğĞıİöÖşŞüÜçÇ\s'-]/g, '');
+                      setFormData({ ...formData, firstName: filteredValue });
+                    }}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     placeholder="Adınız"
                   />
@@ -311,7 +305,12 @@ export default function RegisterPage() {
                     type="text"
                     required
                     value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    onChange={(e) => {
+                      // Only allow letters, spaces, hyphens and apostrophes in real-time
+                      const value = e.target.value;
+                      const filteredValue = value.replace(/[^a-zA-ZəğĞıİöÖşŞüÜçÇ\s'-]/g, '');
+                      setFormData({ ...formData, lastName: filteredValue });
+                    }}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     placeholder="Soyadınız"
                   />
@@ -331,7 +330,7 @@ export default function RegisterPage() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="example@email.com"
+                  placeholder="numune@cvera.net"
                 />
               </div>
 
@@ -443,12 +442,31 @@ export default function RegisterPage() {
               </button>
             </form>
 
+            {/* Social Login Divider */}
+            <div className="my-6 flex items-center">
+              <div className="flex-1 border-t border-gray-300"></div>
+              <span className="px-4 text-sm text-gray-500">və ya</span>
+              <div className="flex-1 border-t border-gray-300"></div>
+            </div>
+
+            {/* LinkedIn Register Button */}
+            <button
+              onClick={handleLinkedInRegister}
+              disabled={loading}
+              className="w-full bg-[#1e40af] text-white py-3 px-4 rounded-lg font-medium hover:bg-[#005885] focus:ring-2 focus:ring-[#0077B5] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+              </svg>
+              <span>LinkedIn ilə qeydiyyat</span>
+            </button>
+
             {/* Links */}
             <div className="mt-6 text-center">
               <div className="text-sm text-gray-600">
-                Artıq hesabın var?{' '}
+                Artıq hesabınız var?{' '}
                 <Link href="/auth/login" className="text-blue-600 hover:text-blue-700 font-medium">
-                  Daxil ol
+                  Daxil olun
                 </Link>
               </div>
             </div>

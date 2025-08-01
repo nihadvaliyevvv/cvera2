@@ -32,7 +32,7 @@ const plans: PricingPlan[] = [
   {
     id: 'medium',
     name: 'Orta',
-    price: 2.99,
+    price: 5, // 2.99 dollara bərabər olan manat qiyməti
     features: [
       'Gündə 5 CV yaratma ',
       'Pulsuz və Orta səviyyə şablonlar',
@@ -49,7 +49,7 @@ const plans: PricingPlan[] = [
   {
     id: 'premium',
     name: 'Premium',
-    price: 4.99,
+    price: 8, // 4.99 dollara bərabər olan manat qiyməti
     features: [
       'Limitsiz CV yaratma',
       'Bütün şablonlar (Premium daxil)',
@@ -232,7 +232,7 @@ export default function PricingPage() {
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
                   <div className="flex items-center justify-center mb-4">
                     <span className="text-4xl font-bold text-gray-900">
-                      {plan.price === 0 ? 'Pulsuz' : `$${plan.price}`}
+                      {plan.price === 0 ? 'Pulsuz' : `₼${plan.price}`}
                     </span>
                     {plan.price > 0 && (
                       <span className="text-gray-600 ml-2">/ay</span>

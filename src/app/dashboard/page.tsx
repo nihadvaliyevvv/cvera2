@@ -19,28 +19,9 @@ export default function DashboardPage() {
     }
   }, [user, loading, isInitialized, router, isRedirecting]);
 
-  // Yükləmə zamanı göstərilən ekran
-  if (!isInitialized || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <div className="bg-white rounded-3xl shadow-2xl p-8 backdrop-blur-sm border border-white/20">
-          <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600 text-center">Yüklənir...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Giriş yoxdursa yönləndirmə zamanı göstərilən ekran
-  if (!user || isRedirecting) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <div className="bg-white rounded-3xl shadow-2xl p-8 backdrop-blur-sm border border-white/20">
-          <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600 text-center">Giriş səhifəsinə yönləndirilib...</p>
-        </div>
-      </div>
-    );
+  // Show loading spinner while auth is loading or user is not loaded yet
+  if (loading || !isInitialized || !user) {
+    return <LoadingSpinner />;
   }
 
   const handleEditCV = (cvId: string) => {

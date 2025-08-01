@@ -4,7 +4,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AuthProvider } from "@/lib/auth";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import TawkToWidget from "@/components/TawkToWidget";
-import CustomCursor from "@/components/ui/CustomCursor";
+import CustomCursor from "@/components/CustomCursor";
 import AOSProvider from "@/components/providers/AOSProvider";
 import "./globals.css";
 
@@ -33,7 +33,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "CVERA — Süni İntellekt və LinkedIn İnteqrasiyası ilə Peşəkar CV Yaratma Platforması",
+  title: "CVERA — AI və LinkedIn ilə Peşəkar CV Yaratma",
   description: "AI texnologiyası ilə dəstəklənən CVERA platforması, peşəkar CV-nizi tez və rahat hazırlamağa imkan verir., LinkedIn məlumatlarınızı idxal edin və zəngin şablonlar ilə CV-nizi fərdiləşdirin.Peşəkar dizaynlı şablonlar və süni intellekt dəstəyi ilə CV yaratmaq indi daha asandır!",
   keywords: "CVERA, CVera, cvera, cveranet, CVERA.NET, cvera.net, cv yaratmaq, cv yarat, cv yaz, ai ilə cv, ai ilə cv yaratmaq, cvera, resume yarat, azerbaycanca cv, cv yazmaq proqramı, online cv yaratmaq, canva cv, cv şablonları, professional cv, professional cv yaratmaq, professional cv yazmaq, professional cv yarat, professional cv yazmaq proqramı, professional cv online, professional cv azerbaycanca, professional cv canva, cv yaratma, cv yazma, cv yazmaq, cv yaratma proqramı, cv yazmaq proqramı, cv yaratma online, cv yazma online, cv yaratma azerbaycanca, cv yazma azerbaycanca, cv yaratma canva, professional resume, professional resume create, professional resume write, professional resume create program, professional resume online, professional resume azerbaijani, professional resume canva",
   applicationName: "CVERA",
@@ -50,8 +50,11 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/',
     languages: {
-      'az': '/az',
+      'x-default': '/',
+      'az': '/',
+      'az-AZ': '/',
       'en': '/en',
+      'en-US': '/en',
     },
   },
   openGraph: {

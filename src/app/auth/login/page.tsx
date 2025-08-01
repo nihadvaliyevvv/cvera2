@@ -20,8 +20,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
-  const [isHovering, setIsHovering] = useState(false);
 
   // All useEffect hooks must also be at the top level
   // Redirect if already authenticated
@@ -41,9 +39,18 @@ export default function LoginPage() {
 
       if (emailInput) {
         emailInput.setCustomValidity('');
-        
-        emailInput.oninvalid = function(e) {
-          const target = e.target as HTMLInputElement;
+
+        // Set initial custom validity for empty field
+        if (!emailInput.value.trim()) {
+          emailInput.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+        }
+
+        emailInput.oninput = function() {
+          (this as HTMLInputElement).setCustomValidity('');
+        };
+
+        emailInput.oninvalid = function() {
+          const target = this as HTMLInputElement;
           if (target.validity.valueMissing) {
             target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
           } else if (target.validity.typeMismatch) {
@@ -52,111 +59,40 @@ export default function LoginPage() {
             target.setCustomValidity('Zəhmət olmasa bu sahəni düzgün doldurun');
           }
         };
-        
-        emailInput.oninput = function(e) {
-          (e.target as HTMLInputElement).setCustomValidity('');
-        };
-        
-        emailInput.onfocus = function(e) {
-          (e.target as HTMLInputElement).setCustomValidity('');
-        };
       }
 
       if (passwordInput) {
         passwordInput.setCustomValidity('');
-        
-        passwordInput.oninvalid = function(e) {
-          const target = e.target as HTMLInputElement;
+
+        // Set initial custom validity for empty field
+        if (!passwordInput.value.trim()) {
+          passwordInput.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+        }
+
+        passwordInput.oninput = function() {
+          (this as HTMLInputElement).setCustomValidity('');
+        };
+
+        passwordInput.oninvalid = function() {
+          const target = this as HTMLInputElement;
           if (target.validity.valueMissing) {
             target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
           } else if (target.validity.tooShort) {
             target.setCustomValidity('Şifrə ən azı 8 simvoldan ibarət olmalıdır');
-          } else if (target.validity.patternMismatch) {
-            target.setCustomValidity('Şifrə ən azı bir böyük hərf ehtiva etməlidir');
           } else {
             target.setCustomValidity('Zəhmət olmasa bu sahəni düzgün doldurun');
           }
         };
-        
-        passwordInput.oninput = function(e) {
-          (e.target as HTMLInputElement).setCustomValidity('');
-        };
-        
-        passwordInput.onfocus = function(e) {
-          (e.target as HTMLInputElement).setCustomValidity('');
-        };
-      }
-
-      const form = document.querySelector('form');
-      if (form) {
-        form.addEventListener('submit', function() {
-          const inputs = form.querySelectorAll('input[required]');
-          inputs.forEach((input: any) => {
-            if (!input.value.trim()) {
-              input.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
-            }
-          });
-        });
       }
     };
 
-    setCustomValidationMessages();
-    const timer = setTimeout(setCustomValidationMessages, 50);
+    // Apply validation with delay to ensure DOM is ready
+    const timer = setTimeout(setCustomValidationMessages, 500);
+
     return () => clearTimeout(timer);
   }, []);
 
-  // Custom cursor tracking
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setCursorPosition({ x: e.clientX, y: e.clientY });
-    };
 
-    const handleMouseEnter = () => setIsHovering(true);
-    const handleMouseLeave = () => setIsHovering(false);
-
-    // Add mouse move listener
-    window.addEventListener('mousemove', handleMouseMove);
-
-    // Add hover listeners to interactive elements
-    const interactiveElements = document.querySelectorAll('button, a, input, [role="button"]');
-    interactiveElements.forEach(el => {
-      el.addEventListener('mouseenter', handleMouseEnter);
-      el.addEventListener('mouseleave', handleMouseLeave);
-    });
-
-    // Hide default cursor
-    document.body.style.cursor = 'none';
-    // Also hide cursor on all elements
-    const style = document.createElement('style');
-    style.textContent = '* { cursor: none !important; }';
-    document.head.appendChild(style);
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      interactiveElements.forEach(el => {
-        el.removeEventListener('mouseenter', handleMouseEnter);
-        el.removeEventListener('mouseleave', handleMouseLeave);
-      });
-      // Restore default cursor
-      document.body.style.cursor = 'auto';
-      // Remove custom style
-      if (style.parentNode) {
-        style.parentNode.removeChild(style);
-      }
-    };
-  }, []);
-
-  // Show loading while checking authentication - but only if not initialized
-  if (!isInitialized || authLoading) {
-    return (
-      <div className="app-background flex items-center justify-center">
-        <div className="bg-white rounded-3xl p-8 backdrop-blur-sm border border-white/20">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 text-center">Yüklənir...</p>
-        </div>
-      </div>
-    );
-  }
 
   // Don't render login form if user is authenticated (extra safety check)
   if (user) {
@@ -170,22 +106,34 @@ export default function LoginPage() {
     );
   }
 
-  // Show standard loading component during form submission
-  if (loading) {
-    return (
-      <div className="app-background flex items-center justify-center">
-        <div className="bg-white rounded-3xl p-8 backdrop-blur-sm border border-white/20">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 text-center">Yüklənir...</p>
-        </div>
-      </div>
-    );
-  }
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Basic validation for login
+    if (!formData.email || !formData.password) {
+      setError('Bütün sahələri doldurun');
+      setLoading(false);
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Düzgün e-poçt ünvanı daxil edin');
+      setLoading(false);
+      return;
+    }
+
+    // Password minimum length check
+    if (formData.password.length < 8) {
+      setError('Şifrə ən azı 8 simvoldan ibarət olmalıdır');
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch('/api/auth/login', {
@@ -241,7 +189,7 @@ export default function LoginPage() {
       {/* Main Content with Enhanced Responsive Container - Premium Edge Spacing */}
       <div className="w-full max-w-full mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-24 2xl:px-32 py-8 sm:py-12 lg:py-16">
         <div className="max-w-md mx-auto">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100" style={{ borderWidth: '2px', borderColor: '#3b82f6' }}>
             {/* Login Form Header */}
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Xoş gəlmisiniz!</h1>
@@ -270,7 +218,7 @@ export default function LoginPage() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="example@email.com"
+                  placeholder="numune@cvera.net"
                 />
               </div>
 
@@ -321,10 +269,29 @@ export default function LoginPage() {
                     <span className="ml-2">Daxil olunur...</span>
                   </div>
                 ) : (
-                  'Daxil ol'
+                  'Daxil olun'
                 )}
               </button>
             </form>
+
+            {/* Social Login Divider */}
+            <div className="my-6 flex items-center">
+              <div className="flex-1 border-t border-gray-300"></div>
+              <span className="px-4 text-sm text-gray-500">və ya</span>
+              <div className="flex-1 border-t border-gray-300"></div>
+            </div>
+
+            {/* LinkedIn Login Button */}
+            <button
+              onClick={handleLinkedInLogin}
+              disabled={loading}
+              className="w-full bg-[#1e40af] text-white py-3 px-4 rounded-lg font-medium hover:bg-[#005885] focus:ring-2 focus:ring-[#0077B5] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+              </svg>
+              <span>LinkedIn ilə daxil olun</span>
+            </button>
 
             {/* Links */}
             <div className="mt-6 text-center space-y-4">
@@ -332,11 +299,11 @@ export default function LoginPage() {
                 href="/auth/forgot-password"
                 className="text-blue-600 hover:text-blue-700 text-sm font-medium"
               >
-                Şifrəni unutmusan?
+                Şifrəni unutmusunuz?
               </Link>
 
               <div className="text-sm text-gray-600">
-                Hesabın yoxdur?{' '}
+                Hesabınız yoxdur?{' '}
                 <Link href="/auth/register" className="text-blue-600 hover:text-blue-700 font-medium">
                   Qeydiyyat
                 </Link>

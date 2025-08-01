@@ -241,7 +241,7 @@ export default function Index2() {
                         </div>
                       </div>
 
-                      {/* Right Side - CV Preview */}
+                      {/* Right Side - Preview */}
                       <div className="relative order-first lg:order-last" data-aos="fade-left" data-aos-delay="900">
                         <div
                             className="relative bg-gradient-to-br from-blue-50 to-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-10 border-2 border-dashed border-blue-200 shadow-inner">
