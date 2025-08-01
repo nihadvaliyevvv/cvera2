@@ -5,7 +5,7 @@
   overflow-x: hidden;
   padding: 20px;
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f1f5f9;
+  scrollbar-color: #cbd5e1 #ffffff;
   scroll-behavior: smooth;
   box-sizing: border-box;
 }
@@ -15,7 +15,7 @@
 }
 
 .a4PreviewContent::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #ffffff;
   border-radius: 8px;
   margin: 4px 0;
 }
@@ -23,8 +23,8 @@
 .a4PreviewContent::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 8px;
-  border: 2px solid #f1f5f9;
-  background-clip: padding-box;
+  border: 2px solid #ffffff;
+  transition: background-color 0.2s ease;
 }
 
 .a4PreviewContent::-webkit-scrollbar-thumb:hover {
@@ -36,5 +36,5 @@
 }
 
 .a4PreviewContent::-webkit-scrollbar-corner {
-  background: #f1f5f9;
+  background: #ffffff;
 }

@@ -191,215 +191,105 @@ export default function PricingPage() {
   const currentTierLevel = getTierLevel(userTier);
 
   return (
-    <>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       <StandardHeader />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        {/* Enhanced Background Effects */}
-        <div className="fixed inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-200/30 to-indigo-200/20 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 -left-48 w-80 h-80 bg-gradient-to-tr from-purple-200/20 to-pink-200/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-gradient-to-bl from-emerald-200/20 to-teal-200/20 rounded-full blur-3xl"></div>
 
-          {/* Floating elements */}
-          <div className="absolute top-20 left-20 w-2 h-2 bg-blue-400/30 rounded-full animate-pulse"></div>
-          <div className="absolute top-40 right-32 w-3 h-3 bg-purple-400/20 rounded-full animate-bounce"></div>
-          <div className="absolute bottom-40 left-1/3 w-2 h-2 bg-emerald-400/30 rounded-full animate-ping"></div>
+      {/* Main Content with Enhanced Responsive Container - Premium Edge Spacing */}
+      <div className="w-full max-w-full mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-24 2xl:px-32 py-8 sm:py-12 lg:py-16">
+        {/* Hero Section */}
+        <div className="text-center mb-12 sm:mb-16">
+          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
+            Sizə Uyğun <span className="text-blue-600">Planı</span> Seçin
+          </h1>
+          <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            Ehtiyaclarınıza uyğun planı seçin və peşəkar CV yaratmağa başlayın
+          </p>
         </div>
 
-        {/* Main Content */}
-        <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {/* Hero Section */}
-          <div className="text-center mb-16">
-            <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/50 p-12">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              </div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                Qiymət Planları
-              </h1>
-              <p className="text-xl text-gray-600">
-                Ehtiyacınıza uyğun planı seçin və karyeranızı irəlilətmə yoluna başlayın
-              </p>
-            </div>
-          </div>
+        {/* Pricing Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 max-w-6xl mx-auto">
+          {plans.map((plan, index) => (
+            <div
+              key={plan.id}
+              className={`relative bg-white rounded-2xl shadow-lg border-2 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${
+                plan.popular 
+                  ? 'border-blue-500 ring-4 ring-blue-100' 
+                  : 'border-gray-200 hover:border-blue-300'
+              }`}
+            >
+              {/* Popular Badge */}
+              {plan.popular && (
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-medium">
+                    Ən Populyar
+                  </span>
+                </div>
+              )}
 
-          {/* Error Display */}
-          {error && (
-            <div className="mb-8 bg-red-50/80 backdrop-blur-sm border-l-4 border-red-400 text-red-700 px-6 py-4 rounded-lg shadow-sm max-w-md mx-auto">
-              <div className="flex items-center">
-                <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-                <span>{error}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Pricing Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            {plans.map((plan) => {
-              const planLevel = getTierLevel(plan.name);
-              // Plan comparison using plan IDs for accuracy
-              const currentPlanId = getCurrentPlanId(userTier);
-              const isCurrentPlan = currentPlanId === plan.id;
-              const isDowngrade = planLevel < currentTierLevel;
-
-              console.log(`Plan: ${plan.name} (${plan.id}), Level: ${planLevel}, Current: ${currentTierLevel}, UserTier: ${userTier}, CurrentPlanId: ${currentPlanId}, IsCurrentPlan: ${isCurrentPlan}, IsDowngrade: ${isDowngrade}`); // Debug log
-
-              return (
-                <div
-                  key={plan.id}
-                  className={ `relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/50 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 flex flex-col ${
-                    plan.popular ? 'ring-2 ring-blue-500 scale-105' : ''
-                  }`}
-                  style={{ minHeight: '700px' }} // Minimum hündürlük təyin edirik
-                >
-                  {plan.popular && (
-                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg">
-                        ⭐ Populyar Seçim
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="p-8 flex flex-col h-full">
-                    {/* Plan Header */}
-                    <div className="text-center mb-8">
-                      <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center ${
-                        plan.id === 'premium' ? 'bg-gradient-to-br from-yellow-100 to-orange-100' :
-                        plan.id === 'medium' ? 'bg-gradient-to-br from-blue-100 to-purple-100' :
-                        'bg-gradient-to-br from-gray-100 to-gray-200'
-                      }`}>
-                        {plan.id === 'premium' ? (
-                          <svg className="w-8 h-8 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        ) : plan.id === 'medium' ? (
-                          <svg className="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                        ) : (
-                          <svg className="w-8 h-8 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-
-                      <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                        {plan.name}
-                      </h3>
-
-                      <div className="mb-6">
-                        <span className="text-4xl font-bold text-gray-900">
-                          {plan.price === 0 ? 'Pulsuz' : `${plan.price} AZN`}
-                        </span>
-                        {plan.price > 0 && (
-                          <span className="text-gray-600 ml-2 text-lg">/aylıq</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Features List - flex-grow ile genişləyir */}
-                    <div className="flex-grow">
-                      <ul className="space-y-3">
-                        {plan.features.map((feature, index) => (
-                          <li key={index} className="flex items-start">
-                            <div className="flex-shrink-0 w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mr-3 mt-1">
-                              <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                            </div>
-                            <span className="text-gray-700 text-sm leading-relaxed">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {/* Action Button - həmişə aşağıda */}
-                    <div className="mt-8 pt-6 border-t border-gray-200">
-                      <button
-                        onClick={() => handleUpgrade(plan.id)}
-                        disabled={loading === plan.id || isCurrentPlan || isDowngrade}
-                        className={`w-full py-4 px-6 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 ${
-                          isCurrentPlan
-                            ? 'bg-green-100 text-green-800 cursor-not-allowed'
-                            : isDowngrade
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : plan.popular
-                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
-                            : plan.id === 'premium'
-                            ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:from-yellow-600 hover:to-orange-600'
-                            : 'bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-700 hover:to-gray-800'
-                        }`}
-                      >
-                        {loading === plan.id ? (
-                          <div className="flex items-center justify-center">
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                            Yüklənir...
-                          </div>
-                        ) : isCurrentPlan ? (
-                          <div className="flex items-center justify-center">
-                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                            Hazırki Plan
-                          </div>
-                        ) : isDowngrade ? (
-                          'Aşağı Səviyyə'
-                        ) : plan.price === 0 ? (
-                          'Pulsuz Başla'
-                        ) : plan.id === 'medium' ? (
-                          'Orta Plan-a Yüksəlt'
-                        ) : plan.id === 'premium' ? (
-                          'Premium Plan-a Yüksəlt'
-                        ) : (
-                          'Planı Dəyişin'
-                        )}
-                      </button>
-                    </div>
+              <div className="p-6 sm:p-8">
+                {/* Plan Header */}
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                  <div className="flex items-center justify-center mb-4">
+                    <span className="text-4xl font-bold text-gray-900">
+                      {plan.price === 0 ? 'Pulsuz' : `$${plan.price}`}
+                    </span>
+                    {plan.price > 0 && (
+                      <span className="text-gray-600 ml-2">/ay</span>
+                    )}
                   </div>
                 </div>
-              );
-            })}
-          </div>
 
-          {/* Support Section */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/50 p-8 text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+                {/* Features List */}
+                <div className="space-y-4 mb-8">
+                  {plan.features.map((feature, idx) => (
+                    <div key={idx} className="flex items-start space-x-3">
+                      <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="text-gray-700 text-sm leading-relaxed">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* CTA Button */}
+                <button
+                  onClick={() => handleUpgrade(plan.id)}
+                  disabled={loading !== null}
+                  className={`w-full py-4 px-6 rounded-xl font-medium transition-all duration-200 ${
+                    plan.popular
+                      ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl'
+                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                  } ${loading !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {loading !== null ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current"></div>
+                      <span className="ml-2">Yüklənir...</span>
+                    </div>
+                  ) : plan.price === 0 ? (
+                    'Başla'
+                  ) : (
+                    'Seç'
+                  )}
+                </button>
+              </div>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">Sualınız var?</h3>
-            <p className="text-gray-600 mb-6">
-              Bizim komandamız sizə kömək etməyə hazırdır. İstənilən sual və ya problemlə bağlı bizimlə əlaqə saxlayın.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="mailto:support@cvera.az"
-                className="flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <span>E-poçt göndər</span>
-              </a>
-              <a
-                href="tel:+994501234567"
-                className="flex items-center justify-center space-x-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 shadow-lg hover:shadow-xl"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                <span>Zəng et</span>
-              </a>
-            </div>
+          ))}
+        </div>
+
+        {/* FAQ Section */}
+        <div className="mt-16 sm:mt-20 max-w-3xl mx-auto">
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-8 sm:mb-12">
+            Tez-tez Soruşulan Suallar
+          </h2>
+          <div className="space-y-6">
+            {/* FAQ items would go here */}
           </div>
-        </main>
+        </div>
       </div>
+
       <Footer />
-    </>
+    </div>
   );
 }

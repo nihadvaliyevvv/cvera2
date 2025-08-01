@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { format } from 'date-fns';
 
 interface User {
@@ -27,11 +27,7 @@ export default function UsersManagement() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [currentPage, searchTerm, filterTier]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -58,7 +54,11 @@ export default function UsersManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm, filterTier]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const updateUserTier = async (userId: string, newTier: string) => {
     try {

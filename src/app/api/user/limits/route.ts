@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-// Direct import path instead of alias
-import { PrismaClient } from '@prisma/client';
-
-// Initialize Prisma client directly in this file
-const prisma = new PrismaClient();
+import { prisma, withRetry } from '@/lib/prisma';
 
 // Simple JWT verification function
 function verifyToken(token: string): any {
@@ -39,31 +35,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Kullanıcının mevcut tier'ini ve limitlerini al
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: {
-        tier: true,
-        _count: {
-          select: { cvs: true }
-        },
-        subscriptions: {
-          where: {
-            status: 'active'
+    // Use retry logic for database queries
+    const user = await withRetry(async () => {
+      return await prisma.user.findUnique({
+        where: { id: decoded.userId },
+        select: {
+          tier: true,
+          _count: {
+            select: { cvs: true }
           },
-          orderBy: {
-            createdAt: 'desc'
-          },
-          take: 1
-        },
-        dailyUsage: {
-          where: {
-            date: {
-              gte: new Date(new Date().setHours(0, 0, 0, 0))
-            }
+          subscriptions: {
+            where: {
+              status: 'active'
+            },
+            orderBy: {
+              createdAt: 'desc'
+            },
+            take: 1
           }
         }
-      }
+      });
     });
 
     if (!user) {
@@ -73,73 +64,87 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Plan bazında limitler
-    const tierLimits = {
-      Free: {
-        cvCount: 2, // Ümumi limit - 2 CV
-        templatesAccess: ['Free'],
-        dailyLimit: -1, // Günlük limit yox, ümumi limit
-        aiFeatures: false,
-        limitType: 'total' // Ümumi limit göstərir
-      },
-      Medium: {
-        cvCount: -1, // Günlük limitə görə limitsiz ümumi
-        templatesAccess: ['Free', 'Medium'],
-        dailyLimit: 5, // Günlük 5 CV
-        aiFeatures: true,
-        limitType: 'daily' // Günlük limit
-      },
-      Premium: {
-        cvCount: -1, // Limitsiz
-        templatesAccess: ['Free', 'Medium', 'Premium'],
-        dailyLimit: -1, // Limitsiz
-        aiFeatures: true,
-        limitType: 'unlimited' // Limitsiz
-      }
-    };
-
-    const userTier = user.tier || 'Free';
-    const limits = tierLimits[userTier as keyof typeof tierLimits] || tierLimits.Free;
-
-    // Günlük kullanım hesapla (Medium plan üçün)
-    const todayUsage = user.dailyUsage.reduce((total, usage) => total + (usage.cvCreated + usage.pdfExports + usage.docxExports), 0);
-
-    // Limit yoxlaması
-    let hasReachedLimit = false;
-    let remainingLimit = 0;
-
-    if (userTier === 'Free') {
-      // Pulsuz plan - ümumi CV sayına bax
-      hasReachedLimit = user._count.cvs >= limits.cvCount;
-      remainingLimit = Math.max(0, limits.cvCount - user._count.cvs);
-    } else if (userTier === 'Medium') {
-      // Orta plan - günlük limitə bax
-      hasReachedLimit = todayUsage >= limits.dailyLimit;
-      remainingLimit = Math.max(0, limits.dailyLimit - todayUsage);
-    } else {
-      // Premium plan - limitsiz
-      hasReachedLimit = false;
-      remainingLimit = -1; // Limitsiz
+    // Determine user tier
+    let currentTier = user.tier || 'Free';
+    if (user.subscriptions.length > 0) {
+      currentTier = user.subscriptions[0].tier;
     }
 
-    const result = {
-      tier: userTier,
-      limits: limits,
+    // Define limits based on tier
+    const tierLimits = {
+      Free: { cvCount: 2, dailyLimit: null, limitType: 'total', aiFeatures: false },
+      Medium: { cvCount: null, dailyLimit: 5, limitType: 'daily', aiFeatures: true },
+      Premium: { cvCount: null, dailyLimit: null, limitType: 'unlimited', aiFeatures: true }
+    };
+
+    const limits = tierLimits[currentTier as keyof typeof tierLimits] || tierLimits.Free;
+
+    // Calculate usage and remaining limits
+    let remainingLimit = 0;
+    let hasReachedLimit = false;
+
+    if (limits.limitType === 'total') {
+      remainingLimit = Math.max(0, limits.cvCount! - user._count.cvs);
+      hasReachedLimit = user._count.cvs >= limits.cvCount!;
+    } else if (limits.limitType === 'daily') {
+      // For daily limits, we need to check today's usage
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const todaysUsage = await withRetry(async () => {
+        return await prisma.cV.count({
+          where: {
+            userId: decoded.userId,
+            createdAt: {
+              gte: today
+            }
+          }
+        });
+      });
+
+      remainingLimit = Math.max(0, limits.dailyLimit! - todaysUsage);
+      hasReachedLimit = todaysUsage >= limits.dailyLimit!;
+    } else {
+      // Unlimited
+      remainingLimit = 999;
+      hasReachedLimit = false;
+    }
+
+    const response = {
+      tier: currentTier,
+      limits: {
+        ...limits,
+        templatesAccess: currentTier === 'Free' ? ['Basic'] :
+                        currentTier === 'Medium' ? ['Basic', 'Medium'] :
+                        ['Basic', 'Medium', 'Premium']
+      },
       usage: {
         cvCount: user._count.cvs,
-        dailyUsage: todayUsage,
-        hasReachedLimit: hasReachedLimit,
-        remainingLimit: remainingLimit
+        dailyUsage: limits.limitType === 'daily' ? (limits.dailyLimit! - remainingLimit) : 0,
+        hasReachedLimit,
+        remainingLimit
       },
       subscription: user.subscriptions[0] || null
     };
 
-    return NextResponse.json(result);
+    return NextResponse.json(response);
 
   } catch (error) {
     console.error('User limits API error:', error);
+
+    // Handle specific database connection errors
+    if (error instanceof Error && error.message.includes('P1001')) {
+      return NextResponse.json(
+        {
+          error: 'Verilənlər bazasına qoşulma problemi. Zəhmət olmasa bir az sonra yenidən cəhd edin.',
+          code: 'DB_CONNECTION_ERROR'
+        },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Server error' },
       { status: 500 }
     );
   }

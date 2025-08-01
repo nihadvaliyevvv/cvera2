@@ -281,7 +281,7 @@ const LoginForm = ({ onSwitchToRegister, onSwitchToForgot }: LoginFormProps) => 
                 onClick={onSwitchToForgot}
                 className="text-sm text-blue-600 hover:text-blue-500"
               >
-                Şifrəni unutmusan?
+                Şifrəni unutmusunuz?
               </button>
             </div>
           )}

@@ -648,14 +648,14 @@
 }
 
 .responsivePreview::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #ffffff;
   border-radius: 4px;
 }
 
 .responsivePreview::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 4px;
-  border: 1px solid #f1f5f9;
+  border: 1px solid #ffffff;
 }
 
 .responsivePreview::-webkit-scrollbar-thumb:hover {

@@ -140,3 +140,22 @@ model ImportSession {
 
   @@index([userId])
 }
+
+model ApiKey {
+  id         String    @id @default(uuid())
+  service    String // 'linkedin', 'scrapingdog', etc.
+  apiKey     String
+  active     Boolean   @default(true)
+  priority   Int       @default(1)
+  usageCount Int       @default(0)
+  lastUsed   DateTime?
+  lastResult String? // Track last API call result (success/failed)
+  dailyLimit Int       @default(1000)
+  dailyUsage Int       @default(0)
+  lastReset  DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@unique([service, apiKey])
+  @@index([service, active])
+}

@@ -536,7 +536,7 @@ export default function Index2() {
             <div className="grid md:grid-cols-3 gap-8">
               <div className="text-center relative" data-aos="slide-up" data-aos-delay="100">
                 <div
-                    className="bg-gradient-to-br from-brown-500 to-blue-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg relative z-10">
+                    className="bg-gradient-to-br from-blue-500 to-brown-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg relative z-10">
                   <span className="text-2xl font-bold text-white">1</span>
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-4">Qeydiyyat</h3>
@@ -549,8 +549,7 @@ export default function Index2() {
                   <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd"
                           d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
-                          clipRule="evenodd"></path>
-                  </svg>
+                          clipRule="evenodd"></path></svg>
                 </div>
               </div>
 
@@ -569,14 +568,13 @@ export default function Index2() {
                   <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd"
                           d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
-                          clipRule="evenodd"></path>
-                  </svg>
+                          clipRule="evenodd"></path></svg>
                 </div>
               </div>
 
               <div className="text-center" data-aos="slide-up" data-aos-delay="300">
                 <div
-                    className="bg-gradient-to-br from-brown-500 to-blue-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    className="bg-gradient-to-br from-blue-500 to-brown-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                   <span className="text-2xl font-bold text-white">3</span>
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-4">CV-ni Yükləyin</h3>
@@ -594,7 +592,7 @@ export default function Index2() {
         <section
             className="py-16 sm:py-24 lg:py-32 bg-gradient-to-br from-blue-600 to-blue-800 text-white relative overflow-hidden">
           {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0 opacity-10" >
             <svg className="w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <pattern id="stats-pattern" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -659,3 +657,4 @@ export default function Index2() {
       </div>
   )
 }
+

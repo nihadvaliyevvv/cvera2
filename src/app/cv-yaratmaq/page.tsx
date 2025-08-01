@@ -48,7 +48,7 @@ export default function CVYaratmaqPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <div className="min-h-screen bg-white relative">
+      <div className="app-background relative">
         {/* Mouse cursor effect */}
         <div
           className="fixed w-6 h-6 bg-blue-500/20 rounded-full pointer-events-none z-50 transition-all duration-200 ease-out"

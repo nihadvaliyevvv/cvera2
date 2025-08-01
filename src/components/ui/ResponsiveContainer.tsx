@@ -7,16 +7,16 @@ interface ResponsiveContainerProps {
   as?: React.ElementType;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | 'full';
   padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
-  forceFullWidth?: boolean; // New prop to force 100% width on desktop
+  forceFullWidth?: boolean;
 }
 
 const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
   children,
   className,
   as: Component = 'div',
-  maxWidth = 'full', // Changed default to 'full'
+  maxWidth = 'full',
   padding = 'md',
-  forceFullWidth = true // Default to true for desktop full width
+  forceFullWidth = true
 }) => {
   const maxWidthClasses = {
     sm: forceFullWidth ? 'w-full' : 'max-w-screen-sm',
@@ -44,7 +44,6 @@ const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
         maxWidthClasses[maxWidth],
         paddingClasses[padding],
         'overflow-x-hidden',
-        // Force full width on desktop when enabled
         forceFullWidth && 'lg:w-full lg:max-w-full xl:w-full xl:max-w-full 2xl:w-full 2xl:max-w-full',
         className
       )}

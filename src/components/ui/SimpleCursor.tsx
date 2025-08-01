@@ -9,20 +9,22 @@ export default function SimpleCursor() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Detect mobile/touch devices
+    // Detect mobile/touch devices more comprehensively
     const checkIfMobile = () => {
       const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
       const isSmallScreen = window.innerWidth <= 1024;
       const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
       const noHover = window.matchMedia('(hover: none)').matches;
+      const userAgent = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-      return isTouchDevice || isSmallScreen || isCoarsePointer || noHover;
+      return isTouchDevice || isSmallScreen || isCoarsePointer || noHover || userAgent;
     };
 
-    setIsMobile(checkIfMobile());
+    const isMobileDevice = checkIfMobile();
+    setIsMobile(isMobileDevice);
 
-    // If mobile, don't initialize cursor at all
-    if (checkIfMobile()) {
+    // If mobile, don't initialize cursor at all and return early
+    if (isMobileDevice) {
       return;
     }
 
@@ -33,7 +35,6 @@ export default function SimpleCursor() {
     const handleMouseEnter = () => setIsVisible(true);
     const handleMouseLeave = () => setIsVisible(false);
 
-    // Check if hovering over interactive elements
     const handleMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (
@@ -52,50 +53,26 @@ export default function SimpleCursor() {
       }
     };
 
-    // Track mouse movement
-    window.addEventListener('mousemove', updateMousePosition);
-    window.addEventListener('mouseover', handleMouseOver);
+    document.addEventListener('mousemove', updateMousePosition);
     document.addEventListener('mouseenter', handleMouseEnter);
     document.addEventListener('mouseleave', handleMouseLeave);
+    document.addEventListener('mouseover', handleMouseOver);
 
-    // Hide default cursor globally with enhanced targeting
-    document.body.style.cursor = 'none';
-    document.documentElement.style.cursor = 'none';
-
-    // Apply cursor: none to all elements including iframes and third-party widgets
-    const style = document.createElement('style');
-    style.textContent = `
-      *, *::before, *::after, 
-      html, body, div, span, iframe, 
-      object, embed, canvas, svg,
-      input, textarea, select, button, a,
-      .tawk-min-container, .tawk-chat-panel,
-      #tawk_chat_iframe, .tawk-chat {
-        cursor: none !important;
+    // Handle window resize to check if device becomes mobile
+    const handleResize = () => {
+      if (checkIfMobile()) {
+        setIsMobile(true);
       }
-      
-      /* Override any potential third-party cursor styles */
-      [style*="cursor"] {
-        cursor: none !important;
-      }
-    `;
-    document.head.appendChild(style);
+    };
 
-    // Cleanup
+    window.addEventListener('resize', handleResize);
+
     return () => {
-      window.removeEventListener('mousemove', updateMousePosition);
-      window.removeEventListener('mouseover', handleMouseOver);
+      document.removeEventListener('mousemove', updateMousePosition);
       document.removeEventListener('mouseenter', handleMouseEnter);
       document.removeEventListener('mouseleave', handleMouseLeave);
-
-      // Reset cursor
-      document.body.style.cursor = '';
-      document.documentElement.style.cursor = '';
-
-      // Remove the style element
-      if (style.parentNode) {
-        style.parentNode.removeChild(style);
-      }
+      document.removeEventListener('mouseover', handleMouseOver);
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
 
@@ -106,17 +83,14 @@ export default function SimpleCursor() {
 
   return (
     <div
-      className="fixed pointer-events-none"
+      className={`fixed pointer-events-none z-[2147483647] transition-all duration-75 ease-out ${
+        isVisible ? 'opacity-100' : 'opacity-0'
+      }`}
       style={{
-        left: mousePosition.x,
-        top: mousePosition.y,
+        left: `${mousePosition.x}px`,
+        top: `${mousePosition.y}px`,
         transform: 'translate(-10px, -10px)',
-        transition: '0.05s ease-out',
-        zIndex: 2147483647,
         willChange: 'transform',
-        position: 'fixed',
-        pointerEvents: 'none',
-        display: isVisible ? 'block' : 'none',
       }}
     >
       <svg
@@ -126,7 +100,7 @@ export default function SimpleCursor() {
         fill="none"
         style={{
           filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))',
-          transform: isHovering ? 'scale(1.2)' : 'scale(1)',
+          transform: `scale(${isHovering ? 1.2 : 1})`,
           transition: 'transform 0.15s ease-out',
         }}
       >

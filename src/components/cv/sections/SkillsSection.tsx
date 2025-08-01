@@ -134,9 +134,9 @@ export default function SkillsSection({ data, onChange }: SkillsSectionProps) {
       )}
 
       {data.length > 0 && (
-        <div className="bg-blue-50 rounded-lg p-4">
-          <h4 className="font-medium text-blue-900 mb-2">Məsləhət:</h4>
-          <p className="text-sm text-blue-800">
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Bacarıqlar</h3>
+          <p className="text-sm text-gray-700">
             Bacarıqlarınızı kateqoriyalara ayırın (məsələn: &quot;Proqramlaşdırma&quot;, &quot;Dizayn&quot;, &quot;İdarəetmə&quot;) 
             və ən vacib bacarıqlarınızı yuxarıda yerləşdirin.
           </p>

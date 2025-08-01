@@ -62,6 +62,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
 
+      // Check if we're coming from a logout (URL parameter check)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('logout')) {
+        console.log('Logout parameter detected, skipping auth check');
+        setUser(null);
+        setLoading(false);
+        setIsInitialized(true);
+        return;
+      }
+
       // First try to get token from localStorage
       let token = localStorage.getItem('accessToken');
 
@@ -199,67 +209,97 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [login]);
 
-  const logout = useCallback(async () => {
+  const logout = useCallback(() => {
     try {
       console.log('🚪 Logout prosesi başlayır...');
 
       // 1. Clear user state immediately to prevent UI issues
       setUser(null);
+      setLoading(false);
+      setIsInitialized(false);
 
       // 2. Clear all possible client-side storage immediately
       const clearClientStorage = () => {
         if (typeof window !== 'undefined') {
+          // Clear localStorage completely
           localStorage.clear();
+          // Clear sessionStorage completely
           sessionStorage.clear();
 
-          // Clear specific tokens just in case
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('auth-token');
-          localStorage.removeItem('user');
+          // Also clear specific tokens as backup
+          const tokensToRemove = [
+            'accessToken', 'refreshToken', 'auth-token', 'user', 'token',
+            'linkedin-token', 'session', 'authData'
+          ];
 
-          sessionStorage.removeItem('accessToken');
-          sessionStorage.removeItem('refreshToken');
-          sessionStorage.removeItem('auth-token');
-          sessionStorage.removeItem('user');
+          tokensToRemove.forEach(token => {
+            try {
+              localStorage.removeItem(token);
+              sessionStorage.removeItem(token);
+            } catch (e) {
+              // Ignore storage errors
+            }
+          });
         }
       };
 
+      // Clear storage immediately
       clearClientStorage();
 
-      // 3. Call logout API to clear server-side session/cookies (but don't wait for it)
-      Promise.allSettled([
-        fetch('/api/auth/logout', {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }).catch(() => {}), // Ignore errors
-        fetch('/api/auth/revoke', {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }).catch(() => {}) // Ignore errors
-      ]).catch(() => {}); // Ignore all errors
-
-      // 4. Clear storage again to be extra sure
-      clearClientStorage();
-
-      console.log('✅ Logout tamamlandı, ana səhifəyə yönləndirilib');
-
-      // 5. Immediate redirect without waiting
+      // 3. Call logout API in background (don't wait for it)
       if (typeof window !== 'undefined') {
-        // Use replace instead of href to prevent back button issues
-        window.location.replace('/');
+        // Fire and forget API calls
+        Promise.allSettled([
+          fetch('/api/auth/logout', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }).catch(() => {}),
+          fetch('/api/auth/revoke', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }).catch(() => {})
+        ]).catch(() => {}); // Complete fire and forget
       }
+
+      // 4. Clear storage one more time
+      setTimeout(() => {
+        clearClientStorage();
+      }, 100);
+
+      console.log('✅ Logout tamamlandı, login səhifəsinə yönləndirilib');
+
+      // 5. Immediate redirect to login page
+      if (typeof window !== 'undefined') {
+        // Small delay to ensure state is cleared
+        setTimeout(() => {
+          window.location.replace('/auth/login');
+        }, 150);
+      }
+
     } catch (error) {
       console.error('Logout error:', error);
-      // Even if there's an error, still redirect to home
+
+      // Fallback: clear everything and redirect anyway
+      setUser(null);
+      setLoading(false);
+      setIsInitialized(false);
+
       if (typeof window !== 'undefined') {
-        window.location.replace('/');
+        try {
+          localStorage.clear();
+          sessionStorage.clear();
+        } catch (e) {
+          // Ignore storage errors
+        }
+
+        // Force redirect even on error
+        window.location.replace('/auth/login');
       }
     }
   }, []);

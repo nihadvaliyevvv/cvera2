@@ -90,7 +90,10 @@ export async function POST(
       const mimeType = format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
       const filename = `${cv.title}.${format}`;
 
-      return new NextResponse(fileBuffer, {
+      // Convert Buffer to Uint8Array to make it compatible with NextResponse
+      const responseBuffer = new Uint8Array(fileBuffer);
+
+      return new NextResponse(responseBuffer, {
         headers: {
           'Content-Type': mimeType,
           'Content-Disposition': `attachment; filename="${filename}"`,

@@ -105,7 +105,7 @@ export default function LinkedInImportPage() {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <div className="bg-white rounded-3xl shadow-2xl p-8 backdrop-blur-sm border border-white/20">
+        <div className="">
           <p className="text-gray-600 text-center">Giriş tələb olunur...</p>
         </div>
       </div>
@@ -115,10 +115,10 @@ export default function LinkedInImportPage() {
   return (
     <>
       <StandardHeader />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <div className="min-h-screen  from-slate-50 via-blue-50 to-indigo-100">
         {/* Main Content */}
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12">
+          <div className=" shadow-2xl p-8 lg:p-12">
             {/* Title Section */}
             <div className="text-center mb-12">
               <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-6">

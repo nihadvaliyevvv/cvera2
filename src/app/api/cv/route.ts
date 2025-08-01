@@ -3,7 +3,43 @@ import { verifyJWT } from '@/lib/jwt';
 import { PrismaClient } from '@prisma/client';
 import { checkCVCreationLimit, incrementCVUsage, getLimitMessage } from '@/lib/cvLimits';
 
-const prisma = new PrismaClient();
+// Use a singleton pattern for Prisma client to avoid connection issues
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+const prisma = globalForPrisma.prisma ?? new PrismaClient({
+  log: ['error'],
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+});
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+
+// Retry function for database operations
+async function withRetry<T>(operation: () => Promise<T>, maxRetries = 3): Promise<T> {
+  let lastError: Error | undefined;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      console.log(`❌ Database operation failed (attempt ${attempt}/${maxRetries}):`, error);
+
+      if (attempt < maxRetries) {
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Exponential backoff
+        console.log(`⏳ Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  throw lastError || new Error('All retry attempts failed');
+}
 
 // GET /api/cv - Bütün CV-ləri əldə et
 export async function GET(request: NextRequest) {
@@ -35,19 +71,19 @@ export async function GET(request: NextRequest) {
 
     console.log(`🔍 Dashboard API: ${decoded.userId} user ID-si üçün CV-lər axtarılır...`);
 
-    // Force fresh database connection
-    await prisma.$connect();
-
-    const cvs = await prisma.cV.findMany({
-      where: { userId: decoded.userId },
-      orderBy: { updatedAt: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        createdAt: true,
-        updatedAt: true,
-        templateId: true
-      }
+    // Use retry logic for database query
+    const cvs = await withRetry(async () => {
+      return await prisma.cV.findMany({
+        where: { userId: decoded.userId },
+        orderBy: { updatedAt: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          createdAt: true,
+          updatedAt: true,
+          templateId: true
+        }
+      });
     });
 
     console.log(`✅ Dashboard API: ${cvs.length} CV tapıldı`);
@@ -72,6 +108,19 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ Dashboard API xətası:', error);
+
+    // Handle specific Prisma errors
+    if (error instanceof Error && error.message.includes('P1001')) {
+      console.error('🔗 Database connection error - retrying...');
+      return NextResponse.json(
+        {
+          error: 'Verilənlər bazasına qoşulma problemi. Zəhmət olmasa bir az sonra yenidən cəhd edin.',
+          code: 'DB_CONNECTION_ERROR'
+        },
+        { status: 503 } // Service Unavailable
+      );
+    }
+
     return NextResponse.json(
       {
         error: 'CV-lər yüklənərkən xəta baş verdi',
@@ -79,8 +128,6 @@ export async function GET(request: NextRequest) {
       },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 

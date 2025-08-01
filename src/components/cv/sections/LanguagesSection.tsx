@@ -179,7 +179,8 @@ export default function LanguagesSection({ data, onChange }: LanguagesSectionPro
       )}
 
       {data.length > 0 && (
-        <div className="bg-blue-50 rounded-lg p-4">
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Dillər</h3>
           <h4 className="font-medium text-blue-900 mb-2">💡 Məsləhət:</h4>
           <p className="text-sm text-blue-800">
             Dillərə olan ehtiyacı göstərmək üçün iş elanına uyğun dil bacarıqlarınızı vurğulayın. 

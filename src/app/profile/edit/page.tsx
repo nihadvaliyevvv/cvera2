@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -31,12 +31,8 @@ export default function ProfileEditPage() {
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const router = useRouter();
 
-  // Load user profile
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
+  // Load user profile - wrapped in useCallback to fix dependency issue
+  const loadProfile = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -68,7 +64,12 @@ export default function ProfileEditPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  // Load user profile
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
