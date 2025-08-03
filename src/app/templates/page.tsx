@@ -7,6 +7,8 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 import StandardHeader from '@/components/ui/StandardHeader';
 import Footer from '@/components/Footer';
+import OptimizedImage from '@/components/ui/OptimizedImage';
+import { generateStructuredData, organizationData, templateProductData, generateBreadcrumbData } from '@/lib/structured-data';
 
 interface Template {
   id: string;
@@ -33,6 +35,45 @@ export default function TemplatesPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const router = useRouter();
+
+  // Add structured data for templates page
+  useEffect(() => {
+    const addStructuredData = (data: any, type: string, id: string) => {
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.innerHTML = generateStructuredData({ type: type as any, data });
+      script.id = id;
+
+      // Remove existing script if it exists
+      const existing = document.getElementById(id);
+      if (existing) {
+        existing.remove();
+      }
+
+      document.head.appendChild(script);
+    };
+
+    // Add organization data
+    addStructuredData(organizationData, 'Organization', 'structured-data-organization');
+
+    // Add breadcrumb data
+    const breadcrumbData = generateBreadcrumbData([
+      { name: 'Ana Səhifə', url: 'https://cvera.net' },
+      { name: 'Şablonlar', url: 'https://cvera.net/templates' }
+    ]);
+    addStructuredData(breadcrumbData, 'BreadcrumbList', 'structured-data-breadcrumb');
+
+    // Add product catalog data for templates
+    addStructuredData(templateProductData, 'Product', 'structured-data-templates-product');
+
+    // Cleanup function
+    return () => {
+      ['structured-data-organization', 'structured-data-breadcrumb', 'structured-data-templates-product'].forEach(id => {
+        const script = document.getElementById(id);
+        if (script) script.remove();
+      });
+    };
+  }, []);
 
   const loadTemplates = useCallback(async () => {
     try {
@@ -204,7 +245,7 @@ export default function TemplatesPage() {
               >
                 {/* Template Image */}
                 <div className="relative overflow-hidden bg-gray-100">
-                  <img
+                  <OptimizedImage
                     src={template.previewUrl}
                     alt={template.name}
                     className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"

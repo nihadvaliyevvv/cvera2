@@ -30,7 +30,7 @@ export default function DashboardPage() {
 
   return (
     <DashboardV2
-      user={user}
+      user={user!}
       onEditCV={handleEditCV}
     />
   );

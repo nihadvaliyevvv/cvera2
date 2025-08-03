@@ -218,118 +218,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
       setIsInitialized(false);
 
-      // 2. Comprehensive client storage clearing function
-      const clearAllStorage = () => {
+      // 2. Quick storage clearing function
+      const clearStorage = () => {
         if (typeof window !== 'undefined') {
-          // Clear localStorage completely
           try {
             localStorage.clear();
-          } catch (e) {
-            console.error('LocalStorage clear error:', e);
-          }
-
-          // Clear sessionStorage completely
-          try {
             sessionStorage.clear();
           } catch (e) {
-            console.error('SessionStorage clear error:', e);
-          }
-
-          // Clear specific tokens as extra safety
-          const tokensToRemove = [
-            'accessToken', 'refreshToken', 'auth-token', 'user', 'token',
-            'linkedin-token', 'session', 'authData', 'userData', 'loginData',
-            'cvera-auth', 'cvera-token', 'cvera-user'
-          ];
-
-          tokensToRemove.forEach(token => {
-            try {
-              localStorage.removeItem(token);
-              sessionStorage.removeItem(token);
-            } catch (e) {
-              // Ignore individual token removal errors
-            }
-          });
-
-          // Force clear browser data
-          try {
-            // Clear any potential IndexedDB data
-            if ('indexedDB' in window) {
-              indexedDB.deleteDatabase('cvera-cache');
-            }
-          } catch (e) {
-            // Ignore IndexedDB errors
+            console.error('Storage clear error:', e);
           }
         }
       };
 
       // 3. Clear storage immediately
-      clearAllStorage();
+      clearStorage();
 
-      // 4. Call logout API and wait for it to complete
+      // 4. Quick logout - no waiting for API calls
       if (typeof window !== 'undefined') {
-        const logoutAPICalls = async () => {
-          try {
-            // Call multiple logout endpoints to ensure complete logout
-            await Promise.allSettled([
-              fetch('/api/auth/logout', {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Cache-Control': 'no-cache',
-                },
-              }),
-              fetch('/api/auth/revoke', {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Cache-Control': 'no-cache',
-                },
-              })
-            ]);
+        // Make logout call but don't wait for it
+        fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }).catch(() => {
+          // Ignore errors since we're already clearing everything
+        });
 
-            // Clear storage again after API calls
-            clearAllStorage();
-
-            console.log('✅ Logout API çağrıları tamamlandı');
-
-            // Force redirect with cache busting
-            const timestamp = Date.now();
-            window.location.href = `/auth/login?logout=true&t=${timestamp}`;
-
-          } catch (error) {
-            console.error('Logout API error:', error);
-            // Even if API fails, clear storage and redirect
-            clearAllStorage();
-            window.location.href = `/auth/login?logout=true&force=true`;
-          }
-        };
-
-        // Execute logout API calls
-        logoutAPICalls();
+        // Immediate redirect
+        const timestamp = Date.now();
+        window.location.href = `/auth/login?logout=true&t=${timestamp}`;
       }
 
     } catch (error) {
       console.error('Logout error:', error);
 
-      // Emergency fallback: nuclear option
+      // Emergency fallback
       if (typeof window !== 'undefined') {
         try {
-          // Clear everything possible
           localStorage.clear();
           sessionStorage.clear();
-
-          // Force page reload to clear any cached state
-          window.location.replace('/auth/login?logout=true&emergency=true');
+          window.location.href = '/auth/login?logout=true';
         } catch (e) {
-          // Last resort
           window.location.href = '/auth/login';
         }
       }
 
-      // Set state to logged out even on error
       setUser(null);
       setLoading(false);
       setIsInitialized(false);

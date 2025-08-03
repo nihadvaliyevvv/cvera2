@@ -140,8 +140,8 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
   // Loading state
   if (loading) {
     return (
-      <div className="app-background flex items-center justify-center">
-        <div className="bg-white rounded-3xl p-8 backdrop-blur-sm border border-white/20">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-200">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600 text-center">Yüklənir...</p>
         </div>
@@ -166,9 +166,9 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
+          <div className="bg-white rounded-2xl shadow-lg p-6  border-2 border-blue-600">
+            <div className="flex items-center justify-between ">
+              <div className="flex-1 ">
                 <p className="text-sm font-medium text-blue-700 mb-2">Abunəlik</p>
                 <div className="flex items-center justify-between">
                   <p className="text-2xl font-bold text-blue-900">
@@ -182,7 +182,7 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
                   </p>
                   <button
                     onClick={() => router.push('/pricing')}
-                    className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg"
+                    className="px-3 py-1.5 bg-blue-600 border-2 text-white text-sm font-medium rounded-lg hover:bg-white hover:text-blue-600 hover:border-2 hover:border-blue-600 transition-all duration-200"
                   >
                     Yenilə
                   </button>
@@ -192,7 +192,7 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+          <div className="bg-white rounded-2xl shadow-lg p-6  border-2 border-blue-600">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-blue-700">
@@ -267,7 +267,7 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
             {/* Replace the LinkedInAutoImport component with direct implementation */}
             <button
               onClick={() => router.push('/linkedin-import')}
-              className="w-full bg-blue-600 text-white rounded-xl px-6 py-4 font-medium"
+              className="w-full bg-blue-600 text-white rounded-xl px-6 py-4 font-medium hover:bg-white hover:text-blue-600 hover:border-2 hover:border-blue-600 border-2 transition-all duration-200"
             >
               <div className="flex items-center justify-center">
                 <span className="text-lg">LinkedIn profilimi import et</span>
@@ -319,7 +319,7 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
 
             <button
               onClick={() => router.push('/new')}
-              className="w-full bg-blue-600 text-white rounded-xl px-6 py-4 font-medium"
+              className="w-full bg-blue-600 text-white border-2 rounded-xl px-6 py-4 font-medium hover:bg-white hover:text-blue-600 hover:border-2 hover:border-blue-600 transition-all duration-200"
             >
               <div className="flex items-center justify-center">
                 <span className="text-lg">Yeni CV yaratmağa başla</span>

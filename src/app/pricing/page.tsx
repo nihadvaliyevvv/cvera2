@@ -2,11 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiClient } from '@/lib/api';
-import Link from 'next/link';
-import Image from 'next/image';
 import StandardHeader from '@/components/ui/StandardHeader';
 import Footer from '@/components/Footer';
+import { generateStructuredData, organizationData, generateBreadcrumbData } from '@/lib/structured-data';
 
 interface PricingPlan {
   id: string;
@@ -69,6 +67,83 @@ export default function PricingPage() {
   const [loading, setLoading] = useState<string | null>(null);
   const [userTier, setUserTier] = useState<string>('Free');
   const [error, setError] = useState('');
+
+  // Add structured data for pricing page
+  useEffect(() => {
+    const addStructuredData = (data: any, type: string, id: string) => {
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.innerHTML = generateStructuredData({ type: type as any, data });
+      script.id = id;
+
+      // Remove existing script if it exists
+      const existing = document.getElementById(id);
+      if (existing) {
+        existing.remove();
+      }
+
+      document.head.appendChild(script);
+    };
+
+    // Add organization data
+    addStructuredData(organizationData, 'Organization', 'structured-data-organization');
+
+    // Add breadcrumb data
+    const breadcrumbData = generateBreadcrumbData([
+      { name: 'Ana Səhifə', url: 'https://cvera.net' },
+      { name: 'Qiymətlər', url: 'https://cvera.net/pricing' }
+    ]);
+    addStructuredData(breadcrumbData, 'BreadcrumbList', 'structured-data-breadcrumb');
+
+    // Add service offers structured data
+    const serviceOffersData = {
+      name: "CVERA CV Yaratma Xidmətləri",
+      description: "AI əsaslı peşəkar CV yaratma xidmətləri - Pulsuz, Orta və Premium planlar",
+      provider: {
+        "@type": "Organization",
+        name: "CVERA",
+        url: "https://cvera.net"
+      },
+      hasOfferCatalog: {
+        "@type": "OfferCatalog",
+        name: "CV Yaratma Planları",
+        itemListElement: plans.map(plan => ({
+          "@type": "Offer",
+          name: `${plan.name} Plan`,
+          description: `${plan.name} plan - ${plan.features.join(', ')}`,
+          price: plan.price.toString(),
+          priceCurrency: "AZN",
+          availability: "https://schema.org/InStock",
+          seller: {
+            "@type": "Organization",
+            name: "CVERA"
+          },
+          itemOffered: {
+            "@type": "Service",
+            name: `CV Yaratma - ${plan.name} Plan`,
+            description: plan.features.join(', ')
+          }
+        }))
+      },
+      offers: {
+        "@type": "AggregateOffer",
+        lowPrice: "0",
+        highPrice: "8",
+        priceCurrency: "AZN",
+        availability: "https://schema.org/InStock",
+        offerCount: plans.length.toString()
+      }
+    };
+    addStructuredData(serviceOffersData, 'Service', 'structured-data-pricing-service');
+
+    // Cleanup function
+    return () => {
+      ['structured-data-organization', 'structured-data-breadcrumb', 'structured-data-pricing-service'].forEach(id => {
+        const script = document.getElementById(id);
+        if (script) script.remove();
+      });
+    };
+  }, []);
 
   const loadUserInfo = useCallback(async () => {
     try {
