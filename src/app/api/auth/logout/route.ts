@@ -16,7 +16,7 @@ export async function POST(request: Request) {
         const decoded = jwt.decode(token) as any;
 
         if (decoded?.userId) {
-          // Optional: Update user's lastLogout timestamp
+          // Update user's last login to force re-authentication
           await prisma.user.update({
             where: { id: decoded.userId },
             data: {
@@ -45,12 +45,14 @@ export async function POST(request: Request) {
       "cvera-auth",
       "cvera-token",
       "next-auth.session-token",
-      "next-auth.csrf-token"
+      "next-auth.csrf-token",
+      "__Secure-next-auth.session-token",
+      "__Host-next-auth.csrf-token"
     ];
 
     // Clear cookies for multiple paths and domains
     const paths = ["/", "/api", "/auth", "/dashboard"];
-    const domains = [undefined, ".cvera.net", "cvera.net"];
+    const domains = [undefined, ".cvera.net", "cvera.net", process.env.NEXT_PUBLIC_DOMAIN];
 
     cookiesToClear.forEach(cookieName => {
       paths.forEach(path => {
@@ -82,22 +84,30 @@ export async function POST(request: Request) {
     return response;
 
   } catch (error) {
-    console.error('Logout API error:', error);
+    console.error("Logout error:", error);
 
-    // Even on error, return success response with cookie clearing
+    // Even if there's an error, still return success and clear cookies
     const response = NextResponse.json({
-      message: "Çıxış edildi (xəta ilə)",
-      timestamp: new Date().toISOString()
+      message: "Çıxış prosesi tamamlandı",
+      timestamp: new Date().toISOString(),
+      cleared: true
     });
 
-    // Still clear cookies even on error
-    response.cookies.set("accessToken", "", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 0,
-      expires: new Date(0),
+    // Emergency cookie clearing
+    const cookiesToClear = [
+      "auth-token", "accessToken", "refreshToken", "session", "token",
+      "cvera-auth", "cvera-token", "next-auth.session-token"
+    ];
+
+    cookiesToClear.forEach(cookieName => {
+      response.cookies.set(cookieName, "", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 0,
+        expires: new Date(0),
+      });
     });
 
     return response;

@@ -63,6 +63,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
 
+      // Check if user has explicitly logged out
+      const userLoggedOut = localStorage.getItem('user_logged_out');
+      const logoutTimestamp = localStorage.getItem('logout_timestamp');
+
+      if (userLoggedOut === 'true') {
+        // Check if logout was recent (within last 24 hours) to prevent auto re-auth
+        const logoutTime = logoutTimestamp ? parseInt(logoutTimestamp) : 0;
+        const timeSinceLogout = Date.now() - logoutTime;
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+
+        if (timeSinceLogout < twentyFourHours) {
+          console.log('User explicitly logged out recently, skipping auth check');
+          setUser(null);
+          setLoading(false);
+          setIsInitialized(true);
+          return;
+        } else {
+          // Clear old logout flags after 24 hours
+          localStorage.removeItem('user_logged_out');
+          localStorage.removeItem('logout_timestamp');
+        }
+      }
+
       // Check if we're coming from a logout (URL parameter check)
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('logout')) {
@@ -129,6 +152,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
+        // Clear logout flags on successful authentication
+        localStorage.removeItem('user_logged_out');
+        localStorage.removeItem('logout_timestamp');
       } else {
         console.log('Failed to fetch user data, removing token');
         localStorage.removeItem('accessToken');
@@ -225,6 +251,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           try {
             localStorage.clear();
             sessionStorage.clear();
+            // Set a logout flag to prevent automatic re-authentication
+            localStorage.setItem('user_logged_out', 'true');
+            localStorage.setItem('logout_timestamp', Date.now().toString());
           } catch (e) {
             console.error('Storage clear error:', e);
           }
@@ -260,6 +289,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           localStorage.clear();
           sessionStorage.clear();
+          localStorage.setItem('user_logged_out', 'true');
           window.location.href = '/auth/login?logout=true';
         } catch (e) {
           window.location.href = '/auth/login';
