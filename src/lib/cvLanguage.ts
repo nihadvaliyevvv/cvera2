@@ -74,6 +74,22 @@ export const SECTION_LABELS = {
     present: 'İndiyədək',
     to: '-',
     
+    // Additional CV specific terms
+    'Phone': 'Telefon',
+    'Email': 'E-poçt',
+    'Website': 'Veb sayt',
+    'LinkedIn': 'LinkedIn',
+    'Summary': 'Xülasə',
+    'Work Experience': 'İş Təcrübəsi',
+    'EXPERIENCE': 'İŞ TƏCRÜBƏSİ',
+    'EDUCATION': 'TƏHSİL',
+    'SKILLS': 'BACARIQLAR',
+    'LANGUAGES': 'DİLLƏR',
+    'PROJECTS': 'LAYİHƏLƏR',
+    'CERTIFICATIONS': 'SERTİFİKATLAR',
+    'Present': 'İndiyədək',
+    'GPA': 'Orta bal',
+
     // Buttons and actions
     add: 'Əlavə et',
     addSection: 'Əlavə et',

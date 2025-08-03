@@ -12,6 +12,7 @@ export interface User {
   loginMethod?: string; // Add login method (linkedin, email)
   linkedinId?: string; // Add LinkedIn ID field
   linkedinUsername?: string; // Add LinkedIn username field (optional until database is updated)
+  tier?: string; // Add tier field to match Prisma schema
   subscriptions: Array<{
     id: string;
     tier: string;

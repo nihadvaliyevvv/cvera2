@@ -42,6 +42,7 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
   const [cvs, setCvs] = useState<CV[]>([]);
   const [userLimits, setUserLimits] = useState<UserLimits | null>(null);
   const [loading, setLoading] = useState(true);
+  const [logoutLoading, setLogoutLoading] = useState(false);
   const router = useRouter();
   const { logout } = useAuth();
 
@@ -128,14 +129,29 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
 
   const handleLogout = async () => {
     try {
+      setLogoutLoading(true);
       logout(); // Remove await - logout function handles everything internally
       // Remove any additional redirects - logout() already handles redirection
     } catch (error) {
       console.error('Logout error:', error);
       // Fallback redirect only if logout completely fails
       window.location.href = '/auth/login';
+    } finally {
+      setLogoutLoading(false);
     }
   };
+
+  // Logout loading overlay
+  if (logoutLoading) {
+    return (
+      <div className="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+        <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-200">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 text-center">Çıxış edilir...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Loading state
   if (loading) {
@@ -182,7 +198,7 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
                   </p>
                   <button
                     onClick={() => router.push('/pricing')}
-                    className="px-3 py-1.5 bg-blue-600 border-2 text-white text-sm font-medium rounded-lg hover:bg-white hover:text-blue-600 hover:border-2 hover:border-blue-600 transition-all duration-200"
+                    className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-white hover:text-blue-600 hover:border-2 hover:border-blue-600 border-2 transition-all duration-200"
                   >
                     Yenilə
                   </button>

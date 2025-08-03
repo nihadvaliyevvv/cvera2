@@ -40,9 +40,17 @@ export default function EditCVPage() {
     }
   }
 
-  // Extract user tier from subscriptions
+  // Extract user tier from user.tier field first, then subscriptions
   const getUserTier = () => {
+    // First check the user's tier field directly
+    if (user?.tier && user.tier !== 'Free') {
+      console.log('Using direct user tier:', user.tier);
+      return user.tier;
+    }
+
+    // Fall back to subscription-based tier detection
     if (!user?.subscriptions || user.subscriptions.length === 0) {
+      console.log('No subscriptions found, using Free tier');
       return 'Free';
     }
 
@@ -51,7 +59,9 @@ export default function EditCVPage() {
       .filter(sub => sub.status === 'active')
       .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())[0];
 
-    return activeSubscription?.tier || 'Free';
+    const subscriptionTier = activeSubscription?.tier || 'Free';
+    console.log('Using subscription tier:', subscriptionTier);
+    return subscriptionTier;
   };
 
   // Debug logging

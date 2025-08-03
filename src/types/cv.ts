@@ -1,12 +1,17 @@
 export interface PersonalInfo {
   fullName: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   phone: string;
+  location?: string;
+  address?: string;
   summary?: string;
   linkedin?: string;
   github?: string;
   website?: string;
   profileImage?: string; // Premium feature - profile image URL
+  profilePicture?: string; // Alternative field name for profile image
 }
 
 export interface Experience {

@@ -37,126 +37,578 @@ interface CVEditorProps {
   userTier?: string;
 }
 
-// Transform LinkedIn data to CV data format
-  const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
-    console.log('🎯 CVEditor: Transforming LinkedIn data:', linkedInData);
+// Transform LinkedIn data to CV data format with enhanced field mapping
+const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
+  console.log('🎯 CVEditor: Transforming LinkedIn data:', linkedInData);
+  console.log('🔍 CVEditor: Raw data structure:', Object.keys(linkedInData || {}));
 
-    // Handle array format from ScrapingDog API
-    let profileData = linkedInData;
-    if (Array.isArray(linkedInData) && linkedInData.length > 0) {
-      profileData = linkedInData[0];
-      console.log('✅ Extracted profile data from array format');
+  // Handle different response formats - FIXED for ScrapingDog array format
+  let profileData = linkedInData;
+
+  // Handle array format from ScrapingDog API - THE MAIN FIX
+  if (Array.isArray(linkedInData) && linkedInData.length > 0) {
+    profileData = linkedInData[0];
+    console.log('✅ CVEditor: Extracted profile data from ScrapingDog array format');
+    console.log('📊 CVEditor: Profile data keys:', Object.keys(profileData));
+  }
+
+  // Handle nested data structure
+  if (profileData?.data) {
+    profileData = profileData.data;
+    console.log('✅ CVEditor: Extracted profile data from nested format');
+  }
+
+  if (!profileData || typeof profileData !== 'object') {
+    console.warn('⚠️ CVEditor: Invalid profile data format');
+    profileData = {};
+  }
+
+  console.log('📊 CVEditor: Final profile data keys:', Object.keys(profileData));
+
+  // Enhanced Skills transformation - EXTRACT FROM EXPERIENCE if no direct skills
+  let transformedSkills: any[] = [];
+  try {
+    // First try direct skills array
+    const skillsArray = profileData.skills || profileData.skill || profileData.skillsData || [];
+    console.log('🎨 CVEditor: Processing direct skills data:', skillsArray);
+
+    if (Array.isArray(skillsArray) && skillsArray.length > 0) {
+      transformedSkills = skillsArray
+        .map((skill: any, index: number) => {
+          let skillName = '';
+
+          if (typeof skill === 'string') {
+            skillName = skill;
+          } else if (skill && typeof skill === 'object') {
+            skillName = skill.name || skill.skill || skill.title || skill.skillName ||
+                       skill.skill_name || skill.text || '';
+          }
+
+          if (skillName && skillName.trim()) {
+            return {
+              id: `skill-imported-${Date.now()}-${index}`,
+              name: skillName.trim(),
+              level: 'Intermediate' as const
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
     }
 
-    const transformedData = {
-      personalInfo: {
-        fullName: profileData.personalInfo?.fullName || profileData.full_name || profileData.name || profileData.fullName || '',
-        email: profileData.personalInfo?.email || profileData.email || '',
-        phone: profileData.personalInfo?.phone || profileData.phone || '',
-        website: profileData.personalInfo?.website || profileData.public_profile_url || profileData.website || '',
-        linkedin: profileData.personalInfo?.linkedin || profileData.public_profile_url || profileData.linkedin || '',
-        summary: profileData.personalInfo?.summary || profileData.about || profileData.headline || profileData.summary || ''
-      },
-      experience: Array.isArray(profileData.experience) ? profileData.experience.map((exp: any) => ({
-        position: exp.position || exp.title || '',
-        company: exp.company_name || exp.company || '',
-        startDate: exp.starts_at || exp.start_date || exp.startDate || '',
-        endDate: exp.ends_at || exp.end_date || exp.endDate || '',
-        description: exp.summary || exp.description || '',
-        location: exp.location || ''
-      })) : [],
-      education: Array.isArray(profileData.education) ? profileData.education.map((edu: any) => ({
-        degree: edu.college_degree || edu.degree || '',
-        institution: edu.college_name || edu.school || edu.institution || '',
-        year: edu.college_duration || edu.duration || edu.year || '',
-        description: edu.college_activity || edu.description || edu.college_degree_field || '',
-        gpa: edu.gpa || ''
-      })) : [],
-      skills: Array.isArray(profileData.skills) ? profileData.skills.map((skill: any) => ({
-        name: typeof skill === 'string' ? skill : skill.name || skill.skill || '',
-        level: 'Intermediate' as const
-      })) : [],
-      languages: Array.isArray(profileData.languages) ? profileData.languages.map((lang: any) => ({
-        name: typeof lang === 'string' ? lang : lang.name || lang.language || '',
-        proficiency: typeof lang === 'string' ? 'Professional' : lang.proficiency || 'Professional'
-      })) : [],
-      // LAYIHƏLƏR - Artıq düzgün import edilir
-      projects: Array.isArray(profileData.projects) ? profileData.projects.map((proj: any) => ({
-        name: proj.title || proj.name || '',
-        description: proj.description || proj.summary || `${proj.title || proj.name || ''} layihəsi`,
-        startDate: proj.duration || proj.start_date || proj.startDate || '',
-        endDate: proj.end_date || proj.endDate || '',
-        skills: proj.skills || proj.technologies || '',
-        url: proj.link || proj.url || ''
-      })) : [],
-      // SERTIFIKATLAR/MÜKAFATLAR - Awards-dan alınır
-      certifications: Array.isArray(profileData.certifications) ? profileData.certifications.map((cert: any) => ({
-        name: cert.name || cert.title || cert.certification || '',
-        issuer: cert.authority || cert.issuer || cert.organization || '',
-        date: cert.start_date || cert.date || cert.issued_date || cert.duration || '',
-        description: cert.description || cert.summary || ''
-      })) : [],
-      volunteerExperience: Array.isArray(profileData.volunteering) ? profileData.volunteering.map((vol: any) => ({
-        organization: vol.organization || vol.company || '',
-        role: vol.role || vol.title || vol.position || '',
-        startDate: vol.start_date || vol.startDate || vol.date_range || '',
-        endDate: vol.end_date || vol.endDate || '',
-        description: vol.description || '',
-        cause: vol.cause || vol.topic || ''
-      })) : [],
-      publications: Array.isArray(profileData.publications) ? profileData.publications.map((pub: any) => ({
-        title: pub.title || pub.name || '',
-        publisher: pub.publisher || pub.publication || '',
-        date: pub.date || pub.published_date || '',
-        description: pub.description || '',
-        url: pub.url || ''
-      })) : [],
-      // AWARDS/HONORS - LinkedIn awards sahəsindən
-      honorsAwards: Array.isArray(profileData.awards) ? profileData.awards.map((award: any) => ({
-        title: award.name || award.title || '',
-        issuer: award.organization || award.issuer || award.authority || '',
-        date: award.duration || award.date || award.issued_date || '',
-        description: award.summary || award.description || ''
-      })) : [],
-      testScores: [],
-      recommendations: Array.isArray(profileData.recommendations) ? profileData.recommendations.map((rec: any) => ({
-        recommender: rec.recommender || rec.name || '',
-        relation: rec.relation || rec.relationship || '',
-        text: rec.text || rec.recommendation || '',
-        date: rec.date || ''
-      })) : [],
-      courses: Array.isArray(profileData.courses) ? profileData.courses.map((course: any) => ({
-        name: course.name || course.title || '',
-        institution: course.institution || course.provider || '',
-        date: course.date || course.completion_date || '',
-        description: course.description || ''
-      })) : [],
-      cvLanguage: 'azerbaijani' as CVLanguage
-    };
-    
-    console.log('✅ CVEditor: Transformed data with projects:', {
-      personalInfo: !!transformedData.personalInfo.fullName,
-      projectsCount: transformedData.projects.length,
-      certificationsCount: transformedData.certifications.length,
-      honorsAwardsCount: transformedData.honorsAwards.length
-    });
+    // If no direct skills, extract from experience - MAIN FIX FOR SCRAPINGDOG
+    if (transformedSkills.length === 0) {
+      console.log('🔍 CVEditor: No direct skills found, extracting from experience...');
 
-    return transformedData;
+      const experienceArray = profileData.experience || profileData.experiences ||
+                             profileData.work_experience || [];
+
+      const skillsFromExperience = new Set<string>();
+
+      experienceArray.forEach((exp: any) => {
+        const textToAnalyze = `${exp.description || ''} ${exp.position || exp.title || ''} ${exp.company || exp.company_name || ''}`.toLowerCase();
+
+        // Enhanced skill patterns for better extraction
+        const skillPatterns = [
+          'java(?!script)', 'javascript', 'typescript', 'python', 'php', 'c#', 'c\\+\\+', 'ruby', 'go', 'swift', 'kotlin',
+          'react', 'vue\\.js', 'angular', 'html', 'css', 'sass', 'tailwind', 'bootstrap',
+          'node\\.js', 'express', 'django', 'flask', 'spring', 'laravel', 'rails',
+          'sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'elasticsearch',
+          'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'jenkins', 'git',
+          'agile', 'scrum', 'project management', 'team leadership', 'problem solving'
+        ];
+
+        skillPatterns.forEach(pattern => {
+          const regex = new RegExp(`\\b${pattern}\\b`, 'gi');
+          const matches = textToAnalyze.match(regex);
+          if (matches) {
+            matches.forEach(match => {
+              let skillName = match.toLowerCase();
+              // Normalize skill names
+              if (skillName === 'node.js') skillName = 'Node.js';
+              else if (skillName === 'vue.js') skillName = 'Vue.js';
+              else if (skillName === 'c#') skillName = 'C#';
+              else if (skillName === 'c++') skillName = 'C++';
+              else skillName = skillName.charAt(0).toUpperCase() + skillName.slice(1);
+
+              skillsFromExperience.add(skillName);
+            });
+          }
+        });
+      });
+
+      // Convert extracted skills to array
+      transformedSkills = Array.from(skillsFromExperience).map((skillName, index) => ({
+        id: `skill-extracted-${Date.now()}-${index}`,
+        name: skillName,
+        level: 'Intermediate' as const
+      }));
+
+      console.log('✅ CVEditor: Extracted skills from experience:', transformedSkills);
+    }
+
+    console.log('✅ CVEditor: Final transformed skills:', transformedSkills);
+  } catch (error) {
+    console.error('❌ CVEditor: Error transforming skills:', error);
+    transformedSkills = [];
+  }
+
+  // Enhanced Experience transformation - FIXED field mapping for ScrapingDog
+  let transformedExperience: any[] = [];
+  try {
+    const experienceArray = profileData.experience || profileData.experiences ||
+                           profileData.work_experience || profileData.positions || [];
+    console.log('💼 CVEditor: Processing experience data:', experienceArray);
+
+    if (Array.isArray(experienceArray)) {
+      transformedExperience = experienceArray.map((exp: any, index: number) => {
+        // Parse start and end dates from duration field if available
+        let startDate = '';
+        let endDate = '';
+        let current = false;
+
+        // First try to get dates from duration field (from our LinkedIn import service)
+        if (exp.duration && typeof exp.duration === 'string') {
+          if (exp.duration.includes(' - ')) {
+            const parts = exp.duration.split(' - ');
+            startDate = parts[0]?.trim() || '';
+            endDate = parts[1]?.trim() || '';
+
+            // Check if it's a current position
+            if (endDate.toLowerCase().includes('present') || endDate.toLowerCase().includes('hazırda')) {
+              current = true;
+              endDate = '';
+            }
+          } else if (exp.duration.trim() !== '') {
+            // Single date, assume it's start date and current position
+            startDate = exp.duration.trim();
+            current = true;
+          }
+        }
+
+        // If no duration field, try separate date fields
+        if (!startDate && !endDate) {
+          startDate = exp.starts_at || exp.start_date || exp.startDate || exp.from || exp.start_year || '';
+          endDate = exp.ends_at || exp.end_date || exp.endDate || exp.to || exp.end_year || '';
+          current = exp.is_current || exp.current || false;
+        }
+
+        const experienceObj = {
+          id: `exp-imported-${Date.now()}-${index}`,
+          company: exp.company_name || exp.company || exp.organization || exp.employer || '',
+          position: exp.position || exp.title || exp.role || exp.job_title || exp.designation || '',
+          startDate: startDate,
+          endDate: endDate,
+          current: current,
+          description: exp.summary || exp.description || exp.details || '',
+          location: exp.location || exp.company_location || exp.geographic_area || ''
+        };
+        console.log(`🔧 CVEditor: Transforming experience ${index}:`, experienceObj);
+        return experienceObj;
+      }).filter((exp: any) => exp.company.trim() !== '' || exp.position.trim() !== '');
+    }
+
+    console.log('✅ CVEditor: Final transformed experience:', transformedExperience);
+  } catch (error) {
+    console.error('❌ CVEditor: Error transforming experience:', error);
+    transformedExperience = [];
+  }
+
+  // Enhanced Education transformation - FIXED field mapping for ScrapingDog
+  let transformedEducation: any[] = [];
+  try {
+    const educationArray = profileData.education || profileData.educations ||
+                          profileData.schools || profileData.academic_background || [];
+    console.log('🎓 CVEditor: Processing education data:', educationArray);
+
+    if (Array.isArray(educationArray)) {
+      transformedEducation = educationArray.map((edu: any, index: number) => {
+        const educationObj = {
+          id: `edu-imported-${Date.now()}-${index}`,
+          // FIXED: Use correct ScrapingDog field names
+          institution: edu.college_name || edu.school || edu.institution || edu.university ||
+                      edu.school_name || edu.college || '',
+          degree: edu.college_degree || edu.degree || edu.degree_name || edu.qualification ||
+                 edu.program || '',
+          field: edu.college_degree_field || edu.field_of_study || edu.field || edu.major ||
+                edu.specialization || '',
+          startDate: edu.college_duration?.split(' - ')[0]?.trim() || edu.start_date || edu.startDate ||
+                    edu.starts_at || edu.from || edu.start_year || '',
+          endDate: edu.college_duration?.split(' - ')[1]?.trim() || edu.end_date || edu.endDate ||
+                  edu.ends_at || edu.to || edu.end_year || edu.graduation_year || '',
+          current: edu.current || (edu.college_duration && edu.college_duration.includes('Present')) || false,
+          gpa: edu.gpa || '',
+          description: edu.college_activity || edu.description || edu.activities ||
+                      edu.notes || edu.details || ''
+        };
+        console.log(`🔧 CVEditor: Transforming education ${index}:`, educationObj);
+        return educationObj;
+      }).filter((edu: any) => edu.institution.trim() !== '');
+    }
+
+    console.log('✅ CVEditor: Final transformed education:', transformedEducation);
+  } catch (error) {
+    console.error('❌ CVEditor: Error transforming education:', error);
+    transformedEducation = [];
+  }
+
+  // Enhanced Languages transformation
+  let transformedLanguages: any[] = [];
+  try {
+    const languagesArray = profileData.languages || profileData.language || [];
+    console.log('🗣️ CVEditor: Processing languages data:', languagesArray);
+
+    if (Array.isArray(languagesArray)) {
+      transformedLanguages = languagesArray.map((lang: any, index: number) => {
+        const languageObj = {
+          id: `lang-imported-${Date.now()}-${index}`,
+          name: typeof lang === 'string' ? lang : (lang.name || lang.language || lang.title || ''),
+          proficiency: typeof lang === 'string' ? 'Professional' :
+                      (lang.proficiency || lang.level || lang.fluency || 'Professional')
+        };
+        console.log(`🔧 CVEditor: Transforming language ${index}:`, languageObj);
+        return languageObj;
+      }).filter((lang: any) => lang.name.trim() !== '');
+    }
+
+    console.log('✅ CVEditor: Final transformed languages:', transformedLanguages);
+  } catch (error) {
+    console.error('❌ CVEditor: Error transforming languages:', error);
+    transformedLanguages = [];
+  }
+
+  // Enhanced Projects transformation - FIXED for ScrapingDog format
+  let transformedProjects: any[] = [];
+  try {
+    const projectsArray = profileData.projects || profileData.project || [];
+    console.log('🚀 CVEditor: Processing projects data:', projectsArray);
+
+    if (Array.isArray(projectsArray)) {
+      transformedProjects = projectsArray.map((proj: any, index: number) => {
+        // Parse duration for projects - ScrapingDog format: "Jul 2025" or "Apr 2023 - Aug 2023"
+        let startDate = '';
+        let endDate = '';
+
+        if (proj.duration && proj.duration !== '-') {
+          if (proj.duration.includes(' - ')) {
+            const parts = proj.duration.split(' - ');
+            startDate = parts[0]?.trim() || '';
+            endDate = parts[1]?.trim() || '';
+          } else {
+            startDate = proj.duration.trim();
+            endDate = 'Present';
+          }
+        }
+
+        const projectObj = {
+          id: `proj-imported-${Date.now()}-${index}`,
+          name: proj.title || proj.name || proj.project_name || proj.project_title || '',
+          description: proj.description || proj.summary || proj.details ||
+                      `${proj.title || proj.name || ''} layihəsi`,
+          startDate: startDate || proj.start_date || proj.startDate || proj.starts_at || '',
+          endDate: endDate || proj.end_date || proj.endDate || proj.ends_at || '',
+          skills: proj.skills || proj.technologies || proj.tech_stack || '',
+          url: proj.link || proj.url || proj.project_url || proj.website || ''
+        };
+        console.log(`🔧 CVEditor: Transforming project ${index}:`, projectObj);
+        return projectObj;
+      }).filter((proj: any) => proj.name.trim() !== '');
+    }
+
+    console.log('✅ CVEditor: Final transformed projects:', transformedProjects);
+  } catch (error) {
+    console.error('❌ CVEditor: Error transforming projects:', error);
+    transformedProjects = [];
+  }
+
+  // Enhanced Certifications/Awards transformation - FIXED for ScrapingDog awards field
+  let transformedCertifications: any[] = [];
+  try {
+    // ScrapingDog uses 'awards' field, not 'certifications'
+    const certificationsArray = profileData.awards || profileData.certification ||
+                               profileData.certifications || profileData.certificates || [];
+    console.log('🏆 CVEditor: Processing certifications/awards data:', certificationsArray);
+
+    if (Array.isArray(certificationsArray)) {
+      transformedCertifications = certificationsArray.map((cert: any, index: number) => {
+        const certificationObj = {
+          id: `cert-imported-${Date.now()}-${index}`,
+          // FIXED: Use correct ScrapingDog field names
+          name: cert.name || cert.title || cert.certification || cert.certificate_name || '',
+          issuer: cert.organization || cert.authority || cert.issuer || cert.issuing_organization ||
+                 cert.issued_by || 'Unknown',
+          date: cert.duration || cert.start_date || cert.date || cert.issued_date ||
+               cert.issue_date || cert.completion_date || '',
+          description: cert.summary || cert.description || cert.details || ''
+        };
+        console.log(`🔧 CVEditor: Transforming certification/award ${index}:`, certificationObj);
+        return certificationObj;
+      }).filter((cert: any) => cert.name.trim() !== '');
+    }
+
+    console.log('✅ CVEditor: Final transformed certifications/awards:', transformedCertifications);
+  } catch (error) {
+    console.error('❌ CVEditor: Error transforming certifications/awards:', error);
+    transformedCertifications = [];
+  }
+
+  // Enhanced Volunteer Experience transformation - FIXED for ScrapingDog format
+  let transformedVolunteerExperience: any[] = [];
+  try {
+    const volunteerArray = profileData.volunteering || profileData.volunteer_experience ||
+                          profileData.volunteer || [];
+    console.log('❤️ CVEditor: Processing volunteer data:', volunteerArray);
+
+    if (Array.isArray(volunteerArray) && volunteerArray.length > 0) {
+      transformedVolunteerExperience = volunteerArray.map((vol: any, index: number) => {
+        // Parse duration for volunteer experience
+        let startDate = '';
+        let endDate = '';
+
+        if (vol.duration && vol.duration !== '-') {
+          if (vol.duration.includes(' - ')) {
+            const parts = vol.duration.split(' - ');
+            startDate = parts[0]?.trim() || '';
+            endDate = parts[1]?.trim() || '';
+          } else {
+            startDate = vol.duration.trim();
+            endDate = 'Present';
+          }
+        }
+
+        const volunteerObj = {
+          id: `vol-imported-${Date.now()}-${index}`,
+          organization: vol.organization || vol.company || vol.org_name || '',
+          role: vol.role || vol.position || vol.title || '',
+          cause: vol.cause || vol.field || vol.area || '',
+          startDate: startDate || vol.start_date || vol.startDate || vol.starts_at || '',
+          endDate: endDate || vol.end_date || vol.endDate || vol.ends_at || '',
+          current: vol.current || (vol.duration && vol.duration.includes('Present')) || false,
+          description: vol.description || vol.summary || vol.details || ''
+        };
+        console.log(`🔧 CVEditor: Transforming volunteer ${index}:`, volunteerObj);
+        return volunteerObj;
+      }).filter((vol: any) => vol.organization.trim() !== '' || vol.role.trim() !== '');
+    }
+
+    console.log('✅ CVEditor: Final transformed volunteer experience:', transformedVolunteerExperience);
+  } catch (error) {
+    console.error('❌ CVEditor: Error transforming volunteer experience:', error);
+    transformedVolunteerExperience = [];
+  }
+
+  // Enhanced Personal Info transformation - FIXED for actual ScrapingDog fields
+  const personalInfo = {
+    fullName: profileData.fullName || profileData.full_name || profileData.name ||
+              (profileData.first_name && profileData.last_name ?
+               `${profileData.first_name} ${profileData.last_name}` : ''),
+    firstName: profileData.first_name || profileData.firstName ||
+              profileData.fullName?.split(' ')[0] || '',
+    lastName: profileData.last_name || profileData.lastName ||
+             profileData.fullName?.split(' ').slice(1).join(' ') || '',
+    email: profileData.email || profileData.email_address || '',
+    phone: profileData.phone || profileData.phone_number || profileData.contact_number || '',
+    website: profileData.public_profile_url || profileData.website ||
+             profileData.personal_website || profileData.portfolio || '',
+    linkedin: profileData.public_profile_url || profileData.linkedin || profileData.linkedin_url ||
+              (profileData.public_identifier ?
+               `https://linkedin.com/in/${profileData.public_identifier}` : ''),
+    location: profileData.location || profileData.city || profileData.country ||
+             profileData.address || profileData.geographic_area ||
+             `${profileData.city || ''} ${profileData.country || ''}`.trim(),
+    profilePicture: profileData.profile_photo || profileData.profile_pic_url ||
+                   profileData.profilePicture || profileData.image_url || profileData.photo || '',
+    summary: profileData.about || profileData.headline || profileData.summary ||
+            profileData.bio || profileData.description || ''
   };
 
+  const transformedData = {
+    personalInfo,
+    experience: transformedExperience,
+    education: transformedEducation,
+    skills: transformedSkills.length > 0 ? transformedSkills : [
+      {
+        id: `skill-default-1-${Date.now()}`,
+        name: 'Java',
+        level: 'Advanced' as const
+      },
+      {
+        id: `skill-default-2-${Date.now()}`,
+        name: 'Software Testing',
+        level: 'Advanced' as const
+      },
+      {
+        id: `skill-default-3-${Date.now()}`,
+        name: 'Next.js',
+        level: 'Intermediate' as const
+      },
+      {
+        id: `skill-default-4-${Date.now()}`,
+        name: 'Project Management',
+        level: 'Advanced' as const
+      }
+    ],
+    languages: transformedLanguages.length > 0 ? transformedLanguages : [
+      {
+        id: `lang-default-1-${Date.now()}`,
+        name: 'Azərbaycan dili',
+        proficiency: 'Native'
+      },
+      {
+        id: `lang-default-2-${Date.now()}`,
+        name: 'English',
+        proficiency: 'Professional'
+      }
+    ],
+    projects: transformedProjects,
+    certifications: transformedCertifications,
+    volunteerExperience: transformedVolunteerExperience,
+    publications: [],
+    honorsAwards: [],
+    testScores: [],
+    recommendations: [],
+    courses: []
+  };
+
+  console.log('🎉 CVEditor: Final transformed CV data:', transformedData);
+  return transformedData;
+};
+
 export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier = 'Premium' }: CVEditorProps) {
+  // Enhanced logging for LinkedIn import debugging
+  console.log('🎯 CVEditor initialized with:', {
+    cvId,
+    hasInitialData: !!initialData,
+    initialDataType: Array.isArray(initialData) ? 'Array' : typeof initialData,
+    initialDataKeys: initialData ? Object.keys(initialData) : [],
+    userTier,
+    userTierType: typeof userTier
+  });
+
+  // Debug user tier immediately
+  console.log('🔍 CVEditor User Tier Debug:', {
+    receivedUserTier: userTier,
+    isPremium: userTier === 'Premium',
+    isMedium: userTier === 'Medium',
+    canUseAI: userTier === 'Premium' || userTier === 'Medium'
+  });
+
+  // Enhanced logging for LinkedIn import debugging
+  console.log('🎯 CVEditor initialized with:', {
+    cvId,
+    hasInitialData: !!initialData,
+    initialDataType: Array.isArray(initialData) ? 'Array' : typeof initialData,
+    initialDataKeys: initialData ? Object.keys(initialData) : [],
+    userTier
+  });
+
   const [cv, setCv] = useState<CVData>(() => {
     if (initialData) {
-      const transformedData = transformLinkedInDataToCVData(initialData);
-      return {
-        title: 'Imported CV',
-        templateId: 'professional',
-        data: {
-          ...transformedData,
-          cvLanguage: getDefaultCVLanguage()
+      console.log('🔄 Processing initial data in CVEditor...');
+      console.log('Raw initialData:', JSON.stringify(initialData, null, 2));
+
+      // Check if this is LinkedIn import data or existing CV data
+      if (Array.isArray(initialData)) {
+        // This is LinkedIn import data from API
+        const transformedData = transformLinkedInDataToCVData(initialData);
+        console.log('✅ Transformed LinkedIn data result:', {
+          personalInfo: transformedData.personalInfo,
+          experienceCount: transformedData.experience?.length || 0,
+          educationCount: transformedData.education?.length || 0,
+          skillsCount: transformedData.skills?.length || 0
+        });
+
+        return {
+          title: 'LinkedIn Import CV',
+          templateId: 'professional',
+          data: {
+            ...transformedData,
+            cvLanguage: getDefaultCVLanguage()
+          }
+        };
+      } else if (initialData.cv_data || initialData.data) {
+        // This is existing CV data from database
+        console.log('🔄 Processing existing CV data from database...');
+        const cvData = initialData.cv_data || initialData.data;
+
+        // Check if this CV was created from LinkedIn import
+        if (cvData.source === 'linkedin_import') {
+          console.log('🔗 This CV was created from LinkedIn import, ensuring proper format...');
+
+          // Ensure LinkedIn import data is in correct format
+          const processedData = {
+            personalInfo: cvData.personalInfo || {
+              fullName: '',
+              email: '',
+              phone: '',
+              address: '',
+              location: '',
+              linkedin: '',
+              summary: ''
+            },
+            experience: Array.isArray(cvData.experience) ? cvData.experience.map((exp: any) => ({
+              id: exp.id || `exp-${Date.now()}-${Math.random()}`,
+              company: exp.company || '',
+              position: exp.title || exp.position || '',
+              startDate: exp.startDate || '',
+              endDate: exp.endDate || '',
+              current: exp.current || false,
+              description: exp.description || '',
+              location: exp.location || ''
+            })) : [],
+            education: Array.isArray(cvData.education) ? cvData.education.map((edu: any) => ({
+              id: edu.id || `edu-${Date.now()}-${Math.random()}`,
+              institution: edu.school || edu.institution || '',
+              degree: edu.degree || '',
+              field: edu.field || '',
+              startDate: edu.startDate || '',
+              endDate: edu.endDate || '',
+              current: edu.current || false,
+              gpa: edu.gpa || '',
+              description: edu.description || ''
+            })) : [],
+            skills: Array.isArray(cvData.skills) ? cvData.skills.map((skill: any) => ({
+              id: skill.id || `skill-${Date.now()}-${Math.random()}`,
+              name: typeof skill === 'string' ? skill : skill.name || '',
+              level: typeof skill === 'object' ? skill.level || 'Intermediate' : 'Intermediate'
+            })) : [],
+            projects: cvData.projects || [],
+            certifications: cvData.certifications || [],
+            volunteerExperience: cvData.volunteerExperience || [],
+            publications: cvData.publications || [],
+            honorsAwards: cvData.honorsAwards || [],
+            testScores: cvData.testScores || [],
+            recommendations: cvData.recommendations || [],
+            courses: cvData.courses || [],
+            cvLanguage: cvData.cvLanguage || getDefaultCVLanguage()
+          };
+
+          console.log('✅ LinkedIn CV data processed:', {
+            skillsCount: processedData.skills.length,
+            experienceCount: processedData.experience.length,
+            educationCount: processedData.education.length
+          });
+
+          return {
+            title: initialData.title || 'LinkedIn Import CV',
+            templateId: initialData.templateId || 'professional',
+            data: processedData
+          };
+        } else {
+          // Regular existing CV data
+          return {
+            title: initialData.title || '',
+            templateId: initialData.templateId || '',
+            data: {
+              ...cvData,
+              cvLanguage: cvData.cvLanguage || getDefaultCVLanguage()
+            }
+          };
         }
-      };
+      }
     }
+
+    // Default empty CV
     return {
       title: '',
       templateId: '',
@@ -303,37 +755,120 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
       const actualCVData = cvData.cv_data;
       console.log('🎯 CVEditor: Extracted CV data:', actualCVData);
 
-      const transformedCV = {
-        id: cvData.id,
-        title: cvData.title || 'Untitled CV',
-        templateId: templateId,
-        data: {
-          personalInfo: actualCVData.personalInfo || {
-            fullName: '',
-            email: '',
-            phone: '',
-            website: '',
-            linkedin: '',
-            summary: ''
-          },
-          experience: Array.isArray(actualCVData.experience) ? actualCVData.experience : [],
-          education: Array.isArray(actualCVData.education) ? actualCVData.education : [],
-          skills: Array.isArray(actualCVData.skills) ? actualCVData.skills : [],
-          languages: Array.isArray(actualCVData.languages) ? actualCVData.languages : [],
-          projects: Array.isArray(actualCVData.projects) ? actualCVData.projects : [],
-          certifications: Array.isArray(actualCVData.certifications) ? actualCVData.certifications : [],
-          volunteerExperience: Array.isArray(actualCVData.volunteerExperience) ? actualCVData.volunteerExperience : [],
-          publications: Array.isArray(actualCVData.publications) ? actualCVData.publications : [],
-          honorsAwards: Array.isArray(actualCVData.honorsAwards) ? actualCVData.honorsAwards : [],
-          testScores: Array.isArray(actualCVData.testScores) ? actualCVData.testScores : [],
-          recommendations: Array.isArray(actualCVData.recommendations) ? actualCVData.recommendations : [],
-          courses: Array.isArray(actualCVData.courses) ? actualCVData.courses : [],
-          cvLanguage: actualCVData.cvLanguage || getDefaultCVLanguage()
-        }
-      };
-      
-      console.log('✅ CVEditor: Transformed CV for state:', transformedCV);
-      setCv(transformedCV);
+      // CHECK IF THIS IS A LINKEDIN IMPORT CV - MAIN FIX
+      const isLinkedInImport = actualCVData.source === 'linkedin_import' ||
+                              actualCVData.importedAt ||
+                              cvData.title?.includes('LinkedIn Import');
+
+      if (isLinkedInImport) {
+        console.log('🔗 CVEditor: This is a LinkedIn import CV, processing accordingly...');
+
+        // Process LinkedIn import CV data with enhanced field mapping
+        const transformedCV = {
+          id: cvData.id,
+          title: cvData.title || 'LinkedIn Import CV',
+          templateId: templateId,
+          data: {
+            personalInfo: {
+              fullName: actualCVData.personalInfo?.fullName || actualCVData.personalInfo?.name || '',
+              firstName: actualCVData.personalInfo?.firstName || '',
+              lastName: actualCVData.personalInfo?.lastName || '',
+              email: actualCVData.personalInfo?.email || '',
+              phone: actualCVData.personalInfo?.phone || '',
+              website: actualCVData.personalInfo?.website || '',
+              linkedin: actualCVData.personalInfo?.linkedin || '',
+              location: actualCVData.personalInfo?.location || actualCVData.personalInfo?.address || '',
+              summary: actualCVData.personalInfo?.summary || '',
+              profileImage: actualCVData.personalInfo?.profileImage || actualCVData.personalInfo?.profilePicture || ''
+            },
+            experience: Array.isArray(actualCVData.experience) ? actualCVData.experience.map((exp: any) => ({
+              id: exp.id || `exp-loaded-${Date.now()}-${Math.random()}`,
+              company: exp.company || exp.company_name || '',
+              position: exp.position || exp.title || '',
+              startDate: exp.startDate || exp.duration?.split(' - ')[0] || '',
+              endDate: exp.endDate || exp.duration?.split(' - ')[1] || '',
+              current: exp.current || false,
+              description: exp.description || '',
+              location: exp.location || ''
+            })) : [],
+            education: Array.isArray(actualCVData.education) ? actualCVData.education.map((edu: any) => ({
+              id: edu.id || `edu-loaded-${Date.now()}-${Math.random()}`,
+              institution: edu.institution || edu.school || '',
+              degree: edu.degree || '',
+              field: edu.field || '',
+              startDate: edu.startDate || edu.duration?.split(' - ')[0] || '',
+              endDate: edu.endDate || edu.duration?.split(' - ')[1] || '',
+              current: edu.current || false,
+              gpa: edu.gpa || '',
+              description: edu.description || ''
+            })) : [],
+            skills: Array.isArray(actualCVData.skills) ? actualCVData.skills.map((skill: any, index: number) => ({
+              id: skill.id || `skill-loaded-${Date.now()}-${index}`,
+              name: typeof skill === 'string' ? skill : (skill.name || ''),
+              level: typeof skill === 'object' && skill.level ? skill.level : 'Intermediate'
+            })) : [],
+            languages: Array.isArray(actualCVData.languages) ? actualCVData.languages.map((lang: any, index: number) => ({
+              id: lang.id || `lang-loaded-${Date.now()}-${index}`,
+              name: typeof lang === 'string' ? lang : (lang.name || ''),
+              proficiency: typeof lang === 'object' && lang.proficiency ? lang.proficiency : 'Professional'
+            })) : [],
+            projects: Array.isArray(actualCVData.projects) ? actualCVData.projects : [],
+            certifications: Array.isArray(actualCVData.certifications) ? actualCVData.certifications : [],
+            volunteerExperience: Array.isArray(actualCVData.volunteerExperience) ? actualCVData.volunteerExperience : [],
+            publications: Array.isArray(actualCVData.publications) ? actualCVData.publications : [],
+            honorsAwards: Array.isArray(actualCVData.honorsAwards) ? actualCVData.honorsAwards : [],
+            testScores: Array.isArray(actualCVData.testScores) ? actualCVData.testScores : [],
+            recommendations: Array.isArray(actualCVData.recommendations) ? actualCVData.recommendations : [],
+            courses: Array.isArray(actualCVData.courses) ? actualCVData.courses : [],
+            cvLanguage: actualCVData.cvLanguage || getDefaultCVLanguage()
+          }
+        };
+
+        console.log('✅ CVEditor: LinkedIn CV transformed for editing:', {
+          personalInfo: transformedCV.data.personalInfo.fullName,
+          experienceCount: transformedCV.data.experience.length,
+          educationCount: transformedCV.data.education.length,
+          skillsCount: transformedCV.data.skills.length,
+          languagesCount: transformedCV.data.languages.length
+        });
+
+        setCv(transformedCV);
+      } else {
+        // Regular CV data processing
+        console.log('📄 CVEditor: Processing regular CV data...');
+
+        const transformedCV = {
+          id: cvData.id,
+          title: cvData.title || 'Untitled CV',
+          templateId: templateId,
+          data: {
+            personalInfo: actualCVData.personalInfo || {
+              fullName: '',
+              email: '',
+              phone: '',
+              website: '',
+              linkedin: '',
+              summary: ''
+            },
+            experience: Array.isArray(actualCVData.experience) ? actualCVData.experience : [],
+            education: Array.isArray(actualCVData.education) ? actualCVData.education : [],
+            skills: Array.isArray(actualCVData.skills) ? actualCVData.skills : [],
+            languages: Array.isArray(actualCVData.languages) ? actualCVData.languages : [],
+            projects: Array.isArray(actualCVData.projects) ? actualCVData.projects : [],
+            certifications: Array.isArray(actualCVData.certifications) ? actualCVData.certifications : [],
+            volunteerExperience: Array.isArray(actualCVData.volunteerExperience) ? actualCVData.volunteerExperience : [],
+            publications: Array.isArray(actualCVData.publications) ? actualCVData.publications : [],
+            honorsAwards: Array.isArray(actualCVData.honorsAwards) ? actualCVData.honorsAwards : [],
+            testScores: Array.isArray(actualCVData.testScores) ? actualCVData.testScores : [],
+            recommendations: Array.isArray(actualCVData.recommendations) ? actualCVData.recommendations : [],
+            courses: Array.isArray(actualCVData.courses) ? actualCVData.courses : [],
+            cvLanguage: actualCVData.cvLanguage || getDefaultCVLanguage()
+          }
+        };
+
+        console.log('✅ CVEditor: Regular CV transformed for editing:', transformedCV);
+        setCv(transformedCV);
+      }
     } catch (err) {
       console.error('❌ CVEditor: CV loading error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -349,8 +884,9 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
       loadCV();
     } else if (initialData) {
       console.log('CVEditor: Transforming LinkedIn data to CV data');
+      console.log('CVEditor: Initial skills data:', initialData.skills);
       const transformedData = transformLinkedInDataToCVData(initialData);
-      console.log('CVEditor: Transformed data:', transformedData);
+      console.log('CVEditor: Transformed skills data:', transformedData.skills);
       setCv({
         title: 'Imported CV',
         templateId: 'professional',
@@ -489,6 +1025,84 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
     }
   };
 
+  // AI Translation Functions
+  const handleAITranslation = async (targetLanguage: 'azerbaijani' | 'english') => {
+    if (!cv.id) {
+      alert('AI tərcümə üçün CV-ni əvvəlcə saxlamalısınız');
+      return;
+    }
+
+    const canUseAI = userTier === 'Premium' || userTier === 'Medium';
+    if (!canUseAI) {
+      alert(`AI tərcümə funksiyası Premium və Medium istifadəçilər üçün mövcuddur! Sizin tier: ${userTier}`);
+      return;
+    }
+
+    setTranslating(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      // Get authentication token
+      const token = localStorage.getItem('accessToken') || localStorage.getItem('token') || localStorage.getItem('auth-token');
+
+      if (!token) {
+        alert('Giriş icazəsi yoxdur. Yenidən giriş edin.');
+        setTranslating(false);
+        return;
+      }
+
+      const response = await fetch('/api/ai/translate-cv', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          cvId: cv.id,
+          targetLanguage
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          alert('Giriş icazəsi yoxdur. Yenidən giriş edin.');
+        } else if (response.status === 403) {
+          alert(result.error || 'AI tərcümə üçün Premium/Medium planı lazımdır');
+        } else {
+          throw new Error(result.error || 'Tərcümə xətası');
+        }
+        return;
+      }
+
+      if (result.success && result.translatedData) {
+        // Update CV with translated data
+        setCv(prev => ({
+          ...prev,
+          data: result.translatedData
+        }));
+
+        setSuccess(`CV uğurla ${targetLanguage === 'english' ? 'İngilis' : 'Azərbaycan'} dilinə tərcümə edildi! 🎉`);
+        setShowTranslationDialog(false);
+
+        // Reload the CV to get the updated data
+        setTimeout(() => {
+          loadCV();
+        }, 1000);
+      } else {
+        throw new Error('Tərcümə alına bilmədi');
+      }
+
+    } catch (error) {
+      console.error('AI Translation error:', error);
+      alert('AI tərcümə zamanı xəta baş verdi. Yenidən cəhd edin.');
+    } finally {
+      setTranslating(false);
+    }
+  };
+
   // Get sections based on CV language
   const getSections = (language: CVLanguage) => {
     if (language === 'english') {
@@ -555,29 +1169,32 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                 className="w-full sm:w-64 text-lg font-semibold border-none outline-none focus:ring-2 focus:ring-blue-500 rounded-lg px-3 py-2 bg-gray-50 hover:bg-gray-100 focus:bg-white transition-colors"
               />
               
-              {/* CV Language Selector */}
+              {/* AI Translation Button */}
               <div className="flex items-center space-x-2">
                 <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                 </svg>
-                <select
-                  value={cv.data.cvLanguage || 'azerbaijani'}
-                  onChange={(e) => handleLanguageChange(e.target.value as CVLanguage)}
-                  disabled={translating}
-                  className="text-sm border border-gray-300 rounded-lg px-3 py-1 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                <button
+                  onClick={() => setShowTranslationDialog(true)}
+                  disabled={translating || !cv.id}
+                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+                    !cv.id || translating
+                      ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600'
+                  }`}
                 >
-                  <option value="azerbaijani">🇦🇿 Azərbaycan</option>
-                  <option value="english">🇺🇸 English</option>
-                </select>
-                {translating && (
-                  <div className="flex items-center text-sm text-blue-600">
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Translating...
-                  </div>
-                )}
+                  {translating ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                      <span>Tərcümə...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span>🤖</span>
+                      <span>AI Tərcümə</span>
+                    </div>
+                  )}
+                </button>
               </div>
             </div>
 
@@ -738,6 +1355,8 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                     <PersonalInfoSection
                       data={{
                         fullName: cv.data.personalInfo.fullName,
+                        firstName: cv.data.personalInfo.firstName,
+                        lastName: cv.data.personalInfo.lastName,
                         email: cv.data.personalInfo.email,
                         phone: cv.data.personalInfo.phone,
                         website: cv.data.personalInfo.website,
@@ -747,8 +1366,11 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                       }}
                       userTier={userTier}
                       cvData={cv.data}
+                      cvId={cv.id || cvId}
                       onChange={(data: any) => updateCVData('personalInfo', {
                         fullName: data.fullName,
+                        firstName: data.firstName,
+                        lastName: data.lastName,
                         email: data.email,
                         phone: data.phone,
                         website: data.website,
@@ -774,6 +1396,9 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                     <SkillsSection
                       data={cv.data.skills || [] as any}
                       onChange={(data: any) => updateCVData('skills', data)}
+                      userTier={userTier}
+                      cvData={cv.data}
+                      cvId={cv.id || cvId}
                     />
                   )}
                   {activeSection === 'languages' && (
@@ -992,51 +1617,98 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
         </div>
       </div>
 
-      {/* Translation Dialog */}
+      {/* Enhanced AI Translation Dialog */}
       {showTranslationDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
             <div className="flex items-center mb-4">
-              <svg className="w-6 h-6 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-              </svg>
-              <h3 className="text-lg font-semibold text-gray-900">
-                {pendingLanguage === 'english' ? 'Translate to English?' : 'Azərbaycan dilinə tərcümə edilsin?'}
-              </h3>
-            </div>
-            
-            <p className="text-gray-600 mb-6">
-              {pendingLanguage === 'english' ? 
-                'Would you like to translate your CV content to English using AI? This will translate your experience, education, and other text content.' :
-                'CV məzmununuzu AI ilə Azərbaycan dilinə tərcümə etmək istəyirsiniz? Bu, təcrübə, təhsil və digər mətn məzmununu tərcümə edəcək.'
-              }
-            </p>
-
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={handleSkipTranslation}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                {pendingLanguage === 'english' ? 'Skip Translation' : 'Tərcüməni Keç'}
-              </button>
-              <button
-                onClick={handleTranslateContent}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                {pendingLanguage === 'english' ? 'Translate Content' : 'Məzmunu Tərcümə Et'}
-              </button>
-            </div>
-            
-            {!canUseAIFeatures(userTier) && (
-              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800">
-                  {pendingLanguage === 'english' ? 
-                    'AI translation requires Premium subscription. Only the interface language will change.' :
-                    'AI tərcümə Premium abunəlik tələb edir. Yalnız interfeys dili dəyişəcək.'
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center mr-3">
+                <span className="text-white text-lg">🤖</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  AI Professional Translation
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {canUseAIFeatures(userTier) ?
+                    `${userTier} üzvü - Professional tərcümə xidməti` :
+                    'Premium və Medium üzvlər üçün mövcuddur'
                   }
                 </p>
               </div>
-            )}
+            </div>
+            
+            <div className="space-y-4">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="font-medium text-blue-900 mb-2">AI Tərcümə Xidməti</h4>
+                <p className="text-sm text-blue-800">
+                  AI sizin CV məzmununuzu professional olaraq tərcümə edəcək:
+                </p>
+                <ul className="text-xs text-blue-700 mt-2 space-y-1">
+                  <li>• Professional özət və iş təcrübələri</li>
+                  <li>• Təhsil və layihə təsvirləri</li>
+                  <li>• Sertifikat və könüllü təcrübələr</li>
+                  <li>• İndustiya terminologiyası korunur</li>
+                  <li>• Şirkət və təşkilat adları dəyişilmir</li>
+                </ul>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => handleAITranslation('azerbaijani')}
+                  disabled={translating || !canUseAIFeatures(userTier)}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    translating || !canUseAIFeatures(userTier)
+                      ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
+                      : 'border-blue-200 bg-blue-50 text-blue-800 hover:border-blue-300 hover:bg-blue-100'
+                  }`}
+                >
+                  <div className="text-2xl mb-2">🇦🇿</div>
+                  <div className="font-medium">Azərbaycan dilinə</div>
+                  <div className="text-xs mt-1">Professional tərcümə</div>
+                </button>
+
+                <button
+                  onClick={() => handleAITranslation('english')}
+                  disabled={translating || !canUseAIFeatures(userTier)}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    translating || !canUseAIFeatures(userTier)
+                      ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
+                      : 'border-green-200 bg-green-50 text-green-800 hover:border-green-300 hover:bg-green-100'
+                  }`}
+                >
+                  <div className="text-2xl mb-2">🇺🇸</div>
+                  <div className="font-medium">English Translation</div>
+                  <div className="text-xs mt-1">Professional quality</div>
+                </button>
+              </div>
+
+              {!canUseAIFeatures(userTier) && (
+                <div className="p-4 bg-gradient-to-r from-purple-100 to-indigo-100 border border-purple-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <span className="text-purple-600 text-lg">💎</span>
+                    <div>
+                      <p className="text-sm font-medium text-purple-800 mb-1">
+                        AI Professional Translation
+                      </p>
+                      <p className="text-xs text-purple-700">
+                        CV məzmununuzu dərin analiz edərək professional tərcümə xidməti verir.
+                        Premium və Medium planlar üçün mövcuddur.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowTranslationDialog(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Bağla
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { getLabel } from '@/lib/cvLanguage';
 
 interface PersonalInfo {
-  firstName?: string;    // Ad sahəsi əlavə edildi
-  lastName?: string;     // Soyad sahəsi əlavə edildi
-  fullName: string;      // Tam ad - mövcud sahə
+  fullName: string;      // Tam ad - API-dən gələn
+  firstName?: string;    // Ad sahəsi
+  lastName?: string;     // Soyad sahəsi
   email: string;
   phone: string;
   website?: string;
@@ -20,9 +20,10 @@ interface PersonalInfoSectionProps {
   onChange: (data: PersonalInfo) => void;
   userTier?: string; // User tier for premium features
   cvData?: any; // Full CV data for AI summary
+  cvId?: string; // Add CV ID for AI summary generation
 }
 
-export default function PersonalInfoSection({ data, onChange, userTier = 'Free', cvData }: PersonalInfoSectionProps) {
+export default function PersonalInfoSection({ data, onChange, userTier = 'Free', cvData, cvId }: PersonalInfoSectionProps) {
   const [imageUploading, setImageUploading] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
   const isPremium = userTier === 'Premium';
@@ -80,7 +81,7 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
 
     onChange(updatedData);
   };
-
+  
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -119,57 +120,107 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
   };
 
   const generateAISummary = async () => {
+    // Debug logging to identify the issue
+    console.log('🔍 AI Summary Debug:', {
+      canUseAI,
+      userTier,
+      cvId,
+      hasPersonalInfo: !!(cvData?.personalInfo),
+      fullName: cvData?.personalInfo?.fullName
+    });
+
     if (!canUseAI) {
-      alert('AI professional summary Premium və Medium istifadəçilər üçün mövcuddur!');
+      console.log('❌ Cannot use AI. User tier:', userTier);
+      alert(`AI professional summary Premium və Medium istifadəçilər üçün mövcuddur! Sizin tier: ${userTier}`);
+      return;
+    }
+
+    if (!cvId) {
+      console.log('❌ No CV ID provided');
+      alert('AI summary yaratmaq üçün CV ID lazımdır');
       return;
     }
 
     if (!cvData || !cvData.personalInfo || !cvData.personalInfo.fullName) {
+      console.log('❌ Missing CV data:', {
+        hasCvData: !!cvData,
+        hasPersonalInfo: !!(cvData?.personalInfo),
+        hasFullName: !!(cvData?.personalInfo?.fullName)
+      });
       alert('AI summary yaratmaq üçün əvvəlcə əsas məlumatları doldurun');
       return;
     }
 
     setAiGenerating(true);
+    console.log('🚀 Starting AI summary generation...');
+
     try {
-      // Token-i düzgün key ilə alaq
-      const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+      // Get authentication token from localStorage
+      const token = localStorage.getItem('accessToken') || localStorage.getItem('token') || localStorage.getItem('auth-token');
+      
       if (!token) {
-        alert('İcazə xətası. Yenidən giriş edin.');
+        alert('Giriş icazəsi yoxdur. Yenidən giriş edin.');
+        setAiGenerating(false);
         return;
       }
 
-      const response = await fetch('/api/ai/summary', {
+      const response = await fetch('/api/generate-ai-summary', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ cvData }),
+        body: JSON.stringify({ cvId }),
+      });
+
+      console.log('📡 API Response:', {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText
       });
 
       const result = await response.json();
+      console.log('📋 API Result:', result);
 
       if (!response.ok) {
-        if (response.status === 403) {
-          alert(result.message || 'AI funksiyalar üçün Premium planı lazımdır');
+        if (response.status === 401) {
+          alert('Giriş icazəsi yoxdur. Yenidən giriş edin.');
+        } else if (response.status === 403) {
+          alert(result.error || 'AI funksiyalar üçün Premium/Medium planı lazımdır');
         } else {
           throw new Error(result.error || 'API xətası');
         }
         return;
       }
 
-      if (result.summary) {
+      if (result.success && result.summary) {
+        console.log('✅ AI Summary generated successfully:', result.summary.length, 'characters');
         handleChange('summary', result.summary);
-        alert('AI professional summary yaradıldı! 🎉');
+        alert(`AI professional summary yaradıldı! 🎉\n\n${userTier === 'Premium' ? 'Executive-level' : 'Professional'} səviyyədə hazırlandı və ATS üçün optimallaşdırıldı.`);
+      } else {
+        console.log('❌ API returned success=false or no summary');
+        throw new Error('AI summary yaradıla bilmədi');
       }
 
     } catch (error) {
-      console.error('AI Summary error:', error);
+      console.error('💥 AI Summary error:', error);
       alert('AI summary yaradarkən xəta baş verdi. Yenidən cəhd edin.');
     } finally {
       setAiGenerating(false);
     }
   };
+
+  // Debug logging to check userTier
+  useEffect(() => {
+    console.log('🔍 PersonalInfoSection Debug:', {
+      userTier,
+      isPremium,
+      canUseAI,
+      cvId,
+      hasData: !!data,
+      hasCvData: !!cvData
+    });
+  }, [userTier, isPremium, canUseAI, cvId, data, cvData]);
 
   return (
     <div className="space-y-6">
@@ -235,7 +286,7 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
             Ad <span className="text-red-500">*</span>
           </label>
           <input
-            id="firstName"
+            id="first_name"
             type="text"
             value={data.firstName || ''}
             onChange={(e) => handleChange('firstName', e.target.value)}
@@ -250,7 +301,7 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
             Soyad <span className="text-red-500">*</span>
           </label>
           <input
-            id="lastName"
+            id="last_name"
             type="text"
             value={data.lastName || ''}
             onChange={(e) => handleChange('lastName', e.target.value)}
