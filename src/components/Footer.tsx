@@ -45,7 +45,7 @@ export default function Footer() {
 
                   {/* LinkedIn */}
                   <a
-                      href="https://www.linkedin.com/company/cveranet"
+                      href="https://www.linkedin.com/company/cv-look"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-gray-600 hover:text-blue-600 transition-colors duration-200 transform hover:scale-110"
@@ -79,7 +79,7 @@ export default function Footer() {
                 <div className="text-left">
                   <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-6">Xidmətlər</h3>
                   <ul className="space-y-2 lg:space-y-4">
-                    <li><Link href="/cv-yaratmaq" className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-xs sm:text-sm lg:text-base">CV Yaratmaq</Link></li>
+                    <li><Link href="/dashboard" className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-xs sm:text-sm lg:text-base">CV Yaratmaq</Link></li>
                     <li><Link href="/templates" className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-xs sm:text-sm lg:text-base">CV Şablonları</Link></li>
                     <li><Link href="/pricing" className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-xs sm:text-sm lg:text-base">Qiymətləndirilmə</Link></li>
                   </ul>
