@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = verifyJWT(token);
-    
+    const decoded = await verifyJWT(token);
+
     if (!decoded || !decoded.userId) {
       return NextResponse.json(
         { message: 'Yanlış token' },

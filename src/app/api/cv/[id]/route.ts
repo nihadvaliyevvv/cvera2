@@ -21,7 +21,7 @@ export async function GET(
     }
 
     const token = authHeader.substring(7);
-    const decoded = verifyJWT(token);
+    const decoded = await verifyJWT(token);
     if (!decoded) {
       return NextResponse.json(
         { error: 'Etibarsız token' },
@@ -71,7 +71,7 @@ export async function PUT(
     }
 
     const token = authHeader.substring(7);
-    const decoded = verifyJWT(token);
+    const decoded = await verifyJWT(token);
     if (!decoded) {
       return NextResponse.json(
         { error: 'Etibarsız token' },
@@ -138,7 +138,7 @@ export async function DELETE(
     }
 
     const token = authHeader.substring(7);
-    const decoded = verifyJWT(token);
+    const decoded = await verifyJWT(token);
     if (!decoded) {
       return NextResponse.json(
         { error: 'Etibarsız token' },

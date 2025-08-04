@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.substring(7);
-    const decoded = verifyJWT(token);
+    const decoded = await verifyJWT(token);
     console.log('🔍 Dashboard API: JWT decode nəticəsi:', decoded ? `User ID: ${decoded.userId}` : 'Decode xətası');
 
     if (!decoded) {
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.substring(7);
-    const decoded = verifyJWT(token);
+    const decoded = await verifyJWT(token);
     if (!decoded) {
       return NextResponse.json(
         { error: 'Etibarsız token' },

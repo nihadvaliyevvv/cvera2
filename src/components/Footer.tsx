@@ -81,7 +81,7 @@ export default function Footer() {
                   <ul className="space-y-2 lg:space-y-4">
                     <li><Link href="/dashboard" className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-xs sm:text-sm lg:text-base">CV Yaratmaq</Link></li>
                     <li><Link href="/templates" className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-xs sm:text-sm lg:text-base">CV Şablonları</Link></li>
-                    <li><Link href="/pricing" className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-xs sm:text-sm lg:text-base">Qiymətləndirilmə</Link></li>
+                    <li><Link href="/pricing" className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-xs sm:text-sm lg:text-base">Qiymətlər</Link></li>
                   </ul>
                 </div>
 

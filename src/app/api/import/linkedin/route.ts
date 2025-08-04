@@ -349,7 +349,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const decoded = verifyJWT(token);
+    const decoded = await verifyJWT(token);
     if (!decoded?.userId) {
       return NextResponse.json(
         { error: 'Invalid or expired token' },
