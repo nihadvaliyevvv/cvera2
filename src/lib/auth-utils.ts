@@ -1,6 +1,12 @@
 // Authentication utility functions for server-side use
 import { NextRequest } from 'next/server';
-import { verifyJWT, JWTPayload } from './jwt';
+import { verifyJWT } from './jwt';
+
+export interface JWTPayload {
+  userId: string;
+  email: string;
+  // Add other JWT payload fields as needed
+}
 
 export interface AuthResult {
   success: boolean;
@@ -12,18 +18,14 @@ export interface AuthResult {
  * Extract token from request headers or cookies
  */
 export function extractToken(request: NextRequest): string | null {
-  // Try Authorization header first (preferred method)
   const authHeader = request.headers.get('authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
     return authHeader.substring(7);
   }
-
-  // Try cookies as fallback
   const cookieToken = request.cookies.get('auth-token')?.value;
   if (cookieToken) {
     return cookieToken;
   }
-
   return null;
 }
 
@@ -126,8 +128,8 @@ const defaultRateLimit: RateLimitConfig = {
 };
 
 export function isRateLimited(
-  identifier: string,
-  config: RateLimitConfig = defaultRateLimit
+    identifier: string,
+    config: RateLimitConfig = defaultRateLimit
 ): boolean {
   // This is a simple in-memory rate limiter
   // In production, you might want to use Redis or similar
