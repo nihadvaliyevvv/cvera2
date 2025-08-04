@@ -4,21 +4,20 @@ import { verifyJWT } from "@/lib/jwt";
 
 const prisma = new PrismaClient();
 
-async function getUserIdFromRequest(req: NextRequest): Promise<string | null> {
+function getUserIdFromRequest(req: NextRequest): string | null {
   const auth = req.headers.get("authorization");
   if (!auth || !auth.startsWith("Bearer ")) return null;
   const token = auth.replace("Bearer ", "");
   
-  const payload = await verifyJWT(token);
+  const payload = verifyJWT(token);
   return payload?.userId || null;
 }
 
 export async function GET(req: NextRequest) {
-  const userId = await getUserIdFromRequest(req);
+  const userId = getUserIdFromRequest(req);
   if (!userId) {
     return NextResponse.json({ error: "Giriş tələb olunur" }, { status: 401 });
   }
-
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -36,27 +35,24 @@ export async function GET(req: NextRequest) {
           status: "active" 
         },
         orderBy: { startedAt: "desc" },
+        take: 1,
         select: {
-          id: true,
           tier: true,
           status: true,
           provider: true,
           expiresAt: true,
-          startedAt: true,
         },
       },
     },
   });
-
   if (!user) {
     return NextResponse.json({ error: "İstifadəçi tapılmadı" }, { status: 404 });
   }
-
   return NextResponse.json(user);
 }
 
 export async function PUT(req: NextRequest) {
-  const userId = await getUserIdFromRequest(req);
+  const userId = getUserIdFromRequest(req);
   if (!userId) {
     return NextResponse.json({ error: "Giriş tələb olunur" }, { status: 401 });
   }
