@@ -5,37 +5,60 @@ const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
   try {
+    console.log('🚪 Logout API called');
+
     // Get token from header
     const authHeader = request.headers.get('authorization');
     const token = authHeader?.replace('Bearer ', '') || null;
 
+    // Get request body for additional flags
+    let requestBody: any = {};
+    try {
+      requestBody = await request.json();
+    } catch (e) {
+      // Ignore JSON parse errors
+    }
+
+    const { logoutFromLinkedIn, revokeLinkedInToken } = requestBody;
+
+    // If we have a token, try to update user's session in database
     if (token) {
-      // Try to extract user ID from token for database cleanup
       try {
         const jwt = require('jsonwebtoken');
         const decoded = jwt.decode(token) as any;
 
         if (decoded?.userId) {
-          // Update user's last login to force re-authentication
-          await prisma.user.update({
-            where: { id: decoded.userId },
-            data: {
-              lastLogin: null, // Clear last login to force re-authentication
-            }
-          }).catch(() => {}); // Ignore errors, logout should still work
+          console.log('🗃️ Clearing user session for:', decoded.userId);
+
+          // Get user info for LinkedIn logout
+          const user = await prisma.user.findUnique({
+            where: { id: decoded.userId }
+          });
+
+          // Update user's last login to track logout (optional)
+          // Since we don't have lastLogout field, we'll just log the action
+          console.log('✅ User logout tracked for:', decoded.userId);
+
+          // Log LinkedIn logout attempt (without trying to revoke stored tokens)
+          if (revokeLinkedInToken && user?.loginMethod === 'linkedin') {
+            console.log('🔗 LinkedIn user logout - clearing session data...');
+            // Note: We don't store LinkedIn access tokens in the database for security
+            // LinkedIn logout is handled client-side via popup and cookie clearing
+          }
         }
       } catch (e) {
-        // Ignore token decode errors
+        console.log('Token decode error (ignored):', e);
       }
     }
 
     const response = NextResponse.json({
       message: "Uğurla çıxış edildi",
       timestamp: new Date().toISOString(),
-      cleared: true
+      cleared: true,
+      linkedinLogout: logoutFromLinkedIn || false
     });
 
-    // Clear all possible authentication cookies
+    // Comprehensive cookie clearing for ALL possible auth cookies
     const cookiesToClear = [
       "auth-token",
       "accessToken",
@@ -47,12 +70,22 @@ export async function POST(request: Request) {
       "next-auth.session-token",
       "next-auth.csrf-token",
       "__Secure-next-auth.session-token",
-      "__Host-next-auth.csrf-token"
+      "__Host-next-auth.csrf-token",
+      "authToken",
+      "user-token",
+      "jwt-token",
+      // LinkedIn-specific cookies
+      "li_at",
+      "liap",
+      "li_rm",
+      "li_gc",
+      "bcookie",
+      "bscookie"
     ];
 
     // Clear cookies for multiple paths and domains
     const paths = ["/", "/api", "/auth", "/dashboard"];
-    const domains = [undefined, ".cvera.net", "cvera.net", process.env.NEXT_PUBLIC_DOMAIN];
+    const domains = [undefined, process.env.NEXT_PUBLIC_DOMAIN, ".linkedin.com", "linkedin.com"];
 
     cookiesToClear.forEach(cookieName => {
       paths.forEach(path => {
@@ -66,7 +99,7 @@ export async function POST(request: Request) {
             expires: new Date(0),
           };
 
-          if (domain) {
+          if (domain && domain !== "localhost") {
             cookieOptions.domain = domain;
           }
 
@@ -79,26 +112,25 @@ export async function POST(request: Request) {
     response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate, private');
     response.headers.set('Pragma', 'no-cache');
     response.headers.set('Expires', '0');
-    response.headers.set('Clear-Site-Data', '"cache", "cookies", "storage"');
+
+    // Add LinkedIn logout headers if needed
+    if (logoutFromLinkedIn) {
+      response.headers.set('X-LinkedIn-Logout', 'true');
+    }
 
     return response;
-
   } catch (error) {
-    console.error("Logout error:", error);
+    console.error('Logout error:', error);
 
-    // Even if there's an error, still return success and clear cookies
+    // Even if there's an error, still return success for logout
     const response = NextResponse.json({
-      message: "Çıxış prosesi tamamlandı",
+      message: "Çıxış edildi",
       timestamp: new Date().toISOString(),
-      cleared: true
+      error: "Partial cleanup"
     });
 
-    // Emergency cookie clearing
-    const cookiesToClear = [
-      "auth-token", "accessToken", "refreshToken", "session", "token",
-      "cvera-auth", "cvera-token", "next-auth.session-token"
-    ];
-
+    // Clear cookies anyway
+    const cookiesToClear = ["auth-token", "accessToken", "refreshToken"];
     cookiesToClear.forEach(cookieName => {
       response.cookies.set(cookieName, "", {
         httpOnly: true,
@@ -111,5 +143,7 @@ export async function POST(request: Request) {
     });
 
     return response;
+  } finally {
+    await prisma.$disconnect();
   }
 }

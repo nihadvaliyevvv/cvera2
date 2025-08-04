@@ -1,18 +1,16 @@
 // Authentication utilities for frontend
 'use client';
 import React, { useState, useEffect, useContext, createContext, useCallback } from 'react';
-import jwt from 'jsonwebtoken';
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  avatar?: string; // Add avatar property as optional
   createdAt?: string;
-  loginMethod?: string; // Add login method (linkedin, email)
-  linkedinId?: string; // Add LinkedIn ID field
-  linkedinUsername?: string; // Add LinkedIn username field (optional until database is updated)
-  tier?: string; // Add tier field to match Prisma schema
+  loginMethod?: string;
+  linkedinId?: string;
+  linkedinUsername?: string;
+  tier?: string;
   subscriptions: Array<{
     id: string;
     tier: string;
@@ -25,6 +23,7 @@ export interface User {
 
 export interface AuthTokens {
   accessToken: string;
+  refreshToken?: string;
 }
 
 interface AuthContextType {
@@ -35,7 +34,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   fetchCurrentUser: () => Promise<void>;
-  // LinkedIn auto-import functionality
+  refreshToken: () => Promise<boolean>;
   canAutoImportLinkedIn: () => boolean;
   importLinkedInProfile: () => Promise<any>;
 }
@@ -47,100 +46,122 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Enhanced token validation with proper JWT decoding
   const isValidToken = (token: string) => {
     try {
-      const decoded = jwt.decode(token) as any;
-      if (!decoded || !decoded.exp) return false;
-      return decoded.exp * 1000 > Date.now();
+      if (!token) return false;
+
+      const parts = token.split('.');
+      if (parts.length !== 3) return false;
+
+      const payload = JSON.parse(atob(parts[1]));
+      const currentTime = Math.floor(Date.now() / 1000);
+
+      return payload.exp && payload.exp > currentTime;
     } catch {
       return false;
     }
   };
 
+  // Token management utilities
+  const getStoredToken = (): string | null => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('accessToken');
+  };
+
+  const setStoredToken = (token: string | null) => {
+    if (typeof window === 'undefined') return;
+
+    if (token) {
+      localStorage.setItem('accessToken', token);
+    } else {
+      localStorage.removeItem('accessToken');
+    }
+  };
+
+  const clearAuthData = () => {
+    if (typeof window === 'undefined') return;
+
+    // Clear all auth-related localStorage items
+    const authKeys = ['accessToken', 'refreshToken', 'user', 'auth_timestamp'];
+    authKeys.forEach(key => localStorage.removeItem(key));
+
+    // Clear session storage
+    sessionStorage.clear();
+  };
+
+  // Enhanced token refresh functionality
+  const refreshToken = useCallback(async (): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/auth/refresh-token', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.accessToken && isValidToken(data.accessToken)) {
+          setStoredToken(data.accessToken);
+          return true;
+        }
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      return false;
+    }
+  }, []);
+
+  // Enhanced user fetching with proper error handling
   const fetchCurrentUser = useCallback(async () => {
     if (typeof window === 'undefined') return;
 
     try {
       setLoading(true);
 
-      // Check if user has explicitly logged out
-      const userLoggedOut = localStorage.getItem('user_logged_out');
-      const logoutTimestamp = localStorage.getItem('logout_timestamp');
+      // Check for logout indicators
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('logout') || urlParams.has('logged_out') || urlParams.has('nuclear_logout')) {
+        console.log('Logout indicator detected, clearing auth state');
+        clearAuthData();
+        setUser(null);
+        setLoading(false);
+        setIsInitialized(true);
+        return;
+      }
 
-      if (userLoggedOut === 'true') {
-        // Check if logout was recent (within last 24 hours) to prevent auto re-auth
-        const logoutTime = logoutTimestamp ? parseInt(logoutTimestamp) : 0;
-        const timeSinceLogout = Date.now() - logoutTime;
-        const twentyFourHours = 24 * 60 * 60 * 1000;
+      let token = getStoredToken();
 
-        if (timeSinceLogout < twentyFourHours) {
-          console.log('User explicitly logged out recently, skipping auth check');
+      // Validate existing token
+      if (token && !isValidToken(token)) {
+        console.log('Token expired, attempting refresh...');
+        const refreshSuccess = await refreshToken();
+
+        if (refreshSuccess) {
+          token = getStoredToken();
+        } else {
+          console.log('Token refresh failed, clearing auth data');
+          clearAuthData();
           setUser(null);
           setLoading(false);
           setIsInitialized(true);
           return;
-        } else {
-          // Clear old logout flags after 24 hours
-          localStorage.removeItem('user_logged_out');
-          localStorage.removeItem('logout_timestamp');
         }
       }
 
-      // Check if we're coming from a logout (URL parameter check)
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.has('logout')) {
-        console.log('Logout parameter detected, skipping auth check');
+      if (!token) {
+        console.log('No valid token found');
         setUser(null);
         setLoading(false);
         setIsInitialized(true);
         return;
       }
 
-      // First try to get token from localStorage
-      let token = localStorage.getItem('accessToken');
-
-      // Validate token before using it
-      if (token && !isValidToken(token)) {
-        console.log('Token expired, removing from localStorage');
-        localStorage.removeItem('accessToken');
-        token = null;
-      }
-
-      // If no valid token in localStorage, try to get from cookies via API
-      if (!token) {
-        try {
-          const response = await fetch('/api/auth/token', {
-            credentials: 'include',
-            headers: {
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache'
-            }
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            token = data.accessToken;
-
-            // Validate token from server
-            if (token && isValidToken(token)) {
-              localStorage.setItem('accessToken', token);
-            } else {
-              token = null;
-            }
-          }
-        } catch (error) {
-          console.error('Error getting token from cookie:', error);
-        }
-      }
-
-      if (!token) {
-        setUser(null);
-        setLoading(false);
-        setIsInitialized(true);
-        return;
-      }
-
-      // Fetch user data with valid token
+      // Fetch user data with retry logic
       const response = await fetch('/api/users/me', {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -151,25 +172,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (response.ok) {
         const userData = await response.json();
+        console.log('✅ User authenticated:', userData.email);
         setUser(userData);
-        // Clear logout flags on successful authentication
-        localStorage.removeItem('user_logged_out');
-        localStorage.removeItem('logout_timestamp');
+      } else if (response.status === 401) {
+        // Token invalid, try refresh one more time
+        const refreshSuccess = await refreshToken();
+        if (refreshSuccess) {
+          // Retry with new token
+          const retryResponse = await fetch('/api/users/me', {
+            headers: {
+              Authorization: `Bearer ${getStoredToken()}`,
+              'Cache-Control': 'no-cache',
+            },
+          });
+
+          if (retryResponse.ok) {
+            const userData = await retryResponse.json();
+            setUser(userData);
+          } else {
+            throw new Error('Authentication failed after refresh');
+          }
+        } else {
+          throw new Error('Token refresh failed');
+        }
       } else {
-        console.log('Failed to fetch user data, removing token');
-        localStorage.removeItem('accessToken');
-        setUser(null);
+        throw new Error(`User fetch failed: ${response.status}`);
       }
     } catch (error) {
-      console.error('Error fetching user:', error);
-      localStorage.removeItem('accessToken');
+      console.error('❌ Authentication error:', error);
+      clearAuthData();
       setUser(null);
     } finally {
       setLoading(false);
       setIsInitialized(true);
     }
-  }, []);
+  }, [refreshToken]);
 
+  // Enhanced login with proper error handling
   const login = useCallback(async (email: string, password: string) => {
     setLoading(true);
     try {
@@ -178,29 +217,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Giriş uğursuz oldu');
+        throw new Error(error.message || error.error || 'Giriş uğursuz oldu');
       }
 
       const data = await response.json();
 
-      // Validate token before storing
       if (data.accessToken && isValidToken(data.accessToken)) {
-        localStorage.setItem('accessToken', data.accessToken);
+        setStoredToken(data.accessToken);
+        setUser(data.user);
 
-        // Fetch user data after successful login
-        await fetchCurrentUser();
-
-        // Redirect to dashboard after successful login with replace to prevent back button issues
+        // Redirect with proper cleanup
         if (typeof window !== 'undefined') {
+          // Clear any logout flags from URL
+          const url = new URL(window.location.href);
+          url.searchParams.delete('logout');
+          url.searchParams.delete('logged_out');
+          window.history.replaceState({}, '', url.toString());
+
+          // Redirect to dashboard
           window.location.replace('/dashboard');
         }
       } else {
-        throw new Error('Yanlış token alındı');
+        throw new Error('Token alınmadı');
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -208,8 +251,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [fetchCurrentUser]);
+  }, []);
 
+  // Enhanced registration
   const register = useCallback(async (name: string, email: string, password: string) => {
     setLoading(true);
     try {
@@ -218,15 +262,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          password
+        }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Qeydiyyat uğursuz oldu');
+        throw new Error(error.message || error.error || 'Qeydiyyat uğursuz oldu');
       }
 
-      // After registration, automatically log in
+      // Auto-login after registration
       await login(email, password);
     } catch (error) {
       console.error('Registration error:', error);
@@ -236,49 +284,131 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [login]);
 
-  const logout = useCallback(() => {
+  // Enhanced logout with proper cleanup
+  const logout = useCallback(async () => {
     try {
-      console.log('🚪 Logout prosesi başlayır...');
+      console.log('🚪 Logging out...');
 
-      // 1. Immediately set user to null and clear state
+      const isLinkedInUser = user?.loginMethod === 'linkedin';
+      const currentToken = getStoredToken();
+
+      // Immediately clear local state
       setUser(null);
       setLoading(false);
-      setIsInitialized(false);
+      clearAuthData();
 
-      // 2. Quick storage clearing function
-      const clearStorage = () => {
-        if (typeof window !== 'undefined') {
-          try {
-            localStorage.clear();
-            sessionStorage.clear();
-            // Set a logout flag to prevent automatic re-authentication
-            localStorage.setItem('user_logged_out', 'true');
-            localStorage.setItem('logout_timestamp', Date.now().toString());
-          } catch (e) {
-            console.error('Storage clear error:', e);
-          }
-        }
-      };
-
-      // 3. Clear storage immediately
-      clearStorage();
-
-      // 4. Quick logout - no waiting for API calls
-      if (typeof window !== 'undefined') {
-        // Make logout call but don't wait for it
-        fetch('/api/auth/logout', {
+      // Call logout API first
+      try {
+        await fetch('/api/auth/logout', {
           method: 'POST',
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentToken}`,
           },
-        }).catch(() => {
-          // Ignore errors since we're already clearing everything
+          body: JSON.stringify({
+            logoutFromLinkedIn: isLinkedInUser,
+            clearAllSessions: true,
+            revokeLinkedInToken: isLinkedInUser
+          })
+        });
+      } catch (error) {
+        console.error('Logout API error (ignored):', error);
+      }
+
+      // Enhanced LinkedIn logout process
+      if (isLinkedInUser && typeof window !== 'undefined') {
+        console.log('🔗 LinkedIn logout başlayır...');
+
+        // Method 1: Direct LinkedIn logout
+        try {
+          const linkedinLogoutWindow = window.open(
+            'https://www.linkedin.com/m/logout/',
+            'linkedin_logout',
+            'width=600,height=400,scrollbars=yes,resizable=yes'
+          );
+
+          // Wait a bit for logout to process
+          setTimeout(() => {
+            if (linkedinLogoutWindow) {
+              linkedinLogoutWindow.close();
+            }
+          }, 3000);
+
+        } catch (e) {
+          console.log('LinkedIn popup logout failed, trying alternative...');
+        }
+
+        // Method 2: Clear LinkedIn-related storage
+        try {
+          // Clear LinkedIn-specific localStorage and sessionStorage
+          const linkedinKeys = Object.keys(localStorage).filter(key =>
+            key.toLowerCase().includes('linkedin') ||
+            key.toLowerCase().includes('li_')
+          );
+
+          linkedinKeys.forEach(key => {
+            localStorage.removeItem(key);
+          });
+
+          const linkedinSessionKeys = Object.keys(sessionStorage).filter(key =>
+            key.toLowerCase().includes('linkedin') ||
+            key.toLowerCase().includes('li_')
+          );
+
+          linkedinSessionKeys.forEach(key => {
+            sessionStorage.removeItem(key);
+          });
+
+          console.log('✅ LinkedIn storage cleared');
+        } catch (e) {
+          console.log('LinkedIn storage clear error:', e);
+        }
+
+        // Method 3: Clear LinkedIn cookies manually
+        try {
+          const linkedinCookies = [
+            'li_at',
+            'liap',
+            'li_rm',
+            'li_gc',
+            'li_mc',
+            'bcookie',
+            'bscookie',
+            'li_sugr',
+            'liveagent_oref',
+            'liveagent_ptid',
+            'li_oatml',
+            'UserMatchHistory'
+          ];
+
+          linkedinCookies.forEach(cookieName => {
+            // Clear for different domains
+            document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.linkedin.com;`;
+            document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=linkedin.com;`;
+            document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+          });
+
+          console.log('✅ LinkedIn cookies cleared');
+        } catch (e) {
+          console.log('LinkedIn cookie clear error:', e);
+        }
+      }
+
+      // Redirect with proper cleanup
+      if (typeof window !== 'undefined') {
+        const timestamp = Date.now();
+        const logoutParams = new URLSearchParams({
+          logout: 'true',
+          t: timestamp.toString()
         });
 
-        // Immediate redirect
-        const timestamp = Date.now();
-        window.location.href = `/auth/login?logout=true&t=${timestamp}`;
+        if (isLinkedInUser) {
+          logoutParams.set('linkedin_logout', 'true');
+        }
+
+        // Force complete page replacement
+        window.location.replace(`/auth/login?${logoutParams.toString()}`);
       }
 
     } catch (error) {
@@ -286,32 +416,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Emergency fallback
       if (typeof window !== 'undefined') {
-        try {
-          localStorage.clear();
-          sessionStorage.clear();
-          localStorage.setItem('user_logged_out', 'true');
-          window.location.href = '/auth/login?logout=true';
-        } catch (e) {
-          window.location.href = '/auth/login';
-        }
+        clearAuthData();
+        window.location.replace('/auth/login?emergency_logout=true');
       }
-
-      setUser(null);
-      setLoading(false);
-      setIsInitialized(false);
     }
-  }, []);
+  }, [user]);
 
+  // LinkedIn auto-import functionality
   const canAutoImportLinkedIn = useCallback((): boolean => {
     return user?.loginMethod === 'linkedin' && !!(user?.linkedinUsername || user?.linkedinId);
   }, [user]);
 
   const importLinkedInProfile = useCallback(async () => {
     if (!canAutoImportLinkedIn()) {
-      throw new Error('LinkedIn auto-import yalnız LinkedIn ilə giriş edən istifadəçilər üçündür');
+      throw new Error('LinkedIn auto-import yalnız LinkedIn istifadəçiləri üçündür');
     }
 
-    const token = localStorage.getItem('accessToken');
+    const token = getStoredToken();
     if (!token) {
       throw new Error('Giriş tələb olunur');
     }
@@ -328,12 +449,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'LinkedIn profil import xətası');
+        throw new Error(error.error || 'LinkedIn import xətası');
       }
 
       const result = await response.json();
-      console.log('✅ LinkedIn profil uğurla import edildi:', result.profile?.name);
-
+      console.log('✅ LinkedIn profil import edildi');
       return result;
     } catch (error) {
       console.error('❌ LinkedIn import xətası:', error);
@@ -343,6 +463,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [canAutoImportLinkedIn]);
 
+  // Initialize authentication on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       fetchCurrentUser();
@@ -357,6 +478,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     register,
     logout,
     fetchCurrentUser,
+    refreshToken,
     canAutoImportLinkedIn,
     importLinkedInProfile,
   };
@@ -384,6 +506,9 @@ export function getUserTier(user: User): string {
 // JWT functions for backend API use
 export function verifyJWT(token: string): { userId: string; email: string } | null {
   try {
+    if (!token || typeof window !== 'undefined') return null; // Client-side safety
+
+    const jwt = require('jsonwebtoken');
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string; email: string };
     return decoded;
   } catch {
@@ -392,13 +517,10 @@ export function verifyJWT(token: string): { userId: string; email: string } | nu
 }
 
 export function generateJWT(payload: { userId: string; email: string }): string {
-  return jwt.sign(payload, process.env.JWT_SECRET!, {
-    expiresIn: '1h',
-  });
-}
+  if (typeof window !== 'undefined') throw new Error('JWT generation only on server');
 
-export function generateRefreshToken(payload: { userId: string; email: string }): string {
-  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET!, {
-    expiresIn: '7d',
+  const jwt = require('jsonwebtoken');
+  return jwt.sign(payload, process.env.JWT_SECRET!, {
+    expiresIn: '24h',
   });
 }
