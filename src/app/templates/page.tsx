@@ -9,6 +9,7 @@ import StandardHeader from '@/components/ui/StandardHeader';
 import Footer from '@/components/Footer';
 import OptimizedImage from '@/components/ui/OptimizedImage';
 import { generateStructuredData, organizationData, templateProductData, generateBreadcrumbData } from '@/lib/structured-data';
+import { useAuth } from '@/lib/auth'; // Import useAuth hook
 
 interface Template {
   id: string;
@@ -32,9 +33,22 @@ export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
   const router = useRouter();
+
+  // Use authentication hook
+  const { user, loading: authLoading, isInitialized } = useAuth();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (isInitialized && !authLoading) {
+      if (!user) {
+        console.log('🚫 İstifadəçi giriş etməyib - login səhifəsinə yönləndirilir');
+        router.push('/auth/login?redirect=/templates');
+        return;
+      }
+      console.log('✅ İstifadəçi təsdiqləndi - templates yüklənir');
+    }
+  }, [user, authLoading, isInitialized, router]);
 
   // Add structured data for templates page
   useEffect(() => {
@@ -95,30 +109,12 @@ export default function TemplatesPage() {
     }
   }, []);
 
-  const checkAuthentication = useCallback(async () => {
-    try {
-      const response = await fetch('/api/auth/me');
-      if (response.ok) {
-        setIsAuthenticated(true);
-        loadTemplates();
-      } else {
-        // Kullanıcı giriş yapmamış, login sayfasına yönlendir
-        router.push('/auth/login');
-        return;
-      }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      router.push('/auth/login');
-      return;
-    } finally {
-      setAuthLoading(false);
-    }
-  }, [router, loadTemplates]);
-
   // Authentication kontrolü
   useEffect(() => {
-    checkAuthentication();
-  }, [checkAuthentication]);
+    if (user) {
+      loadTemplates();
+    }
+  }, [user, loadTemplates]);
 
   useEffect(() => {
     AOS.init({
@@ -149,7 +145,7 @@ export default function TemplatesPage() {
 
   // Kullanıcı authenticated değilse bu component render edilmeyecek
   // çünkü zaten login sayfasına yönlendirilmiş olacak
-  if (!isAuthenticated) {
+  if (!user) {
     return null;
   }
 
