@@ -214,55 +214,129 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('🚪 Logout prosesi başlayır...');
 
-      // 1. Immediately set user to null and clear state
+      // 1. Dərhal user-i null et və state-i təmizlə
       setUser(null);
       setLoading(false);
       setIsInitialized(false);
 
-      // 2. Quick storage clearing function
+      // 2. Gücləndirilmiş storage təmizliyi funksiyası
       const clearStorage = () => {
         if (typeof window !== 'undefined') {
           try {
+            // localStorage-ı tamamilə təmizlə
             localStorage.clear();
             sessionStorage.clear();
+
+            // Həmçinin xüsusi auth key-ləri təmizlə
+            const authKeys = [
+              'auth-token',
+              'accessToken',
+              'refreshToken',
+              'user',
+              'token',
+              'session',
+              'cvera-auth',
+              'jwt-token',
+              'userSession'
+            ];
+
+            authKeys.forEach(key => {
+              localStorage.removeItem(key);
+              sessionStorage.removeItem(key);
+            });
+
+            console.log('✅ Storage tamamilə təmizləndi');
           } catch (e) {
-            console.error('Storage clear error:', e);
+            console.error('Storage təmizliyi xətası:', e);
           }
         }
       };
 
-      // 3. Clear storage immediately
+      // 3. Storage-ı dərhal təmizlə
       clearStorage();
 
-      // 4. Quick logout - no waiting for API calls
+      // 4. Gücləndirilmiş logout API çağırışı
       if (typeof window !== 'undefined') {
-        // Make logout call but don't wait for it
+        // Cari token-i logout request ilə göndər
+        const currentToken = localStorage.getItem('auth-token') ||
+                           localStorage.getItem('accessToken') ||
+                           localStorage.getItem('token');
+
+        // Token ilə logout çağırışı et
         fetch('/api/auth/logout', {
           method: 'POST',
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
+            ...(currentToken && { 'Authorization': `Bearer ${currentToken}` })
           },
-        }).catch(() => {
-          // Ignore errors since we're already clearing everything
+          body: JSON.stringify({
+            timestamp: new Date().toISOString(),
+            sessionTerminate: true
+          })
+        }).then(response => {
+          console.log('✅ Logout API çağırışı tamamlandı:', response.status);
+          // API çağırışından sonra storage-ı yenidən təmizlə
+          clearStorage();
+        }).catch(error => {
+          console.error('Logout API xətası (davam edirik):', error);
+          // API uğursuz olsa belə storage-ı təmizlə
+          clearStorage();
         });
 
-        // Immediate redirect
+        // 5. Cache və IndexedDB təmizliyi
+        try {
+          // Cache-lanmış API cavablarını təmizlə
+          if ('caches' in window) {
+            caches.keys().then(names => {
+              names.forEach(name => {
+                caches.delete(name);
+              });
+            });
+          }
+        } catch (e) {
+          console.error('Cache təmizliyi xətası:', e);
+        }
+
+        // 6. Dərhal redirect cache busting ilə
         const timestamp = Date.now();
-        window.location.href = `/auth/login?logout=true&t=${timestamp}`;
+        const randomId = Math.random().toString(36).substring(7);
+
+        // href əvəzinə replace istifadə et ki, geri düyməsi problemi olmasın
+        window.location.replace(`/auth/login?logout=true&t=${timestamp}&r=${randomId}`);
       }
 
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Logout xətası:', error);
 
-      // Emergency fallback
+      // Təcili fallback - daha aqressiv təmizlik
       if (typeof window !== 'undefined') {
         try {
+          // Nuclear seçim - hər şeyi təmizlə
           localStorage.clear();
           sessionStorage.clear();
-          window.location.href = '/auth/login?logout=true';
+
+          // document.cookie vasitəsilə cookie-ləri təmizlə (ehtiyat kimi)
+          document.cookie.split(";").forEach(cookie => {
+            const eqPos = cookie.indexOf("=");
+            const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+            if (name) {
+              // Müxtəlif path və domain-lər üçün təmizlə
+              const paths = ["/", "/api", "/auth", "/dashboard"];
+              const domains = ["", ".cvera.net", "cvera.net"];
+
+              paths.forEach(path => {
+                domains.forEach(domain => {
+                  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; ${domain ? `domain=${domain};` : ''}`;
+                });
+              });
+            }
+          });
+
+          window.location.replace('/auth/login?logout=true&emergency=true');
         } catch (e) {
-          window.location.href = '/auth/login';
+          console.error('Təcili logout uğursuz:', e);
+          window.location.replace('/auth/login');
         }
       }
 
