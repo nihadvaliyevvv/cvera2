@@ -157,7 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || error.error || 'Giriş uğursuz oldu');
+        throw new Error(error.error || 'Giriş uğursuz oldu');
       }
 
       const data = await response.json();
@@ -210,113 +210,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [login]);
 
-  const logout = useCallback(async () => {
+  const logout = useCallback(() => {
     try {
       console.log('🚪 Logout prosesi başlayır...');
-      setLoading(true);
 
-      // 1. Get current token and user info for LinkedIn logout check
-      const token = localStorage.getItem('accessToken');
-      const currentUser = user; // Store current user before clearing state
-
-      // 2. Immediately clear client-side state
+      // 1. Immediately set user to null and clear state
       setUser(null);
+      setLoading(false);
       setIsInitialized(false);
 
-      // 3. Clear all storage immediately
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.clear();
-          sessionStorage.clear();
-
-          // Clear any other possible storage keys
-          ['accessToken', 'refreshToken', 'user', 'auth-token', 'cvera-token'].forEach(key => {
-            localStorage.removeItem(key);
-            sessionStorage.removeItem(key);
-          });
-        } catch (e) {
-          console.error('Storage clear error:', e);
-        }
-      }
-
-      // 4. If user logged in with LinkedIn, force LinkedIn logout
-      if (currentUser?.loginMethod === 'linkedin') {
-        try {
-          console.log('🔗 LinkedIn hesabı aşkarlandı - LinkedIn-dən də çıxış edilir...');
-
-          // Import LinkedIn logout functions
-          const { forceLinkedInLogout, forceLinkedInLogoutPopup } = await import('@/utils/linkedinAuth');
-
-          // Try iframe method first, fallback to popup if needed
+      // 2. Quick storage clearing function
+      const clearStorage = () => {
+        if (typeof window !== 'undefined') {
           try {
-            await forceLinkedInLogout();
-          } catch (error) {
-            console.log('⚠️ Iframe method failed, trying popup method...');
-            await forceLinkedInLogoutPopup();
+            localStorage.clear();
+            sessionStorage.clear();
+          } catch (e) {
+            console.error('Storage clear error:', e);
           }
-
-          console.log('✅ LinkedIn logout tamamlandı');
-        } catch (error) {
-          console.error('❌ LinkedIn logout xətası:', error);
-          // Continue with normal logout even if LinkedIn logout fails
         }
-      }
+      };
 
-      // 5. Call logout API with proper error handling
-      try {
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-        };
+      // 3. Clear storage immediately
+      clearStorage();
 
-        // Add token to header if available
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        const response = await fetch('/api/auth/logout', {
+      // 4. Quick logout - no waiting for API calls
+      if (typeof window !== 'undefined') {
+        // Make logout call but don't wait for it
+        fetch('/api/auth/logout', {
           method: 'POST',
           credentials: 'include',
-          headers,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }).catch(() => {
+          // Ignore errors since we're already clearing everything
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          console.log('✅ Server logout successful:', data.message);
-        } else {
-          console.warn('⚠️ Server logout failed but continuing with client logout');
-        }
-      } catch (apiError) {
-        console.error('❌ Logout API error:', apiError);
-        // Continue with logout even if API fails
-      }
-
-      // 6. Force reload to ensure clean state
-      if (typeof window !== 'undefined') {
-        // Use replace to prevent back button issues
+        // Immediate redirect
         const timestamp = Date.now();
-        window.location.replace(`/auth/login?logout=true&t=${timestamp}`);
+        window.location.href = `/auth/login?logout=true&t=${timestamp}`;
       }
 
     } catch (error) {
-      console.error('❌ Logout error:', error);
+      console.error('Logout error:', error);
 
-      // Emergency fallback - ensure user is logged out no matter what
-      setUser(null);
-      setIsInitialized(false);
-      setLoading(false);
-
+      // Emergency fallback
       if (typeof window !== 'undefined') {
         try {
           localStorage.clear();
           sessionStorage.clear();
-          window.location.replace('/auth/login?logout=true&emergency=true');
+          window.location.href = '/auth/login?logout=true';
         } catch (e) {
-          // Last resort
           window.location.href = '/auth/login';
         }
       }
+
+      setUser(null);
+      setLoading(false);
+      setIsInitialized(false);
     }
-  }, [user]);
+  }, []);
 
   const canAutoImportLinkedIn = useCallback((): boolean => {
     return user?.loginMethod === 'linkedin' && !!(user?.linkedinUsername || user?.linkedinId);

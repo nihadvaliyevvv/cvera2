@@ -31,7 +31,7 @@ export const organizationData = {
     "https://linkedin.com/company/cvera",
     "https://instagram.com/cvera.net"
   ],
-  foundingDate: "2024",
+  foundingDate: "2025",
   founder: {
     "@type": "Person",
     name: "Musayev"
@@ -106,7 +106,7 @@ export const serviceData = {
           "@type": "Service",
           name: "Orta Plan"
         },
-        price: "5",
+        price: "2.99",
         priceCurrency: "AZN",
         availability: "https://schema.org/InStock"
       },
@@ -116,7 +116,7 @@ export const serviceData = {
           "@type": "Service",
           name: "Premium Plan"
         },
-        price: "10",
+        price: "4.99",
         priceCurrency: "AZN",
         availability: "https://schema.org/InStock"
       }
@@ -125,7 +125,7 @@ export const serviceData = {
   offers: {
     "@type": "AggregateOffer",
     lowPrice: "0",
-    highPrice: "10",
+    highPrice: "4.99",
     priceCurrency: "AZN",
     availability: "https://schema.org/InStock"
   }

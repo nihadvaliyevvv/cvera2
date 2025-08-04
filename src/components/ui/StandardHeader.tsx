@@ -12,10 +12,15 @@ export default function StandardHeader() {
 
   const handleLogout = async () => {
     try {
+      console.log('🚪 StandardHeader: Logout butonuna basıldı');
+      console.log('🚪 StandardHeader: Logout funksiyasını çağırıram...');
+
       logout(); // Remove await - logout function handles everything internally
+
+      console.log('🚪 StandardHeader: Logout funksiyası çağırıldı');
       // Remove any additional redirects - logout() already handles redirection
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('❌ StandardHeader: Logout error:', error);
       // Fallback redirect only if logout completely fails
       window.location.href = '/auth/login';
     }
@@ -102,7 +107,10 @@ export default function StandardHeader() {
 
             {/* Logout Button - Enhanced responsive design */}
             <button
-              onClick={handleLogout}
+              onClick={() => {
+                console.log('🔴 LOGOUT BUTTON CLICKED - TEST');
+                handleLogout();
+              }}
               className="px-3 lg:px-4 py-2 text-xs lg:text-sm font-medium text-white bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg hover:bg-white/20 transition-all duration-200"
             >
               <svg className="w-3 h-3 lg:w-4 lg:h-4 mr-1 lg:mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">

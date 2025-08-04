@@ -1,42 +1,52 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from '@prisma/client';
+import { verifyJWT, blacklistToken, blacklistAllUserTokens, cleanupExpiredTokens } from '@/lib/jwt';
 
 const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
   try {
-    // Get token from header
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '') || null;
+    console.log('🚪 Logout API called');
 
-    let wasLinkedInLogin = false;
+    // Clean up expired tokens first
+    await cleanupExpiredTokens();
+
+    // Get token from header or cookies
+    const authHeader = request.headers.get('authorization');
+    const headerToken = authHeader?.replace('Bearer ', '') || null;
+
+    // Also check cookies for token
+    const cookies = request.headers.get('cookie');
+    const cookieToken = cookies?.split(';')
+      .find(c => c.trim().startsWith('auth-token='))
+      ?.split('=')[1] || null;
+
+    const token = headerToken || cookieToken;
+    let userId: string | null = null;
 
     if (token) {
-      // Try to extract user ID from token for database cleanup
       try {
-        const jwt = require('jsonwebtoken');
-        const decoded = jwt.decode(token) as any;
+        // Verify and get user info from token
+        const decoded = await verifyJWT(token);
+        if (decoded) {
+          userId = decoded.userId;
+          console.log(`🔓 Logging out user: ${userId}`);
 
-        if (decoded?.userId) {
-          // Get user info to check login method
-          const user = await prisma.user.findUnique({
-            where: { id: decoded.userId },
-            select: { loginMethod: true }
-          }).catch(() => null);
+          // Blacklist the current token
+          await blacklistToken(token, userId);
 
-          wasLinkedInLogin = user?.loginMethod === 'linkedin';
+          // Optional: Blacklist all user tokens for complete logout from all devices
+          // await blacklistAllUserTokens(userId);
 
-          // Update user's lastLogout timestamp and clear lastLogin
+          // Update user's lastLogin to null to force re-authentication
           await prisma.user.update({
-            where: { id: decoded.userId },
-            data: {
-              lastLogin: null, // Clear last login to force re-authentication
-              lastLogout: new Date() // Track logout time
-            }
-          }).catch(() => {}); // Ignore errors, logout should still work
+            where: { id: userId },
+            data: { lastLogin: null }
+          }).catch(() => {}); // Ignore errors
         }
-      } catch (e) {
-        // Ignore token decode errors
+      } catch (error) {
+        console.error('Token verification error during logout:', error);
+        // Continue with logout even if token verification fails
       }
     }
 
@@ -44,7 +54,7 @@ export async function POST(request: Request) {
       message: "Uğurla çıxış edildi",
       timestamp: new Date().toISOString(),
       cleared: true,
-      wasLinkedInLogin
+      userId: userId || 'unknown'
     });
 
     // Clear all possible authentication cookies
@@ -57,21 +67,16 @@ export async function POST(request: Request) {
       "cvera-auth",
       "cvera-token",
       "next-auth.session-token",
-      "next-auth.csrf-token"
-    ];
-
-    // LinkedIn specific cookies to clear
-    const linkedinCookies = [
-      'li_at', 'JSESSIONID', 'bcookie', 'bscookie', 'li_mc', 'li_sugr',
-      'liap', 'li_oatml', 'UserMatchHistory', 'AnalyticsSyncHistory',
-      'li_fat_id', 'li_giant', 'li_ep_auth_context'
+      "next-auth.csrf-token",
+      "user-session",
+      "jwt-token"
     ];
 
     // Clear cookies for multiple paths and domains
     const paths = ["/", "/api", "/auth", "/dashboard"];
-    const domains = [undefined, ".cvera.net", "cvera.net"];
+    const domains = [undefined, ".cvera.net", "cvera.net", "localhost"];
 
-    [...cookiesToClear, ...(wasLinkedInLogin ? linkedinCookies : [])].forEach(cookieName => {
+    cookiesToClear.forEach(cookieName => {
       paths.forEach(path => {
         domains.forEach(domain => {
           const cookieOptions: any = {
@@ -83,7 +88,7 @@ export async function POST(request: Request) {
             expires: new Date(0),
           };
 
-          if (domain) {
+          if (domain && domain !== "localhost") {
             cookieOptions.domain = domain;
           }
 
@@ -98,34 +103,30 @@ export async function POST(request: Request) {
     response.headers.set('Expires', '0');
     response.headers.set('Clear-Site-Data', '"cache", "cookies", "storage"');
 
+    console.log('✅ Logout completed successfully');
     return response;
 
   } catch (error) {
-    console.error('Logout API error:', error);
+    console.error('❌ Logout API error:', error);
 
     // Even on error, return success response with cookie clearing
     const response = NextResponse.json({
-      message: "Çıxış edildi (xəta ilə)",
-      timestamp: new Date().toISOString()
+      message: "Çıxış edildi",
+      timestamp: new Date().toISOString(),
+      error: "Xəta baş verdi, lakin çıxış tamamlandı"
     });
 
     // Still clear cookies even on error
-    response.cookies.set("accessToken", "", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 0,
-      expires: new Date(0),
-    });
-
-    response.cookies.set("refreshToken", "", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 0,
-      expires: new Date(0),
+    const essentialCookies = ["auth-token", "accessToken", "refreshToken"];
+    essentialCookies.forEach(cookieName => {
+      response.cookies.set(cookieName, "", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 0,
+        expires: new Date(0),
+      });
     });
 
     return response;
