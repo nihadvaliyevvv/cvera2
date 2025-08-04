@@ -1,5 +1,8 @@
 // JWT utilities for server-side authentication
 import jwt from 'jsonwebtoken';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export function verifyJWT(token: string): { userId: string; email: string } | null {
   try {
@@ -28,5 +31,83 @@ export function verifyRefreshToken(token: string): { userId: string; email: stri
     return decoded;
   } catch {
     return null;
+  }
+}
+
+// Cookie configuration functions
+export function createSessionCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    maxAge: 24 * 60 * 60, // 24 hours in seconds
+    path: '/'
+  };
+}
+
+export function createRefreshCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+    path: '/'
+  };
+}
+
+// Token blacklisting functions
+export async function blacklistToken(token: string, userId: string): Promise<void> {
+  try {
+    const decoded = jwt.decode(token) as any;
+    const expiresAt = decoded?.exp ? new Date(decoded.exp * 1000) : new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await prisma.tokenBlacklist.create({
+      data: {
+        token,
+        userId,
+        expiresAt
+      }
+    });
+  } catch (error) {
+    console.error('Error blacklisting token:', error);
+  }
+}
+
+export async function blacklistAllUserTokens(userId: string): Promise<void> {
+  try {
+    // This would require tracking all active tokens for a user
+    // For now, we'll just update the user's lastLogin to force re-authentication
+    await prisma.user.update({
+      where: { id: userId },
+      data: { lastLogin: null }
+    });
+  } catch (error) {
+    console.error('Error blacklisting all user tokens:', error);
+  }
+}
+
+export async function cleanupExpiredTokens(): Promise<void> {
+  try {
+    await prisma.tokenBlacklist.deleteMany({
+      where: {
+        expiresAt: {
+          lt: new Date()
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error cleaning up expired tokens:', error);
+  }
+}
+
+export async function isTokenBlacklisted(token: string): Promise<boolean> {
+  try {
+    const blacklistedToken = await prisma.tokenBlacklist.findUnique({
+      where: { token }
+    });
+    return !!blacklistedToken;
+  } catch (error) {
+    console.error('Error checking token blacklist:', error);
+    return false;
   }
 }

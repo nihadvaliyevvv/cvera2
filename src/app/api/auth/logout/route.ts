@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from '@prisma/client';
+import { verifyJWT, blacklistToken, blacklistAllUserTokens, cleanupExpiredTokens } from '@/lib/jwt';
 
 const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
   try {
+<<<<<<< HEAD
     console.log('🚪 Logout API çağırıldı');
 
     // Token-i header və cookie-dən əldə et
@@ -18,6 +20,21 @@ export async function POST(request: Request) {
       ?.split('=')[1] ||
       cookies?.split(';')
       .find(c => c.trim().startsWith('accessToken='))
+=======
+    console.log('🚪 Logout API called');
+
+    // Clean up expired tokens first
+    await cleanupExpiredTokens();
+
+    // Get token from header or cookies
+    const authHeader = request.headers.get('authorization');
+    const headerToken = authHeader?.replace('Bearer ', '') || null;
+
+    // Also check cookies for token
+    const cookies = request.headers.get('cookie');
+    const cookieToken = cookies?.split(';')
+      .find(c => c.trim().startsWith('auth-token='))
+>>>>>>> origin/main
       ?.split('=')[1] || null;
 
     const token = headerToken || cookieToken;
@@ -25,9 +42,13 @@ export async function POST(request: Request) {
 
     if (token) {
       try {
-        const jwt = require('jsonwebtoken');
-        const decoded = jwt.decode(token) as any;
+        // Verify and get user info from token
+        const decoded = await verifyJWT(token);
+        if (decoded) {
+          userId = decoded.userId;
+          console.log(`🔓 Logging out user: ${userId}`);
 
+<<<<<<< HEAD
         if (decoded?.userId) {
           userId = decoded.userId;
           console.log(`🔓 İstifadəçi çıxır: ${userId}`);
@@ -46,6 +67,23 @@ export async function POST(request: Request) {
       } catch (error) {
         console.error('Token decode error:', error);
         // Token decode xətası olsa belə logout davam etsin
+=======
+          // Blacklist the current token
+          await blacklistToken(token, userId);
+
+          // Optional: Blacklist all user tokens for complete logout from all devices
+          // await blacklistAllUserTokens(userId);
+
+          // Update user's lastLogin to null to force re-authentication
+          await prisma.user.update({
+            where: { id: userId },
+            data: { lastLogin: null }
+          }).catch(() => {}); // Ignore errors
+        }
+      } catch (error) {
+        console.error('Token verification error during logout:', error);
+        // Continue with logout even if token verification fails
+>>>>>>> origin/main
       }
     }
 
@@ -53,8 +91,12 @@ export async function POST(request: Request) {
       message: "Uğurla hesabdan çıxış edildi",
       timestamp: new Date().toISOString(),
       cleared: true,
+<<<<<<< HEAD
       userId: userId || 'naməlum',
       sessionTerminated: true
+=======
+      userId: userId || 'unknown'
+>>>>>>> origin/main
     });
 
     // Bütün mümkün authentication cookie-lərini təmizlə
@@ -69,12 +111,20 @@ export async function POST(request: Request) {
       "next-auth.session-token",
       "next-auth.csrf-token",
       "user-session",
+<<<<<<< HEAD
       "jwt-token",
       "sessionToken"
     ];
 
     // Müxtəlif path və domain-lər üçün cookie-ləri təmizlə
     const paths = ["/", "/api", "/auth", "/dashboard", "/admin"];
+=======
+      "jwt-token"
+    ];
+
+    // Clear cookies for multiple paths and domains
+    const paths = ["/", "/api", "/auth", "/dashboard"];
+>>>>>>> origin/main
     const domains = [undefined, ".cvera.net", "cvera.net", "localhost"];
 
     cookiesToClear.forEach(cookieName => {
@@ -104,14 +154,23 @@ export async function POST(request: Request) {
     response.headers.set('Expires', '0');
     response.headers.set('Clear-Site-Data', '"cache", "cookies", "storage"');
 
+<<<<<<< HEAD
     console.log('✅ Logout API uğurla tamamlandı');
     return response;
 
   } catch (error) {
     console.error('Logout API xətası:', error);
+=======
+    console.log('✅ Logout completed successfully');
+    return response;
+
+  } catch (error) {
+    console.error('❌ Logout API error:', error);
+>>>>>>> origin/main
 
     // Xəta olsa belə, cookie-ləri təmizləməyə çalış
     const response = NextResponse.json({
+<<<<<<< HEAD
       message: "Çıxış zamanı xəta baş verdi, lakin təmizləndi",
       error: error instanceof Error ? error.message : "Naməlum xəta",
       timestamp: new Date().toISOString(),
@@ -121,6 +180,16 @@ export async function POST(request: Request) {
     // Təcili cookie təmizliyi
     const cookiesToClear = ["auth-token", "accessToken", "refreshToken", "session", "token"];
     cookiesToClear.forEach(cookieName => {
+=======
+      message: "Çıxış edildi",
+      timestamp: new Date().toISOString(),
+      error: "Xəta baş verdi, lakin çıxış tamamlandı"
+    });
+
+    // Still clear cookies even on error
+    const essentialCookies = ["auth-token", "accessToken", "refreshToken"];
+    essentialCookies.forEach(cookieName => {
+>>>>>>> origin/main
       response.cookies.set(cookieName, "", {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",

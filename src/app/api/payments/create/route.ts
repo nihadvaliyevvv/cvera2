@@ -143,8 +143,13 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
+<<<<<<< HEAD
         { message: error.issues[0].message },
         { status: 400 }
+=======
+          { message: error.issues[0].message },
+          { status: 400 }
+>>>>>>> origin/main
       );
     }
 
