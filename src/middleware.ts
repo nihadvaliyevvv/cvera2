@@ -25,7 +25,7 @@ function simpleJWTDecode(token: string): any {
 
     return decoded;
   } catch (error) {
-    console.log('❌ JWT decode failed:', error.message);
+    console.log('❌ JWT decode failed:', error instanceof Error ? error.message : String(error));
     return null;
   }
 }

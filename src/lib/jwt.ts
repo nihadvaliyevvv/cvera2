@@ -14,7 +14,7 @@ export function verifyJWT(token: string): { userId: string; email: string } | nu
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string; email: string };
     return decoded;
   } catch (error) {
-    console.error('JWT verification failed:', error.message);
+    console.error('JWT verification failed:', error instanceof Error ? error.message : String(error));
     return null;
   }
 }
@@ -67,15 +67,19 @@ export async function blacklistToken(token: string, userId: string): Promise<voi
     const decoded = jwt.decode(token) as any;
     const expiresAt = decoded?.exp ? new Date(decoded.exp * 1000) : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
+    // Generate a unique ID for the blacklist entry
+    const tokenId = `${userId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     await prisma.tokenBlacklist.create({
       data: {
+        id: tokenId,
         token,
         userId,
         expiresAt
       }
     });
   } catch (error) {
-    console.error('Error blacklisting token:', error);
+    console.error('Error blacklisting token:', error instanceof Error ? error.message : String(error));
   }
 }
 

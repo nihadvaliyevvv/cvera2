@@ -26,7 +26,7 @@ export default function Header({ showAuthButtons = true, currentPage }: HeaderPr
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center">
               <img
-                src="/cveralogo.png"
+                src="public/cveralogo.png"
                 alt="CVERA"
                 className="h-8 sm:h-9 md:h-10 lg:h-11 w-auto"
                 style={{ maxWidth: '140px', height: 'auto' }}
