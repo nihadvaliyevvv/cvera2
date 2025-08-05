@@ -12,6 +12,8 @@ export async function POST(request: Request) {
 
     console.log('🚪 Logout API called with token:', token ? 'present' : 'none');
 
+    let isLinkedInUser = false;
+
     if (token) {
       // Try to extract user ID from token for database cleanup
       try {
@@ -19,25 +21,28 @@ export async function POST(request: Request) {
         console.log('Token decoded for user:', decoded?.userId);
 
         if (decoded?.userId) {
+          // Check if user logged in with LinkedIn
+          const user = await prisma.user.findUnique({
+            where: { id: decoded.userId },
+            select: { loginMethod: true }
+          });
+
+          if (user?.loginMethod === 'linkedin') {
+            isLinkedInUser = true;
+            console.log('🔗 LinkedIn user detected for logout');
+          }
+
           // More comprehensive user session cleanup
           await prisma.user.update({
             where: { id: decoded.userId },
             data: {
               lastLogin: null, // Clear last login to force re-authentication
-              // Note: We don't have lastLogout field in schema, so we skip it
             }
           }).catch((error) => {
             console.log('User update during logout failed (continuing):', error.message);
           });
 
-          // Also invalidate any active sessions (if you have a sessions table)
-          // This is optional and depends on your session management strategy
-          try {
-            // If you implement a sessions table in the future, clear it here
-            console.log('Session cleanup completed for user:', decoded.userId);
-          } catch (sessionError) {
-            console.log('Session cleanup failed (continuing):', sessionError);
-          }
+          console.log('Session cleanup completed for user:', decoded.userId);
         }
       } catch (tokenError) {
         console.log('Token decode error during logout (continuing):', tokenError);
@@ -48,7 +53,9 @@ export async function POST(request: Request) {
       message: "Uğurla çıxış edildi",
       timestamp: new Date().toISOString(),
       cleared: true,
-      tokenWasPresent: !!token
+      tokenWasPresent: !!token,
+      isLinkedInUser: isLinkedInUser,
+      linkedInLogoutUrl: isLinkedInUser ? 'https://linkedin.com/m/logout' : null
     });
 
     // Enhanced cookie clearing with more aggressive approach
@@ -64,8 +71,8 @@ export async function POST(request: Request) {
       "next-auth.csrf-token",
       "__Secure-next-auth.session-token",
       "__Host-next-auth.csrf-token",
-      "connect.sid", // Common session cookie name
-      "JSESSIONID" // Java session cookie
+      "connect.sid",
+      "JSESSIONID"
     ];
 
     // More comprehensive path and domain clearing
@@ -109,6 +116,12 @@ export async function POST(request: Request) {
     response.headers.set('Clear-Site-Data', '"cache", "cookies", "storage", "executionContexts"');
     response.headers.set('X-Logout-Success', 'true');
     response.headers.set('X-Session-Cleared', 'true');
+
+    // LinkedIn çıxış məlumatı əlavə et
+    if (isLinkedInUser) {
+      response.headers.set('X-LinkedIn-Logout', 'true');
+      response.headers.set('X-LinkedIn-Logout-URL', 'https://linkedin.com/m/logout');
+    }
 
     console.log('✅ Logout API completed successfully');
     return response;

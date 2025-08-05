@@ -27,17 +27,21 @@ export default function LinkedInCallbackPage() {
           if (data.accessToken) {
             // Store token in localStorage
             localStorage.setItem('accessToken', data.accessToken);
+
+            // LinkedIn login üçün xüsusi flag əlavə edək
+            localStorage.setItem('loginMethod', 'linkedin');
+
             setStatus('Uğurlu! Dashboard-a yönləndirilirsiz...');
 
-            // Wait a moment then redirect
-            setTimeout(() => {
-              router.replace('/dashboard');
-            }, 1500);
+            // LinkedIn login uğurlu olduqda birbaşa dashboard-a keç
+            router.replace('/dashboard');
           } else {
             throw new Error('Token alınmadı');
           }
         } else {
-          throw new Error('Token yoxlanması uğursuz');
+          const errorData = await response.json();
+          console.error('Token response error:', errorData);
+          throw new Error('Token yoxlanması uğursuz: ' + (errorData.error || 'Naməlum xəta'));
         }
       } catch (error) {
         console.error('LinkedIn callback error:', error);
