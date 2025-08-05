@@ -5,6 +5,94 @@ import { callScrapingDogAPI, callRapidAPIForSkills } from '@/lib/api-fallback-sy
 
 const prisma = new PrismaClient();
 
+// Function to get active ScrapingDog API key from admin panel
+async function getActiveScrapingDogApiKey() {
+  try {
+    const activeApiKey = await prisma.apiKey.findFirst({
+      where: {
+        service: 'scrapingdog',
+        active: true
+      },
+      orderBy: {
+        priority: 'asc' // Lower number = higher priority
+      }
+    });
+
+    if (!activeApiKey) {
+      throw new Error('Aktiv ScrapingDog API key tapılmadı. Admin paneldə API key əlavə edin.');
+    }
+
+    console.log('✅ Active ScrapingDog API key found:', activeApiKey.apiKey.substring(0, 8) + '***');
+    return activeApiKey.apiKey;
+  } catch (error) {
+    console.error('❌ API key lookup failed:', error);
+    throw new Error('ScrapingDog API key əldə edilə bilmədi');
+  }
+}
+
+// ScrapingDog API call with your exact code style
+async function callScrapingDogAPI(linkedinUrl: string) {
+  const axios = require('axios');
+
+  // Get active API key from admin panel
+  const api_key = await getActiveScrapingDogApiKey();
+  const url = 'https://api.scrapingdog.com/linkedin';
+
+  // Extract LinkedIn username/ID
+  let linkId = '';
+  try {
+    if (linkedinUrl.includes('linkedin.com/in/')) {
+      linkId = linkedinUrl.split('linkedin.com/in/')[1].split('/')[0].split('?')[0];
+    } else {
+      linkId = linkedinUrl.trim();
+    }
+  } catch (error) {
+    throw new Error('LinkedIn URL formatı səhvdir');
+  }
+
+  const params = {
+    api_key: api_key,
+    type: 'profile',
+    linkId: linkId,
+    premium: 'false',
+  };
+
+  console.log('🔄 ScrapingDog API call with params:', { ...params, api_key: api_key.substring(0, 8) + '***' });
+
+  try {
+    const response = await axios
+      .get(url, { params: params })
+      .then(function (response) {
+        if (response.status === 200) {
+          const data = response.data;
+          console.log('✅ ScrapingDog API success');
+          return { success: true, data: data };
+        } else {
+          console.log('❌ Request failed with status code: ' + response.status);
+          return { success: false, error: 'Request failed with status code: ' + response.status };
+        }
+      })
+      .catch(function (error) {
+        console.error('❌ Error making the request: ' + error.message);
+
+        if (error.message.includes('Unexpected token')) {
+          return {
+            success: false,
+            error: 'API key limiti tükənib və ya səhvdir. Admin paneldə yeni key əlavə edin.',
+            details: 'JSON parse xətası - API HTML qaytarır'
+          };
+        }
+
+        return { success: false, error: error.message };
+      });
+
+    return response;
+  } catch (error: any) {
+    console.error('❌ ScrapingDog API error:', error.message);
+    throw new Error('LinkedIn profil məlumatları əldə edilə bilmədi: ' + error.message);
+  }
+}
+
 // Enhanced data transformation function with specialized data sources
 function transformLinkedInData(scrapingdogData: any, rapidApiData: any = null) {
   console.log('🔄 Transforming LinkedIn data...');
