@@ -49,8 +49,25 @@ export async function POST(req: NextRequest) {
     if (!user.password) {
       return NextResponse.json({
         message: "Bu hesab LinkedIn ilə qeydiyyatdan keçib. LinkedIn ilə daxil olun.",
-        requiresLinkedInLogin: true
+        linkedinLogin: true
       }, { status: 400 });
+    }
+
+    // Check if email is verified
+    if (!user.emailVerified || user.status === "pending_verification") {
+      return NextResponse.json({
+        message: "E-poçt ünvanınız təsdiqlənməyib. E-poçt qutunuzu yoxlayın və təsdiqləmə linkine basın.",
+        requiresVerification: true,
+        email: user.email
+      }, { status: 403 });
+    }
+
+    // Check if account is active
+    if (user.status !== "active") {
+      return NextResponse.json({
+        message: "Hesabınız aktiv deyil. Dəstək komandası ilə əlaqə saxlayın.",
+        accountStatus: user.status
+      }, { status: 403 });
     }
 
     // Verify password

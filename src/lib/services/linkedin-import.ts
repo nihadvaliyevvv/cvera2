@@ -843,9 +843,9 @@ export class LinkedInImportService {
       if (!limitCheck.canImport) {
         return {
           success: false,
-          error: `Daily LinkedIn import limit reached. Your ${limitCheck.userTier} plan allows ${
+          error: `Günlük LinkedIn idxal limitiniz dolmuşdur. Sizin ${limitCheck.userTier} paketiniz gündə ${
             LINKEDIN_LIMITS[limitCheck.userTier as keyof typeof LINKEDIN_LIMITS]
-          } imports per day.`,
+          } idxal imkanı verir.`,
           remainingImports: limitCheck.remainingImports
         };
       }
@@ -855,7 +855,7 @@ export class LinkedInImportService {
       if (!linkedinUsername) {
         return {
           success: false,
-          error: 'Invalid LinkedIn URL or username format',
+          error: 'Yanlış LinkedIn URL və ya istifadəçi adı formatı',
           remainingImports: limitCheck.remainingImports
         };
       }
@@ -866,7 +866,7 @@ export class LinkedInImportService {
         await this.saveImportSession(userId, linkedinUsername, false);
         return {
           success: false,
-          error: 'Failed to fetch LinkedIn profile. Please check the username/URL and try again.',
+          error: 'Linkedin idxal edilə bilmədi. Linki yoxlayın.',
           remainingImports: limitCheck.remainingImports
         };
       }
@@ -891,7 +891,7 @@ export class LinkedInImportService {
       console.error('LinkedIn import error:', error);
       return {
         success: false,
-        error: 'An unexpected error occurred during LinkedIn import',
+        error: 'LinkedIn idxal zamanı gözlənilməz xəta baş verdi',
         remainingImports: 0
       };
     }
@@ -910,14 +910,14 @@ export class LinkedInImportService {
       });
 
       if (!user) {
-        return { success: false, error: 'User not found' };
+        return { success: false, error: 'İstifadəçi tapılmadı' };
       }
 
       // Only allow Medium and Premium users to generate AI summaries
       if (user.tier === 'Free') {
         return {
           success: false,
-          error: 'AI summary generation is only available for Medium and Premium subscribers. Upgrade your plan to access this feature.'
+          error: 'AI xülasə yaratma yalnız Orta və Premium abunəçilər üçün mövcuddur. Bu xüsusiyyətə daxil olmaq üçün paketinizi yüksəldin.'
         };
       }
 
@@ -928,7 +928,7 @@ export class LinkedInImportService {
       });
 
       if (!cv) {
-        return { success: false, error: 'CV not found' };
+        return { success: false, error: 'CV tapılmadı' };
       }
 
       const cvData = cv.cv_data as any;
@@ -1078,7 +1078,7 @@ export class LinkedInImportService {
       return { success: true, summary: cleanedSummary };
     } catch (error) {
       console.error('Error generating AI summary:', error);
-      return { success: false, error: 'Failed to generate AI summary. Please try again.' };
+      return { success: false, error: 'AI xülasəsi yaratmaq mümkün olmadı. Zəhmət olmasa, yenidən cəhd edin.' };
     }
   }
 

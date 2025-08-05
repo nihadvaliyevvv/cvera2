@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { validateEmail, validatePassword, validateName } from "@/lib/validation";
+import { EmailService } from "@/lib/email-service";
 
 const prisma = new PrismaClient();
+const emailService = new EmailService();
 
 export async function POST(req: NextRequest) {
   try {
@@ -48,22 +51,77 @@ export async function POST(req: NextRequest) {
     
     const hashedPassword = await bcrypt.hash(password, parseInt(process.env.BCRYPT_ROUNDS || "12"));
     
+    // Generate email verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
     const user = await prisma.user.create({
-      data: { 
-        name: fullName.trim(), 
-        email: normalizedEmail, 
-        password: hashedPassword 
+      data: {
+        name: fullName,
+        email: normalizedEmail,
+        password: hashedPassword,
+        status: "pending_verification", // User cannot login until verified
+        emailVerified: null, // Not verified yet
+        resetToken: verificationToken, // Reuse reset token field for verification
+        resetTokenExpiry: verificationTokenExpiry,
+        tier: "Free",
+        role: "USER",
+        loginMethod: "email",
+        createdAt: new Date(),
+        updatedAt: new Date()
       },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        tier: true,
+        status: true,
+        createdAt: true
+      }
     });
-    
-    return NextResponse.json({ 
-      id: user.id, 
-      name: user.name, 
-      email: user.email 
-    }, { status: 201 });
-  } catch (error) {
-    console.error('Register error:', error);
-    return NextResponse.json({ 
+
+    // Send verification email
+    const emailResult = await emailService.sendEmailVerification(
+      user.email,
+      user.name,
+      verificationToken
+    );
+
+    if (emailResult.success) {
+      console.log(`✅ Verification email sent to ${user.email}`);
+
+      return NextResponse.json({
+        message: "Qeydiyyat uğurludur! E-poçt ünvanınıza təsdiqləmə mesajı göndərildi. E-poçt təsdiqlədikdən sonra hesabınıza daxil ola bilərsiniz.",
+        success: true,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          status: user.status,
+          requiresVerification: true
+        }
+      }, { status: 201 });
+    } else {
+      // If email sending fails, delete the user and return error
+      await prisma.user.delete({ where: { id: user.id } });
+
+      return NextResponse.json({
+        message: "E-poçt göndərmədə xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.",
+        error: emailResult.error
+      }, { status: 500 });
+    }
+
+  } catch (error: any) {
+    console.error("Registration error:", error);
+
+    // Handle Prisma unique constraint violations
+    if (error.code === 'P2002') {
+      return NextResponse.json({
+        message: "Bu e-poçt ünvanı artıq mövcuddur."
+      }, { status: 409 });
+    }
+
+    return NextResponse.json({
       message: "Qeydiyyat zamanı xəta baş verdi. Zəhmət olmasa yenidən cəhd edin." 
     }, { status: 500 });
   } finally {
