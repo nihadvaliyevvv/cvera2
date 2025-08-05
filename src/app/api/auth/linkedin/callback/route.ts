@@ -4,7 +4,7 @@ import { generateJWT } from '@/lib/jwt';
 
 const prisma = new PrismaClient();
 
-// LinkedIn OAuth configuration
+// LinkedIn OAuth configuration with validation
 const LINKEDIN_CONFIG = {
   clientId: process.env.LINKEDIN_CLIENT_ID!,
   clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
@@ -12,8 +12,21 @@ const LINKEDIN_CONFIG = {
   scope: 'openid profile email',
 };
 
+// Validate required environment variables on startup
+function validateEnvironment() {
+  const required = ['LINKEDIN_CLIENT_ID', 'LINKEDIN_CLIENT_SECRET', 'LINKEDIN_REDIRECT_URI', 'JWT_SECRET'];
+  const missing = required.filter(key => !process.env[key]);
+
+  if (missing.length > 0) {
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
+    // Validate environment variables first
+    validateEnvironment();
+
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
     const error = searchParams.get('error');
@@ -32,7 +45,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=avtorizasiya_kodu_alinmadi`);
     }
 
-    // Exchange code for access token
+    // Exchange code for access token with enhanced error handling
     console.log('Exchanging code for token...');
     const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
       method: 'POST',
@@ -51,14 +64,19 @@ export async function GET(request: NextRequest) {
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
       console.error('LinkedIn token error:', errorText);
-      return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=token_deyisimi_ugursuz`);
+      return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=token_deyisimi_ugursuz&details=${encodeURIComponent(errorText)}`);
     }
 
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
     console.log('Access token received:', accessToken ? 'YES' : 'NO');
 
-    // Get LinkedIn profile data
+    if (!accessToken) {
+      console.error('No access token in response:', tokenData);
+      return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=token_not_received`);
+    }
+
+    // Get LinkedIn profile data with enhanced error handling
     let profileData = null;
     let email = null;
     let firstName = '';
@@ -81,7 +99,8 @@ export async function GET(request: NextRequest) {
         lastName = userinfoData.family_name || '';
         linkedinId = userinfoData.sub;
       } else {
-        console.log('OpenID userinfo failed, trying legacy endpoints...');
+        const errorText = await userinfoResponse.text();
+        console.log('OpenID userinfo failed, trying legacy endpoints...', errorText);
 
         // Fallback to legacy LinkedIn API
         const profileResponse = await fetch('https://api.linkedin.com/v2/me', {
@@ -105,11 +124,15 @@ export async function GET(request: NextRequest) {
             const emailData = await emailResponse.json();
             email = emailData.elements?.[0]?.['handle~']?.emailAddress;
           }
+        } else {
+          const profileErrorText = await profileResponse.text();
+          console.error('Legacy profile fetch error:', profileErrorText);
+          return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=legacy_profile_fetch_failed&details=${encodeURIComponent(profileErrorText)}`);
         }
       }
     } catch (apiError) {
       console.error('LinkedIn API error:', apiError);
-      return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=profile_fetch_failed`);
+      return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=profile_fetch_failed&details=${encodeURIComponent(String(apiError))}`);
     }
 
     console.log('Final extracted data:', { email, firstName, lastName, linkedinId });
@@ -119,15 +142,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=no_email_provided`);
     }
 
-    // Enhanced database operations - check for existing user by email OR linkedinId
+    // Enhanced database operations with error handling
     console.log('Checking user in database by email and LinkedIn ID...');
 
-    // First, try to find user by email
     let user = await prisma.user.findUnique({
       where: { email },
     });
 
-    // If no user found by email, try to find by LinkedIn ID
     if (!user && linkedinId) {
       user = await prisma.user.findUnique({
         where: { linkedinId },
@@ -152,7 +173,6 @@ export async function GET(request: NextRequest) {
           email,
           name: `${firstName} ${lastName}`.trim() || email.split('@')[0],
           linkedinId: linkedinId,
-          linkedinUsername: linkedinUsername,
           tier: 'Free',
           status: 'active',
           loginMethod: 'linkedin',
@@ -169,7 +189,6 @@ export async function GET(request: NextRequest) {
         data: {
           // Update LinkedIn data if not present or if changed
           linkedinId: linkedinId || user.linkedinId,
-          linkedinUsername: linkedinUsername || user.linkedinUsername,
           loginMethod: 'linkedin', // Update to LinkedIn login method
           lastLogin: new Date(),
           // Update name if it was missing or LinkedIn provides better data
@@ -179,9 +198,15 @@ export async function GET(request: NextRequest) {
       console.log('Existing user updated (login):', user.id);
     }
 
-    // Generate JWT token
+    // Generate JWT token with error handling
     console.log('Generating JWT token...');
-    const token = generateJWT({ userId: user.id, email: user.email });
+    let token;
+    try {
+      token = generateJWT({ userId: user.id, email: user.email });
+    } catch (jwtError) {
+      console.error('JWT generation failed:', jwtError);
+      return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=jwt_generation_failed`);
+    }
 
     // Create response with redirect to LinkedIn callback page
     const response = NextResponse.redirect(`https://cvera.net/auth/linkedin-callback`);
@@ -207,6 +232,11 @@ export async function GET(request: NextRequest) {
 
     if (errorStack) {
       console.error('Error stack:', errorStack);
+    }
+
+    // Enhanced error reporting
+    if (errorMessage.includes('Missing required environment variables')) {
+      return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=configuration_error&details=${encodeURIComponent(errorMessage)}`);
     }
 
     return NextResponse.redirect(`https://cvera.net/api/auth/linkedin-error?error=authentication_failed&debug=${encodeURIComponent(errorMessage)}`);
