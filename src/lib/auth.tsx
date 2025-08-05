@@ -291,16 +291,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
 
       if (confirmLinkedInLogout) {
-        // Open LinkedIn logout in a new tab and auto-close after 2 seconds
+        // Open LinkedIn logout in a new tab and auto-close with better detection
         const logoutWindow = window.open(linkedinLogoutUrl, '_blank', 'width=600,height=400');
 
-        // Close the logout window after 2 seconds
-        setTimeout(() => {
-          if (logoutWindow && !logoutWindow.closed) {
-            logoutWindow.close();
-            console.log('LinkedIn logout səhifəsi 2 saniyə sonra bağlandı');
+        // İmproved logout window management
+        let windowClosed = false;
+
+        // Check if logout is complete by monitoring window
+        const checkLogoutComplete = () => {
+          if (!logoutWindow || logoutWindow.closed) {
+            windowClosed = true;
+            console.log('LinkedIn logout pəncərəsi istifadəçi tərəfindən bağlandı');
+            return;
           }
-        }, 2000); // 2 saniyə
+
+          // Check if LinkedIn logout is complete (URL change or specific content)
+          try {
+            // LinkedIn logout usually redirects or changes page
+            const currentUrl = logoutWindow.location.href;
+            if (currentUrl.includes('linkedin.com') && !currentUrl.includes('logout')) {
+              // Logout completed, close window
+              logoutWindow.close();
+              windowClosed = true;
+              console.log('LinkedIn logout tamamlandı, pəncərə bağlandı');
+              return;
+            }
+          } catch (e) {
+            // Cross-origin error means logout might be complete
+            console.log('LinkedIn logout cross-origin detected, likely complete');
+          }
+
+          // Continue checking if window still open
+          if (!windowClosed) {
+            setTimeout(checkLogoutComplete, 500);
+          }
+        };
+
+        // Start monitoring after a short delay
+        setTimeout(checkLogoutComplete, 1000);
+
+        // Fallback: force close after 10 seconds maximum
+        setTimeout(() => {
+          if (!windowClosed && logoutWindow && !logoutWindow.closed) {
+            logoutWindow.close();
+            console.log('LinkedIn logout pəncərəsi 10 saniyə sonra məcburi bağlandı');
+          }
+        }, 10000); // 10 saniyə maksimum gözləmə
       }
     }
 

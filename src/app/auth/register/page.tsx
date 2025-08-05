@@ -242,11 +242,60 @@ export default function RegisterPage() {
       "width=600,height=400"
     );
 
-    // Close the logout window after 2 seconds and redirect to LinkedIn auth
+    // İmproved logout window management with smart detection
+    let windowClosed = false;
+
+    const monitorLogoutWindow = () => {
+      if (!logoutWin || logoutWin.closed) {
+        windowClosed = true;
+        console.log('LinkedIn logout pəncərəsi bağlandı');
+        // Proceed to LinkedIn auth
+        window.location.href = "/api/auth/linkedin?from=register";
+        return;
+      }
+
+      // Check if logout completed by monitoring URL or content
+      try {
+        const currentUrl = logoutWin.location.href;
+        if (currentUrl.includes('linkedin.com') && !currentUrl.includes('logout')) {
+          // Logout completed successfully
+          logoutWin.close();
+          windowClosed = true;
+          console.log('LinkedIn logout tamamlandı');
+          window.location.href = "/api/auth/linkedin?from=register";
+          return;
+        }
+      } catch (e) {
+        // Cross-origin restriction - likely logout completed
+        console.log('LinkedIn logout cross-origin - logout likely complete');
+        // Wait a bit more then proceed
+        setTimeout(() => {
+          if (!windowClosed) {
+            logoutWin.close();
+            windowClosed = true;
+            window.location.href = "/api/auth/linkedin?from=register";
+          }
+        }, 1000);
+        return;
+      }
+
+      // Continue monitoring
+      if (!windowClosed) {
+        setTimeout(monitorLogoutWindow, 500);
+      }
+    };
+
+    // Start monitoring after initial delay
+    setTimeout(monitorLogoutWindow, 1000);
+
+    // Fallback: force proceed after 8 seconds maximum
     setTimeout(() => {
-      logoutWin?.close();
-      window.location.href = "/api/auth/linkedin?from=register";
-    }, 2000); // 2 saniyəyə düşürdüm
+      if (!windowClosed) {
+        logoutWin?.close();
+        console.log('LinkedIn logout timeout - proceeding anyway');
+        window.location.href = "/api/auth/linkedin?from=register";
+      }
+    }, 8000); // 8 saniyə maksimum
   };
 
   return (
