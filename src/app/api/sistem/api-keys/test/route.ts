@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
                 success: true,
                 status: response.status,
                 data: data,
-                dataKeys: Object.keys(data || {})
+                message: 'ScrapingDog API test successful'
               };
             } else {
               return {
@@ -101,24 +101,10 @@ export async function POST(request: NextRequest) {
           })
           .catch(function (error: any) {
             console.error('Error making the request: ' + error.message);
-
-            // Handle JSON parse error specifically
-            if (error.message.includes('Unexpected token')) {
-              return {
-                success: false,
-                error: 'JSON parse xətası',
-                details: {
-                  issue: 'API HTML səhifə qaytarır JSON əvəzinə',
-                  cause: 'API key səhvdir və ya limit tükənib',
-                  solution: 'Yeni API key alın və ya mövcud key-i yoxlayın'
-                }
-              };
-            }
-
             return {
               success: false,
               error: error.message,
-              code: error.code
+              status: error.response?.status || 'unknown'
             };
           });
 

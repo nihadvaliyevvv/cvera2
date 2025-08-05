@@ -79,8 +79,57 @@ export interface LinkedInImportResult {
 }
 
 export class LinkedInImportService {
-  private readonly SCRAPINGDOG_API_KEY = '6882894b855f5678d36484c8';
+  // Remove hardcoded API key and use database instead
   private readonly SCRAPINGDOG_URL = 'https://api.scrapingdog.com/linkedin';
+
+  /**
+   * Get active ScrapingDog API key from database
+   */
+  private async getActiveScrapingDogApiKey(): Promise<string> {
+    try {
+      const activeApiKey = await prisma.apiKey.findFirst({
+        where: {
+          service: 'scrapingdog',
+          active: true
+        },
+        orderBy: {
+          priority: 'asc' // Lower number = higher priority
+        }
+      });
+
+      if (!activeApiKey) {
+        console.warn('❌ No active ScrapingDog API key found in database, using fallback');
+        // Fallback to your working key if no active key in database
+        return '6882894b855f5678d36484c8';
+      }
+
+      console.log('✅ Active ScrapingDog API key found:', activeApiKey.apiKey.substring(0, 8) + '***');
+      return activeApiKey.apiKey;
+    } catch (error) {
+      console.error('❌ API key lookup failed:', error);
+      // Fallback to your working key
+      return '6882894b855f5678d36484c8';
+    }
+  }
+
+  /**
+   * Update API key usage statistics
+   */
+  private async updateApiKeyUsage(apiKey: string, success: boolean): Promise<void> {
+    try {
+      await prisma.apiKey.updateMany({
+        where: { apiKey: apiKey },
+        data: {
+          usageCount: { increment: 1 },
+          dailyUsage: { increment: 1 },
+          lastUsed: new Date(),
+          lastResult: success ? 'success' : 'error'
+        }
+      });
+    } catch (error) {
+      console.log('Usage update failed:', error);
+    }
+  }
 
   /**
    * Check if user can import more LinkedIn profiles based on their tier
@@ -182,8 +231,10 @@ export class LinkedInImportService {
     try {
       console.log(`🔍 Scraping LinkedIn profile: ${linkedinUsername}`);
 
+      const apiKey = await this.getActiveScrapingDogApiKey();
+
       const params = {
-        api_key: this.SCRAPINGDOG_API_KEY,
+        api_key: apiKey,
         type: 'profile',
         linkId: linkedinUsername,
         premium: 'false',

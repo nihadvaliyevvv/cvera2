@@ -151,36 +151,25 @@ export function validateName(name: string): ValidationResult {
     return { isValid: false, error: 'Ad Soyad çox uzundur' };
   }
 
-  // More strict validation - only letters, spaces, apostrophes, and hyphens
-  // Includes Azerbaijani characters
-  const nameRegex = /^[a-zA-ZğĞıİöÖüÜşŞçÇəƏ\s'-]+$/;
+  // Check for dash/hyphen (-) character
+  if (trimmedName.includes('-')) {
+    return { isValid: false, error: 'Ad Soyadda tire (-) istifadə edilə bilməz' };
+  }
+
+  // Check for only letters, spaces, and basic punctuation (excluding dash)
+  const nameRegex = /^[a-zA-ZğüşöçıİĞÜŞÖÇ\s'.]+$/;
   if (!nameRegex.test(trimmedName)) {
-    return { isValid: false, error: 'Ad/Soyad yalnız hərflərdən ibarət olmalıdır' };
+    return { isValid: false, error: 'Ad Soyadda yalnız hərflər və boşluq istifadə edilə bilər' };
   }
 
-  // Check for only spaces
-  if (trimmedName.replace(/\s/g, '').length === 0) {
-    return { isValid: false, error: 'Ad Soyad yalnız boşluqlardan ibarət ola bilməz' };
+  // Check for multiple consecutive spaces
+  if (trimmedName.includes('  ')) {
+    return { isValid: false, error: 'Ad Soyadda ardıcıl boşluqlar ola bilməz' };
   }
 
-  // Check for excessive spaces (more than 2 consecutive spaces)
-  if (/\s{3,}/.test(trimmedName)) {
-    return { isValid: false, error: 'Ad Soyad çox boşluq daxil edir' };
-  }
-
-  // Check if it starts or ends with special characters
-  if (/^[-'\s]|[-'\s]$/.test(trimmedName)) {
-    return { isValid: false, error: 'Ad Soyad xüsusi işarələrlə başlaya və ya bitə bilməz' };
-  }
-
-  // Check for numbers
-  if (/\d/.test(trimmedName)) {
-    return { isValid: false, error: 'Ad/Soyad yalnız hərflərdən ibarət olmalıdır' };
-  }
-
-  // Check for special symbols (except allowed ones)
-  if (/[^a-zA-ZğĞıİöÖüÜşŞçÇəƏ\s'-]/.test(trimmedName)) {
-    return { isValid: false, error: 'Ad/Soyad yalnız hərflərdən ibarət olmalıdır' };
+  // Check if starts or ends with space (should be handled by trim, but double check)
+  if (trimmedName.startsWith(' ') || trimmedName.endsWith(' ')) {
+    return { isValid: false, error: 'Ad Soyad boşluqla başlaya və ya bitə bilməz' };
   }
 
   return { isValid: true };

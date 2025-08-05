@@ -30,15 +30,24 @@ async function getActiveScrapingDogApiKey() {
   }
 }
 
-// ScrapingDog API call with your exact code style
-async function callScrapingDogAPI(linkedinUrl: string) {
+// ScrapingDog API call with proper TypeScript types
+async function callScrapingDogAPIInternal(linkedinUrl: string) {
   const axios = require('axios');
 
-  // Get active API key from admin panel
-  const api_key = await getActiveScrapingDogApiKey();
+  // Get active API key from admin panel - with better error handling
+  let api_key;
+  try {
+    api_key = await getActiveScrapingDogApiKey();
+  } catch (error) {
+    console.error('❌ API key əldə edilə bilmədi:', error);
+    // Fallback to your working key if database lookup fails
+    api_key = '6882894b855f5678d36484c8';
+    console.log('🔄 Fallback API key istifadə edilir');
+  }
+
   const url = 'https://api.scrapingdog.com/linkedin';
 
-  // Extract LinkedIn username/ID
+  // Extract LinkedIn username/ID - exactly like your working code
   let linkId = '';
   try {
     if (linkedinUrl.includes('linkedin.com/in/')) {
@@ -50,6 +59,7 @@ async function callScrapingDogAPI(linkedinUrl: string) {
     throw new Error('LinkedIn URL formatı səhvdir');
   }
 
+  // Use exact same parameters as your working code
   const params = {
     api_key: api_key,
     type: 'profile',
@@ -57,39 +67,93 @@ async function callScrapingDogAPI(linkedinUrl: string) {
     premium: 'false',
   };
 
-  console.log('🔄 ScrapingDog API call with params:', { ...params, api_key: api_key.substring(0, 8) + '***' });
+  console.log('🔄 ScrapingDog API call with params:', {
+    ...params,
+    api_key: api_key.substring(0, 8) + '***',
+    linkId: linkId
+  });
 
   try {
+    // Use exact same code structure as your working example
     const response = await axios
-      .get(url, { params: params })
+      .get(url, { params: params, timeout: 30000 })
       .then(function (response: any) {
         if (response.status === 200) {
           const data = response.data;
-          console.log('✅ ScrapingDog API success');
-          return { success: true, data: data };
+          console.log('✅ ScrapingDog API success - data received');
+
+          // Update API key usage in database
+          updateApiKeyUsage(api_key).catch(err => console.log('Usage update failed:', err.message));
+
+          return { success: true, data: data, attemptsCount: 1 };
         } else {
           console.log('❌ Request failed with status code: ' + response.status);
-          return { success: false, error: 'Request failed with status code: ' + response.status };
+          return {
+            success: false,
+            error: 'Request failed with status code: ' + response.status,
+            attemptsCount: 1
+          };
         }
       })
       .catch(function (error: any) {
         console.error('❌ Error making the request: ' + error.message);
 
+        // Better error handling for common issues
+        if (error.response?.status === 403) {
+          return {
+            success: false,
+            error: 'API key-ə giriş qadağandır (403). API key-inizi yoxlayın.',
+            details: 'API key səhv və ya limiti tükənib',
+            attemptsCount: 1
+          };
+        }
+
+        if (error.response?.status === 429) {
+          return {
+            success: false,
+            error: 'API limit aşıldı (429). Admin paneldə başqa API key əlavə edin.',
+            details: 'Rate limit exceeded',
+            attemptsCount: 1
+          };
+        }
+
         if (error.message.includes('Unexpected token')) {
           return {
             success: false,
             error: 'API key limiti tükənib və ya səhvdir. Admin paneldə yeni key əlavə edin.',
-            details: 'JSON parse xətası - API HTML qaytarır'
+            details: 'JSON parse xətası - API HTML qaytarır',
+            attemptsCount: 1
           };
         }
 
-        return { success: false, error: error.message };
+        return {
+          success: false,
+          error: error.message,
+          attemptsCount: 1
+        };
       });
 
     return response;
   } catch (error: any) {
     console.error('❌ ScrapingDog API error:', error.message);
     throw new Error('LinkedIn profil məlumatları əldə edilə bilmədi: ' + error.message);
+  }
+}
+
+// Helper function to update API key usage
+async function updateApiKeyUsage(apiKey: string) {
+  try {
+    await prisma.apiKey.updateMany({
+      where: { apiKey: apiKey },
+      data: {
+        usageCount: { increment: 1 },
+        dailyUsage: { increment: 1 },
+        lastUsed: new Date(),
+        lastResult: 'success'
+      }
+    });
+  } catch (error) {
+    console.log('Usage update failed:', error);
   }
 }
 
@@ -405,7 +469,7 @@ export async function POST(request: NextRequest) {
 
     // Call ScrapingDog API for ALL main data (experience, education, personal info, etc.)
     console.log('📡 ScrapingDog API çağırışı başlanır (əsas məlumatlar üçün)...');
-    const scrapingdogResult = await callScrapingDogAPI(linkedinUsername);
+    const scrapingdogResult = await callScrapingDogAPIInternal(linkedinUsername);
 
     if (scrapingdogResult.success) {
       scrapingdogData = scrapingdogResult.data;

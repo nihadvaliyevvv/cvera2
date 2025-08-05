@@ -61,8 +61,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === 'undefined') return;
 
     try {
-      setLoading(true);
-
       // Check if we're coming from a logout (URL parameter check)
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('logout')) {
@@ -76,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // CRITICAL: If no token exists, immediately set user to null
+      // CRITICAL: If no token exists, immediately set user to null without showing loader
       let token = localStorage.getItem('accessToken');
       if (!token) {
         console.log('No token found in localStorage');
@@ -86,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Validate token before using it
+      // Validate token before using it - if invalid, don't show loader
       if (!isValidToken(token)) {
         console.log('Token expired or invalid, removing');
         localStorage.removeItem('accessToken');
@@ -95,6 +93,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsInitialized(true);
         return;
       }
+
+      // Only show loading when we actually need to fetch user data
+      setLoading(true);
 
       // Fetch user data with valid token
       const response = await fetch('/api/users/me', {
@@ -152,24 +153,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userId: data.user?.id
       });
 
-      // Validate token before storing
+      // Validate and store token immediately
       if (data.accessToken && isValidToken(data.accessToken)) {
         console.log('💾 Storing token in localStorage');
         localStorage.setItem('accessToken', data.accessToken);
 
-        // Verify token was stored
-        const storedToken = localStorage.getItem('accessToken');
-        console.log('🔍 Token stored check:', !!storedToken);
-
-        // Fetch user data after successful login
-        console.log('👤 Fetching user data...');
-        await fetchCurrentUser();
-
-        // Redirect to dashboard after successful login with replace to prevent back button issues
-        if (typeof window !== 'undefined') {
-          console.log('🔄 Redirecting to dashboard...');
-          window.location.replace('/dashboard');
+        // Set user data immediately from login response (no extra API call)
+        if (data.user) {
+          console.log('👤 Setting user data from login response');
+          setUser(data.user);
+          setIsInitialized(true);
         }
+
+        // Redirect immediately without waiting for fetchCurrentUser
+        console.log('🔄 Redirecting to dashboard immediately...');
+        window.location.replace('/dashboard');
+
+        return; // Exit early, don't wait for anything else
       } else {
         console.error('❌ Invalid token received');
         throw new Error('Yanlış token alındı');
@@ -180,7 +180,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [fetchCurrentUser]);
+  }, []);
 
   const register = useCallback(async (name: string, email: string, password: string) => {
     setLoading(true);
@@ -215,10 +215,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const currentUser = user;
     const isLinkedInUser = currentUser?.loginMethod === 'linkedin';
 
-    // 1. IMMEDIATE state clearing - no async delays
+    // 1. IMMEDIATE state clearing - keep main loader but clear user
     setUser(null);
-    setLoading(false);
-    setIsInitialized(false);
+    // Don't change loading state - let the main app loader handle it
+    setIsInitialized(true); // Keep initialized true
 
     // 2. IMMEDIATE storage clearing - synchronous
     if (typeof window !== 'undefined') {
@@ -262,7 +262,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // 4. Call logout API (fire and forget - don't wait)
+    // 4. Call logout API (fire and forget - don't wait or show loading)
     const token = localStorage.getItem('accessToken') || '';
     fetch('/api/auth/logout', {
       method: 'POST',
@@ -282,16 +282,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isLinkedInUser) {
       console.log('🔗 LinkedIn ilə giriş edən istifadəçi - LinkedIn logout edilir...');
 
-      // LinkedIn mobile logout URL
-      const linkedinLogoutUrl = 'https://linkedin.com/m/logout';
-
       // Show user confirmation before LinkedIn logout
       const confirmLinkedInLogout = confirm(
         'Siz LinkedIn ilə giriş etmişsiniz. LinkedIn-dən də çıxış etmək istəyirsiniz?'
       );
 
       if (confirmLinkedInLogout) {
-        // Open LinkedIn logout in a popup with automatic management
+        // LinkedIn mobile logout URL
+        const linkedinLogoutUrl = 'https://linkedin.com/m/logout';
+
+        // Open LinkedIn logout in a popup
         const logoutWindow = window.open(
           linkedinLogoutUrl,
           'linkedin_logout',
@@ -299,124 +299,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
 
         if (logoutWindow) {
-          let checkCount = 0;
-          const maxChecks = 30; // 15 saniyə maksimum (500ms * 30)
-          let logoutCompleted = false;
-
-          const monitorLogout = () => {
-            checkCount++;
-
-            try {
-              // Check if window is closed by user
-              if (logoutWindow.closed) {
-                logoutCompleted = true;
-                console.log('✅ LinkedIn logout pəncərəsi bağlandı');
-
-                // Redirect to cvera.net after LinkedIn logout
-                setTimeout(() => {
-                  window.location.href = 'https://cvera.net';
-                }, 500);
-                return;
-              }
-
-              // Try to detect logout completion by URL change
-              try {
-                const currentUrl = logoutWindow.location.href;
-
-                // LinkedIn logout redirects to main page after logout
-                if (currentUrl && (
-                  currentUrl.includes('linkedin.com/feed') ||
-                  currentUrl.includes('linkedin.com/in/') ||
-                  currentUrl === 'https://www.linkedin.com/' ||
-                  !currentUrl.includes('logout')
-                )) {
-                  // Logout completed successfully
-                  logoutWindow.close();
-                  logoutCompleted = true;
-                  console.log('✅ LinkedIn logout tamamlandı - URL dəyişdi');
-
-                  // Redirect to cvera.net
-                  setTimeout(() => {
-                    window.location.href = 'https://cvera.net';
-                  }, 500);
-                  return;
-                }
-              } catch (e) {
-                // Cross-origin restriction - this actually means logout is likely complete
-                if (checkCount > 6) { // After 3 seconds of cross-origin, assume logout complete
-                  logoutWindow.close();
-                  logoutCompleted = true;
-                  console.log('✅ LinkedIn logout tamamlandı - cross-origin detected');
-
-                  // Redirect to cvera.net
-                  setTimeout(() => {
-                    window.location.href = 'https://cvera.net';
-                  }, 500);
-                  return;
-                }
-              }
-
-              // Continue monitoring if not complete and under max checks
-              if (!logoutCompleted && checkCount < maxChecks) {
-                setTimeout(monitorLogout, 500);
-              } else if (checkCount >= maxChecks) {
-                // Force close after timeout
-                logoutWindow.close();
-                console.log('⏰ LinkedIn logout timeout - force closing');
-
-                // Still redirect to cvera.net
-                setTimeout(() => {
-                  window.location.href = 'https://cvera.net';
-                }, 500);
-              }
-
-            } catch (error) {
-              console.log('LinkedIn logout monitor error:', error);
-
-              // On any error, continue monitoring or close
-              if (checkCount >= maxChecks) {
-                try {
-                  logoutWindow.close();
-                } catch (e) {}
-
-                setTimeout(() => {
-                  window.location.href = 'https://cvera.net';
-                }, 500);
-              } else {
-                setTimeout(monitorLogout, 500);
-              }
-            }
-          };
-
-          // Start monitoring after a brief delay
-          setTimeout(monitorLogout, 1000);
-
-          // Fallback: show user instruction and redirect
+          // Simple monitoring without complex state changes
           setTimeout(() => {
-            if (!logoutCompleted && !logoutWindow.closed) {
-              alert('LinkedIn logout səhifəsi açıldı. Logout tamamladıqdan sonra bu pəncərəni bağlayın.');
-
-              // Force redirect to cvera.net after showing message
-              setTimeout(() => {
-                try {
-                  logoutWindow.close();
-                } catch (e) {}
-                window.location.href = 'https://cvera.net';
-              }, 3000);
-            }
-          }, 10000); // 10 saniyə sonra fallback
+            try {
+              logoutWindow.close();
+            } catch (e) {}
+            window.location.href = 'https://cvera.net';
+          }, 5000); // Close popup and redirect after 5 seconds
         }
       } else {
-        // User declined LinkedIn logout, just redirect to cvera.net
-        setTimeout(() => {
-          window.location.href = 'https://cvera.net';
-        }, 500);
+        // User declined LinkedIn logout, just redirect
+        window.location.href = 'https://cvera.net';
       }
     } else {
-      // Regular user (not LinkedIn), redirect to cvera.net immediately
-      setTimeout(() => {
-        window.location.href = 'https://cvera.net';
-      }, 500);
+      // Regular user (not LinkedIn), redirect immediately
+      window.location.href = 'https://cvera.net';
     }
   }, [user]);
 

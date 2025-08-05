@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import StandardHeader from "@/components/ui/StandardHeader";
+import Footer from "@/components/Footer";
 
 interface UserProfile {
   id: string;
@@ -34,11 +36,16 @@ export default function ProfileEditPage() {
   // Load user profile - wrapped in useCallback to fix dependency issue
   const loadProfile = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
+      // Check multiple possible token names
+      let token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+
       if (!token) {
+        console.log('❌ No token found, redirecting to login');
         router.push('/auth/login');
         return;
       }
+
+      console.log('✅ Token found, loading profile...');
 
       const response = await fetch('/api/user/profile', {
         headers: {
@@ -46,8 +53,17 @@ export default function ProfileEditPage() {
         }
       });
 
+      if (response.status === 401) {
+        console.log('❌ Token expired or invalid, redirecting to login');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('token');
+        router.push('/auth/login');
+        return;
+      }
+
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ Profile loaded successfully');
         setProfile(data.user);
         setFormData({
           name: data.user.name,
@@ -57,9 +73,11 @@ export default function ProfileEditPage() {
           confirmPassword: ''
         });
       } else {
+        console.error('❌ Failed to load profile:', response.status);
         setError('Profil məlumatları yüklənərkən xəta baş verdi');
       }
     } catch (error) {
+      console.error('❌ Profile load error:', error);
       setError('Sistem xətası baş verdi');
     } finally {
       setLoading(false);
@@ -102,7 +120,15 @@ export default function ProfileEditPage() {
     }
 
     try {
-      const token = localStorage.getItem('token');
+      // Use the same token checking logic as in loadProfile
+      const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+
+      if (!token) {
+        console.log('❌ No token found during update, redirecting to login');
+        router.push('/auth/login');
+        return;
+      }
+
       const updateData: any = {
         name: formData.name,
         email: formData.email
@@ -123,6 +149,14 @@ export default function ProfileEditPage() {
         body: JSON.stringify(updateData)
       });
 
+      if (response.status === 401) {
+        console.log('❌ Token expired during update, redirecting to login');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('token');
+        router.push('/auth/login');
+        return;
+      }
+
       const data = await response.json();
 
       if (response.ok) {
@@ -139,6 +173,7 @@ export default function ProfileEditPage() {
         setError(data.message || 'Profil yenilənərkən xəta baş verdi');
       }
     } catch (error) {
+      console.error('❌ Profile update error:', error);
       setError('Sistem xətası baş verdi');
     } finally {
       setSaving(false);
@@ -174,26 +209,7 @@ export default function ProfileEditPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/dashboard"
-                className="flex items-center text-gray-600 hover:text-blue-600 transition-colors"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Dashboard-a qayıt
-              </Link>
-            </div>
-            <h1 className="text-xl font-semibold text-gray-900">Profil Redaktəsi</h1>
-            <div></div>
-          </div>
-        </div>
-      </div>
-
+      <StandardHeader />
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
@@ -455,6 +471,7 @@ export default function ProfileEditPage() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

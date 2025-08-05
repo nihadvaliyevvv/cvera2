@@ -56,17 +56,24 @@ export default function Header({ showAuthButtons = true, currentPage }: HeaderPr
                   href="/dashboard"
                   className="text-white hover:text-blue-200 transition-colors duration-200 px-3 lg:px-4 py-2 text-sm lg:text-base font-medium"
                 >
-                  Dashboard
+                  İdarəetmə Paneli
                 </Link>
                 <span className="text-blue-100 text-sm">
                   Xoş gəlmisiniz, {user.name}
                 </span>
                 <button
-                  onClick={handleLogout}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 lg:px-6 py-2 lg:py-2.5 rounded-lg font-semibold transition-colors duration-200 text-sm lg:text-base"
+                    onClick={() => {
+                      console.log('🔴 LOGOUT BUTTON CLICKED - TEST');
+                      handleLogout();
+                    }}
+                    className="px-3 lg:px-4 py-2 text-xs lg:text-sm font-medium text-white bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg hover:bg-white/20 transition-all duration-200"
                 >
+                  <svg className="w-3 h-3 lg:w-4 lg:h-4 mr-1 lg:mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
                   Çıxış
                 </button>
+
               </>
             ) : (
               // Guest user buttons
