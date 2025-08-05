@@ -291,13 +291,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
 
       if (confirmLinkedInLogout) {
-        // Open LinkedIn logout in a new tab to preserve user experience
-        window.open(linkedinLogoutUrl, '_blank', 'width=600,height=400');
+        // Open LinkedIn logout in a new tab and auto-close after 2 seconds
+        const logoutWindow = window.open(linkedinLogoutUrl, '_blank', 'width=600,height=400');
 
-        // Show notification to user
+        // Close the logout window after 2 seconds
         setTimeout(() => {
-          alert('LinkedIn logout səhifəsi açıldı. LinkedIn-dən çıxış etdikdən sonra bu pəncərəni bağlaya bilərsiniz.');
-        }, 500);
+          if (logoutWindow && !logoutWindow.closed) {
+            logoutWindow.close();
+            console.log('LinkedIn logout səhifəsi 2 saniyə sonra bağlandı');
+          }
+        }, 2000); // 2 saniyə
       }
     }
 

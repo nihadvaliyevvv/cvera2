@@ -242,12 +242,11 @@ export default function RegisterPage() {
       "width=600,height=400"
     );
 
-    // Close the logout window after 3 seconds and redirect to LinkedIn auth
-    // Increased from 1.5s to 3s to give more time for logout to complete
+    // Close the logout window after 2 seconds and redirect to LinkedIn auth
     setTimeout(() => {
       logoutWin?.close();
       window.location.href = "/api/auth/linkedin?from=register";
-    }, 3000);
+    }, 2000); // 2 saniyəyə düşürdüm
   };
 
   return (
