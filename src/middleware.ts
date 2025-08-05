@@ -95,10 +95,11 @@ const protectedRoutes = ['/dashboard', '/cv', '/profile', '/admin'];
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for static files and images
+  // Skip middleware for static files, API auth routes, and images
   if (
     pathname.startsWith('/_next/') ||
-    pathname.startsWith('/api/auth/') ||
+    pathname.startsWith('/api/auth/') ||  // LinkedIn OAuth callback buradadır
+    pathname.startsWith('/auth/') ||      // Auth səhifələri də skip edilməli
     pathname.startsWith('/public/') ||
     pathname.includes('.') && (
       pathname.endsWith('.png') ||
@@ -116,7 +117,7 @@ export function middleware(request: NextRequest) {
       pathname.endsWith('.txt')
     )
   ) {
-    console.log(`🟢 Skipping middleware for static file: ${pathname}`);
+    console.log(`🟢 Skipping middleware for: ${pathname}`);
     return NextResponse.next();
   }
 
@@ -132,13 +133,12 @@ export function middleware(request: NextRequest) {
   if (isProtectedRoute) {
     console.log(`🔒 Checking auth for protected route: ${pathname}`);
 
-    // Get token from multiple sources
+    // Get token from multiple sources - LinkedIn callback zamanı token cookie-də olacaq
+    const tokenCookie = request.cookies.get('token')?.value;  // LinkedIn callback-dən gələn token
     const authTokenCookie = request.cookies.get('auth-token')?.value;
     const accessTokenCookie = request.cookies.get('accessToken')?.value;
 
-    // For now, also check if user has token in request (from localStorage)
-    // Since localStorage is not available in middleware, we rely on cookies
-    let token = authTokenCookie || accessTokenCookie;
+    let token = tokenCookie || authTokenCookie || accessTokenCookie;
 
     if (!token) {
       console.log(`🚫 No authentication token found for ${pathname}`);
