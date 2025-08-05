@@ -261,6 +261,12 @@ export default function ProfileEditPage() {
                     placeholder="Adınız və soyadınız"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onInvalid={(e) => {
+                      (e.target as HTMLInputElement).setCustomValidity('Ad və soyad sahəsi məcburidir');
+                    }}
+                    onInput={(e) => {
+                      (e.target as HTMLInputElement).setCustomValidity('');
+                    }}
                   />
                 </div>
 
@@ -276,6 +282,17 @@ export default function ProfileEditPage() {
                     placeholder="example@email.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onInvalid={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      if (target.validity.valueMissing) {
+                        target.setCustomValidity('E-poçt ünvanı məcburidir');
+                      } else if (target.validity.typeMismatch) {
+                        target.setCustomValidity('Düzgün e-poçt ünvanı daxil edin');
+                      }
+                    }}
+                    onInput={(e) => {
+                      (e.target as HTMLInputElement).setCustomValidity('');
+                    }}
                   />
                 </div>
               </div>

@@ -4,17 +4,17 @@ import { verifyJWT } from "@/lib/jwt";
 
 const prisma = new PrismaClient();
 
-function getUserIdFromRequest(req: NextRequest): string | null {
+async function getUserIdFromRequest(req: NextRequest): Promise<string | null> {
   const auth = req.headers.get("authorization");
   if (!auth || !auth.startsWith("Bearer ")) return null;
   const token = auth.replace("Bearer ", "");
   
-  const payload = verifyJWT(token);
+  const payload = await verifyJWT(token);
   return payload?.userId || null;
 }
 
 export async function POST(req: NextRequest) {
-  const userId = getUserIdFromRequest(req);
+  const userId = await getUserIdFromRequest(req);
   if (!userId) {
     return NextResponse.json({ error: "Giriş tələb olunur" }, { status: 401 });
   }

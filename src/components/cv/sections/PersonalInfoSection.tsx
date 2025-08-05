@@ -293,6 +293,12 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             placeholder="Adınız"
             required
+            onInvalid={(e) => {
+              (e.target as HTMLInputElement).setCustomValidity('Ad sahəsi məcburidir');
+            }}
+            onInput={(e) => {
+              (e.target as HTMLInputElement).setCustomValidity('');
+            }}
           />
         </div>
 
@@ -308,6 +314,12 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             placeholder="Soyadınız"
             required
+            onInvalid={(e) => {
+              (e.target as HTMLInputElement).setCustomValidity('Soyad sahəsi məcburidir');
+            }}
+            onInput={(e) => {
+              (e.target as HTMLInputElement).setCustomValidity('');
+            }}
           />
         </div>
 

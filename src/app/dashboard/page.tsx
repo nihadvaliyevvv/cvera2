@@ -12,15 +12,44 @@ export default function DashboardPage() {
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    // Sadə giriş yoxlaması - giriş yoxdursa login səhifəsinə yönləndir
-    if (isInitialized && !loading && !user && !isRedirecting) {
-      setIsRedirecting(true);
-      router.replace('/auth/login');
+    // Wait for auth to be fully initialized before redirecting
+    if (isInitialized && !loading) {
+      // Only redirect if we're sure there's no user
+      if (!user && !isRedirecting) {
+        console.log('🔄 No user found, redirecting to login...');
+        setIsRedirecting(true);
+        router.replace('/auth/login');
+      } else if (user) {
+        // Clear redirecting flag if user is found
+        setIsRedirecting(false);
+        console.log('✅ User found in dashboard:', user.email);
+      }
     }
   }, [user, loading, isInitialized, router, isRedirecting]);
 
-  // Show loading spinner while auth is loading or user is not loaded yet
-  if (loading || !isInitialized || !user) {
+  // Debug logging
+  useEffect(() => {
+    console.log('Dashboard state:', {
+      user: !!user,
+      loading,
+      isInitialized,
+      isRedirecting,
+      userEmail: user?.email
+    });
+  }, [user, loading, isInitialized, isRedirecting]);
+
+  // Show loading spinner while auth is initializing
+  if (!isInitialized || loading) {
+    return <LoadingSpinner />;
+  }
+
+  // Show loading while redirecting
+  if (isRedirecting) {
+    return <LoadingSpinner />;
+  }
+
+  // If no user after initialization, let useEffect handle redirect
+  if (!user) {
     return <LoadingSpinner />;
   }
 

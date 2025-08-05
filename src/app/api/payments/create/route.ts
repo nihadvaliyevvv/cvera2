@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
         status: 'pending',
         paymentMethod: 'epoint',
         orderId,
-        transactionId: 'pending', // Will be updated after payment creation
+        transactionId: 'pending' // Will be updated after payment creation
       },
     });
 
