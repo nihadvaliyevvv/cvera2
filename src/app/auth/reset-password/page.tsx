@@ -329,7 +329,7 @@ function ResetPasswordContent() {
                 </li>
                 <li className={`flex items-center ${/[A-Z]/.test(formData.password) ? 'text-green-600' : ''}`}>
                   <span className="mr-2">{/[A-Z]/.test(formData.password) ? '✓' : '•'}</span>
-                  Bir böyük h��rf
+                  Bir böyük hərf
                 </li>
                 <li className={`flex items-center ${/[a-z]/.test(formData.password) ? 'text-green-600' : ''}`}>
                   <span className="mr-2">{/[a-z]/.test(formData.password) ? '✓' : '•'}</span>
