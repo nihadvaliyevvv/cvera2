@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyJWT } from '@/lib/jwt';
 import { PrismaClient } from '@prisma/client';
-import { callScrapingDogAPI, callRapidAPIForSkills } from '@/lib/api-fallback-system';
+import { callRapidAPIForSkills } from '@/lib/api-fallback-system';
 
 const prisma = new PrismaClient();
 
@@ -62,7 +62,7 @@ async function callScrapingDogAPI(linkedinUrl: string) {
   try {
     const response = await axios
       .get(url, { params: params })
-      .then(function (response) {
+      .then(function (response: any) {
         if (response.status === 200) {
           const data = response.data;
           console.log('✅ ScrapingDog API success');
@@ -72,7 +72,7 @@ async function callScrapingDogAPI(linkedinUrl: string) {
           return { success: false, error: 'Request failed with status code: ' + response.status };
         }
       })
-      .catch(function (error) {
+      .catch(function (error: any) {
         console.error('❌ Error making the request: ' + error.message);
 
         if (error.message.includes('Unexpected token')) {
@@ -95,7 +95,7 @@ async function callScrapingDogAPI(linkedinUrl: string) {
 
 // Enhanced data transformation function with specialized data sources
 function transformLinkedInData(scrapingdogData: any, rapidApiData: any = null) {
-  console.log('🔄 Transforming LinkedIn data...');
+  console.log('�� Transforming LinkedIn data...');
   console.log('📊 ScrapingDog data type:', Array.isArray(scrapingdogData) ? 'Array' : typeof scrapingdogData);
   console.log('📊 RapidAPI skills data available:', !!rapidApiData?.skills);
 

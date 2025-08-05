@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
         // Test LinkedIn API call exactly like user's code
         const response = await axios
           .get(url, { params: params })
-          .then(function (response) {
+          .then(function (response: any) {
             if (response.status === 200) {
               const data = response.data;
               return {
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
               };
             }
           })
-          .catch(function (error) {
+          .catch(function (error: any) {
             console.error('Error making the request: ' + error.message);
 
             // Handle JSON parse error specifically
