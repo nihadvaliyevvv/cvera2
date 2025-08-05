@@ -18,13 +18,14 @@ const plans: PricingPlan[] = [
   {
     id: 'free',
     name: 'Pulsuz',
-    price: 0,
+    price: 0.00,
     features: [
       'Ümumi 2 CV yaratma ',
       'Pulsuz şablonlar (Basic və Resumonk Bold)',
       'Yalnız PDF formatında yükləmə',
       'LinkedIn profilindən idxal',
-      'E-poçt dəstəyi'
+      'E-poçt dəstəyi',
+
     ]
   },
   {
@@ -301,16 +302,16 @@ export default function PricingPage() {
                 </div>
               )}
 
-              <div className="p-6 sm:p-8">
+              <div className="p-6 sm:p-8 flex flex-col h-full">
                 {/* Plan Header */}
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
                   <div className="flex items-center justify-center mb-4">
-                    <span className="text-4xl font-bold text-gray-900">
-                      {plan.price === 0 ? 'Pulsuz' : `₼${plan.price}`}
-                    </span>
+      <span className="text-4xl font-bold text-gray-900">
+        {plan.price === 0 ? `₼${plan.price}.00` : `₼${plan.price}`}
+      </span>
                     {plan.price > 0 && (
-                      <span className="text-gray-600 ml-2">/ay</span>
+                        <span className="text-gray-600 ml-2">/ay</span>
                     )}
                   </div>
                 </div>
@@ -318,34 +319,37 @@ export default function PricingPage() {
                 {/* Features List */}
                 <div className="space-y-4 mb-8">
                   {plan.features.map((feature, idx) => (
-                    <div key={idx} className="flex items-start space-x-3">
-                      <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-gray-700 text-sm leading-relaxed">{feature}</span>
-                    </div>
+                      <div key={idx} className="flex items-start space-x-3">
+                        <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="text-gray-700 text-sm leading-relaxed">{feature}</span>
+                      </div>
                   ))}
                 </div>
 
+                {/* Spacer to push button down */}
+                <div className="flex-grow" />
+
                 {/* CTA Button */}
                 <button
-                  onClick={() => handleUpgrade(plan.id)}
-                  disabled={loading !== null}
-                  className={`w-full py-4 px-6 rounded-xl font-medium transition-all duration-200 ${
-                    plan.popular
-                      ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl'
-                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                  } ${loading !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={() => handleUpgrade(plan.id)}
+                    disabled={loading !== null}
+                    className={ ` w-full py-4 px-6 rounded-xl font-medium transition-all duration-200 ${
+                        plan.popular
+                            ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl'
+                            : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                    } ${loading !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {loading !== null ? (
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current"></div>
-                      <span className="ml-2">Yüklənir...</span>
-                    </div>
+                      <div className="flex items-center justify-center ">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current"></div>
+                        <span className="ml-2">Yüklənir...</span>
+                      </div>
                   ) : plan.price === 0 ? (
-                    'Başla'
+                      'Başla'
                   ) : (
-                    'Seç'
+                      'Seç'
                   )}
                 </button>
               </div>

@@ -3,6 +3,9 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 function ResetPasswordContent() {
   const [formData, setFormData] = useState({
@@ -43,9 +46,6 @@ function ResetPasswordContent() {
       errors.push('Şifrə ən azı bir kiçik hərf ehtiva etməlidir');
     }
 
-    if (!/[0-9]/.test(password)) {
-      errors.push('Şifrə ən azı bir rəqəm ehtiva etməlidir');
-    }
 
     return errors;
   };
@@ -151,11 +151,25 @@ function ResetPasswordContent() {
     }
   };
 
+  const getPasswordStrength = (password: string) => {
+    if (password.length === 0) return { strength: 0, text: '', color: '' };
+    if (password.length < 6) return { strength: 1, text: 'Zəif', color: 'text-red-600' };
+    if (password.length < 8) return { strength: 2, text: 'Orta', color: 'text-yellow-600' };
+    if (password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password)) {
+      return { strength: 3, text: 'Güclü', color: 'text-green-600' };
+    }
+    return { strength: 2, text: 'Yaxşı', color: 'text-blue-600' };
+  };
+
+  const passwordStrength = getPasswordStrength(formData.password);
+
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <div className="max-w-md w-full space-y-8 p-8">
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+        <Header showAuthButtons={false} currentPage="login" />
+
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,128 +194,129 @@ function ResetPasswordContent() {
             </div>
           </div>
         </div>
+
+        <Footer />
       </div>
     );
   }
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <div className="max-w-md w-full space-y-8 p-8">
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Sıfırlama Tokeni Tapılmadı
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Bu link düzgün deyil və ya vaxtı keçmişdir. Zəhmət olmasa yeni sıfırlama linki tələb edin.
-              </p>
-              <Link
-                href="/auth/forgot-password"
-                className="inline-flex items-center px-6 py-3 text-white bg-blue-600 font-medium hover:bg-blue-700 rounded-xl transition-colors duration-200"
-              >
-                Yeni Link Tələb Edin
-              </Link>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+        <Header showAuthButtons={false} currentPage="login" />
+
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg text-center">
+            <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
             </div>
+            <h2 className="text-2xl font-bold text-gray-900">Token Tapılmadı</h2>
+            <p className="text-gray-600">Şifrə yeniləmə linkini yoxlayın və ya yeni link tələb edin.</p>
+            <Link
+              href="/auth/forgot-password"
+              className="inline-block w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Yeni Link Tələb Et
+            </Link>
           </div>
         </div>
+
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <div className="max-w-md w-full space-y-8 p-8">
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-              </svg>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Yeni Şifrə Təyin Edin
-            </h1>
-            <p className="text-gray-600">
-              Hesabınız üçün yeni və güclü bir şifrə daxil edin
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+      <Header showAuthButtons={false} currentPage="login" />
+
+      <div className="flex-1 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg"
+        >
+          <div className="text-center">
+            <Link href="/" className="text-2xl font-bold text-blue-600 hover:text-blue-700">
+              CVera
+            </Link>
+            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+              Yeni Şifrə Təyin Et
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Hesabınız üçün yeni və güclü şifrə yaradın
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Yeni Şifrə
               </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  required
-                  minLength={8}
-                  value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  className="appearance-none relative block w-full px-4 py-3 pr-12 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="Ən azı 8 simvol"
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                required
+                minLength={8}
+                value={formData.password}
+                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Ən azı 8 simvol"
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                </svg>
+                ) : (
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                )}
+              </button>
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                 Şifrəni Təsdiq Edin
               </label>
-              <div className="relative">
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  required
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                  className="appearance-none relative block w-full px-4 py-3 pr-12 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="Şifrəni təkrarlayın"
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? (
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                autoComplete="new-password"
+                required
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Şifrəni təkrarlayın"
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? (
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                </svg>
+                ) : (
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                )}
+              </button>
             </div>
 
             {/* Password requirements */}
@@ -314,16 +329,13 @@ function ResetPasswordContent() {
                 </li>
                 <li className={`flex items-center ${/[A-Z]/.test(formData.password) ? 'text-green-600' : ''}`}>
                   <span className="mr-2">{/[A-Z]/.test(formData.password) ? '✓' : '•'}</span>
-                  Bir böyük hərf
+                  Bir böyük h��rf
                 </li>
                 <li className={`flex items-center ${/[a-z]/.test(formData.password) ? 'text-green-600' : ''}`}>
                   <span className="mr-2">{/[a-z]/.test(formData.password) ? '✓' : '•'}</span>
                   Bir kiçik hərf
                 </li>
-                <li className={`flex items-center ${/[0-9]/.test(formData.password) ? 'text-green-600' : ''}`}>
-                  <span className="mr-2">{/[0-9]/.test(formData.password) ? '✓' : '•'}</span>
-                  Bir rəqəm
-                </li>
+
               </ul>
             </div>
 
@@ -368,24 +380,15 @@ function ResetPasswordContent() {
               </Link>
             </div>
           </form>
-        </div>
-
-        {/* Security Notice */}
-        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Təhlükəsizlik Məsləhətləri</h3>
-          <div className="space-y-3 text-sm text-gray-600">
-            <p>• Güclü və unikal şifrə seçin</p>
-            <p>• Şifrənizi heç kimlə paylaşmayın</p>
-            <p>• Müntəzəm olaraq şifrənizi dəyişin</p>
-            <p>• Şübhəli aktivlik görərsəniz bizə məlumat verin</p>
-          </div>
-        </div>
+        </motion.div>
       </div>
+
+      <Footer />
     </div>
   );
 }
 
-export default function ResetPasswordPage() {
+export default function ResetPasswordPageWrapper() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">

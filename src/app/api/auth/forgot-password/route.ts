@@ -1,64 +1,79 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
-import crypto from 'crypto';
+import { EmailService } from '@/lib/email-service';
 
 const prisma = new PrismaClient();
-
-const forgotPasswordSchema = z.object({
-  email: z.string().email('Email düzgün formatda deyil'),
-});
+const emailService = new EmailService();
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { email } = forgotPasswordSchema.parse(body);
+    const { email } = await request.json();
 
-    // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      // Don't reveal if user exists or not for security
-      return NextResponse.json({
-        message: 'Əgər hesab mövcuddursa, parol sıfırlama linki göndəriləcək.',
-      });
-    }
-
-    // Generate reset token
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
-
-    // Save reset token to database
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        resetToken,
-        resetTokenExpiry,
-      },
-    });
-
-    // TODO: Send email with reset token
-    // For now, we'll just return success
-    // In production, you would integrate with an email service like SendGrid, AWS SES, etc.
-    
-    console.log(`Password reset token for ${email}: ${resetToken}`);
-    
-    return NextResponse.json({
-      message: 'Əgər hesab mövcuddursa, parol sıfırlama linki göndəriləcək.',
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
+    // Validate email
+    if (!email) {
       return NextResponse.json(
-        { message: error.issues[0].message },
+        { message: 'Email tələb olunur' },
         { status: 400 }
       );
     }
 
-    console.error('Forgot password error:', error);
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() }
+    });
+
+    if (!user) {
+      // Security: Don't reveal if user exists or not
+      return NextResponse.json(
+        { message: 'Əgər bu email mövcuddursa, şifrə yeniləmə linki göndəriləcək' },
+        { status: 200 }
+      );
+    }
+
+    // Generate reset token
+    const resetToken = emailService.generateResetToken();
+    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    // Update user with reset token
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetToken,
+        resetTokenExpiry
+      }
+    });
+
+    // Send reset email
+    const emailResult = await emailService.sendForgotPasswordEmail(
+      user.email,
+      user.name,
+      resetToken
+    );
+
+    if (emailResult.success) {
+      console.log(`✅ Password reset email sent to ${user.email}`);
+
+      return NextResponse.json(
+        {
+          message: 'Şifrə yeniləmə linki email ünvanınıza göndərildi',
+          success: true
+        },
+        { status: 200 }
+      );
+    } else {
+      console.error('❌ Failed to send email:', emailResult.error);
+
+      return NextResponse.json(
+        { message: 'Email göndərmədə xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.' },
+        { status: 500 }
+      );
+    }
+
+  } catch (error: any) {
+    console.error('❌ Forgot password error:', error);
+
     return NextResponse.json(
-      { message: 'Daxili server xətası' },
+      { message: 'Server xətası baş verdi. Zəhmət olmasa yenidən cəhd edin.' },
       { status: 500 }
     );
   } finally {

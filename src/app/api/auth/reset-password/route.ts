@@ -1,39 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
+import { EmailService } from '@/lib/email-service';
 
 const prisma = new PrismaClient();
-
-const resetPasswordSchema = z.object({
-  token: z.string().min(1, 'Token tələb olunur'),
-  newPassword: z.string().min(6, 'Parol ən azı 6 simvoldan ibarət olmalıdır'),
-});
+const emailService = new EmailService();
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { token, newPassword } = resetPasswordSchema.parse(body);
+    const { token, newPassword } = await request.json();
 
-    // Find user by reset token
-    const user = await prisma.user.findFirst({
-      where: {
-        resetToken: token,
-        resetTokenExpiry: {
-          gt: new Date(), // Token should not be expired
-        },
-      },
-    });
-
-    if (!user) {
+    // Validate input
+    if (!token || !newPassword) {
       return NextResponse.json(
-        { message: 'Yanlış və ya vaxtı keçmiş token' },
+        { message: 'Token və yeni şifrə tələb olunur' },
         { status: 400 }
       );
     }
 
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    // Validate password strength
+    if (newPassword.length < 6) {
+      return NextResponse.json(
+        { message: 'Şifrə minimum 6 simvol olmalıdır' },
+        { status: 400 }
+      );
+    }
+
+    // Find user with valid reset token
+    const user = await prisma.user.findFirst({
+      where: {
+        resetToken: token,
+        resetTokenExpiry: {
+          gt: new Date() // Token must not be expired
+        }
+      }
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { message: 'Token etibarsızdır və ya müddəti bitib' },
+        { status: 400 }
+      );
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
 
     // Update user password and clear reset token
     await prisma.user.update({
@@ -42,23 +53,31 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         resetToken: null,
         resetTokenExpiry: null,
-      },
+        updatedAt: new Date()
+      }
     });
 
-    return NextResponse.json({
-      message: 'Parol uğurla yeniləndi',
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { message: error.issues[0].message },
-        { status: 400 }
-      );
-    }
+    // Send confirmation email
+    await emailService.sendPasswordResetConfirmation(
+      user.email,
+      user.name
+    );
 
-    console.error('Reset password error:', error);
+    console.log(`✅ Password reset successful for user: ${user.email}`);
+
     return NextResponse.json(
-      { message: 'Daxili server xətası' },
+      {
+        message: 'Şifrəniz uğurla yeniləndi. İndi yeni şifrənizlə daxil ola bilərsiniz.',
+        success: true
+      },
+      { status: 200 }
+    );
+
+  } catch (error: any) {
+    console.error('❌ Reset password error:', error);
+
+    return NextResponse.json(
+      { message: 'Server xətası baş verdi. Zəhmət olmasa yenidən cəhd edin.' },
       { status: 500 }
     );
   } finally {
