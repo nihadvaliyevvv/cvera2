@@ -23,9 +23,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   useEffect(() => {
     const verifyAdmin = async () => {
       try {
-        const token = localStorage.getItem('admin-token');
+        const token = localStorage.getItem('adminToken'); // Düzgün token key
         if (!token) {
-          router.push('/error/login');
+          router.push('/sistem/login'); // Düzgün login path
           return;
         }
 
@@ -36,8 +36,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         });
 
         if (!response.ok) {
-          localStorage.removeItem('admin-token');
-          router.push('/error/login');
+          localStorage.removeItem('adminToken');
+          router.push('/sistem/login'); // Düzgün login path
           return;
         }
 
@@ -45,8 +45,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         setAdmin(data.admin);
       } catch (error) {
         console.error('Admin verification error:', error);
-        localStorage.removeItem('admin-token');
-        router.push('/error/login');
+        localStorage.removeItem('adminToken');
+        router.push('/sistem/login'); // Düzgün login path
       } finally {
         setLoading(false);
       }
@@ -63,8 +63,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      localStorage.removeItem('admin-token');
-      router.push('/error/login');
+      localStorage.removeItem('adminToken');
+      router.push('/sistem/login'); // Düzgün login path
     }
   };
 
