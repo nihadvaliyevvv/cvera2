@@ -95,6 +95,31 @@ const protectedRoutes = ['/dashboard', '/cv', '/profile', '/admin'];
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Skip middleware for static files and images
+  if (
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/api/auth/') ||
+    pathname.startsWith('/public/') ||
+    pathname.includes('.') && (
+      pathname.endsWith('.png') ||
+      pathname.endsWith('.jpg') ||
+      pathname.endsWith('.jpeg') ||
+      pathname.endsWith('.gif') ||
+      pathname.endsWith('.svg') ||
+      pathname.endsWith('.ico') ||
+      pathname.endsWith('.webp') ||
+      pathname.endsWith('.avif') ||
+      pathname.endsWith('.css') ||
+      pathname.endsWith('.js') ||
+      pathname.endsWith('.json') ||
+      pathname.endsWith('.xml') ||
+      pathname.endsWith('.txt')
+    )
+  ) {
+    console.log(`🟢 Skipping middleware for static file: ${pathname}`);
+    return NextResponse.next();
+  }
+
   // Apply rate limiting to all requests
   const rateLimitResponse = rateLimit()(request);
   if (rateLimitResponse) {
@@ -162,15 +187,12 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Matcher configuration
+// Matcher configuration - Much simpler approach
 export const config = {
   matcher: [
-    // All paths except:
-    // - /api/auth
-    // - /_next/static
-    // - /_next/image
-    // - /favicon.ico
-    // - /public/*
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|public).*)'
+    '/dashboard/:path*',
+    '/cv/:path*',
+    '/profile/:path*',
+    '/admin/:path*'
   ]
 }

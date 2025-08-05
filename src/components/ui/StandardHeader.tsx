@@ -35,19 +35,11 @@ export default function StandardHeader() {
   };
 
   return (
-    <header className="bg-gradient-to-r from-blue-600 to-blue-700 border-b border-blue-800 sticky top-0 z-40 shadow-lg">
-      {/* Enhanced responsive container with better edge spacing */}
-      <div className="w-full max-w-full mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20">
-        <div className="flex justify-between items-center h-16 sm:h-18 md:h-20">
-          {/* Logo - Fixed sizing */}
-          <Link href="/dashboard" className="flex items-center">
-            <img
-              src="/cveralogo-2.png"
-              alt="CVera Logo"
-              className="h-8 sm:h-9 md:h-10 w-auto"
-              style={{ maxWidth: '140px', height: 'auto' }}
-            />
-          </Link>
+      <header className="bg-gradient-to-r from-blue-600 to-blue-700 border-b border-blue-800 sticky top-0 z-40 shadow-lg">
+        {/* Enhanced responsive container with better edge spacing */}
+        <div className="w-full max-w-full mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20">
+          <div className="flex justify-between items-center h-16 sm:h-18 md:h-20">
+
 
           {/* Navigation Menu - Better responsive spacing */}
           <nav className="hidden md:flex items-center space-x-4 lg:space-x-6 xl:space-x-8">

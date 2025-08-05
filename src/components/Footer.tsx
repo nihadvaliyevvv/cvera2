@@ -29,7 +29,7 @@ export default function Footer() {
               {/* Logo və məlumat */}
               <div className="w-full lg:w-1/2">
                 <img
-                    src="/cveralogo.png"
+                    src="/cveralogoco.png"
                     alt="CVera Logo"
                     className="h-8 w-auto sm:h-10 mb-4 lg:mb-6"
                     style={{ width: '120px', height: 'auto' }}
