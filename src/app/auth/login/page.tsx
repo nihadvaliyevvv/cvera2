@@ -9,7 +9,7 @@ import Footer from '@/components/Footer'; // Footer əlavə edirik
 
 export default function LoginPage() {
   // All hooks must be called at the top level, before any early returns
-  const { user, loading: authLoading, isInitialized, fetchCurrentUser } = useAuth();
+  const { user, loading: authLoading, isInitialized, login } = useAuth(); // login funksiyasını əlavə et
   const router = useRouter();
 
   // All useState hooks must be called in the same order every time
@@ -113,68 +113,57 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    // Basic validation for login
+    console.log('🔑 Normal login started:', formData.email);
+
+    // Basic validation
     if (!formData.email || !formData.password) {
       setError('Bütün sahələri doldurun');
       setLoading(false);
       return;
     }
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setError('Düzgün e-poçt ünvanı daxil edin');
-      setLoading(false);
-      return;
-    }
-
-    // Password minimum length check
-    if (formData.password.length < 8) {
-      setError('Şifrə ən azı 8 simvoldan ibarət olmalıdır');
-      setLoading(false);
-      return;
-    }
-
     try {
+      // Direct API call instead of useAuth (since test-login works)
+      console.log('📡 Calling login API directly...');
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        }),
       });
 
+      console.log('📡 Response status:', response.status);
       const data = await response.json();
+      console.log('📡 Response data keys:', Object.keys(data));
 
       if (response.ok) {
-        // Token-i localStorage-a saxla
-        localStorage.setItem('accessToken', data.token);
+        console.log('✅ Login API success');
 
-        // Auth context-ini manual olaraq yenilə ki, dərhal user məlumatları yükləsin
-        try {
-          await fetchCurrentUser();
-        } catch (error) {
-          console.log('Auth context yenilənmədi, amma davam edirik');
-        }
+        if (data.accessToken) {
+          console.log('💾 Storing token...');
+          localStorage.setItem('accessToken', data.accessToken);
 
-        // Loading state-i bir az daha uzat ki, auth context yenilənsə
-        setTimeout(() => {
-          setLoading(false);
-          // window.location.href istifadə et ki, tam səhifə yenilənsə və auth context düzgün yüklənsə
+          const storedToken = localStorage.getItem('accessToken');
+          console.log('🔍 Token stored:', !!storedToken);
+
+          console.log('🔄 Redirecting to dashboard...');
+          // Use window.location.href for reliable redirect
           window.location.href = '/dashboard';
-        }, 500);
-
-        return; // handleSubmit-i burada bitir
+        } else {
+          setError('Token alınmadı');
+        }
       } else {
-        setError(data.error || 'Giriş zamanı xəta baş verdi');
+        setError(data.message || data.error || 'Login xətası');
       }
-    } catch (error) {
-      setError('Şəbəkə xətası baş verdi');
+    } catch (error: any) {
+      console.error('💥 Login error:', error);
+      setError('Giriş zamanı xəta baş verdi');
     } finally {
-      // Yalnız error vəziyyətində loading-i dərhal dayandır
-      if (!localStorage.getItem('accessToken')) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 

@@ -3,9 +3,15 @@ import jwt from 'jsonwebtoken';
 
 export function verifyJWT(token: string): { userId: string; email: string } | null {
   try {
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET is not defined');
+      return null;
+    }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string; email: string };
     return decoded;
-  } catch {
+  } catch (error) {
+    console.error('JWT verification failed:', error.message);
     return null;
   }
 }

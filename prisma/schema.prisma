@@ -11,7 +11,7 @@ model User {
   id               String          @id @default(uuid())
   name             String
   email            String          @unique
-  password         String? // Make password optional for LinkedIn users
+  password         String?
   status           String          @default("active")
   resetToken       String?
   resetTokenExpiry DateTime?
@@ -20,10 +20,11 @@ model User {
   updatedAt        DateTime        @updatedAt
   role             String          @default("USER")
   linkedinId       String?         @unique
-  loginMethod      String? // Add login method (linkedin, email)
-  linkedinUsername String? // Add LinkedIn username field
-  emailVerified    DateTime? // Add email verification field
   tier             String          @default("Free")
+  emailVerified    DateTime?
+  linkedinUsername String?
+  loginMethod      String?
+  lastLogout       DateTime?
   cvs              CV[]            @relation("UserCVs")
   dailyUsage       DailyUsage[]    @relation("UserDailyUsage")
   importSessions   ImportSession[] @relation("UserImportSessions")
@@ -143,19 +144,31 @@ model ImportSession {
 
 model ApiKey {
   id         String    @id @default(uuid())
-  service    String // 'linkedin', 'scrapingdog', etc.
-  apiKey     String
+  service    String
   active     Boolean   @default(true)
   priority   Int       @default(1)
   usageCount Int       @default(0)
   lastUsed   DateTime?
-  lastResult String? // Track last API call result (success/failed)
+  lastResult String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  apiKey     String
   dailyLimit Int       @default(1000)
   dailyUsage Int       @default(0)
   lastReset  DateTime  @default(now())
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
 
   @@unique([service, apiKey])
   @@index([service, active])
+}
+
+model TokenBlacklist {
+  id        String   @id
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+  @@index([token])
+  @@index([userId])
 }

@@ -66,51 +66,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Check if we're coming from a logout (URL parameter check)
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('logout')) {
-        console.log('Logout parameter detected, skipping auth check');
+        console.log('Logout parameter detected, clearing everything');
+        // Aggressive cleanup when logout parameter is detected
+        localStorage.clear();
+        sessionStorage.clear();
         setUser(null);
         setLoading(false);
         setIsInitialized(true);
         return;
       }
 
-      // First try to get token from localStorage
+      // CRITICAL: If no token exists, immediately set user to null
       let token = localStorage.getItem('accessToken');
+      if (!token) {
+        console.log('No token found in localStorage');
+        setUser(null);
+        setLoading(false);
+        setIsInitialized(true);
+        return;
+      }
 
       // Validate token before using it
-      if (token && !isValidToken(token)) {
-        console.log('Token expired, removing from localStorage');
+      if (!isValidToken(token)) {
+        console.log('Token expired or invalid, removing');
         localStorage.removeItem('accessToken');
-        token = null;
-      }
-
-      // If no valid token in localStorage, try to get from cookies via API
-      if (!token) {
-        try {
-          const response = await fetch('/api/auth/token', {
-            credentials: 'include',
-            headers: {
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache'
-            }
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            token = data.accessToken;
-
-            // Validate token from server
-            if (token && isValidToken(token)) {
-              localStorage.setItem('accessToken', token);
-            } else {
-              token = null;
-            }
-          }
-        } catch (error) {
-          console.error('Error getting token from cookie:', error);
-        }
-      }
-
-      if (!token) {
         setUser(null);
         setLoading(false);
         setIsInitialized(true);
@@ -130,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userData = await response.json();
         setUser(userData);
       } else {
-        console.log('Failed to fetch user data, removing token');
+        console.log('Failed to fetch user data, token invalid');
         localStorage.removeItem('accessToken');
         setUser(null);
       }
@@ -146,6 +125,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     setLoading(true);
+    console.log('🔑 Login başladı:', email);
+
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -155,29 +136,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email, password }),
       });
 
+      console.log('📡 Login API response status:', response.status);
+
       if (!response.ok) {
         const error = await response.json();
+        console.error('❌ Login API error:', error);
         throw new Error(error.error || 'Giriş uğursuz oldu');
       }
 
       const data = await response.json();
+      console.log('✅ Login API success:', {
+        hasAccessToken: !!data.accessToken,
+        tokenLength: data.accessToken?.length,
+        hasUser: !!data.user,
+        userId: data.user?.id
+      });
 
       // Validate token before storing
       if (data.accessToken && isValidToken(data.accessToken)) {
+        console.log('💾 Storing token in localStorage');
         localStorage.setItem('accessToken', data.accessToken);
 
+        // Verify token was stored
+        const storedToken = localStorage.getItem('accessToken');
+        console.log('🔍 Token stored check:', !!storedToken);
+
         // Fetch user data after successful login
+        console.log('👤 Fetching user data...');
         await fetchCurrentUser();
 
         // Redirect to dashboard after successful login with replace to prevent back button issues
         if (typeof window !== 'undefined') {
+          console.log('🔄 Redirecting to dashboard...');
           window.location.replace('/dashboard');
         }
       } else {
+        console.error('❌ Invalid token received');
         throw new Error('Yanlış token alındı');
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('💥 Login error:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -211,66 +209,123 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [login]);
 
   const logout = useCallback(() => {
-    try {
-      console.log('🚪 Logout prosesi başlayır...');
+    console.log('🚪 LOGOUT BAŞLADI - Dərhal təmizlik...');
 
-      // 1. Immediately set user to null and clear state
-      setUser(null);
-      setLoading(false);
-      setIsInitialized(false);
+    // Get user info before clearing to check login method
+    const currentUser = user;
+    const isLinkedInUser = currentUser?.loginMethod === 'linkedin';
 
-      // 2. Quick storage clearing function
-      const clearStorage = () => {
-        if (typeof window !== 'undefined') {
-          try {
-            localStorage.clear();
-            sessionStorage.clear();
-          } catch (e) {
-            console.error('Storage clear error:', e);
-          }
-        }
-      };
+    // 1. IMMEDIATE state clearing - no async delays
+    setUser(null);
+    setLoading(false);
+    setIsInitialized(false);
 
-      // 3. Clear storage immediately
-      clearStorage();
+    // 2. IMMEDIATE storage clearing - synchronous
+    if (typeof window !== 'undefined') {
+      try {
+        // Clear all possible storage immediately
+        localStorage.clear();
+        sessionStorage.clear();
 
-      // 4. Quick logout - no waiting for API calls
-      if (typeof window !== 'undefined') {
-        // Make logout call but don't wait for it
-        fetch('/api/auth/logout', {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }).catch(() => {
-          // Ignore errors since we're already clearing everything
+        // Clear specific items that might be cached
+        ['accessToken', 'refreshToken', 'user', 'auth-token', 'cvera-auth', 'cvera-token'].forEach(key => {
+          localStorage.removeItem(key);
+          sessionStorage.removeItem(key);
         });
 
-        // Immediate redirect
-        const timestamp = Date.now();
-        window.location.href = `/auth/login?logout=true&t=${timestamp}`;
+        console.log('✅ Storage təmizləndi');
+      } catch (e) {
+        console.log('Storage clear error:', e);
       }
+    }
 
-    } catch (error) {
-      console.error('Logout error:', error);
+    // 3. IMMEDIATE cookie clearing - synchronous
+    if (typeof document !== 'undefined') {
+      try {
+        // More aggressive cookie clearing
+        const cookiesToClear = [
+          'accessToken', 'refreshToken', 'auth-token', 'session', 'token',
+          'cvera-auth', 'cvera-token', 'next-auth.session-token', 'next-auth.csrf-token'
+        ];
 
-      // Emergency fallback
-      if (typeof window !== 'undefined') {
+        cookiesToClear.forEach(name => {
+          // Clear for current domain and path
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname};`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/api;`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/auth;`;
+        });
+
+        console.log('✅ Cookies təmizləndi');
+      } catch (e) {
+        console.log('Cookie clear error:', e);
+      }
+    }
+
+    // 4. Call logout API (fire and forget - don't wait)
+    const token = localStorage.getItem('accessToken') || '';
+    fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Cache-Control': 'no-cache',
+      },
+    }).then(() => {
+      console.log('✅ Logout API çağırıldı');
+    }).catch((error) => {
+      console.log('Logout API error (ignoring):', error);
+    });
+
+    // 5. Handle LinkedIn logout if user logged in via LinkedIn
+    if (isLinkedInUser) {
+      console.log('🔗 LinkedIn ilə giriş edən istifadəçi - LinkedIn logout edilir...');
+
+      // LinkedIn logout URL
+      const linkedinLogoutUrl = 'https://www.linkedin.com/logout';
+
+      // Show user confirmation before LinkedIn logout
+      const confirmLinkedInLogout = confirm(
+        'Siz LinkedIn ilə giriş etmişsiniz. LinkedIn-dən də çıxış etmək istəyirsiniz?'
+      );
+
+      if (confirmLinkedInLogout) {
+        // Open LinkedIn logout in a new tab to preserve user experience
+        window.open(linkedinLogoutUrl, '_blank', 'width=600,height=400');
+
+        // Show notification to user
+        setTimeout(() => {
+          alert('LinkedIn logout səhifəsi açıldı. LinkedIn-dən çıxış etdikdən sonra bu pəncərəni bağlaya bilərsiniz.');
+        }, 500);
+      }
+    }
+
+    // 6. IMMEDIATE redirect - no delays
+    console.log('🔄 Login səhifəsinə yönləndiriliyor...');
+
+    // Multiple redirect strategies for maximum reliability
+    const timestamp = Date.now();
+    const loginUrl = `/auth/login?logout=true&t=${timestamp}${isLinkedInUser ? '&linkedin=true' : ''}`;
+
+    try {
+      // First try: window.location.replace (most reliable)
+      window.location.replace(loginUrl);
+    } catch (e) {
+      try {
+        // Second try: window.location.href
+        window.location.href = loginUrl;
+      } catch (e2) {
         try {
-          localStorage.clear();
-          sessionStorage.clear();
-          window.location.href = '/auth/login?logout=true';
-        } catch (e) {
-          window.location.href = '/auth/login';
+          // Third try: window.location.assign
+          window.location.assign(loginUrl);
+        } catch (e3) {
+          // Last resort: reload the page
+          window.location.reload();
         }
       }
-
-      setUser(null);
-      setLoading(false);
-      setIsInitialized(false);
     }
-  }, []);
+  }, [user]);
 
   const canAutoImportLinkedIn = useCallback((): boolean => {
     return user?.loginMethod === 'linkedin' && !!(user?.linkedinUsername || user?.linkedinId);

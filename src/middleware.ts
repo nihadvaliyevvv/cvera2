@@ -1,5 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Simple JWT decode for Edge Runtime - no crypto dependencies
+function simpleJWTDecode(token: string): any {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      console.log('❌ JWT format invalid:', parts.length, 'parts');
+      return null;
+    }
+
+    // Add padding if needed for base64 decode
+    let payload = parts[1];
+    while (payload.length % 4) {
+      payload += '=';
+    }
+
+    const decoded = JSON.parse(atob(payload));
+    console.log('✅ JWT decoded successfully:', {
+      userId: decoded.userId,
+      email: decoded.email,
+      exp: decoded.exp,
+      iat: decoded.iat
+    });
+
+    return decoded;
+  } catch (error) {
+    console.log('❌ JWT decode failed:', error.message);
+    return null;
+  }
+}
+
 interface RateLimitStore {
   [key: string]: {
     count: number;
@@ -46,11 +76,11 @@ export function rateLimit(
     if (store[key].count > limit) {
       return NextResponse.json(
         { error: 'Too many requests' },
-        { 
+        {
           status: 429,
           headers: {
             'Retry-After': Math.ceil((store[key].resetTime - now) / 1000).toString(),
-          },
+          }
         }
       );
     }
@@ -59,27 +89,88 @@ export function rateLimit(
   };
 }
 
+// Protected routes that require authentication
+const protectedRoutes = ['/dashboard', '/cv', '/profile', '/admin'];
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Apply rate limiting to API routes
-  if (pathname.startsWith('/api/')) {
-    const rateLimitResult = rateLimit()(request);
-    if (rateLimitResult) {
-      return rateLimitResult;
-    }
+  // Apply rate limiting to all requests
+  const rateLimitResponse = rateLimit()(request);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
-  // Allow all other requests to proceed
+  // Check if accessing a protected route
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+
+  if (isProtectedRoute) {
+    console.log(`🔒 Checking auth for protected route: ${pathname}`);
+
+    // Get token from multiple sources
+    const authTokenCookie = request.cookies.get('auth-token')?.value;
+    const accessTokenCookie = request.cookies.get('accessToken')?.value;
+
+    // For now, also check if user has token in request (from localStorage)
+    // Since localStorage is not available in middleware, we rely on cookies
+    let token = authTokenCookie || accessTokenCookie;
+
+    if (!token) {
+      console.log(`🚫 No authentication token found for ${pathname}`);
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    console.log(`🔍 Token found, length: ${token.length}`);
+
+    // Decode and validate JWT using simple Edge Runtime compatible method
+    const decoded = simpleJWTDecode(token);
+
+    if (!decoded) {
+      console.log(`🚫 JWT decode failed for ${pathname}`);
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      loginUrl.searchParams.set('expired', 'true');
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Check expiration
+    if (decoded.exp && decoded.exp * 1000 <= Date.now()) {
+      console.log(`🚫 Token expired for ${pathname}`);
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      loginUrl.searchParams.set('expired', 'true');
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Check required fields
+    if (!decoded.userId || !decoded.email) {
+      console.log(`🚫 Missing required fields in token for ${pathname}`, {
+        userId: decoded.userId,
+        email: decoded.email,
+        allFields: Object.keys(decoded)
+      });
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    console.log(`✅ Authentication successful for user ${decoded.userId} on ${pathname}`);
+  }
+
   return NextResponse.next();
 }
 
+// Matcher configuration
 export const config = {
   matcher: [
-    // Match all request paths except for the ones starting with:
-    // - _next/static (static files)
-    // - _next/image (image optimization files)
-    // - favicon.ico (favicon file)
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
-};
+    // All paths except:
+    // - /api/auth
+    // - /_next/static
+    // - /_next/image
+    // - /favicon.ico
+    // - /public/*
+    '/((?!api/auth|_next/static|_next/image|favicon.ico|public).*)'
+  ]
+}
