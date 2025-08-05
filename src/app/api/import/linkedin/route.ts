@@ -1,29 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyJWT } from '@/lib/jwt';
 import { PrismaClient } from '@prisma/client';
-import axios from 'axios';
+import { callScrapingDogAPI, callRapidAPIForSkills } from '@/lib/api-fallback-system';
 
 const prisma = new PrismaClient();
 
-// RapidAPI configuration for skills enhancement
-const RAPID_API_CONFIG = {
-  key: 'e69773e8c2msh50ce2f81e481a35p1888abjsn83f1b967cbe4',
-  host: 'fresh-linkedin-profile-data.p.rapidapi.com',
-  url: 'https://fresh-linkedin-profile-data.p.rapidapi.com/get-extra-profile-data'
-};
-
-// ScrapingDog configuration
-const SCRAPINGDOG_CONFIG = {
-  apiKey: '6882894b855f5678d36484c8',
-  url: 'https://api.scrapingdog.com/linkedin'
-};
-
-// Enhanced data transformation function
+// Enhanced data transformation function with specialized data sources
 function transformLinkedInData(scrapingdogData: any, rapidApiData: any = null) {
   console.log('🔄 Transforming LinkedIn data...');
   console.log('📊 ScrapingDog data type:', Array.isArray(scrapingdogData) ? 'Array' : typeof scrapingdogData);
-  console.log('📊 ScrapingDog raw data:', JSON.stringify(scrapingdogData, null, 2));
-  console.log('📊 RapidAPI data keys:', Object.keys(rapidApiData || {}));
+  console.log('📊 RapidAPI skills data available:', !!rapidApiData?.skills);
 
   // Handle ScrapingDog array response format - the API returns an array with profile data
   let profileData = {};
@@ -36,37 +22,10 @@ function transformLinkedInData(scrapingdogData: any, rapidApiData: any = null) {
     console.log('✅ Using ScrapingDog object format');
   }
 
-  // Combine data from both sources
+  // Use ScrapingDog as primary data source
   const combinedData: any = { ...profileData };
 
-  if (rapidApiData) {
-    // Enhance skills from RapidAPI
-    if (rapidApiData.skills && Array.isArray(rapidApiData.skills)) {
-      combinedData.skills = [...(combinedData.skills || []), ...rapidApiData.skills];
-    }
-
-    // Enhance experience details
-    if (rapidApiData.experience && Array.isArray(rapidApiData.experience)) {
-      combinedData.experience = rapidApiData.experience;
-    }
-
-    // Enhance education
-    if (rapidApiData.education && Array.isArray(rapidApiData.education)) {
-      combinedData.education = rapidApiData.education;
-    }
-
-    // Enhance projects
-    if (rapidApiData.projects && Array.isArray(rapidApiData.projects)) {
-      combinedData.projects = rapidApiData.projects;
-    }
-
-    // Enhance certifications
-    if (rapidApiData.certifications && Array.isArray(rapidApiData.certifications)) {
-      combinedData.certification = rapidApiData.certifications;
-    }
-  }
-
-  // Transform personal info with enhanced field mappings for ScrapingDog format
+  // Transform personal info from ScrapingDog data
   const personalInfo = {
     firstName: combinedData.first_name || combinedData.firstName ||
                (combinedData.full_name || combinedData.fullName || combinedData.name || '').split(' ')[0] || '',
@@ -92,7 +51,7 @@ function transformLinkedInData(scrapingdogData: any, rapidApiData: any = null) {
     website: combinedData.website || combinedData.personal_website || combinedData.website_url || ''
   };
 
-  // Transform experience with enhanced mapping for ScrapingDog format
+  // Transform experience from ScrapingDog data
   const experienceArray = combinedData.experience || combinedData.experiences || combinedData.work_experience || [];
   const experience = experienceArray.map((exp: any, index: number) => ({
     id: `exp-${Date.now()}-${index}`,
@@ -105,7 +64,7 @@ function transformLinkedInData(scrapingdogData: any, rapidApiData: any = null) {
     location: exp.location || exp.company_location || exp.workplace_location || ''
   })).filter((exp: any) => exp.company.trim() !== '' || exp.position.trim() !== '');
 
-  // Transform education - if ScrapingDog education is empty, create basic structure
+  // Transform education from ScrapingDog data
   const educationArray = combinedData.education || combinedData.educations || combinedData.schools || [];
   let education = educationArray.map((edu: any, index: number) => ({
     id: `edu-${Date.now()}-${index}`,
@@ -123,7 +82,7 @@ function transformLinkedInData(scrapingdogData: any, rapidApiData: any = null) {
                 edu.details || ''
   })).filter((edu: any) => edu.institution.trim() !== '');
 
-  // If no education data from ScrapingDog, create placeholder for user to fill
+  // If no education data, create placeholder
   if (education.length === 0) {
     education = [{
       id: `edu-placeholder-${Date.now()}`,
@@ -136,115 +95,92 @@ function transformLinkedInData(scrapingdogData: any, rapidApiData: any = null) {
     }];
   }
 
-  // Transform skills - Enhanced skill extraction from experience data
+  // SKILLS: Use RapidAPI as primary source, fallback to ScrapingDog + text extraction
   let skills: any[] = [];
 
-  // Extract skills from experience summaries and position titles
-  const skillsFromText = new Set<string>();
-
-  // Add technical skills from experience summaries AND position titles
-  experience.forEach((exp: any) => {
-    const textToAnalyze = `${exp.description || ''} ${exp.position || ''} ${exp.company || ''}`.toLowerCase();
-
-    // Enhanced skill detection patterns
-    const skillPatterns = [
-      // Programming Languages
-      'java(?!script)', 'javascript', 'typescript', 'python', 'php', 'c#', 'c\\+\\+', 'ruby', 'go', 'rust', 'swift', 'kotlin',
-      // Frontend
-      'react', 'vue\\.js', 'angular', 'html', 'css', 'sass', 'scss', 'tailwind', 'bootstrap', 'jquery',
-      // Backend
-      'node\\.js', 'express', 'django', 'flask', 'spring', 'laravel', 'symfony', 'rails',
-      // Databases
-      'sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'elasticsearch', 'oracle',
-      // Cloud & DevOps
-      'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'jenkins', 'git', 'gitlab', 'github',
-      // Tools & Methodologies
-      'agile', 'scrum', 'jira', 'confluence', 'slack', 'teams', 'figma', 'adobe',
-      // Business Skills
-      'project management', 'team leadership', 'business analysis', 'problem solving',
-      'communication', 'presentation', 'negotiation', 'strategic planning'
-    ];
-
-    skillPatterns.forEach(pattern => {
-      const regex = new RegExp(`\\b${pattern}\\b`, 'gi');
-      const matches = textToAnalyze.match(regex);
-      if (matches) {
-        matches.forEach(match => {
-          // Normalize skill names
-          let skillName = match.toLowerCase();
-          if (skillName === 'node.js') skillName = 'Node.js';
-          else if (skillName === 'vue.js') skillName = 'Vue.js';
-          else if (skillName === 'c#') skillName = 'C#';
-          else if (skillName === 'c++') skillName = 'C++';
-          else skillName = skillName.charAt(0).toUpperCase() + skillName.slice(1);
-
-          skillsFromText.add(skillName);
-        });
-      }
-    });
-  });
-
-  // Convert to skills array
-  skills.push(...Array.from(skillsFromText).map((skillName, index) => ({
-    id: `skill-extracted-${Date.now()}-${index}`,
-    name: skillName,
-    level: 'Intermediate' as const
-  })));
-
-  // If no skills extracted, add some based on position titles
-  if (skills.length === 0) {
-    const positionBasedSkills = new Set<string>();
-    experience.forEach((exp: any) => {
-      const position = exp.position.toLowerCase();
-      if (position.includes('developer') || position.includes('programmer')) {
-        positionBasedSkills.add('Software Development');
-        positionBasedSkills.add('Problem Solving');
-      }
-      if (position.includes('frontend') || position.includes('front-end')) {
-        positionBasedSkills.add('HTML');
-        positionBasedSkills.add('CSS');
-        positionBasedSkills.add('JavaScript');
-      }
-      if (position.includes('backend') || position.includes('back-end')) {
-        positionBasedSkills.add('Server Development');
-        positionBasedSkills.add('Database Management');
-      }
-      if (position.includes('fullstack') || position.includes('full-stack')) {
-        positionBasedSkills.add('Full-Stack Development');
-        positionBasedSkills.add('API Development');
-      }
-      if (position.includes('manager') || position.includes('lead')) {
-        positionBasedSkills.add('Team Leadership');
-        positionBasedSkills.add('Project Management');
-      }
-      if (position.includes('designer') || position.includes('ui') || position.includes('ux')) {
-        positionBasedSkills.add('UI/UX Design');
-        positionBasedSkills.add('User Experience');
-      }
-      if (position.includes('analyst') || position.includes('consultant')) {
-        positionBasedSkills.add('Business Analysis');
-        positionBasedSkills.add('Data Analysis');
-      }
-    });
-
-    skills.push(...Array.from(positionBasedSkills).map((skillName, index) => ({
-      id: `skill-position-${Date.now()}-${index}`,
-      name: skillName,
-      level: 'Intermediate' as const
-    })));
+  // 1. First priority: RapidAPI skills (if available)
+  if (rapidApiData?.skills && Array.isArray(rapidApiData.skills)) {
+    console.log('✅ Using RapidAPI skills data');
+    skills = rapidApiData.skills.map((skill: any, index: number) => ({
+      id: `skill-rapidapi-${Date.now()}-${index}`,
+      name: typeof skill === 'string' ? skill : skill.name || skill.skill || skill.title || '',
+      level: typeof skill === 'object' ? (skill.level || skill.proficiency || 'Intermediate') : 'Intermediate'
+    })).filter((skill: any) => skill.name.trim() !== '');
   }
 
-  // If still no skills, add basic professional skills
+  // 2. If no RapidAPI skills, use ScrapingDog skills
+  if (skills.length === 0 && combinedData.skills) {
+    console.log('📡 Using ScrapingDog skills data');
+    const scrapingdogSkills = Array.isArray(combinedData.skills) ? combinedData.skills : [combinedData.skills];
+    skills = scrapingdogSkills.map((skill: any, index: number) => ({
+      id: `skill-scrapingdog-${Date.now()}-${index}`,
+      name: typeof skill === 'string' ? skill : skill.name || skill.skill || '',
+      level: typeof skill === 'object' ? (skill.level || 'Intermediate') : 'Intermediate'
+    })).filter((skill: any) => skill.name.trim() !== '');
+  }
+
+  // 3. If still no skills, extract from experience text (ScrapingDog data)
+  if (skills.length === 0) {
+    console.log('🔍 Extracting skills from experience text');
+    const skillsFromText = new Set<string>();
+
+    experience.forEach((exp: any) => {
+      const textToAnalyze = `${exp.description || ''} ${exp.position || ''} ${exp.company || ''}`.toLowerCase();
+
+      // Enhanced skill detection patterns
+      const skillPatterns = [
+        // Programming Languages
+        'java(?!script)', 'javascript', 'typescript', 'python', 'php', 'c#', 'c\\+\\+', 'ruby', 'go', 'rust', 'swift', 'kotlin',
+        // Frontend
+        'react', 'vue\\.js', 'angular', 'html', 'css', 'sass', 'scss', 'tailwind', 'bootstrap', 'jquery',
+        // Backend
+        'node\\.js', 'express', 'django', 'flask', 'spring', 'laravel', 'symfony', 'rails',
+        // Databases
+        'sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'elasticsearch', 'oracle',
+        // Cloud & DevOps
+        'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'jenkins', 'git', 'gitlab', 'github',
+        // Tools & Methodologies
+        'agile', 'scrum', 'jira', 'confluence', 'slack', 'teams', 'figma', 'adobe',
+        // Business Skills
+        'project management', 'team leadership', 'business analysis', 'problem solving',
+        'communication', 'presentation', 'negotiation', 'strategic planning'
+      ];
+
+      skillPatterns.forEach(pattern => {
+        const regex = new RegExp(`\\b${pattern}\\b`, 'gi');
+        const matches = textToAnalyze.match(regex);
+        if (matches) {
+          matches.forEach(match => {
+            let skillName = match.toLowerCase();
+            if (skillName === 'node.js') skillName = 'Node.js';
+            else if (skillName === 'vue.js') skillName = 'Vue.js';
+            else if (skillName === 'c#') skillName = 'C#';
+            else if (skillName === 'c++') skillName = 'C++';
+            else skillName = skillName.charAt(0).toUpperCase() + skillName.slice(1);
+            skillsFromText.add(skillName);
+          });
+        }
+      });
+    });
+
+    skills = Array.from(skillsFromText).map((skillName, index) => ({
+      id: `skill-extracted-${Date.now()}-${index}`,
+      name: skillName,
+      level: 'Intermediate' as const
+    }));
+  }
+
+  // 4. If still no skills, add basic skills
   if (skills.length === 0) {
     const basicSkills = ['Communication', 'Problem Solving', 'Team Collaboration', 'Time Management'];
-    skills.push(...basicSkills.map((skillName, index) => ({
+    skills = basicSkills.map((skillName, index) => ({
       id: `skill-basic-${Date.now()}-${index}`,
       name: skillName,
       level: 'Advanced' as const
-    })));
+    }));
   }
 
-  // Transform languages - add default if none provided
+  // Transform languages from ScrapingDog data
   let languages = (combinedData.languages || []).map((lang: any, index: number) => ({
     id: `lang-${Date.now()}-${index}`,
     name: typeof lang === 'string' ? lang : lang.name || lang.language || '',
@@ -259,7 +195,7 @@ function transformLinkedInData(scrapingdogData: any, rapidApiData: any = null) {
     ];
   }
 
-  // Transform projects - create placeholder if none
+  // Transform projects from ScrapingDog data
   let projects = (combinedData.projects || []).map((proj: any, index: number) => ({
     id: `proj-${Date.now()}-${index}`,
     name: proj.title || proj.name || proj.project_name || '',
@@ -283,7 +219,7 @@ function transformLinkedInData(scrapingdogData: any, rapidApiData: any = null) {
     }];
   }
 
-  // Transform certifications/awards - create placeholder if none
+  // Transform certifications from ScrapingDog data
   let certifications = (combinedData.awards || combinedData.certification || combinedData.certifications || []).map((cert: any, index: number) => ({
     id: `cert-${Date.now()}-${index}`,
     name: cert.name || cert.title || cert.certification || '',
@@ -303,7 +239,7 @@ function transformLinkedInData(scrapingdogData: any, rapidApiData: any = null) {
     }];
   }
 
-  // Transform volunteer experience - create placeholder if none
+  // Transform volunteer experience from ScrapingDog data
   let volunteerExperience = (combinedData.volunteering || []).map((vol: any, index: number) => ({
     id: `vol-${Date.now()}-${index}`,
     organization: vol.organization || vol.company || '',
@@ -315,14 +251,14 @@ function transformLinkedInData(scrapingdogData: any, rapidApiData: any = null) {
   })).filter((vol: any) => vol.organization.trim() !== '' || vol.role.trim() !== '');
 
   console.log('📊 Transformation Results:');
-  console.log(`- Personal Info: ${personalInfo.fullName}`);
-  console.log(`- Experience: ${experience.length} items`);
-  console.log(`- Education: ${education.length} items`);
-  console.log(`- Skills: ${skills.length} items`);
-  console.log(`- Languages: ${languages.length} items`);
-  console.log(`- Projects: ${projects.length} items`);
-  console.log(`- Certifications: ${certifications.length} items`);
-  console.log(`- Volunteer: ${volunteerExperience.length} items`);
+  console.log(`- Personal Info: ${personalInfo.fullName} (ScrapingDog)`);
+  console.log(`- Experience: ${experience.length} items (ScrapingDog)`);
+  console.log(`- Education: ${education.length} items (ScrapingDog)`);
+  console.log(`- Skills: ${skills.length} items (${rapidApiData?.skills ? 'RapidAPI' : 'ScrapingDog/Extracted'})`);
+  console.log(`- Languages: ${languages.length} items (ScrapingDog)`);
+  console.log(`- Projects: ${projects.length} items (ScrapingDog)`);
+  console.log(`- Certifications: ${certifications.length} items (ScrapingDog)`);
+  console.log(`- Volunteer: ${volunteerExperience.length} items (ScrapingDog)`);
 
   return {
     personalInfo,
@@ -377,63 +313,40 @@ export async function POST(request: NextRequest) {
     console.log('📝 LinkedIn username:', linkedinUsername);
 
     let scrapingdogData = null;
-    let rapidApiData = null;
+    let rapidApiSkillsData = null;
 
-    // Call ScrapingDog API
-    try {
-      console.log('📡 Calling ScrapingDog API...');
-      const scrapingdogParams = {
-        api_key: SCRAPINGDOG_CONFIG.apiKey,
-        type: 'profile',
-        linkId: linkedinUsername,
-        premium: 'false',
-      };
+    // Call ScrapingDog API for ALL main data (experience, education, personal info, etc.)
+    console.log('📡 ScrapingDog API çağırışı başlanır (əsas məlumatlar üçün)...');
+    const scrapingdogResult = await callScrapingDogAPI(linkedinUsername);
 
-      const scrapingdogResponse = await axios.get(SCRAPINGDOG_CONFIG.url, {
-        params: scrapingdogParams,
-        timeout: 30000
-      });
-
-      if (scrapingdogResponse.status === 200 && scrapingdogResponse.data) {
-        scrapingdogData = scrapingdogResponse.data;
-        console.log('✅ ScrapingDog data received');
-      }
-    } catch (error: any) {
-      console.warn('⚠️ ScrapingDog API failed:', error.message);
+    if (scrapingdogResult.success) {
+      scrapingdogData = scrapingdogResult.data;
+      console.log(`✅ ScrapingDog əsas məlumatlar alındı (${scrapingdogResult.attemptsCount} cəhddə)`);
+    } else {
+      console.warn(`⚠️ ScrapingDog API tamamilə uğursuz: ${scrapingdogResult.error}`);
     }
 
-    // Call RapidAPI for enhanced data
-    try {
-      console.log('📡 Calling RapidAPI for enhanced data...');
-      const rapidApiResponse = await axios.get(RAPID_API_CONFIG.url, {
-        params: {
-          linkedin_url: linkedinUrl
-        },
-        headers: {
-          'x-rapidapi-key': RAPID_API_CONFIG.key,
-          'x-rapidapi-host': RAPID_API_CONFIG.host
-        },
-        timeout: 25000
-      });
+    // Call RapidAPI ONLY for skills data
+    console.log('📡 RapidAPI çağırışı başlanır (YALNIZ skills üçün)...');
+    const rapidApiSkillsResult = await callRapidAPIForSkills(linkedinUrl);
 
-      if (rapidApiResponse.status === 200 && rapidApiResponse.data) {
-        rapidApiData = rapidApiResponse.data;
-        console.log('✅ RapidAPI data received');
-      }
-    } catch (error: any) {
-      console.warn('⚠️ RapidAPI failed:', error.message);
+    if (rapidApiSkillsResult.success) {
+      rapidApiSkillsData = rapidApiSkillsResult.data;
+      console.log(`✅ RapidAPI skills data alındı (${rapidApiSkillsResult.attemptsCount} cəhddə)`);
+    } else {
+      console.warn(`⚠️ RapidAPI skills uğursuz: ${rapidApiSkillsResult.error}`);
     }
 
-    // Check if we have any data
-    if (!scrapingdogData && !rapidApiData) {
+    // Check if we have main data from ScrapingDog
+    if (!scrapingdogData) {
       return NextResponse.json(
-        { error: 'LinkedIn profili məlumatları alına bilmədi. URL-i yoxlayın və yenidən cəhd edin.' },
+        { error: 'LinkedIn profili əsas məlumatları alına bilmədi. ScrapingDog API-lər işləmir.' },
         { status: 404 }
       );
     }
 
-    // Transform the combined data
-    const transformedData = transformLinkedInData(scrapingdogData, rapidApiData);
+    // Transform the combined data (ScrapingDog main + RapidAPI skills)
+    const transformedData = transformLinkedInData(scrapingdogData, rapidApiSkillsData);
 
     // Enhanced debug logging for CV data
     console.log('🎉 LinkedIn Import SUCCESS! Transformed data:', {
@@ -487,7 +400,7 @@ export async function POST(request: NextRequest) {
         certificationsCount: transformedData.certifications.length,
         dataSource: {
           scrapingdog: !!scrapingdogData,
-          rapidapi: !!rapidApiData
+          rapidapi: !!rapidApiSkillsData
         }
       },
       // IMPORTANT: Return transformed data for direct CV editor use

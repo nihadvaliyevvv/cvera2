@@ -282,7 +282,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isLinkedInUser) {
       console.log('🔗 LinkedIn ilə giriş edən istifadəçi - LinkedIn logout edilir...');
 
-      // LinkedIn mobile logout URL (istədiyiniz URL)
+      // LinkedIn mobile logout URL
       const linkedinLogoutUrl = 'https://linkedin.com/m/logout';
 
       // Show user confirmation before LinkedIn logout
@@ -291,66 +291,133 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
 
       if (confirmLinkedInLogout) {
-        // Open LinkedIn logout in a new tab and auto-close with better detection
-        const logoutWindow = window.open(linkedinLogoutUrl, '_blank', 'width=600,height=400');
+        // Open LinkedIn logout in a popup with automatic management
+        const logoutWindow = window.open(
+          linkedinLogoutUrl,
+          'linkedin_logout',
+          'width=600,height=400,left=' + (screen.width/2-300) + ',top=' + (screen.height/2-200)
+        );
 
-        // İmproved logout window management
-        let windowClosed = false;
+        if (logoutWindow) {
+          let checkCount = 0;
+          const maxChecks = 30; // 15 saniyə maksimum (500ms * 30)
+          let logoutCompleted = false;
 
-        // Check if logout is complete by monitoring window
-        const checkLogoutComplete = () => {
-          if (!logoutWindow || logoutWindow.closed) {
-            windowClosed = true;
-            console.log('LinkedIn logout pəncərəsi istifadəçi tərəfindən bağlandı');
-            return;
-          }
+          const monitorLogout = () => {
+            checkCount++;
 
-          // Check if LinkedIn logout is complete (URL change or specific content)
-          try {
-            // LinkedIn logout usually redirects or changes page
-            const currentUrl = logoutWindow.location.href;
-            if (currentUrl.includes('linkedin.com') && !currentUrl.includes('logout')) {
-              // Logout completed, close window
-              logoutWindow.close();
-              windowClosed = true;
-              console.log('LinkedIn logout tamamlandı, pəncərə bağlandı');
-              return;
+            try {
+              // Check if window is closed by user
+              if (logoutWindow.closed) {
+                logoutCompleted = true;
+                console.log('✅ LinkedIn logout pəncərəsi bağlandı');
+
+                // Redirect to cvera.net after LinkedIn logout
+                setTimeout(() => {
+                  window.location.href = 'https://cvera.net';
+                }, 500);
+                return;
+              }
+
+              // Try to detect logout completion by URL change
+              try {
+                const currentUrl = logoutWindow.location.href;
+
+                // LinkedIn logout redirects to main page after logout
+                if (currentUrl && (
+                  currentUrl.includes('linkedin.com/feed') ||
+                  currentUrl.includes('linkedin.com/in/') ||
+                  currentUrl === 'https://www.linkedin.com/' ||
+                  !currentUrl.includes('logout')
+                )) {
+                  // Logout completed successfully
+                  logoutWindow.close();
+                  logoutCompleted = true;
+                  console.log('✅ LinkedIn logout tamamlandı - URL dəyişdi');
+
+                  // Redirect to cvera.net
+                  setTimeout(() => {
+                    window.location.href = 'https://cvera.net';
+                  }, 500);
+                  return;
+                }
+              } catch (e) {
+                // Cross-origin restriction - this actually means logout is likely complete
+                if (checkCount > 6) { // After 3 seconds of cross-origin, assume logout complete
+                  logoutWindow.close();
+                  logoutCompleted = true;
+                  console.log('✅ LinkedIn logout tamamlandı - cross-origin detected');
+
+                  // Redirect to cvera.net
+                  setTimeout(() => {
+                    window.location.href = 'https://cvera.net';
+                  }, 500);
+                  return;
+                }
+              }
+
+              // Continue monitoring if not complete and under max checks
+              if (!logoutCompleted && checkCount < maxChecks) {
+                setTimeout(monitorLogout, 500);
+              } else if (checkCount >= maxChecks) {
+                // Force close after timeout
+                logoutWindow.close();
+                console.log('⏰ LinkedIn logout timeout - force closing');
+
+                // Still redirect to cvera.net
+                setTimeout(() => {
+                  window.location.href = 'https://cvera.net';
+                }, 500);
+              }
+
+            } catch (error) {
+              console.log('LinkedIn logout monitor error:', error);
+
+              // On any error, continue monitoring or close
+              if (checkCount >= maxChecks) {
+                try {
+                  logoutWindow.close();
+                } catch (e) {}
+
+                setTimeout(() => {
+                  window.location.href = 'https://cvera.net';
+                }, 500);
+              } else {
+                setTimeout(monitorLogout, 500);
+              }
             }
-          } catch (e) {
-            // Cross-origin error means logout might be complete
-            console.log('LinkedIn logout cross-origin detected, likely complete');
-          }
+          };
 
-          // Continue checking if window still open
-          if (!windowClosed) {
-            setTimeout(checkLogoutComplete, 500);
-          }
-        };
+          // Start monitoring after a brief delay
+          setTimeout(monitorLogout, 1000);
 
-        // Start monitoring after a short delay
-        setTimeout(checkLogoutComplete, 1000);
+          // Fallback: show user instruction and redirect
+          setTimeout(() => {
+            if (!logoutCompleted && !logoutWindow.closed) {
+              alert('LinkedIn logout səhifəsi açıldı. Logout tamamladıqdan sonra bu pəncərəni bağlayın.');
 
-        // Fallback: force close after 10 seconds maximum
+              // Force redirect to cvera.net after showing message
+              setTimeout(() => {
+                try {
+                  logoutWindow.close();
+                } catch (e) {}
+                window.location.href = 'https://cvera.net';
+              }, 3000);
+            }
+          }, 10000); // 10 saniyə sonra fallback
+        }
+      } else {
+        // User declined LinkedIn logout, just redirect to cvera.net
         setTimeout(() => {
-          if (!windowClosed && logoutWindow && !logoutWindow.closed) {
-            logoutWindow.close();
-            console.log('LinkedIn logout pəncərəsi 10 saniyə sonra məcburi bağlandı');
-          }
-        }, 10000); // 10 saniyə maksimum gözləmə
+          window.location.href = 'https://cvera.net';
+        }, 500);
       }
-    }
-
-    // 6. IMMEDIATE redirect - no delays, no async waits
-    if (typeof window !== 'undefined') {
-      console.log('🔄 Login səhifəsinə yönləndirmə...');
-
-      // Force immediate redirect with replace to prevent back button issues
+    } else {
+      // Regular user (not LinkedIn), redirect to cvera.net immediately
       setTimeout(() => {
-        window.location.replace('/auth/login?logout=success');
-      }, 100); // Minimal delay to ensure cleanup completes
+        window.location.href = 'https://cvera.net';
+      }, 500);
     }
-
-    console.log('✅ LOGOUT TAMAMLANDI - İstifadəçi təmizləndi');
   }, [user]);
 
   const canAutoImportLinkedIn = useCallback((): boolean => {
