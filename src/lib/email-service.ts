@@ -278,7 +278,7 @@ Bu e-poçt avtomatik olaraq göndərilmişdir.
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Email Təsdiqi - CVera</title>
+              <title>Email Təsdiqi - CVERA</title>
             <style>
                 body { 
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -370,7 +370,6 @@ Bu e-poçt avtomatik olaraq göndərilmişdir.
             <div class="container">
                 <div class="header">
                     <div class="logo">CVera</div>
-                    <div class="subtitle">Peşəkar CV Yaradıcısı</div>
                     <div class="welcome-icon">🎉</div>
                     <h1 style="color: #1e293b; margin: 20px 0 0 0;">Xoş Gəlmisiniz!</h1>
                 </div>
@@ -378,10 +377,10 @@ Bu e-poçt avtomatik olaraq göndərilmişdir.
                 <div class="content">
                     <p style="font-size: 16px;">Salam <strong>${userName || userEmail}</strong>,</p>
                     
-                    <p>CVera ailəsinə xoş gəlmisiniz! Hesabınızı aktivləşdirmək üçün email ünvanınızı təsdiqləmək lazımdır.</p>
+                    <p>CVERA ailəsinə xoş gəlmisiniz! Hesabınızı aktivləşdirmək üçün e-poçt ünvanınızı təsdiqləmək lazımdır.</p>
                     
                     <div style="text-align: center; margin: 30px 0;">
-                        <a href="${verificationLink}" class="button">✉️ Email Ünvanımı Təsdiqlə</a>
+                        <a href="${verificationLink}" style="color:white" class="button">✉️ Email Ünvanımı Təsdiqlə</a>
                     </div>
                     
                     <div class="warning">
@@ -389,18 +388,18 @@ Bu e-poçt avtomatik olaraq göndərilmişdir.
                     </div>
                     
                     <div class="features">
-                        <h3 style="color: #1e293b; margin-bottom: 15px;">CVera ilə nələr edə bilərsiniz:</h3>
+                        <h3 style="color: #1e293b; margin-bottom: 15px;">CVERA ilə nələr edə bilərsiniz:</h3>
                         <div class="feature-item">
                             <span class="feature-icon">✨</span>
                             <span>Peşəkar CV-lər yaradın</span>
                         </div>
                         <div class="feature-item">
                             <span class="feature-icon">🔗</span>
-                            <span>LinkedIn profilini avtomatik import edin</span>
+                            <span>LinkedIn profilinizi avtomatik idxal edin</span>
                         </div>
                         <div class="feature-item">
                             <span class="feature-icon">📱</span>
-                            <span>Müxtəlif template-lərdən seçim edin</span>
+                            <span>Müxtəlif şablonlardan seçim edin</span>
                         </div>
                         <div class="feature-item">
                             <span class="feature-icon">📄</span>
@@ -408,11 +407,11 @@ Bu e-poçt avtomatik olaraq göndərilmişdir.
                         </div>
                         <div class="feature-item">
                             <span class="feature-icon">🤖</span>
-                            <span>AI ilə professional xülasə yaradın</span>
+                            <span>Süni intellekt ilə professional xülasə yaradın</span>
                         </div>
                     </div>
                     
-                    <p>Email ünvanınızı təsdiqlədikdən sonra dərhal hesabınıza daxil olub peşəkar CV yaratmağa başlaya bilərsiniz!</p>
+                    <p>E-poçt ünvanınızı təsdiqlədikdən sonra dərhal hesabınıza daxil olub peşəkar CV yaratmağa başlaya bilərsiniz!</p>
                     
                     <p style="font-size: 14px; color: #64748b;">
                         Əgər yuxarıdakı düymə işləmirsə, bu linki kopyalayıb brauzerinizə yapışdırın:<br>
@@ -421,8 +420,8 @@ Bu e-poçt avtomatik olaraq göndərilmişdir.
                 </div>
                 
                 <div class="footer">
-                    <p><strong>CVera</strong> - Peşəkar karyeranızın başlanğıcı</p>
-                    <p>© 2025 CVera. Bütün hüquqlar qorunur.</p>
+                    <p><strong>CVERA</strong> - Peşəkar karyeranızın başlanğıcı</p>
+                    <p>© 2025 CVERA. Bütün hüquqlar qorunur.</p>
                     <p style="font-size: 12px; margin-top: 15px;">
                         Bu email avtomatik olaraq göndərilmişdir. Bu emailə cavab verməyin.
                     </p>
@@ -433,33 +432,33 @@ Bu e-poçt avtomatik olaraq göndərilmişdir.
       `;
 
       const textVersion = `
-CVera - Email Təsdiqi
+CVERA - E-poçt Təsdiqi
 
 Salam ${userName || userEmail},
 
-CVera ailəsinə xoş gəlmisiniz!
+CVERA ailəsinə xoş gəlmisiniz!
 
-Hesabınızı aktivləşdirmək üçün bu linkə basın: ${verificationLink}
+Hesabınızı aktivləşdirmək üçün bu linkə klik edin: ${verificationLink}
 
 DIQQƏT: Bu link 24 saat ərzində etibarlıdır.
 
-CVera ilə:
+CVERA ilə:
 - Peşəkar CV-lər yaradın
-- LinkedIn profilini import edin  
-- Müxtəlif template-lərdən istifadə edin
+- LinkedIn profilini idxal edin  
+- Müxtəlif şablonlardan istifadə edin
 - PDF və DOCX formatında yükləyin
 
-© 2025 CVera
-Bu email avtomatik olaraq göndərilmişdir.
+© 2025 CVERA
+Bu e-poçt avtomatik olaraq göndərilmişdir.
       `;
 
       const mailOptions = {
         from: {
-          name: 'CVera Support',
+          name: 'CVERA Support',
           address: 'noreply@cvera.net'
         },
         to: userEmail,
-        subject: '🎉 CVera-ya Xoş Gəlmisiniz - Email Təsdiqi',
+        subject: '🎉 CVERA-ya Xoş Gəlmisiniz - E-poçt Təsdiqi',
         html: emailHTML,
         text: textVersion,
         headers: {
@@ -498,7 +497,7 @@ Bu email avtomatik olaraq göndərilmişdir.
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Hesab Aktivləşdirildi - CVera</title>
+            <title>Hesab Aktivləşdirildi - CVERA</title>
             <style>
                 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc; }
                 .container { background: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; }
@@ -512,24 +511,24 @@ Bu email avtomatik olaraq göndərilmişdir.
         <body>
             <div class="container">
                 <div class="header">
-                    <div class="logo">CVera</div>
+                    <div class="logo">CVERA</div>
                     <div class="success-icon">🎊</div>
                     <h1 style="color: #10b981;">Hesabınız Uğurla Aktivləşdirildi!</h1>
                 </div>
                 
                 <p>Salam <strong>${userName || userEmail}</strong>,</p>
                 
-                <p>Təbriklər! Email ünvanınız uğurla təsdiqləndi və hesabınız aktiv edildi. İndi CVera-nın bütün xüsusiyyətlərindən istifadə edə bilərsiniz.</p>
+                <p>Təbriklər! E-poçt ünvanınız uğurla təsdiqləndi və hesabınız aktiv edildi. İndi CVERA-nın bütün xüsusiyyətlərindən istifadə edə bilərsiniz.</p>
                 
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://cvera.net'}/auth/login" class="cta-button">🚀 İlk CV-mi Yaratmağa Başla</a>
+                    <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://cvera.net'}/auth/login" class="cta-button" style="color:white">🚀 İlk CV-nizi Yaratmağa Başlayın</a>
                 </div>
                 
                 <p>Hər hansı sualınız varsa, bizə müraciət etməkdən çəkinməyin.</p>
                 
                 <div class="footer">
-                    <p><strong>CVera</strong> - Peşəkar karyeranızın başlanğıcı</p>
-                    <p>© 2025 CVera. Bütün hüquqlar qorunur.</p>
+                    <p><strong>CVERA</strong> - Peşəkar karyeranızın başlanğıcı</p>
+                    <p>© 2025 CVERA. Bütün hüquqlar qorunur.</p>
                 </div>
             </div>
         </body>
@@ -538,11 +537,11 @@ Bu email avtomatik olaraq göndərilmişdir.
 
       const mailOptions = {
         from: {
-          name: 'CVera Support',
+          name: 'CVERA Support',
           address: 'noreply@cvera.net'
         },
         to: userEmail,
-        subject: '🎊 Hesabınız Aktivləşdirildi - CVera',
+        subject: '🎊 Hesabınız Aktivləşdirildi - CVERA',
         html: emailHTML
       };
 

@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     // Check if email is verified
     if (!user.emailVerified || user.status === "pending_verification") {
       return NextResponse.json({
-        message: "E-poçt ünvanınız təsdiqlənməyib. E-poçt qutunuzu yoxlayın və təsdiqləmə linkine basın.",
+        message: "E-poçt ünvanınız təsdiqlənməyib. E-poçt qutunuzu yoxlayın və təsdiqləmə linkinə klik edin.",
         requiresVerification: true,
         email: user.email
       }, { status: 403 });
