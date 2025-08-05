@@ -1,224 +1,134 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
-import axios from 'axios';
 
-const prisma = new PrismaClient();
-
-// Admin authentication middleware
-async function authenticateAdmin(request: NextRequest) {
-  try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return null;
-    }
-
-    const token = authHeader.substring(7);
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
-
-    const admin = await prisma.admin.findUnique({
-      where: { id: decoded.adminId },
-      select: { id: true, email: true, role: true, active: true }
-    });
-
-    if (!admin || !admin.active) {
-      return null;
-    }
-
-    return admin;
-  } catch (error) {
-    return null;
-  }
-}
-
-// Test API key functionality
+// Test API key with your code sample
 export async function POST(request: NextRequest) {
-  try {
-    const admin = await authenticateAdmin(request);
-    if (!admin) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const body = await request.json();
-    const { apiKeyId } = body;
-
-    if (!apiKeyId) {
-      return NextResponse.json(
-        { error: 'API key ID tələb olunur' },
-        { status: 400 }
-      );
-    }
-
-    // Get API key from database
-    const apiKeyRecord = await prisma.apiKey.findUnique({
-      where: { id: apiKeyId }
-    });
-
-    if (!apiKeyRecord) {
-      return NextResponse.json(
-        { error: 'API key tapılmadı' },
-        { status: 404 }
-      );
-    }
-
-    let testResult;
-
     try {
-      switch (apiKeyRecord.service) {
-        case 'scrapingdog':
-          testResult = await testScrapingDogAPI(apiKeyRecord.apiKey);
-          break;
-        case 'rapidapi':
-          testResult = await testRapidAPI(apiKeyRecord.apiKey);
-          break;
-        case 'openai':
-          testResult = await testOpenAI(apiKeyRecord.apiKey);
-          break;
-        default:
-          throw new Error('Dəstəklənməyən service');
-      }
-
-      // Update API key record with test result
-      await prisma.apiKey.update({
-        where: { id: apiKeyId },
-        data: {
-          lastUsed: new Date(),
-          lastResult: testResult.success ? 'SUCCESS' : 'FAILED',
-          usageCount: { increment: 1 }
+        // Verify admin authentication
+        const authHeader = request.headers.get('authorization');
+        if (!authHeader?.startsWith('Bearer ')) {
+            return NextResponse.json({error: 'Unauthorized'}, {status: 401});
         }
-      });
 
-      return NextResponse.json({
-        success: testResult.success,
-        data: testResult,
-        message: testResult.success ? 'API key işləyir' : 'API key işləmir'
-      });
+        const token = authHeader.substring(7);
+        const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key';
+        const JWT_ADMIN_SECRET = process.env.JWT_ADMIN_SECRET || process.env.JWT_SECRET || 'fallback_secret_key';
+
+        let decoded;
+        try {
+            decoded = jwt.verify(token, JWT_ADMIN_SECRET) as any;
+        } catch {
+            decoded = jwt.verify(token, JWT_SECRET) as any;
+        }
+
+        if (!(decoded.role === 'admin' || decoded.role === 'ADMIN' || decoded.role === 'SUPER_ADMIN' || decoded.isAdmin || decoded.adminId)) {
+            return NextResponse.json({error: 'Admin icazəniz yoxdur'}, {status: 403});
+        }
+
+        const {apiKey, service} = await request.json();
+
+        if (!apiKey || !service) {
+            return NextResponse.json({
+                success: false,
+                error: 'API key və service tələb olunur'
+            }, {status: 400});
+        }
+
+        // Test ScrapingDog API with your exact code
+        if (service === 'scrapingdog') {
+            const axios = require('axios');
+
+            const url = 'https://api.scrapingdog.com/linkedin';
+            const params = {
+                api_key: apiKey,
+                type: 'profile',
+                linkId: 'musayevcreate',
+                premium: 'false',
+            };
+
+            try {
+                // First check account status
+                const accountResponse = await axios.get('https://api.scrapingdog.com/account', {
+                    params: {api_key: apiKey},
+                    timeout: 10000
+                });
+
+                const accountData = accountResponse.data;
+                const remaining = accountData.requestLimit - accountData.requestUsed;
+
+                if (remaining <= 0) {
+                    return NextResponse.json({
+                        success: false,
+                        error: 'API limit tükənib',
+                        details: {
+                            used: accountData.requestUsed,
+                            limit: accountData.requestLimit,
+                            remaining: remaining,
+                            pack: accountData.pack
+                        }
+                    });
+                }
+
+                // Test LinkedIn API call
+                const response = await axios.get(url, {
+                    params: params,
+                    timeout: 15000
+                });
+
+                if (response.status === 200) {
+                    return NextResponse.json({
+                        success: true,
+                        message: 'API key işləyir!',
+                        details: {
+                            status: response.status,
+                            remaining: remaining,
+                            pack: accountData.pack,
+                            profileDataReceived: !!response.data,
+                            dataKeys: Object.keys(response.data || {})
+                        }
+                    });
+                } else {
+                    return NextResponse.json({
+                        success: false,
+                        error: `API request failed: ${response.status}`,
+                        details: {status: response.status}
+                    });
+                }
+
+            } catch (error: any) {
+                if (error.message?.includes('Unexpected token')) {
+                    return NextResponse.json({
+                        success: false,
+                        error: 'JSON parse xətası - API HTML qaytarır',
+                        details: {
+                            issue: 'API key səhvdir və ya limit tükənib',
+                            solution: 'Yeni API key alın'
+                        }
+                    });
+                }
+
+                return NextResponse.json({
+                    success: false,
+                    error: error.message || 'Test uğursuz',
+                    details: {
+                        code: error.code,
+                        status: error.response?.status
+                    }
+                });
+            }
+        }
+
+        // Test other services (placeholder)
+        return NextResponse.json({
+            success: false,
+            error: `${service} service test hələ dəstəklənmir`
+        });
 
     } catch (error) {
-      // Update with failed result
-      await prisma.apiKey.update({
-        where: { id: apiKeyId },
-        data: {
-          lastUsed: new Date(),
-          lastResult: 'FAILED'
-        }
-      });
-
-      return NextResponse.json({
-        success: false,
-        error: error instanceof Error ? error.message : 'Test uğursuz',
-        message: 'API key test edilə bilmədi'
-      });
+        console.error('API test error:', error);
+        return NextResponse.json({
+            success: false,
+            error: 'Server xətası'
+        }, {status: 500});
     }
-
-  } catch (error) {
-    console.error('API Key Test error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  } finally {
-    await prisma.$disconnect();
-  }
-}
-
-// Test ScrapingDog API
-async function testScrapingDogAPI(apiKey: string) {
-  try {
-    const response = await axios.get('https://api.scrapingdog.com/linkedin', {
-      params: {
-        api_key: apiKey,
-        type: 'profile',
-        linkId: 'musayevcreate',
-        premium: 'false'
-      },
-      timeout: 10000
-    });
-
-    return {
-      success: response.status === 200,
-      status: response.status,
-      data: response.data ? 'Data alındı' : 'Data boş',
-      message: 'ScrapingDog API test edildi'
-    };
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      return {
-        success: false,
-        status: error.response?.status || 0,
-        error: error.response?.data?.message || error.message,
-        message: 'ScrapingDog API xətası'
-      };
-    }
-    throw error;
-  }
-}
-
-// Test RapidAPI
-async function testRapidAPI(apiKey: string) {
-  try {
-    // Example RapidAPI endpoint test
-    const response = await axios.get('https://fresh-linkedin-profile-data.p.rapidapi.com/get-linkedin-profile', {
-      params: {
-        linkedin_url: 'https://www.linkedin.com/in/musayevcreate',
-        include_skills: 'false'
-      },
-      headers: {
-        'X-RapidAPI-Key': apiKey,
-        'X-RapidAPI-Host': 'fresh-linkedin-profile-data.p.rapidapi.com'
-      },
-      timeout: 10000
-    });
-
-    return {
-      success: response.status === 200,
-      status: response.status,
-      data: response.data ? 'Data alındı' : 'Data boş',
-      message: 'RapidAPI test edildi'
-    };
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      return {
-        success: false,
-        status: error.response?.status || 0,
-        error: error.response?.data?.message || error.message,
-        message: 'RapidAPI xətası'
-      };
-    }
-    throw error;
-  }
-}
-
-// Test OpenAI API
-async function testOpenAI(apiKey: string) {
-  try {
-    const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: 'Test' }],
-      max_tokens: 5
-    }, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      timeout: 10000
-    });
-
-    return {
-      success: response.status === 200,
-      status: response.status,
-      data: response.data ? 'Data alındı' : 'Data boş',
-      message: 'OpenAI API test edildi'
-    };
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      return {
-        success: false,
-        status: error.response?.status || 0,
-        error: error.response?.data?.error?.message || error.message,
-        message: 'OpenAI API xətası'
-      };
-    }
-    throw error;
-  }
 }

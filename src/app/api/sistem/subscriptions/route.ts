@@ -5,29 +5,39 @@ import jwt from 'jsonwebtoken';
 const prisma = new PrismaClient();
 
 async function verifyAdmin(request: NextRequest) {
-  // In development, allow bypassing auth for testing
-  if (process.env.NODE_ENV === 'development' && !request.headers.get('authorization')) {
-    console.log('Development mode: bypassing admin auth for testing');
-    return { id: 'test-admin', email: 'admin@test.com', role: 'ADMIN' };
-  }
+  try {
+    const authHeader = request.headers.get('authorization');
 
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new Error('Token tapılmadı');
-  }
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new Error('Token tapılmadı');
+    }
 
-  const token = authHeader.substring(7);
-  const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
-  
-  const user = await prisma.user.findUnique({
-    where: { id: decoded.userId }
-  });
+    const token = authHeader.substring(7);
+    const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key';
+    const JWT_ADMIN_SECRET = process.env.JWT_ADMIN_SECRET || process.env.JWT_SECRET || 'fallback_secret_key';
 
-  if (!user || (user.role !== 'ADMIN' && user.role !== 'superadmin')) {
+    let decoded;
+    try {
+      // Try admin secret first, then regular secret
+      decoded = jwt.verify(token, JWT_ADMIN_SECRET) as any;
+    } catch {
+      decoded = jwt.verify(token, JWT_SECRET) as any;
+    }
+
+    // Check if user is admin
+    if (decoded.role === 'admin' ||
+        decoded.role === 'ADMIN' ||
+        decoded.role === 'SUPER_ADMIN' ||
+        decoded.isAdmin ||
+        decoded.adminId) {
+      return decoded;
+    }
+
     throw new Error('Admin icazəniz yoxdur');
+  } catch (error) {
+    console.error('Admin verification failed:', error);
+    throw error;
   }
-
-  return user;
 }
 
 export async function GET(request: NextRequest) {
@@ -84,6 +94,14 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Admin subscriptions error:', error);
+
+    if (error instanceof Error && error.message.includes('Token')) {
+      return NextResponse.json({
+        success: false,
+        message: error.message
+      }, { status: 401 });
+    }
+
     return NextResponse.json({
       success: false,
       message: error instanceof Error ? error.message : 'Server xətası'

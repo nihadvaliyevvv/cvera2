@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { apiClient } from '@/lib/api';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -13,26 +12,52 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   const checkAdminStatus = useCallback(async () => {
+    // If we're on the login page, skip verification
+    if (pathname === '/sistem/login') {
+      setLoading(false);
+      setIsAdmin(true); // Allow access to login page
+      return;
+    }
+
     try {
+      const adminToken = localStorage.getItem('adminToken');
+
+      if (!adminToken) {
+        setIsAdmin(false);
+        router.push('/sistem/login');
+        return;
+      }
+
       const response = await fetch('/api/admin/verify', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Authorization': `Bearer ${adminToken}`,
           'Content-Type': 'application/json'
         }
       });
+
       const data = await response.json();
-      setIsAdmin(data.success);
+
+      if (data.success) {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+        // Clear invalid token
+        localStorage.removeItem('adminToken');
+        router.push('/sistem/login');
+      }
     } catch (error) {
       console.error('Admin verification failed:', error);
       setIsAdmin(false);
-      router.push('/dashboard');
+      localStorage.removeItem('adminToken');
+      router.push('/sistem/login');
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, pathname]);
 
   useEffect(() => {
     checkAdminStatus();
@@ -46,12 +71,20 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     );
   }
 
+  // If on login page, render it without admin check
+  if (pathname === '/sistem/login') {
+    return <>{children}</>;
+  }
+
   if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Giriş rədd edildi</h1>
           <p className="text-gray-600 mb-4">Bu səhifəyə giriş üçün admin icazəniz yoxdur</p>
+          <Link href="/sistem/login" className="text-blue-600 hover:underline mr-4">
+            Admin girişi
+          </Link>
           <Link href="/dashboard" className="text-blue-600 hover:underline">
             Dashboard-a qayıt
           </Link>
@@ -71,42 +104,45 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </div>
             <nav className="flex space-x-6">
               <Link 
-                href="/admin" 
+                href="/sistem"
                 className="hover:text-red-200 transition-colors"
               >
                 Ana səhifə
               </Link>
               <Link 
-                href="/admin/users" 
+                href="/sistem/users"
                 className="hover:text-red-200 transition-colors"
               >
                 İstifadəçilər
               </Link>
               <Link 
-                href="/admin/subscriptions" 
+                href="/sistem/subscriptions"
                 className="hover:text-red-200 transition-colors"
               >
                 Abunəliklər
               </Link>
               <Link 
-                href="/admin/analytics" 
+                href="/sistem/analytics"
                 className="hover:text-red-200 transition-colors"
               >
                 Analitika
               </Link>
-              <Link 
-                href="/dashboard" 
+              <button
+                onClick={() => {
+                  localStorage.removeItem('adminToken');
+                  router.push('/sistem/login');
+                }}
                 className="bg-red-700 hover:bg-red-800 px-3 py-1 rounded transition-colors"
               >
-                Dashboard
-              </Link>
+                Çıxış
+              </button>
             </nav>
           </div>
         </div>
       </header>
 
-      {/* Admin Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {children}
       </main>
     </div>

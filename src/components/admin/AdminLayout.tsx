@@ -23,30 +23,42 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   useEffect(() => {
     const verifyAdmin = async () => {
       try {
-        const token = localStorage.getItem('adminToken'); // Düzgün token key
+        const token = localStorage.getItem('adminToken');
         if (!token) {
-          router.push('/sistem/login'); // Düzgün login path
+          router.push('/sistem/login');
           return;
         }
 
-        const response = await fetch('/api/system/auth/verify', {
+        // Düzgün API endpoint istifadə edirik
+        const response = await fetch('/api/admin/verify', {
           headers: {
             'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           },
         });
 
         if (!response.ok) {
           localStorage.removeItem('adminToken');
-          router.push('/sistem/login'); // Düzgün login path
+          router.push('/sistem/login');
           return;
         }
 
         const data = await response.json();
-        setAdmin(data.admin);
+        if (data.success) {
+          setAdmin(data.user || {
+            id: 'admin',
+            name: 'Administrator',
+            email: 'admin@cvera.com',
+            role: 'SUPER_ADMIN'
+          });
+        } else {
+          localStorage.removeItem('adminToken');
+          router.push('/sistem/login');
+        }
       } catch (error) {
         console.error('Admin verification error:', error);
         localStorage.removeItem('adminToken');
-        router.push('/sistem/login'); // Düzgün login path
+        router.push('/sistem/login');
       } finally {
         setLoading(false);
       }
@@ -64,7 +76,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       console.error('Logout error:', error);
     } finally {
       localStorage.removeItem('adminToken');
-      router.push('/sistem/login'); // Düzgün login path
+      router.push('/sistem/login');
     }
   };
 
@@ -96,7 +108,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   href="/sistem"
                   className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  İdarə Paneli
+                  Dashboard
                 </Link>
                 <Link
                   href="/sistem/users"
@@ -105,20 +117,33 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   İstifadəçilər
                 </Link>
                 <Link
-                  href="/sistem/api-keys"
+                  href="/sistem/subscriptions"
                   className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  API Açarları
+                  Abunəliklər
+                </Link>
+                <Link
+                  href="/sistem/api-keys"
+                  className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium bg-blue-50 text-blue-700"
+                >
+                  API Keys
+                </Link>
+                <Link
+                  href="/sistem/analytics"
+                  className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Analitika
                 </Link>
               </div>
             </div>
+
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">
-                Xoş gəlmisiniz, {admin.name}
+              <span className="text-sm text-gray-700">
+                {admin.name} ({admin.role})
               </span>
               <button
                 onClick={handleLogout}
-                className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
               >
                 Çıxış
               </button>
@@ -127,7 +152,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </nav>
 
-      {/* Main content */}
+      {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {children}
       </main>

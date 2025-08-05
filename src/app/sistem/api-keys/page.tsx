@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import AdminLayout from '@/components/admin/AdminLayout';
 
 interface ApiKey {
   id: string;
@@ -50,6 +49,12 @@ export default function ApiKeysPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
+
+      if (!token) {
+        setError('Admin girişi tələb olunur');
+        return;
+      }
+
       const url = selectedService === 'all'
         ? '/api/sistem/api-keys'
         : `/api/sistem/api-keys?service=${selectedService}`;
@@ -63,11 +68,14 @@ export default function ApiKeysPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setApiKeys(data.data);
+        setApiKeys(data.data || []);
+        setError('');
       } else {
-        setError('API key-ləri yükləmək mümkün olmadı');
+        const errorData = await response.json();
+        setError(errorData.error || 'API key-ləri yükləmək mümkün olmadı');
       }
     } catch (err) {
+      console.error('Fetch error:', err);
       setError('Xəta baş verdi');
     } finally {
       setLoading(false);
@@ -95,7 +103,7 @@ export default function ApiKeysPage() {
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         await fetchApiKeys();
         setShowAddForm(false);
         setNewApiKey({
@@ -109,11 +117,44 @@ export default function ApiKeysPage() {
         setError(data.error || 'API key əlavə edilə bilmədi');
       }
     } catch (err) {
+      console.error('Add API key error:', err);
       setError('Xəta baş verdi');
     }
   };
 
-  const toggleApiKeyStatus = async (keyId: string, currentStatus: boolean) => {
+  const testApiKey = async (id: string, service: string, apiKey: string) => {
+    setTestingKey(id);
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch('/api/sistem/api-keys/test', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          apiKey: apiKey,
+          service: service
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`✅ API key işləyir!\n${result.message}\nQalan request: ${result.details?.remaining || 'N/A'}`);
+      } else {
+        alert(`❌ API key test uğursuz:\n${result.error}`);
+      }
+    } catch (err) {
+      console.error('Test error:', err);
+      alert('❌ Test zamanı xəta baş verdi');
+    } finally {
+      setTestingKey(null);
+    }
+  };
+
+  const toggleApiKeyStatus = async (id: string, currentStatus: boolean) => {
     try {
       const token = localStorage.getItem('adminToken');
       const response = await fetch('/api/sistem/api-keys', {
@@ -123,7 +164,7 @@ export default function ApiKeysPage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          id: keyId,
+          id: id,
           active: !currentStatus
         })
       });
@@ -134,142 +175,76 @@ export default function ApiKeysPage() {
         setError('Status dəyişdirilə bilmədi');
       }
     } catch (err) {
+      console.error('Toggle status error:', err);
       setError('Xəta baş verdi');
     }
-  };
-
-  const testApiKey = async (keyId: string) => {
-    try {
-      setTestingKey(keyId);
-      const token = localStorage.getItem('adminToken');
-
-      const response = await fetch('/api/sistem/api-keys/test', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ apiKeyId: keyId })
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        alert('API key işləyir!');
-      } else {
-        alert(`API key test uğursuz: ${data.error || 'Naməlum xəta'}`);
-      }
-
-      await fetchApiKeys(); // Refresh to show updated lastUsed/lastResult
-    } catch (err) {
-      alert('Test zamanı xəta baş verdi');
-    } finally {
-      setTestingKey(null);
-    }
-  };
-
-  const deleteApiKey = async (keyId: string) => {
-    if (!confirm('Bu API key-i silmək istədiyinizə əminsiniz?')) {
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem('adminToken');
-      const response = await fetch(`/api/sistem/api-keys?id=${keyId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        }
-      });
-
-      if (response.ok) {
-        await fetchApiKeys();
-      } else {
-        setError('API key silinə bilmədi');
-      }
-    } catch (err) {
-      setError('Xəta baş verdi');
-    }
-  };
-
-  const getStatusBadge = (active: boolean) => {
-    return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-        active 
-          ? 'bg-green-100 text-green-800' 
-          : 'bg-red-100 text-red-800'
-      }`}>
-        {active ? 'Aktiv' : 'Deaktiv'}
-      </span>
-    );
-  };
-
-  const getResultBadge = (result: string | null) => {
-    if (!result) return <span className="text-gray-400">-</span>;
-
-    return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-        result === 'SUCCESS' 
-          ? 'bg-green-100 text-green-800' 
-          : 'bg-red-100 text-red-800'
-      }`}>
-        {result === 'SUCCESS' ? 'Uğurlu' : 'Uğursuz'}
-      </span>
-    );
   };
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">API Key İdarəçiliyi</h1>
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Yeni API Key
-          </button>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-white shadow">
+        <div className="px-4 py-5 sm:px-6">
+          <h1 className="text-3xl font-bold leading-tight text-gray-900">API Key İdarəetməsi</h1>
+          <p className="mt-1 max-w-2xl text-sm text-gray-500">
+            Xarici API xidmətləri üçün açarları idarə edin və test edin
+          </p>
         </div>
+      </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-600">{error}</p>
-          </div>
-        )}
+      {/* Controls */}
+      <div className="bg-white shadow rounded-lg">
+        <div className="px-4 py-5 sm:p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
+            <div className="flex space-x-4">
+              <select
+                value={selectedService}
+                onChange={(e) => setSelectedService(e.target.value)}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+              >
+                <option value="all">Bütün xidmətlər</option>
+                {services.map(service => (
+                  <option key={service.value} value={service.value}>
+                    {service.label}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        {/* Service Filter */}
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex items-center space-x-4">
-            <label className="text-sm font-medium text-gray-700">Service:</label>
-            <select
-              value={selectedService}
-              onChange={(e) => setSelectedService(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-1"
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
             >
-              <option value="all">Hamısı</option>
-              {services.map(service => (
-                <option key={service.value} value={service.value}>
-                  {service.label}
-                </option>
-              ))}
-            </select>
+              + Yeni API Key Əlavə Et
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Add API Key Form */}
-        {showAddForm && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Yeni API Key Əlavə Et</h2>
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="text-red-600 text-sm">{error}</div>
+        </div>
+      )}
+
+      {/* Add API Key Form */}
+      {showAddForm && (
+        <div className="bg-white shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+              Yeni API Key Əlavə Et
+            </h3>
             <form onSubmit={handleAddApiKey} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Service
+                  <label className="block text-sm font-medium text-gray-700">
+                    Xidmət
                   </label>
                   <select
                     value={newApiKey.service}
-                    onChange={(e) => setNewApiKey({...newApiKey, service: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    onChange={(e) => setNewApiKey({ ...newApiKey, service: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                   >
                     {services.map(service => (
                       <option key={service.value} value={service.value}>
@@ -278,169 +253,167 @@ export default function ApiKeysPage() {
                     ))}
                   </select>
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Prioritet
+                  <label className="block text-sm font-medium text-gray-700">
+                    Priority
                   </label>
                   <input
                     type="number"
                     min="1"
                     max="10"
                     value={newApiKey.priority}
-                    onChange={(e) => setNewApiKey({...newApiKey, priority: parseInt(e.target.value)})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    onChange={(e) => setNewApiKey({ ...newApiKey, priority: parseInt(e.target.value) })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                   />
                 </div>
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700">
                   API Key
                 </label>
                 <input
                   type="text"
                   value={newApiKey.apiKey}
-                  onChange={(e) => setNewApiKey({...newApiKey, apiKey: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  placeholder="API key daxil edin..."
+                  onChange={(e) => setNewApiKey({ ...newApiKey, apiKey: e.target.value })}
+                  placeholder="API key-inizi daxil edin"
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  required
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700">
                   Günlük Limit
                 </label>
                 <input
                   type="number"
                   min="1"
                   value={newApiKey.dailyLimit}
-                  onChange={(e) => setNewApiKey({...newApiKey, dailyLimit: parseInt(e.target.value)})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  onChange={(e) => setNewApiKey({ ...newApiKey, dailyLimit: parseInt(e.target.value) })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                 />
               </div>
-              <div className="flex space-x-3">
-                <button
-                  type="submit"
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Əlavə Et
-                </button>
+
+              <div className="flex justify-end space-x-3">
                 <button
                   type="button"
                   onClick={() => setShowAddForm(false)}
-                  className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md text-sm"
                 >
-                  Ləğv Et
+                  Ləğv et
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  Əlavə et
                 </button>
               </div>
             </form>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* API Keys Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Service
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    API Key
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Prioritet
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    İstifadə
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Son Test
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Əməliyyatlar
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {loading ? (
+      {/* API Keys List */}
+      <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div className="px-4 py-5 sm:p-6">
+          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+            API Keys ({apiKeys.length})
+          </h3>
+
+          {loading ? (
+            <div className="flex justify-center py-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+          ) : apiKeys.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">
+              Hələ API key əlavə edilməyib
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
-                    <td colSpan={7} className="px-6 py-4 text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                    </td>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Xidmət
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      API Key
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Priority
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      İstifadə
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Əməliyyatlar
+                    </th>
                   </tr>
-                ) : apiKeys.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
-                      API key tapılmadı
-                    </td>
-                  </tr>
-                ) : (
-                  apiKeys.map((key) => (
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {apiKeys.map((key) => (
                     <tr key={key.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-medium text-gray-900 capitalize">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {key.service}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <code className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                          {key.apiKey}
-                        </code>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+                        {key.apiKey ? `${key.apiKey.substring(0, 8)}***${key.apiKey.slice(-4)}` : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(key.active)}
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          key.active 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {key.active ? 'Aktiv' : 'Deaktiv'}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {key.priority}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {key.dailyUsage}/{key.dailyLimit}
-                        <div className="text-xs text-gray-500">
-                          Ümumi: {key.usageCount}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getResultBadge(key.lastResult)}
-                        {key.lastUsed && (
-                          <div className="text-xs text-gray-500">
-                            {new Date(key.lastUsed).toLocaleDateString('az-AZ')}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div>
+                          <div>{key.usageCount || 0} total</div>
+                          <div className="text-xs text-gray-400">
+                            {key.dailyUsage || 0}/{key.dailyLimit} günlük
                           </div>
-                        )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                         <button
-                          onClick={() => testApiKey(key.id)}
+                          onClick={() => testApiKey(key.id, key.service, key.apiKey)}
                           disabled={testingKey === key.id}
                           className="text-blue-600 hover:text-blue-900 disabled:opacity-50"
                         >
-                          {testingKey === key.id ? 'Test...' : 'Test'}
+                          {testingKey === key.id ? 'Test edilir...' : 'Test et'}
                         </button>
                         <button
                           onClick={() => toggleApiKeyStatus(key.id, key.active)}
                           className={`${
-                            key.active ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'
+                            key.active 
+                              ? 'text-red-600 hover:text-red-900' 
+                              : 'text-green-600 hover:text-green-900'
                           }`}
                         >
                           {key.active ? 'Deaktiv et' : 'Aktiv et'}
                         </button>
-                        <button
-                          onClick={() => deleteApiKey(key.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Sil
-                        </button>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
-    </AdminLayout>
+    </div>
   );
 }
