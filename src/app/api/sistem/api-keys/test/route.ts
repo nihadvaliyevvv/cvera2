@@ -1,134 +1,174 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
-// Test API key with your code sample
+// Test API key with user's exact code sample
 export async function POST(request: NextRequest) {
+  try {
+    // Verify admin authentication
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const token = authHeader.substring(7);
+    const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key';
+    const JWT_ADMIN_SECRET = process.env.JWT_ADMIN_SECRET || process.env.JWT_SECRET || 'fallback_secret_key';
+
+    let decoded;
     try {
-        // Verify admin authentication
-        const authHeader = request.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({error: 'Unauthorized'}, {status: 401});
-        }
+      decoded = jwt.verify(token, JWT_ADMIN_SECRET) as any;
+    } catch {
+      decoded = jwt.verify(token, JWT_SECRET) as any;
+    }
 
-        const token = authHeader.substring(7);
-        const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key';
-        const JWT_ADMIN_SECRET = process.env.JWT_ADMIN_SECRET || process.env.JWT_SECRET || 'fallback_secret_key';
+    if (!(decoded.role === 'admin' || decoded.role === 'ADMIN' || decoded.role === 'SUPER_ADMIN' || decoded.isAdmin || decoded.adminId)) {
+      return NextResponse.json({ error: 'Admin icazəniz yoxdur' }, { status: 403 });
+    }
 
-        let decoded;
-        try {
-            decoded = jwt.verify(token, JWT_ADMIN_SECRET) as any;
-        } catch {
-            decoded = jwt.verify(token, JWT_SECRET) as any;
-        }
+    const { apiKey, service } = await request.json();
 
-        if (!(decoded.role === 'admin' || decoded.role === 'ADMIN' || decoded.role === 'SUPER_ADMIN' || decoded.isAdmin || decoded.adminId)) {
-            return NextResponse.json({error: 'Admin icazəniz yoxdur'}, {status: 403});
-        }
+    if (!apiKey || !service) {
+      return NextResponse.json({
+        success: false,
+        error: 'API key və service tələb olunur'
+      }, { status: 400 });
+    }
 
-        const {apiKey, service} = await request.json();
+    // Test ScrapingDog API with user's exact code style
+    if (service === 'scrapingdog') {
+      const axios = require('axios');
 
-        if (!apiKey || !service) {
-            return NextResponse.json({
-                success: false,
-                error: 'API key və service tələb olunur'
-            }, {status: 400});
-        }
+      const api_key = apiKey; // User's API key
+      const url = 'https://api.scrapingdog.com/linkedin';
 
-        // Test ScrapingDog API with your exact code
-        if (service === 'scrapingdog') {
-            const axios = require('axios');
+      const params = {
+        api_key: api_key,
+        type: 'profile',
+        linkId: 'musayevcreate',
+        premium: 'false',
+      };
 
-            const url = 'https://api.scrapingdog.com/linkedin';
-            const params = {
-                api_key: apiKey,
-                type: 'profile',
-                linkId: 'musayevcreate',
-                premium: 'false',
-            };
+      try {
+        // First check account status like user's code structure
+        console.log('🔄 Testing API key with user code style...');
 
-            try {
-                // First check account status
-                const accountResponse = await axios.get('https://api.scrapingdog.com/account', {
-                    params: {api_key: apiKey},
-                    timeout: 10000
-                });
-
-                const accountData = accountResponse.data;
-                const remaining = accountData.requestLimit - accountData.requestUsed;
-
-                if (remaining <= 0) {
-                    return NextResponse.json({
-                        success: false,
-                        error: 'API limit tükənib',
-                        details: {
-                            used: accountData.requestUsed,
-                            limit: accountData.requestLimit,
-                            remaining: remaining,
-                            pack: accountData.pack
-                        }
-                    });
-                }
-
-                // Test LinkedIn API call
-                const response = await axios.get(url, {
-                    params: params,
-                    timeout: 15000
-                });
-
-                if (response.status === 200) {
-                    return NextResponse.json({
-                        success: true,
-                        message: 'API key işləyir!',
-                        details: {
-                            status: response.status,
-                            remaining: remaining,
-                            pack: accountData.pack,
-                            profileDataReceived: !!response.data,
-                            dataKeys: Object.keys(response.data || {})
-                        }
-                    });
-                } else {
-                    return NextResponse.json({
-                        success: false,
-                        error: `API request failed: ${response.status}`,
-                        details: {status: response.status}
-                    });
-                }
-
-            } catch (error: any) {
-                if (error.message?.includes('Unexpected token')) {
-                    return NextResponse.json({
-                        success: false,
-                        error: 'JSON parse xətası - API HTML qaytarır',
-                        details: {
-                            issue: 'API key səhvdir və ya limit tükənib',
-                            solution: 'Yeni API key alın'
-                        }
-                    });
-                }
-
-                return NextResponse.json({
-                    success: false,
-                    error: error.message || 'Test uğursuz',
-                    details: {
-                        code: error.code,
-                        status: error.response?.status
-                    }
-                });
-            }
-        }
-
-        // Test other services (placeholder)
-        return NextResponse.json({
-            success: false,
-            error: `${service} service test hələ dəstəklənmir`
+        const accountResponse = await axios.get('https://api.scrapingdog.com/account', {
+          params: { api_key: api_key },
+          timeout: 10000
         });
 
-    } catch (error) {
-        console.error('API test error:', error);
-        return NextResponse.json({
+        const accountData = accountResponse.data;
+        const remaining = accountData.requestLimit - accountData.requestUsed;
+
+        console.log('📊 Account status for key:', api_key.substring(0, 8) + '***');
+        console.log('- Request Limit:', accountData.requestLimit);
+        console.log('- Request Used:', accountData.requestUsed);
+        console.log('- Remaining:', remaining);
+
+        if (remaining <= 0) {
+          return NextResponse.json({
             success: false,
-            error: 'Server xətası'
-        }, {status: 500});
+            error: `API limit tükənib! Used: ${accountData.requestUsed}/${accountData.requestLimit}`,
+            details: {
+              used: accountData.requestUsed,
+              limit: accountData.requestLimit,
+              remaining: remaining,
+              pack: accountData.pack,
+              message: 'Yeni API key almalısınız'
+            }
+          });
+        }
+
+        // Test LinkedIn API call exactly like user's code
+        const response = await axios
+          .get(url, { params: params })
+          .then(function (response) {
+            if (response.status === 200) {
+              const data = response.data;
+              return {
+                success: true,
+                status: response.status,
+                data: data,
+                dataKeys: Object.keys(data || {})
+              };
+            } else {
+              return {
+                success: false,
+                status: response.status,
+                message: 'Request failed with status code: ' + response.status
+              };
+            }
+          })
+          .catch(function (error) {
+            console.error('Error making the request: ' + error.message);
+
+            // Handle JSON parse error specifically
+            if (error.message.includes('Unexpected token')) {
+              return {
+                success: false,
+                error: 'JSON parse xətası',
+                details: {
+                  issue: 'API HTML səhifə qaytarır JSON əvəzinə',
+                  cause: 'API key səhvdir və ya limit tükənib',
+                  solution: 'Yeni API key alın və ya mövcud key-i yoxlayın'
+                }
+              };
+            }
+
+            return {
+              success: false,
+              error: error.message,
+              code: error.code
+            };
+          });
+
+        if (response.success) {
+          return NextResponse.json({
+            success: true,
+            message: '✅ API key düzgün işləyir!',
+            details: {
+              status: response.status,
+              remaining: remaining,
+              pack: accountData.pack,
+              profileDataReceived: !!response.data,
+              dataFields: response.dataKeys,
+              testProfile: 'musayevcreate'
+            }
+          });
+        } else {
+          return NextResponse.json({
+            success: false,
+            error: response.error || response.message,
+            details: response.details || { status: response.status }
+          });
+        }
+
+      } catch (error: any) {
+        console.error('❌ API test failed:', error.message);
+
+        return NextResponse.json({
+          success: false,
+          error: error.message || 'Test uğursuz',
+          details: {
+            code: error.code,
+            status: error.response?.status,
+            note: 'User kod style ilə test edildi'
+          }
+        });
+      }
     }
+
+    // Test other services (placeholder)
+    return NextResponse.json({
+      success: false,
+      error: `${service} service test hələ dəstəklənmir`
+    });
+
+  } catch (error) {
+    console.error('API test error:', error);
+    return NextResponse.json({
+      success: false,
+      error: 'Server xətası'
+    }, { status: 500 });
+  }
 }
