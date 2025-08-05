@@ -25,7 +25,7 @@ export default function ForgotPasswordForm({ onSwitchToLogin }: ForgotPasswordFo
           if (target.validity.valueMissing) {
             target.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
           } else if (target.validity.typeMismatch) {
-            target.setCustomValidity('Zəhmət olmasa düzgün email ünvanı daxil edin');
+            target.setCustomValidity('Zəhmət olmasa düzgün e-poçt ünvanı daxil edin');
           }
         };
         emailInput.oninput = function (e) {
@@ -60,7 +60,7 @@ export default function ForgotPasswordForm({ onSwitchToLogin }: ForgotPasswordFo
         throw new Error(data.message || 'Xəta baş verdi');
       }
 
-      setMessage('Şifrə bərpası linki email ünvanınıza göndərildi.');
+      setMessage('Şifrə bərpası linki e-poçt ünvanınıza göndərildi.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Xəta baş verdi');
     } finally {
@@ -81,7 +81,7 @@ export default function ForgotPasswordForm({ onSwitchToLogin }: ForgotPasswordFo
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          placeholder="example@email.com"
+          placeholder="numune@cvera.net"
         />
       </div>
 

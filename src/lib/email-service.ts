@@ -135,12 +135,12 @@ export class EmailService {
                         • Şübhəli fəaliyyət gördükdə dərhal bizə müraciət edin
                     </div>
                     
-                    <p>CVera komandası olaraq hesabınızın təhlükəsizliyini qorumaq bizim əsas prioritetimizdir.</p>
+                    <p>CVERA komandası olaraq hesabınızın təhlükəsizliyini qorumaq bizim əsas prioritetimizdir.</p>
                 </div>
                 
                 <div class="footer">
                     <p><strong>CVERA</strong> - Peşəkar karyeranızın başlanğıcı</p>
-                    <p>© 2025 CVera. Bütün hüquqlar qorunur.</p>
+                    <p>© 2025 CVERA. Bütün hüquqlar qorunur.</p>
                     <p style="font-size: 12px; margin-top: 15px;">
                         Bu e-poçt avtomatik olaraq göndərilmişdir. Bu emailə cavab verməyin.
                     </p>

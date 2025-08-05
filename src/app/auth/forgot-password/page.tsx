@@ -57,13 +57,13 @@ export default function ForgotPasswordPage() {
 
           <div className="text-center">
             <Link href="/" className="text-2xl font-bold text-blue-600 hover:text-blue-700">
-              CVera
+              CVERA
             </Link>
             <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
               Şifrəni Unutmusunuz?
             </h2>
             <p className="mt-2 text-sm text-gray-600">
-              Email ünvanınızı daxil edin, şifrə yeniləmə linki göndərək
+              E-poçt ünvanınızı daxil edin, şifrə yeniləmə linki göndərək
             </p>
           </div>
 
@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
             <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Email ünvanı
+                  E-poçt ünvanı
                 </label>
                 <input
                   id="email"
@@ -142,10 +142,10 @@ export default function ForgotPasswordPage() {
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-lg font-medium text-gray-900">Email Göndərildi!</h3>
+                <h3 className="text-lg font-medium text-gray-900">E-poçt Göndərildi!</h3>
                 <p className="text-sm text-gray-600">{message}</p>
                 <p className="text-xs text-gray-500">
-                  Email almadınızsa spam qovluğunu yoxlayın
+                  E-poçt almadınızsa spam qovluğunu yoxlayın
                 </p>
               </div>
 
@@ -158,7 +158,7 @@ export default function ForgotPasswordPage() {
                   }}
                   className="w-full text-blue-600 hover:text-blue-700 text-sm font-medium"
                 >
-                  Başqa email ilə yenidən cəhd et
+                  Başqa e-poçt ilə yenidən cəhd et
                 </button>
 
                 <Link
