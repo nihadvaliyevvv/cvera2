@@ -282,8 +282,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isLinkedInUser) {
       console.log('🔗 LinkedIn ilə giriş edən istifadəçi - LinkedIn logout edilir...');
 
-      // LinkedIn logout URL
-      const linkedinLogoutUrl = 'https://www.linkedin.com/logout';
+      // LinkedIn mobile logout URL (istədiyiniz URL)
+      const linkedinLogoutUrl = 'https://linkedin.com/m/logout';
 
       // Show user confirmation before LinkedIn logout
       const confirmLinkedInLogout = confirm(
@@ -301,30 +301,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // 6. IMMEDIATE redirect - no delays
-    console.log('🔄 Login səhifəsinə yönləndiriliyor...');
+    // 6. IMMEDIATE redirect - no delays, no async waits
+    if (typeof window !== 'undefined') {
+      console.log('🔄 Login səhifəsinə yönləndirmə...');
 
-    // Multiple redirect strategies for maximum reliability
-    const timestamp = Date.now();
-    const loginUrl = `/auth/login?logout=true&t=${timestamp}${isLinkedInUser ? '&linkedin=true' : ''}`;
-
-    try {
-      // First try: window.location.replace (most reliable)
-      window.location.replace(loginUrl);
-    } catch (e) {
-      try {
-        // Second try: window.location.href
-        window.location.href = loginUrl;
-      } catch (e2) {
-        try {
-          // Third try: window.location.assign
-          window.location.assign(loginUrl);
-        } catch (e3) {
-          // Last resort: reload the page
-          window.location.reload();
-        }
-      }
+      // Force immediate redirect with replace to prevent back button issues
+      setTimeout(() => {
+        window.location.replace('/auth/login?logout=success');
+      }, 100); // Minimal delay to ensure cleanup completes
     }
+
+    console.log('✅ LOGOUT TAMAMLANDI - İstifadəçi təmizləndi');
   }, [user]);
 
   const canAutoImportLinkedIn = useCallback((): boolean => {
