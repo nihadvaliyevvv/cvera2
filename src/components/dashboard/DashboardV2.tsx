@@ -130,40 +130,23 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
   const handleLogout = async () => {
     try {
       setLogoutLoading(true);
-      logout(); // Remove await - logout function handles everything internally
-      // Remove any additional redirects - logout() already handles redirection
+
+      // Set timeout to 1 second as requested
+      setTimeout(() => {
+        logout();
+      }, 1000);
+
     } catch (error) {
       console.error('Logout error:', error);
       // Fallback redirect only if logout completely fails
       window.location.href = '/auth/login';
     } finally {
-      setLogoutLoading(false);
+      // Clear loading after 1.5 seconds to ensure logout completes
+      setTimeout(() => {
+        setLogoutLoading(false);
+      }, 1500);
     }
   };
-
-  // Logout loading overlay
-  if (logoutLoading) {
-    return (
-      <div className="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
-        <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-200">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 text-center">Çıxış edilir...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-200">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 text-center">Yüklənir...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen">
@@ -174,7 +157,7 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
         {/* Welcome Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            CV Dashboard
+            İdarəetmə Paneli
             <span className="block text-2xl font-normal text-gray-600 mt-2">Peşəkar CV-lərinizi idarə edin</span>
           </h1>
           <div className="w-24 h-1 bg-blue-600 mx-auto rounded-full"></div>

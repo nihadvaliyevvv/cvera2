@@ -1,165 +1,152 @@
-// Performance monitoring utilities
-export class PerformanceMonitor {
-  private static timers: Map<string, number> = new Map();
-  private static metrics: Map<string, number[]> = new Map();
+// Performance measurement utilities
+'use client';
 
-  static startTimer(name: string): void {
-    this.timers.set(name, performance.now());
+interface PerformanceEntry {
+  name: string;
+  startTime: number;
+  duration: number;
+  type: 'navigation' | 'login' | 'api' | 'render';
+}
+
+class PerformanceTracker {
+  private entries: Map<string, { startTime: number; type: string }> = new Map();
+
+  // Start measuring performance
+  startMeasurement(name: string, type: 'navigation' | 'login' | 'api' | 'render' = 'api') {
+    if (typeof window === 'undefined') return;
+
+    const startTime = performance.now();
+    this.entries.set(name, { startTime, type });
+
+    console.log(`🚀 Performance: ${name} başladı`);
   }
 
-  static endTimer(name: string): number {
-    const startTime = this.timers.get(name);
-    if (!startTime) {
-      console.warn(`Timer "${name}" was not started`);
+  // End measuring and return duration
+  endMeasurement(name: string): number {
+    if (typeof window === 'undefined') return 0;
+
+    const entry = this.entries.get(name);
+    if (!entry) {
+      console.warn(`⚠️ Performance: ${name} ölçümü tapılmadı`);
       return 0;
     }
 
-    const duration = performance.now() - startTime;
-    this.timers.delete(name);
+    const endTime = performance.now();
+    const duration = endTime - entry.startTime;
 
-    // Store metric
-    const metrics = this.metrics.get(name) || [];
-    metrics.push(duration);
-    this.metrics.set(name, metrics);
+    console.log(`✅ Performance: ${name} tamamlandı - ${duration.toFixed(2)}ms`);
+
+    // Remove entry after measurement
+    this.entries.delete(name);
 
     return duration;
   }
 
-  static getMetrics(name: string): {
-    count: number;
-    average: number;
-    min: number;
-    max: number;
-    total: number;
-  } {
-    const metrics = this.metrics.get(name) || [];
-    
-    if (metrics.length === 0) {
-      return { count: 0, average: 0, min: 0, max: 0, total: 0 };
-    }
+  // Get network connection speed
+  getConnectionSpeed(): string {
+    if (typeof window === 'undefined') return 'unknown';
 
-    const total = metrics.reduce((sum, val) => sum + val, 0);
-    const average = total / metrics.length;
-    const min = Math.min(...metrics);
-    const max = Math.max(...metrics);
+    try {
+      // Check if navigator.connection is available
+      const connection = (navigator as any).connection ||
+                        (navigator as any).mozConnection ||
+                        (navigator as any).webkitConnection;
 
-    return {
-      count: metrics.length,
-      average,
-      min,
-      max,
-      total,
-    };
-  }
+      if (connection) {
+        const downlink = connection.downlink; // Mbps
+        const effectiveType = connection.effectiveType; // slow-2g, 2g, 3g, 4g
 
-  static getAllMetrics(): Record<string, ReturnType<typeof PerformanceMonitor.getMetrics>> {
-    const result: Record<string, ReturnType<typeof PerformanceMonitor.getMetrics>> = {};
-    
-    for (const [name] of this.metrics) {
-      result[name] = this.getMetrics(name);
-    }
+        if (downlink) {
+          if (downlink >= 10) return 'fast';
+          if (downlink >= 1.5) return 'medium';
+          return 'slow';
+        }
 
-    return result;
-  }
+        if (effectiveType) {
+          switch (effectiveType) {
+            case '4g': return 'fast';
+            case '3g': return 'medium';
+            case '2g':
+            case 'slow-2g': return 'slow';
+            default: return 'medium';
+          }
+        }
+      }
 
-  static clearMetrics(name?: string): void {
-    if (name) {
-      this.metrics.delete(name);
-    } else {
-      this.metrics.clear();
+      // Fallback: measure actual performance
+      return this.measureActualSpeed();
+    } catch (error) {
+      console.warn('Connection speed ölçülə bilmir:', error);
+      return 'medium'; // Default fallback
     }
   }
-}
 
-// Database query performance monitor
-export function withPerformanceMonitoring<T extends (...args: any[]) => Promise<any>>(
-  fn: T,
-  operationName: string
-): T {
-  return (async (...args: Parameters<T>): Promise<ReturnType<T>> => {
-    PerformanceMonitor.startTimer(operationName);
+  // Measure actual speed based on recent API calls
+  private measureActualSpeed(): string {
+    if (typeof window === 'undefined') return 'unknown';
     
     try {
-      const result = await fn(...args);
-      const duration = PerformanceMonitor.endTimer(operationName);
+      // Get navigation timing for page load speed
+      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
       
-      // Log slow queries (> 1 second)
-      if (duration > 1000) {
-        console.warn(`Slow operation detected: ${operationName} took ${duration.toFixed(2)}ms`);
+      if (navigation) {
+        // Fix: Use startTime instead of navigationStart for PerformanceNavigationTiming
+        const totalTime = navigation.loadEventEnd - navigation.startTime;
+        
+        // Classify based on total load time
+        if (totalTime < 1000) return 'fast';    // Under 1 second
+        if (totalTime < 3000) return 'medium';  // 1-3 seconds
+        return 'slow';                          // Over 3 seconds
       }
       
-      return result;
+      return 'medium';
     } catch (error) {
-      PerformanceMonitor.endTimer(operationName);
-      throw error;
+      console.warn('Actual speed ölçülə bilmir:', error);
+      return 'medium';
     }
-  }) as T;
-}
+  }
 
-// React component performance monitoring
-export function usePerformanceMonitoring(componentName: string) {
-  const startTime = performance.now();
-  
-  React.useEffect(() => {
-    const duration = performance.now() - startTime;
-    PerformanceMonitor.startTimer(`${componentName}-render`);
-    PerformanceMonitor.endTimer(`${componentName}-render`);
-    
-    return () => {
-      // Log if component took too long to render
-      if (duration > 16) { // 16ms = 60fps
-        console.warn(`Slow component render: ${componentName} took ${duration.toFixed(2)}ms`);
-      }
-    };
-  }, [componentName, startTime]);
-}
+  // Get detailed performance metrics
+  getPerformanceMetrics() {
+    if (typeof window === 'undefined') return null;
 
-// API endpoint performance monitoring
-export function withApiPerformanceMonitoring(handler: any, endpointName: string) {
-  return async (req: any, res: any) => {
-    const startTime = performance.now();
-    
     try {
-      const result = await handler(req, res);
-      const duration = performance.now() - startTime;
-      
-      // Log slow API requests (> 2 seconds)
-      if (duration > 2000) {
-        console.warn(`Slow API endpoint: ${endpointName} took ${duration.toFixed(2)}ms`);
-      }
-      
-      return result;
-    } catch (error) {
-      const duration = performance.now() - startTime;
-      console.error(`API error in ${endpointName} after ${duration.toFixed(2)}ms:`, error);
-      throw error;
-    }
-  };
-}
+      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
 
-// Memory usage monitoring
-export function logMemoryUsage(context: string = 'Unknown') {
-  if (typeof window !== 'undefined') {
-    // Browser environment
-    const memory = (performance as any).memory;
-    if (memory) {
-      console.info(`Memory usage (${context}):`, {
-        used: `${(memory.usedJSHeapSize / 1024 / 1024).toFixed(2)} MB`,
-        total: `${(memory.totalJSHeapSize / 1024 / 1024).toFixed(2)} MB`,
-        limit: `${(memory.jsHeapSizeLimit / 1024 / 1024).toFixed(2)} MB`,
-      });
+      if (!navigation) return null;
+
+      return {
+        dns: navigation.domainLookupEnd - navigation.domainLookupStart,
+        tcp: navigation.connectEnd - navigation.connectStart,
+        request: navigation.responseStart - navigation.requestStart,
+        response: navigation.responseEnd - navigation.responseStart,
+        dom: navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
+        total: navigation.loadEventEnd - navigation.startTime, // Fix: Use startTime instead of navigationStart
+        speed: this.getConnectionSpeed()
+      };
+    } catch (error) {
+      console.warn('Performance metrics alına bilmir:', error);
+      return null;
     }
-  } else {
-    // Node.js environment
-    const usage = process.memoryUsage();
-    console.info(`Memory usage (${context}):`, {
-      rss: `${(usage.rss / 1024 / 1024).toFixed(2)} MB`,
-      heapTotal: `${(usage.heapTotal / 1024 / 1024).toFixed(2)} MB`,
-      heapUsed: `${(usage.heapUsed / 1024 / 1024).toFixed(2)} MB`,
-      external: `${(usage.external / 1024 / 1024).toFixed(2)} MB`,
-    });
   }
 }
 
-// React import for usePerformanceMonitoring
-import React from 'react';
+// Create global instance
+export const performanceTracker = new PerformanceTracker();
+
+// Helper functions
+export const startLoginMeasurement = () => {
+  performanceTracker.startMeasurement('login-process', 'login');
+};
+
+export const endLoginMeasurement = () => {
+  return performanceTracker.endMeasurement('login-process');
+};
+
+export const getConnectionSpeed = () => {
+  return performanceTracker.getConnectionSpeed();
+};
+
+export const getPerformanceMetrics = () => {
+  return performanceTracker.getPerformanceMetrics();
+};

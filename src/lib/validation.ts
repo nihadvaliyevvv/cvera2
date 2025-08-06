@@ -156,10 +156,11 @@ export function validateName(name: string): ValidationResult {
     return { isValid: false, error: 'Ad Soyadda tire (-) istifadə edilə bilməz' };
   }
 
-  // Check for only letters, spaces, and basic punctuation (excluding dash)
-  const nameRegex = /^[a-zA-ZğüşöçıİĞÜŞÖÇ\s'.]+$/;
+  // FIXED: Include all Azerbaijani letters including "ə" and "Ə"
+  // Azərbaycan əlifbasının bütün hərfləri daxil edilib
+  const nameRegex = /^[a-zA-ZəƏğüşöçıİĞÜŞÖÇ\s'.]+$/;
   if (!nameRegex.test(trimmedName)) {
-    return { isValid: false, error: 'Ad Soyadda yalnız hərflər və boşluq istifadə edilə bilər' };
+    return { isValid: false, error: 'Ad Soyadda yalnız hərflər istifadə edilə bilər' };
   }
 
   // Check for multiple consecutive spaces

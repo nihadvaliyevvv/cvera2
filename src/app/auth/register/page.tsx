@@ -190,36 +190,10 @@ export default function RegisterPage() {
       });
 
       if (response.ok) {
-        // Qeydiyyat uğurlu oldu, indi login et
-        const loginResponse = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
-          }),
-        });
+        const data = await response.json();
 
-        if (loginResponse.ok) {
-          const loginData = await loginResponse.json();
-
-          // Token-i localStorage-a saxla
-          localStorage.setItem('accessToken', loginData.token);
-
-          // Loading state-i bir az uzat və sonra dashboard-a yönləndir
-          setTimeout(() => {
-            setLoading(false);
-            // window.location.href istifadə et ki, tam səhifə yenilənsə
-            window.location.href = '/dashboard';
-          }, 500);
-
-          return; // handleSubmit-i burada bitir
-        } else {
-          // Login uğursuz olsa, login səhifəsinə yönləndir
-          router.push('/auth/login?message=registered');
-        }
+        // Redirect to login page with email verification message
+        router.push('/auth/login?message=email_verification_sent&email=' + encodeURIComponent(formData.email));
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Qeydiyyat uğursuz oldu');
@@ -227,10 +201,7 @@ export default function RegisterPage() {
     } catch (error) {
       setError('Sistem xətası baş verdi');
     } finally {
-      // Yalnız error vəziyyətində loading-i dərhal dayandır
-      if (!localStorage.getItem('accessToken')) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 

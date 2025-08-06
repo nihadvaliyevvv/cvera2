@@ -38,6 +38,121 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) => {
       const passwordInput = form.querySelector('#password') as HTMLInputElement;
       const confirmPasswordInput = form.querySelector('#confirmPassword') as HTMLInputElement;
 
+      // ULTRA AGGRESSIVE AUTO-FILL PREVENTION
+      // Track user typing state using WeakMap to avoid TypeScript errors
+      const userTypingMap = new WeakMap<HTMLInputElement, boolean>();
+      const manualValueMap = new WeakMap<HTMLInputElement, string>();
+
+      const inputs = [nameInput, emailInput, passwordInput, confirmPasswordInput].filter(Boolean);
+      inputs.forEach((input) => {
+        // Clear any existing custom validity
+        input.setCustomValidity('');
+
+        // Set initial custom validity for empty fields
+        if (!input.value.trim()) {
+          input.setCustomValidity('Zəhmət olmasa bu sahəni doldurun');
+        }
+
+        // Initialize manual value tracking
+        manualValueMap.set(input, '');
+
+        // Override the value setter to detect auto-fill
+        Object.defineProperty(input, 'value', {
+          get: () => input.getAttribute('value') || '',
+          set: (val) => {
+            const manualValue = manualValueMap.get(input) || '';
+            // Only update if user is typing or it's a manual change
+            if (userTypingMap.get(input) || val === manualValue) {
+              manualValueMap.set(input, val);
+              input.setAttribute('value', val);
+            } else {
+              // This might be auto-fill, clear it
+              input.setAttribute('value', '');
+              console.log('🚫 Blocked potential auto-fill on:', input.id);
+            }
+          },
+          configurable: true
+        });
+
+        // Track manual typing using WeakMap
+        input.addEventListener('keydown', () => {
+          userTypingMap.set(input, true);
+          setTimeout(() => {
+            userTypingMap.set(input, false);
+          }, 50);
+        });
+
+        // IMMEDIATE: Clear any auto-filled values on every check
+        if (input.value && !formData.name && !formData.email && !formData.password && !formData.confirmPassword) {
+          input.value = '';
+          manualValueMap.set(input, '');
+          console.log('🚫 Cleared auto-filled value from:', input.id);
+        }
+
+        // NUCLEAR: Completely disable browser auto-fill mechanisms
+        input.setAttribute('readonly', 'true');
+        setTimeout(() => {
+          input.removeAttribute('readonly');
+        }, 100);
+
+        // AGGRESSIVE: Clear on any browser attempt to auto-fill
+        const clearValue = () => {
+          if (input.hasAttribute('data-auto-filled') || input.matches(':-webkit-autofill')) {
+            input.value = '';
+            manualValueMap.set(input, '');
+            input.blur();
+            setTimeout(() => input.focus(), 10);
+          }
+        };
+
+        // Multiple event listeners to catch all auto-fill attempts
+        input.addEventListener('focus', clearValue);
+        input.addEventListener('blur', clearValue);
+        input.addEventListener('change', (e) => {
+          // Block programmatic changes
+          if (!userTypingMap.get(input)) {
+            e.preventDefault();
+            input.value = '';
+            manualValueMap.set(input, '');
+          }
+        });
+
+        // NUCLEAR: Monitor for any value changes
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
+              if (!userTypingMap.get(input)) {
+                input.value = '';
+                manualValueMap.set(input, '');
+                console.log('🚫 Blocked mutation auto-fill on:', input.id);
+              }
+            }
+          });
+        });
+
+        observer.observe(input, {
+          attributes: true,
+          attributeFilter: ['value']
+        });
+
+        // Force clear every 50ms for maximum aggression
+        const interval = setInterval(() => {
+          if (input.hasAttribute('data-auto-filled') ||
+              input.matches(':-webkit-autofill') ||
+              (input.value && !userTypingMap.get(input) && !formData.name && !formData.email && !formData.password && !formData.confirmPassword)) {
+            input.value = '';
+            manualValueMap.set(input, '');
+            console.log('🚫 Interval cleared auto-fill:', input.id);
+          }
+        }, 50);
+
+        // Clear interval when component unmounts
+        setTimeout(() => {
+          clearInterval(interval);
+          observer.disconnect();
+        }, 10000);
+      });
+
       if (nameInput) {
         nameInput.setCustomValidity('');
         nameInput.oninvalid = function(e) {
@@ -110,12 +225,14 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) => {
     // Bir az gecikmə ilə çağır ki, DOM elementi tam yüklənsin
     const timer1 = setTimeout(setCustomValidationMessages, 100);
     const timer2 = setTimeout(setCustomValidationMessages, 500);
+    const timer3 = setTimeout(setCustomValidationMessages, 1000); // Extra delay for stubborn browsers
 
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
+      clearTimeout(timer3);
     };
-  }, []);
+  }, [formData]);
 
   // Real-time validation
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -268,18 +385,40 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) => {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off" key={Math.random()}>
+          {/* INVISIBLE DUMMY FIELDS TO CONFUSE BROWSERS */}
+          <div style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0, overflow: 'hidden' }}>
+            <input type="email" name="fake_email" tabIndex={-1} autoComplete="off" />
+            <input type="password" name="fake_password" tabIndex={-1} autoComplete="off" />
+            <input type="text" name="fake_username" tabIndex={-1} autoComplete="off" />
+          </div>
+
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700">
               Ad Soyad
             </label>
             <input
                 id="name"
+                name={`name_${Math.random().toString(36)}`}
                 type="text"
                 required
                 minLength={2}
                 value={formData.name}
                 onChange={handleNameChange}
+                autoComplete="off"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck="false"
+                data-form-type="other"
+                data-lpignore="true"
+                data-1p-ignore="true"
+                data-bwignore="true"
+                data-dashlane-ignore="true"
+                style={{
+                  backgroundColor: 'transparent !important',
+                  backgroundImage: 'none !important',
+                  color: 'inherit !important'
+                }}
                 onInvalid={(e) => {
                   const target = e.target as HTMLInputElement;
                   if (target.validity.valueMissing) {
@@ -303,12 +442,35 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) => {
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               E-poçt
             </label>
+            {/* DECOY EMAIL FIELD - INVISIBLE */}
+            <input
+              type="email"
+              name="email_decoy"
+              style={{ position: 'absolute', left: '-9999px', opacity: 0 }}
+              tabIndex={-1}
+              autoComplete="email"
+            />
             <input
                 id="email"
+                name={`email_${Math.random().toString(36)}`}
                 type="email"
                 required
                 value={formData.email}
                 onChange={handleEmailChange}
+                autoComplete="off"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck="false"
+                data-form-type="other"
+                data-lpignore="true"
+                data-1p-ignore="true"
+                data-bwignore="true"
+                data-dashlane-ignore="true"
+                style={{
+                  backgroundColor: 'transparent !important',
+                  backgroundImage: 'none !important',
+                  color: 'inherit !important'
+                }}
                 onInvalid={(e) => {
                   const target = e.target as HTMLInputElement;
                   if (target.validity.valueMissing) {
@@ -332,13 +494,36 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) => {
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Şifrə
             </label>
+            {/* DECOY PASSWORD FIELD - INVISIBLE */}
+            <input
+              type="password"
+              name="password_decoy"
+              style={{ position: 'absolute', left: '-9999px', opacity: 0 }}
+              tabIndex={-1}
+              autoComplete="current-password"
+            />
             <input
                 id="password"
+                name={`password_${Math.random().toString(36)}`}
                 type="password"
                 required
                 minLength={8}
                 value={formData.password}
                 onChange={handlePasswordChange}
+                autoComplete="new-password"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck="false"
+                data-form-type="other"
+                data-lpignore="true"
+                data-1p-ignore="true"
+                data-bwignore="true"
+                data-dashlane-ignore="true"
+                style={{
+                  backgroundColor: 'transparent !important',
+                  backgroundImage: 'none !important',
+                  color: 'inherit !important'
+                }}
                 onInvalid={(e) => {
                   const target = e.target as HTMLInputElement;
                   if (target.validity.valueMissing) {
@@ -364,10 +549,25 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }: RegisterFormProps) => {
             </label>
             <input
                 id="confirmPassword"
+                name={`confirm_password_${Math.random().toString(36)}`}
                 type="password"
                 required
                 value={formData.confirmPassword}
                 onChange={handleConfirmPasswordChange}
+                autoComplete="new-password"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck="false"
+                data-form-type="other"
+                data-lpignore="true"
+                data-1p-ignore="true"
+                data-bwignore="true"
+                data-dashlane-ignore="true"
+                style={{
+                  backgroundColor: 'transparent !important',
+                  backgroundImage: 'none !important',
+                  color: 'inherit !important'
+                }}
                 onInvalid={(e) => {
                   const target = e.target as HTMLInputElement;
                   if (target.validity.valueMissing) {

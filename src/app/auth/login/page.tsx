@@ -1,16 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer'; // Footer əlavə edirik
 
-export default function LoginPage() {
+function LoginPageContent() {
   // All hooks must be called at the top level, before any early returns
   const { user, loading: authLoading, isInitialized, login } = useAuth(); // login funksiyasını əlavə et
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // All useState hooks must be called in the same order every time
   const [formData, setFormData] = useState({
@@ -20,6 +21,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState('');
 
   // All useEffect hooks must also be at the top level
   // Redirect if already authenticated
@@ -30,6 +32,18 @@ export default function LoginPage() {
       router.push('/dashboard');
     }
   }, [user, authLoading, isInitialized, router]);
+
+  // Check for email verification message from URL params
+  useEffect(() => {
+    const message = searchParams.get('message');
+    const email = searchParams.get('email');
+
+    if (message === 'email_verification_sent' && email) {
+      setVerificationMessage(`E-poçt təsdiqləmə linki ${email} ünvanına göndərildi. E-poçtunuzu yoxlayın və təsdiqləmə linkini kliklədikdən sonra giriş edə bilərsiniz.`);
+      // Pre-fill email field
+      setFormData(prev => ({ ...prev, email: decodeURIComponent(email) }));
+    }
+  }, [searchParams]);
 
   // Set custom validation messages for Azerbaijani
   useEffect(() => {
@@ -112,6 +126,7 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setVerificationMessage(''); // Clear previous verification message
 
     console.log('🔑 Normal login started:', formData.email);
 
@@ -156,6 +171,14 @@ export default function LoginPage() {
         } else {
           setError('Token alınmadı');
         }
+      } else if (response.status === 403 && data.requiresVerification) {
+        // Handle email verification required
+        if (data.emailResent) {
+          setVerificationMessage(`Yeni təsdiqləmə linki ${data.email} ünvanına göndərildi. E-poçtunuzu yoxlayın və təsdiqləmə linkini kliklədikdən sonra giriş edə bilərsiniz.`);
+        } else {
+          setVerificationMessage(data.message || 'E-poçt ünvanınız təsdiqlənməyib. E-poçt qutunuzu yoxlayın və təsdiqləmə linkinə klik edin.');
+        }
+        setError(''); // Clear any error since this is a verification issue
       } else {
         setError(data.message || data.error || 'Login xətası');
       }
@@ -189,6 +212,21 @@ export default function LoginPage() {
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                 <p className="text-red-600 text-sm">{error}</p>
+              </div>
+            )}
+
+            {/* Email Verification Message */}
+            {verificationMessage && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <div>
+                    <p className="text-blue-800 text-sm font-medium">{verificationMessage}</p>
+                    <p className="text-blue-600 text-xs mt-1">Spam qovluğunu da yoxlamağı unutmayın.</p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -304,5 +342,13 @@ export default function LoginPage() {
 
       <Footer /> {/* Footer əlavə edirik */}
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

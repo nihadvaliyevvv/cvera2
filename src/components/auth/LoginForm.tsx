@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { validateEmail } from '@/lib/validation';
+import { getConnectionSpeed } from '@/lib/performance';
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
@@ -109,50 +110,41 @@ const LoginForm = ({ onSwitchToRegister, onSwitchToForgot }: LoginFormProps) => 
     }
   };
 
+  // OPTIMIZED: Faster form submission with performance tracking
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+
+    // Clear previous errors
     setError('');
     setFieldErrors({ email: '', password: '' });
 
-    // Validate email before submitting
-    const emailValidation = validateEmail(formData.email);
-    if (!emailValidation.isValid) {
-      setFieldErrors(prev => ({ ...prev, email: emailValidation.error! }));
-      setLoading(false);
+    // Quick validation before API call
+    if (!validateEmail(formData.email)) {
+      setFieldErrors(prev => ({ ...prev, email: 'Düzgün email ünvanı daxil edin' }));
       return;
     }
 
-    // Basic password validation
-    if (!formData.password) {
-      setFieldErrors(prev => ({ ...prev, password: 'Şifrə tələb olunur' }));
-      setLoading(false);
+    if (formData.password.length < 6) {
+      setFieldErrors(prev => ({ ...prev, password: 'Şifrə ən az 6 simvol olmalıdır' }));
       return;
     }
 
     try {
-      await login(formData.email.trim().toLowerCase(), formData.password);
-      // Don't call onSuccess() - let the auth system handle the redirect automatically
-      // The login function already redirects to dashboard, calling onSuccess might interfere
-    } catch (error) {
-      console.error('Login failed:', error);
-      if (error instanceof Error) {
-        // Check for specific error types and provide appropriate Azerbaijani messages
-        if (error.message.includes('401') || error.message.includes('Invalid credentials')) {
-          setError('E-poçt və ya şifrə yanlışdır. Zəhmət olmasa yenidən cəhd edin.');
-        } else if (error.message.includes('network') || error.message.includes('fetch')) {
-          setError('İnternet bağlantısı problemi. Zəhmət olmasa yenidən cəhd edin.');
-        } else if (error.message.includes('blocked') || error.message.includes('suspended')) {
-          setError('Hesabınız müvəqqəti bloklanıb. Dəstək ilə əlaqə saxlayın.');
-        } else {
-          setError('Giriş zamanı xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.');
-        }
-      } else {
-        setError('Giriş zamanı xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.');
-      }
-    } finally {
-      setLoading(false);
+      setLoading(true);
+
+      // INSTANT LOGIN: No performance tracking delay
+      const connectionSpeed = getConnectionSpeed();
+      console.log('🌐 Connection Speed:', connectionSpeed);
+
+      // OPTIMIZED: Login function now handles immediate redirect
+      await login(formData.email, formData.password);
+
+      // No need to handle redirect here - auth.tsx handles it instantly
+    } catch (err: any) {
+      setError(err.message || 'Giriş zamanı xəta baş verdi');
+      setLoading(false); // Only set loading false on error
     }
+    // Don't set loading false on success - let redirect handle it
   };
 
   const handleLinkedInLogin = () => {

@@ -2,6 +2,7 @@
 'use client';
 import React, { useState, useEffect, useContext, createContext, useCallback } from 'react';
 import jwt from 'jsonwebtoken';
+import { performanceTracker, getConnectionSpeed } from './performance';
 
 export interface User {
   id: string;
@@ -65,7 +66,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('logout')) {
         console.log('Logout parameter detected, clearing everything');
-        // Aggressive cleanup when logout parameter is detected
         localStorage.clear();
         sessionStorage.clear();
         setUser(null);
@@ -74,19 +74,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // CRITICAL: If no token exists, immediately set user to null without showing loader
+      // OPTIMIZED: Fast token check without API call
       let token = localStorage.getItem('accessToken');
       if (!token) {
-        console.log('No token found in localStorage');
+        console.log('No token found - instant redirect');
         setUser(null);
         setLoading(false);
         setIsInitialized(true);
         return;
       }
 
-      // Validate token before using it - if invalid, don't show loader
+      // OPTIMIZED: Quick token validation without network request
       if (!isValidToken(token)) {
-        console.log('Token expired or invalid, removing');
+        console.log('Token expired - instant cleanup');
         localStorage.removeItem('accessToken');
         setUser(null);
         setLoading(false);
@@ -94,31 +94,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Only show loading when we actually need to fetch user data
-      setLoading(true);
+      // INSTANT: For valid tokens, set initialized immediately
+      console.log('🔑 Valid token found, initializing...');
+      setLoading(false);
+      setIsInitialized(true);
 
-      // Fetch user data with valid token
-      const response = await fetch('/api/users/me', {
+      // IMMEDIATE: Try to get cached user or set temporary user
+      try {
+        // Decode token to get basic user info
+        const decoded = jwt.decode(token) as any;
+        if (decoded && decoded.userId) {
+          // Set a minimal user object to prevent redirect loop
+          const tempUser = {
+            id: decoded.userId,
+            email: decoded.email || 'loading...',
+            name: 'Loading...',
+            subscriptions: []
+          };
+          console.log('🔄 Setting temporary user from token:', tempUser.id);
+          setUser(tempUser);
+        }
+      } catch (error) {
+        console.log('Could not decode token for temp user');
+      }
+
+      // BACKGROUND: API call to get full user data
+      fetch('/api/users/me', {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
         },
-      });
-
-      if (response.ok) {
-        const userData = await response.json();
+      }).then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          console.log('API call failed - token invalid');
+          localStorage.removeItem('accessToken');
+          setUser(null);
+          throw new Error('Invalid token');
+        }
+      }).then(userData => {
+        console.log('✅ Full user data loaded:', userData.email);
         setUser(userData);
-      } else {
-        console.log('Failed to fetch user data, token invalid');
+        setIsInitialized(true);
+      }).catch(error => {
+        console.error('Background user fetch error:', error);
         localStorage.removeItem('accessToken');
         setUser(null);
-      }
+        setLoading(false);
+        setIsInitialized(true);
+      });
     } catch (error) {
       console.error('Error fetching user:', error);
       localStorage.removeItem('accessToken');
       setUser(null);
     } finally {
+      // OPTIMIZED: Faster state updates
       setLoading(false);
       setIsInitialized(true);
     }
@@ -127,6 +157,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     setLoading(true);
     console.log('🔑 Login başladı:', email);
+
+    // Start performance tracking
+    performanceTracker.startMeasurement('api-login', 'api');
+    const speed = getConnectionSpeed();
+    console.log('🌐 Detected connection speed:', speed);
 
     try {
       const response = await fetch('/api/auth/login', {
@@ -153,6 +188,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userId: data.user?.id
       });
 
+      // End performance tracking
+      const apiDuration = performanceTracker.endMeasurement('api-login');
+      console.log('⚡ API Performance:', {
+        duration: `${apiDuration.toFixed(2)}ms`,
+        speed: speed,
+        status: apiDuration < 1000 ? 'fast' : apiDuration < 3000 ? 'medium' : 'slow'
+      });
+
       // Validate and store token immediately
       if (data.accessToken && isValidToken(data.accessToken)) {
         console.log('💾 Storing token in localStorage');
@@ -176,6 +219,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error('💥 Login error:', error);
+      // End performance tracking even on error
+      performanceTracker.endMeasurement('api-login');
       throw error;
     } finally {
       setLoading(false);

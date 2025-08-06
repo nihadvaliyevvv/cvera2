@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { generateJWT, generateRefreshToken, createSessionCookieOptions, createRefreshCookieOptions } from "@/lib/jwt";
+import { EmailService } from "@/lib/email-service";
 
 const prisma = new PrismaClient();
+const emailService = new EmailService();
 
 export async function POST(req: NextRequest) {
   try {
@@ -55,11 +58,61 @@ export async function POST(req: NextRequest) {
 
     // Check if email is verified
     if (!user.emailVerified || user.status === "pending_verification") {
-      return NextResponse.json({
-        message: "E-poçt ünvanınız təsdiqlənməyib. E-poçt qutunuzu yoxlayın və təsdiqləmə linkinə klik edin.",
-        requiresVerification: true,
-        email: user.email
-      }, { status: 403 });
+      // Verify password first before resending email
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        return NextResponse.json({
+          message: "E-poçt və ya şifrə yanlışdır"
+        }, { status: 401 });
+      }
+
+      // Generate new verification token
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+      // Update user with new verification token
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          resetToken: verificationToken,
+          resetTokenExpiry: verificationTokenExpiry,
+        }
+      });
+
+      // Resend verification email
+      try {
+        const emailResult = await emailService.sendEmailVerification(
+          user.email,
+          user.name,
+          verificationToken
+        );
+
+        if (emailResult.success) {
+          console.log(`✅ Verification email resent to ${user.email}`);
+          return NextResponse.json({
+            message: "E-poçt ünvanınız təsdiqlənməyib. Yeni təsdiqləmə linki e-poçt ünvanınıza göndərildi.",
+            requiresVerification: true,
+            email: user.email,
+            emailResent: true
+          }, { status: 403 });
+        } else {
+          console.error(`❌ Failed to resend verification email to ${user.email}:`, emailResult.error);
+          return NextResponse.json({
+            message: "E-poçt ünvanınız təsdiqlənməyib. E-poçt qutunuzu yoxlayın və təsdiqləmə linkinə klik edin.",
+            requiresVerification: true,
+            email: user.email,
+            emailResent: false
+          }, { status: 403 });
+        }
+      } catch (emailError) {
+        console.error(`❌ Error resending verification email to ${user.email}:`, emailError);
+        return NextResponse.json({
+          message: "E-poçt ünvanınız təsdiqlənməyib. E-poçt qutunuzu yoxlayın və təsdiqləmə linkinə klik edin.",
+          requiresVerification: true,
+          email: user.email,
+          emailResent: false
+        }, { status: 403 });
+      }
     }
 
     // Check if account is active

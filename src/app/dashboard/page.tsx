@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import DashboardV2 from '@/components/dashboard/DashboardV2';
-import { LoadingSpinner } from '@/components/ui/Loading';
 
 export default function DashboardPage() {
   const { user, loading, isInitialized } = useAuth();
@@ -12,55 +11,50 @@ export default function DashboardPage() {
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    // Wait for auth to be fully initialized before redirecting
+    console.log('🎛️ Dashboard useEffect triggered:', {
+      user: !!user,
+      userEmail: user?.email,
+      loading,
+      isInitialized,
+      isRedirecting
+    });
+
+    // FIXED: More strict conditions to prevent redirect loops
     if (isInitialized && !loading) {
-      // Only redirect if we're sure there's no user
       if (!user && !isRedirecting) {
         console.log('🔄 No user found, redirecting to login...');
         setIsRedirecting(true);
-        router.replace('/auth/login');
+        setTimeout(() => {
+          router.replace('/auth/login');
+        }, 100); // Small delay to prevent race conditions
       } else if (user) {
-        // Clear redirecting flag if user is found
-        setIsRedirecting(false);
-        console.log('✅ User found in dashboard:', user.email);
+        // IMPORTANT: Clear redirecting flag when user is found
+        if (isRedirecting) {
+          console.log('🛑 Clearing redirect flag, user found');
+          setIsRedirecting(false);
+        }
+        console.log('✅ User authenticated in dashboard:', user.email);
       }
     }
   }, [user, loading, isInitialized, router, isRedirecting]);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('Dashboard state:', {
-      user: !!user,
-      loading,
-      isInitialized,
-      isRedirecting,
-      userEmail: user?.email
-    });
-  }, [user, loading, isInitialized, isRedirecting]);
+  // Show dashboard immediately when user exists - no loading screens
+  if (user && isInitialized) {
+    console.log('🎯 Rendering dashboard for user:', user.email);
 
-  // Show loading spinner while auth is initializing
-  if (!isInitialized || loading) {
-    return <LoadingSpinner />;
+    const handleEditCV = (cvId: string) => {
+      router.push(`/cv/edit/${cvId}`);
+    };
+
+    return (
+      <DashboardV2
+        user={user}
+        onEditCV={handleEditCV}
+      />
+    );
   }
 
-  // Show loading while redirecting
-  if (isRedirecting) {
-    return <LoadingSpinner />;
-  }
-
-  // If no user after initialization, let useEffect handle redirect
-  if (!user) {
-    return <LoadingSpinner />;
-  }
-
-  const handleEditCV = (cvId: string) => {
-    router.push(`/cv/edit/${cvId}`);
-  };
-
-  return (
-    <DashboardV2
-      user={user!}
-      onEditCV={handleEditCV}
-    />
-  );
+  // Only show null while auth is initializing or redirecting
+  console.log('⏳ Dashboard waiting...', { user: !!user, loading, isInitialized, isRedirecting });
+  return null;
 }
