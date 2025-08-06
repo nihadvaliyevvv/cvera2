@@ -74,7 +74,8 @@ export async function GET(request: NextRequest) {
     const tierLimits = {
       Free: { cvCount: 2, dailyLimit: null, limitType: 'total', aiFeatures: false },
       Medium: { cvCount: null, dailyLimit: 5, limitType: 'daily', aiFeatures: true },
-      Premium: { cvCount: null, dailyLimit: null, limitType: 'unlimited', aiFeatures: true }
+      Pro: { cvCount: null, dailyLimit: 5, limitType: 'daily', aiFeatures: true }, // Add Pro tier as alias for Medium
+      Premium: { cvCount: null, dailyLimit: null, limitType: 'unlimited', aiFeatures: true },
     };
 
     const limits = tierLimits[currentTier as keyof typeof tierLimits] || tierLimits.Free;
@@ -115,7 +116,7 @@ export async function GET(request: NextRequest) {
       limits: {
         ...limits,
         templatesAccess: currentTier === 'Free' ? ['Basic'] :
-                        currentTier === 'Medium' ? ['Basic', 'Medium'] :
+                        (currentTier === 'Medium' || currentTier === 'Pro') ? ['Basic', 'Medium'] :
                         ['Basic', 'Medium', 'Premium']
       },
       usage: {

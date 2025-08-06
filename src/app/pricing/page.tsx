@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import StandardHeader from '@/components/ui/StandardHeader';
 import Footer from '@/components/Footer';
+import PromoCodeSection from '@/components/PromoCodeSection'; // Import the PromoCodeSection component
 import { generateStructuredData, organizationData, generateBreadcrumbData } from '@/lib/structured-data';
 
 interface PricingPlan {
@@ -68,6 +69,9 @@ export default function PricingPage() {
   const [loading, setLoading] = useState<string | null>(null);
   const [userTier, setUserTier] = useState<string>('Free');
   const [error, setError] = useState('');
+  const [userLoading, setUserLoading] = useState(true);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelMessage, setCancelMessage] = useState('');
 
   // Add structured data for pricing page
   useEffect(() => {
@@ -147,14 +151,15 @@ export default function PricingPage() {
   }, []);
 
   const loadUserInfo = useCallback(async () => {
+    setUserLoading(true);
     try {
       const token = localStorage.getItem('accessToken');
       if (!token) {
-        router.push('/auth/login');
+        setUserTier('Free');
         return;
       }
 
-      const response = await fetch('/api/users/me', {
+      const response = await fetch('/api/user/limits', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -163,20 +168,21 @@ export default function PricingPage() {
       if (response.ok) {
         const userData = await response.json();
         console.log('User data from API:', userData); // Debug log
-        
-        // Get active subscription tier, default to 'Free' if no active subscription
-        const activeSubscription = userData.subscriptions?.[0];
-        const tier = activeSubscription?.tier || 'Free';
-        
-        console.log('Active subscription:', activeSubscription); // Debug log
+
+        // Get the user's current tier
+        const tier = userData.tier || 'Free';
         console.log('Setting userTier to:', tier); // Debug log
-        
         setUserTier(tier);
+      } else {
+        setUserTier('Free');
       }
     } catch (error) {
       console.error('Error loading user info:', error);
+      setUserTier('Free');
+    } finally {
+      setUserLoading(false);
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     loadUserInfo();
@@ -184,7 +190,7 @@ export default function PricingPage() {
 
   const handleUpgrade = async (planId: string) => {
     if (planId === 'free') return;
-    
+
     setLoading(planId);
     setError('');
 
@@ -234,10 +240,44 @@ export default function PricingPage() {
     }
   };
 
+  const handleCancelSubscription = async () => {
+    setCancelLoading(true);
+    setCancelMessage('');
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch('/api/subscription/cancel', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setCancelMessage(data.message);
+        loadUserInfo(); // Reload user info to update the tier
+      } else {
+        setCancelMessage(data.message || 'Ləğv edilərkən xəta baş verdi');
+      }
+    } catch (error) {
+      console.error('Error canceling subscription:', error);
+      setCancelMessage('Ləğv edilərkən xəta baş verdi');
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
   const getTierLevel = (tier: string) => {
-    const levels = { 
-      Free: 0, Medium: 1, Premium: 2,
-      Pulsuz: 0, Orta: 1  // Azərbaycanca adlar - Premium eyni qalır
+    const levels = {
+      Free: 0, Medium: 1, Premium: 2, Pro: 2,
+      Pulsuz: 0, Orta: 1  // Azərbaycanca adlar
     };
     return levels[tier as keyof typeof levels] || 0;
   };
@@ -246,6 +286,7 @@ export default function PricingPage() {
     const tierToPlanId: { [key: string]: string } = {
       'Free': 'free',
       'Medium': 'medium',
+      'Pro': 'medium',  // Fix: Pro should map to medium, not premium
       'Premium': 'premium',
       'Pulsuz': 'free',
       'Orta': 'medium'
@@ -253,115 +294,178 @@ export default function PricingPage() {
     return tierToPlanId[userTier] || 'free';
   };
 
-  const normalizeTierName = (tier: string) => {
-    const mapping: { [key: string]: string } = {
-      'Free': 'Free',
-      'Medium': 'Medium', 
-      'Premium': 'Premium',
-      'Pulsuz': 'Free',
-      'Orta': 'Medium'
-    };
-    return mapping[tier] || tier;
-  };
+  const currentUserPlanId = getCurrentPlanId(userTier);
 
-  const currentTierLevel = getTierLevel(userTier);
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Yüklənir...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      <StandardHeader />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <StandardHeader />
 
-      {/* Main Content with Enhanced Responsive Container - Premium Edge Spacing */}
-      <div className="w-full max-w-full mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-24 2xl:px-32 py-8 sm:py-12 lg:py-16">
-        {/* Hero Section */}
-        <div className="text-center mb-12 sm:mb-16">
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-            Sizə Uyğun <span className="text-blue-600">Planı</span> Seçin
-          </h1>
-          <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Ehtiyaclarınıza uyğun planı seçin və peşəkar CV yaratmağa başlayın
-          </p>
-        </div>
+        {/* Main Content with Enhanced Responsive Container - Premium Edge Spacing */}
+        <div className="w-full max-w-full mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-24 2xl:px-32 py-8 sm:py-12 lg:py-16">
+          {/* Hero Section */}
+          <div className="text-center mb-12 sm:mb-16">
+            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
+              Sizə Uyğun <span className="text-blue-600">Planı</span> Seçin
+            </h1>
+            <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Ehtiyaclarınıza uyğun planı seçin və peşəkar CV yaratmağa başlayın
+            </p>
+          </div>
 
-        {/* Pricing Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 max-w-6xl mx-auto">
-          {plans.map((plan, index) => (
-            <div
-              key={plan.id}
-              className={`relative bg-white rounded-2xl shadow-lg border-2 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${
-                plan.popular 
-                  ? 'border-blue-500 ring-4 ring-blue-100' 
-                  : 'border-gray-200 hover:border-blue-300'
-              }`}
-            >
-              {/* Popular Badge */}
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+          {/* Pricing Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 max-w-6xl mx-auto">
+            {plans.map((plan, index) => {
+                const isCurrentPlan = plan.id === currentUserPlanId;
+                return (
+                <div
+                    key={plan.id}
+                    className={`relative bg-white rounded-2xl shadow-lg border-2 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${
+                        isCurrentPlan
+                            ? 'border-green-500 ring-4 ring-green-100 bg-green-50'
+                            : plan.popular
+                            ? 'border-blue-500 ring-4 ring-blue-100'
+                            : 'border-gray-200 hover:border-blue-300'
+                    }`}
+                >
+                  {/* Current Plan Badge */}
+                  {isCurrentPlan && (
+                      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-green-600 text-white px-6 py-2 rounded-full text-sm font-medium">
+                    Cari Paket
+                  </span>
+                      </div>
+                  )}
+
+                  {/* Popular Badge */}
+                  {plan.popular && !isCurrentPlan && (
+                      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                   <span className="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-medium">
                     Ən Populyar
                   </span>
-                </div>
-              )}
+                      </div>
+                  )}
 
-              <div className="p-6 sm:p-8 flex flex-col h-full">
-                {/* Plan Header */}
-                <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                  <div className="flex items-center justify-center mb-4">
+                  <div className="p-6 sm:p-8 flex flex-col h-full">
+                    {/* Plan Header */}
+                    <div className="text-center mb-6">
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                      <div className="flex items-center justify-center mb-4">
       <span className="text-4xl font-bold text-gray-900">
         {plan.price === 0 ? `₼${plan.price}.00` : `₼${plan.price}`}
       </span>
-                    {plan.price > 0 && (
-                        <span className="text-gray-600 ml-2">/ay</span>
+                        {plan.price > 0 && (
+                            <span className="text-gray-600 ml-2">/ay</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Features List */}
+                    <div className="space-y-4 mb-8">
+                      {plan.features.map((feature, idx) => (
+                          <div key={idx} className="flex items-start space-x-3">
+                            <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span className="text-gray-700 text-sm leading-relaxed">{feature}</span>
+                          </div>
+                      ))}
+                    </div>
+
+                    {/* Spacer to push button down */}
+                    <div className="flex-grow" />
+
+                    {/* CTA Button */}
+                    {isCurrentPlan ? (
+                      // Show cancel subscription button for paid users, active status for free users
+                      userTier === 'Free' ? (
+                        <div className="w-full py-4 px-6 rounded-xl font-medium bg-green-100 text-green-800 text-center border-2 border-green-200">
+                          <div className="flex items-center justify-center">
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Aktiv Paket
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={handleCancelSubscription}
+                          disabled={cancelLoading}
+                          className="w-full py-4 px-6 rounded-xl font-medium bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border-2 border-red-600"
+                        >
+                          {cancelLoading ? (
+                            <div className="flex items-center justify-center">
+                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                              Ləğv edilir...
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-center">
+                              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                              Abunəliyi ləğv et
+                            </div>
+                          )}
+                        </button>
+                      )
+                    ) : (
+                      <button
+                          onClick={() => handleUpgrade(plan.id)}
+                          disabled={loading !== null}
+                          className={ ` w-full py-4 px-6 rounded-xl font-medium transition-all duration-200 ${
+                              plan.popular
+                                  ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl'
+                                  : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                          } ${loading !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {loading !== null ? (
+                            <div className="flex items-center justify-center ">
+                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current"></div>
+                              <span className="ml-2">Yüklənir...</span>
+                            </div>
+                        ) : plan.price === 0 ? (
+                            'Başla'
+                        ) : (
+                            'Seç'
+                        )}
+                      </button>
                     )}
                   </div>
                 </div>
-
-                {/* Features List */}
-                <div className="space-y-4 mb-8">
-                  {plan.features.map((feature, idx) => (
-                      <div key={idx} className="flex items-start space-x-3">
-                        <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span className="text-gray-700 text-sm leading-relaxed">{feature}</span>
-                      </div>
-                  ))}
-                </div>
-
-                {/* Spacer to push button down */}
-                <div className="flex-grow" />
-
-                {/* CTA Button */}
-                <button
-                    onClick={() => handleUpgrade(plan.id)}
-                    disabled={loading !== null}
-                    className={ ` w-full py-4 px-6 rounded-xl font-medium transition-all duration-200 ${
-                        plan.popular
-                            ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl'
-                            : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                    } ${loading !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {loading !== null ? (
-                      <div className="flex items-center justify-center ">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current"></div>
-                        <span className="ml-2">Yüklənir...</span>
-                      </div>
-                  ) : plan.price === 0 ? (
-                      'Başla'
-                  ) : (
-                      'Seç'
-                  )}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+                );
+            })}
+          </div>
         </div>
 
+        {/* Promo Code Section */}
+        <div className="max-w-2xl mx-auto mt-16 bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Promokod istifadə edin
+            </h2>
+            <p className="text-gray-600">
+              Keçərli promokodunuz varsa, aşağıdakı sahəyə daxil edərək premium paketləri pulsuz əldə edə bilərsiniz
+            </p>
+          </div>
+
+          <PromoCodeSection userTier={userTier} onTierUpdate={loadUserInfo} />
+
+        </div>
+<br/>
+      <br/>
 
 
-
-      <Footer />
-    </div>
+        <Footer />
+      </div>
   );
 }

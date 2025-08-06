@@ -8,28 +8,29 @@ datasource db {
 }
 
 model User {
-  id               String          @id @default(uuid())
+  id               String           @id @default(uuid())
   name             String
-  email            String          @unique
+  email            String           @unique
   password         String?
-  status           String          @default("active")
+  status           String           @default("active")
   resetToken       String?
   resetTokenExpiry DateTime?
   lastLogin        DateTime?
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  role             String          @default("USER")
-  linkedinId       String?         @unique
-  tier             String          @default("Free")
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  role             String           @default("USER")
+  linkedinId       String?          @unique
+  tier             String           @default("Free")
   emailVerified    DateTime?
   linkedinUsername String?
   loginMethod      String?
   lastLogout       DateTime?
-  cvs              CV[]            @relation("UserCVs")
-  dailyUsage       DailyUsage[]    @relation("UserDailyUsage")
-  importSessions   ImportSession[] @relation("UserImportSessions")
-  payments         Payment[]       @relation("UserPayments")
-  subscriptions    Subscription[]  @relation("UserSubscriptions")
+  cvs              CV[]             @relation("UserCVs")
+  dailyUsage       DailyUsage[]     @relation("UserDailyUsage")
+  importSessions   ImportSession[]  @relation("UserImportSessions")
+  payments         Payment[]        @relation("UserPayments")
+  subscriptions    Subscription[]   @relation("UserSubscriptions")
+  promoCodeUsages  PromoCodeUsage[] @relation("UserPromoCodeUsages")
 }
 
 model CV {
@@ -171,4 +172,34 @@ model TokenBlacklist {
   @@index([expiresAt])
   @@index([token])
   @@index([userId])
+}
+
+model PromoCode {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  tier        String // "Premium", "Pro", "Business" etc.
+  description String?
+  isActive    Boolean   @default(true)
+  usageLimit  Int? // null means unlimited
+  usedCount   Int       @default(0)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Track which users used this promo code
+  usedBy PromoCodeUsage[] @relation("PromoCodeUsages")
+}
+
+model PromoCodeUsage {
+  id          String   @id @default(uuid())
+  userId      String
+  promoCodeId String
+  usedAt      DateTime @default(now())
+
+  user      User      @relation("UserPromoCodeUsages", fields: [userId], references: [id])
+  promoCode PromoCode @relation("PromoCodeUsages", fields: [promoCodeId], references: [id])
+
+  @@unique([userId, promoCodeId])
+  @@index([userId])
+  @@index([promoCodeId])
 }
