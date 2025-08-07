@@ -80,6 +80,9 @@ export async function POST(req: NextRequest) {
       expiresAt: Date;
     }
 
+    console.log(`🌍 [APPLY] Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔑 [APPLY] Database URL exists: ${!!process.env.DATABASE_URL}`);
+
     const transactionPromise = prisma.$transaction(async (tx) => {
       console.log(`🔍 [APPLY] Starting database transaction for: ${promoCode}`);
 
@@ -129,7 +132,8 @@ export async function POST(req: NextRequest) {
         throw new Error("Bu promokoddun vaxtı keçib");
       }
 
-      // Get user info
+      // Get user info with enhanced logging
+      console.log(`🔍 [APPLY] Fetching user data for: ${userId}`);
       const user = await tx.user.findUnique({
         where: { id: userId },
         include: { subscriptions: true }
@@ -140,7 +144,7 @@ export async function POST(req: NextRequest) {
         throw new Error("İstifadəçi tapılmadı");
       }
 
-      console.log(`👤 [APPLY] Found user: ${user.email} | Current tier: ${user.tier}`);
+      console.log(`👤 [APPLY] Found user: ${user.email} | Current tier: ${user.tier} | Subscriptions: ${user.subscriptions?.length || 0}`);
 
       // Calculate subscription expiration (1 month from now for premium promo codes)
       let expiresAt;
@@ -159,17 +163,19 @@ export async function POST(req: NextRequest) {
       // Delete existing subscriptions if exist (user can have multiple subscriptions)
       if (user.subscriptions && user.subscriptions.length > 0) {
         console.log(`🗑️ [APPLY] Deleting ${user.subscriptions.length} existing subscriptions for user ${userId}`);
-        await tx.subscription.deleteMany({
+        const deleteResult = await tx.subscription.deleteMany({
           where: { userId: userId }
         });
+        console.log(`🗑️ [APPLY] Deleted subscriptions count: ${deleteResult.count}`);
       }
 
       // Update user tier to match the promo code tier
       console.log(`🔄 [APPLY] Updating user tier from ${user.tier} to ${foundPromoCode.tier}`);
-      await tx.user.update({
+      const updatedUser = await tx.user.update({
         where: { id: userId },
         data: { tier: foundPromoCode.tier }
       });
+      console.log(`🔄 [APPLY] User tier updated successfully. New tier: ${updatedUser.tier}`);
 
       // Create new subscription based on promo code tier
       const subscriptionData: any = {
@@ -187,31 +193,42 @@ export async function POST(req: NextRequest) {
         subscriptionData.expiresAt = expiresAt;
       }
 
-      console.log(`📦 [APPLY] Creating subscription:`, subscriptionData);
+      console.log(`📦 [APPLY] Creating subscription with data:`, JSON.stringify(subscriptionData, null, 2));
       const subscription = await tx.subscription.create({
         data: subscriptionData
       });
+      console.log(`📦 [APPLY] Subscription created successfully with ID: ${subscription.id}`);
 
       // Mark promo code as used
       console.log(`✅ [APPLY] Marking promo code as used`);
-      await tx.promoCodeUsage.create({
+      const promoUsage = await tx.promoCodeUsage.create({
         data: {
           promoCodeId: foundPromoCode.id,
           userId: userId,
           usedAt: new Date()
         }
       });
+      console.log(`✅ [APPLY] Promo usage recorded with ID: ${promoUsage.id}`);
 
       // Update promo code usage count
-      await tx.promoCode.update({
+      console.log(`📊 [APPLY] Updating promo code usage count from ${foundPromoCode.usedCount} to ${foundPromoCode.usedCount + 1}`);
+      const updatedPromoCode = await tx.promoCode.update({
         where: { id: foundPromoCode.id },
         data: {
           usedCount: foundPromoCode.usedCount + 1
         }
       });
+      console.log(`📊 [APPLY] Promo code usage count updated: ${updatedPromoCode.usedCount}`);
 
       console.log(`🎉 [APPLY] Successfully applied promo code ${foundPromoCode.code} for user ${userId}`);
       console.log(`📦 [APPLY] Created ${foundPromoCode.tier} subscription until ${expiresAt ? expiresAt.toISOString() : 'unlimited'}`);
+
+      // Double-check the results
+      const finalUser = await tx.user.findUnique({
+        where: { id: userId },
+        include: { subscriptions: { where: { status: 'active' } } }
+      });
+      console.log(`🔍 [APPLY] Final user check - Tier: ${finalUser?.tier}, Active subscriptions: ${finalUser?.subscriptions?.length}`);
 
       return {
         subscription,
@@ -219,8 +236,8 @@ export async function POST(req: NextRequest) {
         expiresAt
       } as TransactionResult;
     }, {
-      timeout: 15000, // 15 second timeout for the transaction
-      maxWait: 10000, // 10 second max wait for connection
+      timeout: 30000, // Increased timeout for production
+      maxWait: 15000, // Increased max wait for production
     });
 
     let result: TransactionResult;
