@@ -30,12 +30,12 @@ const plans: PricingPlan[] = [
     ]
   },
   {
-    id: 'medium',
-    name: 'Orta',
+    id: 'pro',
+    name: 'Populyar',
     price: 2.99, // 2.99 dollara bərabər olan manat qiyməti
     features: [
       'Gündə 5 CV yaratma ',
-      'Pulsuz və Orta səviyyə şablonlar',
+      'Pulsuz və Populyar səviyyə şablonlar',
       'PDF və DOCX formatında yükləmə',
       'Saytda texniki dəstək',
       'LinkedIn profilindən idxal',
@@ -72,6 +72,7 @@ export default function PricingPage() {
   const [userLoading, setUserLoading] = useState(true);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelMessage, setCancelMessage] = useState('');
+  const [subscriptionDetails, setSubscriptionDetails] = useState<any>(null);
 
   // Add structured data for pricing page
   useEffect(() => {
@@ -103,7 +104,7 @@ export default function PricingPage() {
     // Add service offers structured data
     const serviceOffersData = {
       name: "CVERA CV Yaratma Xidmətləri",
-      description: "AI əsaslı peşəkar CV yaratma xidmətləri - Pulsuz, Orta və Premium planlar",
+      description: "AI əsaslı peşəkar CV yaratma xidmətləri - Pulsuz, Populyar və Premium planlar",
       provider: {
         "@type": "Organization",
         name: "CVERA",
@@ -173,6 +174,17 @@ export default function PricingPage() {
         const tier = userData.tier || 'Free';
         console.log('Setting userTier to:', tier); // Debug log
         setUserTier(tier);
+
+        // Set subscription details if available
+        if (userData.subscription) {
+          setSubscriptionDetails({
+            status: userData.subscription.status,
+            currentPeriodEnd: userData.subscription.currentPeriodEnd,
+            cancelAtPeriodEnd: userData.subscription.cancelAtPeriodEnd
+          });
+        } else {
+          setSubscriptionDetails(null);
+        }
       } else {
         setUserTier('Free');
       }
@@ -206,8 +218,8 @@ export default function PricingPage() {
 
       // Plan tipini API-nin gözlədiyi formata çevir
       let apiPlanType = plan.name;
-      if (plan.id === 'medium') {
-        apiPlanType = 'Medium'; // 'Orta' əvəzinə 'Medium' göndər
+      if (plan.id === 'pro') {
+        apiPlanType = 'Pro'; // Pro paketini göndər
       } else if (plan.id === 'premium') {
         apiPlanType = 'Premium'; // Zaten doğru
       }
@@ -285,13 +297,66 @@ export default function PricingPage() {
   const getCurrentPlanId = (userTier: string) => {
     const tierToPlanId: { [key: string]: string } = {
       'Free': 'free',
-      'Medium': 'medium',
-      'Pro': 'medium',  // Pro tier maps to medium plan
+      'Medium': 'pro',  // Legacy Medium maps to new pro plan
+      'Pro': 'pro',     // Pro maps to pro plan
       'Premium': 'premium',
       'Pulsuz': 'free',
-      'Orta': 'medium'
+      'Orta': 'pro'     // Legacy Orta maps to new pro plan
     };
     return tierToPlanId[userTier] || 'free';
+  };
+
+  // Function to format expiration date
+  const formatExpirationDate = (dateString: string) => {
+    if (!dateString) return null;
+
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffTime = date.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) {
+        return 'Bitib';
+      } else if (diffDays === 0) {
+        return 'Bu gün bitir';
+      } else if (diffDays === 1) {
+        return '1 gün qalıb';
+      } else if (diffDays <= 30) {
+        return `${diffDays} gün qalıb`;
+      } else {
+        return date.toLocaleDateString('az-AZ', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+      }
+    } catch (error) {
+      return null;
+    }
+  };
+
+  // Function to get subscription expiration info
+  const getSubscriptionExpiration = () => {
+    if (!subscriptionDetails || userTier === 'Free') return null;
+
+    if (subscriptionDetails.currentPeriodEnd) {
+      return formatExpirationDate(subscriptionDetails.currentPeriodEnd);
+    }
+
+    return null;
+  };
+
+  // Function to get tier display name
+  const getTierDisplayName = (tier: string) => {
+    const tierNames: { [key: string]: string } = {
+      'Free': 'Pulsuz',
+      'Pro': 'Populyar',
+      'Premium': 'Premium',
+      'Medium': 'Populyar', // Legacy support
+      'Orta': 'Populyar'    // Legacy support
+    };
+    return tierNames[tier] || tier;
   };
 
   const currentUserPlanId = getCurrentPlanId(userTier);
@@ -351,12 +416,12 @@ export default function PricingPage() {
                   {plan.popular && !isCurrentPlan && (
                       <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                   <span className="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-medium">
-                    Ən Populyar
+                    Ən Yaxşı Seçim
                   </span>
                       </div>
                   )}
 
-                  <div className="p-6 sm:p-8 flex flex-col h-full">
+                  <div className="p-6 sm:p-8 flex flex-col h-full border-2 border-blue-400 rounded-2xl">
                     {/* Plan Header */}
                     <div className="text-center mb-6">
                       <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
@@ -371,7 +436,7 @@ export default function PricingPage() {
                     </div>
 
                     {/* Features List */}
-                    <div className="space-y-4 mb-8">
+                    <div className="space-y-4 mb-8 ">
                       {plan.features.map((feature, idx) => (
                           <div key={idx} className="flex items-start space-x-3">
                             <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -446,6 +511,37 @@ export default function PricingPage() {
             })}
           </div>
         </div>
+
+        {/* Subscription Expiration Info Section */}
+        {userTier !== 'Free' && getSubscriptionExpiration() && (
+          <div className="w-full max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-24 2xl:px-32 mt-12">
+            <div className="text-center bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 sm:p-8 border border-blue-200 shadow-lg">
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mr-4">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
+                    Cari Abunəlik: {getTierDisplayName(userTier)}
+                  </h3>
+                  <p className="text-lg text-blue-700 font-semibold">
+                    📅 {getSubscriptionExpiration()}
+                  </p>
+                </div>
+              </div>
+
+              {subscriptionDetails?.cancelAtPeriodEnd && (
+                <div className="mt-4 p-3 bg-yellow-100 rounded-lg border border-yellow-300">
+                  <p className="text-yellow-800 text-sm font-medium">
+                    ⚠️ Abunəlik ləğv edilib və yuxarıdakı tarixdə bitəcək
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Promo Code Section */}
         <div className="max-w-2xl mx-auto mt-16 bg-white rounded-2xl shadow-lg p-8 border border-gray-200">

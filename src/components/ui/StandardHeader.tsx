@@ -3,13 +3,85 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export default function StandardHeader() {
-  const { user, logout } = useAuth();
+  const { user, logout, fetchCurrentUser } = useAuth();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [userTier, setUserTier] = useState<string>('Free');
+  const [tierLoading, setTierLoading] = useState(false);
+
+  // State for subscription details
+  const [subscriptionDetails, setSubscriptionDetails] = useState<any>(null);
+
+  // Function to fetch latest user tier information
+  const refreshUserTier = useCallback(async () => {
+    if (!user) return;
+
+    setTierLoading(true);
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      const response = await fetch('/api/user/limits', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        const newTier = userData.tier || 'Free';
+        setUserTier(newTier);
+
+        // Store subscription details for expiration dates
+        setSubscriptionDetails(userData);
+
+        // Also update the main user context if tier changed
+        if (user.tier !== newTier) {
+          await fetchCurrentUser();
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing user tier:', error);
+    } finally {
+      setTierLoading(false);
+    }
+  }, [user, fetchCurrentUser]);
+
+  // Set initial tier from user object
+  useEffect(() => {
+    if (user?.tier) {
+      setUserTier(user.tier);
+    }
+  }, [user?.tier]);
+
+  // Auto-refresh tier every 30 seconds when profile menu is open
+  useEffect(() => {
+    if (!isProfileMenuOpen || !user) return;
+
+    // Immediate refresh when menu opens
+    refreshUserTier();
+
+    // Set up interval for periodic refresh
+    const interval = setInterval(refreshUserTier, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [isProfileMenuOpen, user, refreshUserTier]);
+
+  // Listen for storage events to refresh tier when subscription changes in other tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'subscriptionUpdated' || e.key === 'tierUpdated') {
+        refreshUserTier();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [refreshUserTier]);
 
   const handleLogout = async () => {
     try {
@@ -57,6 +129,85 @@ export default function StandardHeader() {
       return () => document.removeEventListener('click', handleClickOutside);
     }
   }, [isProfileMenuOpen]);
+
+  // Function to get display name for tier
+  const getTierDisplayName = (tier: string) => {
+    const tierNames: { [key: string]: string } = {
+      'Free': 'Pulsuz',
+      'Pro': 'Populyar',
+      'Premium': 'Premium',
+      'Medium': 'Populyar', // Legacy support
+      'Orta': 'Populyar'    // Legacy support
+    };
+    return tierNames[tier] || tier;
+  };
+
+  // Function to get tier badge color
+  const getTierBadgeColor = (tier: string) => {
+    switch (tier) {
+      case 'Free':
+        return 'bg-gray-100 text-gray-800';
+      case 'Pro':
+      case 'Medium':
+      case 'Orta':
+        return 'bg-blue-100 text-blue-800';
+      case 'Premium':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Function to format expiration date
+  const formatExpirationDate = (dateString: string) => {
+    if (!dateString) return null;
+
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffTime = date.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) {
+        return 'Bitib';
+      } else if (diffDays === 0) {
+        return 'Bu gün bitir';
+      } else if (diffDays === 1) {
+        return '1 gün qalıb';
+      } else if (diffDays <= 30) {
+        return `${diffDays} gün qalıb`;
+      } else {
+        return date.toLocaleDateString('az-AZ', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+      }
+    } catch (error) {
+      return null;
+    }
+  };
+
+  // Function to get subscription expiration info
+  const getSubscriptionExpiration = () => {
+    if (!subscriptionDetails || userTier === 'Free') return null;
+
+    // Check if user has active subscription
+    const activeSubscription = subscriptionDetails.subscriptions?.find(
+      (sub: any) => sub.status === 'active' && sub.tier === userTier
+    );
+
+    if (activeSubscription?.expiresAt) {
+      return formatExpirationDate(activeSubscription.expiresAt);
+    }
+
+    // Fallback: check subscription end date from user data
+    if (subscriptionDetails.subscriptionEndDate) {
+      return formatExpirationDate(subscriptionDetails.subscriptionEndDate);
+    }
+
+    return null;
+  };
 
   return (
     <header className="bg-gradient-to-r from-blue-600 to-blue-700 border-b border-blue-800 sticky top-0 z-40 shadow-lg">
@@ -131,10 +282,11 @@ export default function StandardHeader() {
                         <p className="font-semibold text-gray-900 text-sm">{user?.name || 'İstifadəçi'}</p>
                         <p className="text-gray-500 text-xs">{user?.email}</p>
                         <div className="flex items-center mt-1">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                            {user?.tier || 'Free'}
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getTierBadgeColor(userTier)}`}>
+                            {getTierDisplayName(userTier)}
                           </span>
                         </div>
+
                       </div>
                     </div>
                   </div>

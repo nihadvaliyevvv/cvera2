@@ -4,6 +4,11 @@ import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
 
+interface JWTPayload {
+  userId: string;
+  email?: string;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { promoCode } = await req.json();
@@ -14,23 +19,25 @@ export async function POST(req: NextRequest) {
 
     if (!token) {
       return NextResponse.json({
+        success: false,
         message: "Giriş tələb olunur"
       }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JWTPayload;
     const userId = decoded.userId;
 
+    console.log(`🔍 Validating promo code: "${promoCode}" for user: ${userId}`);
+
+    // Validate promo code input
     if (!promoCode || typeof promoCode !== 'string') {
       return NextResponse.json({
-        valid: false,
+        success: false,
         message: "Promokod daxil edin"
       }, { status: 400 });
     }
 
-    console.log(`🔍 Validating promo code: "${promoCode}" for user: ${userId}`);
-
-    // First try exact case match, then fallback to uppercase
+    // Find promo code (try exact case first, then uppercase)
     let foundPromoCode = await prisma.promoCode.findUnique({
       where: { code: promoCode.trim() },
       include: {
@@ -53,57 +60,73 @@ export async function POST(req: NextRequest) {
     }
 
     if (!foundPromoCode) {
-      console.log(`❌ Promo code not found in database: "${promoCode}"`);
       return NextResponse.json({
-        valid: false,
+        success: false,
         message: "Promokod tapılmadı"
-      });
+      }, { status: 404 });
     }
 
-    console.log(`✅ Found promo code: ${foundPromoCode.code} - ${foundPromoCode.tier}`);
-
+    // Check if promo code is active
     if (!foundPromoCode.isActive) {
       return NextResponse.json({
-        valid: false,
-        message: "Promokod aktiv deyil"
-      });
+        success: false,
+        message: "Bu promokod artıq aktiv deyil"
+      }, { status: 400 });
     }
 
-    if (foundPromoCode.expiresAt && foundPromoCode.expiresAt < new Date()) {
-      return NextResponse.json({
-        valid: false,
-        message: "Promokodin vaxtı bitib"
-      });
-    }
-
+    // Check if user already used this promo code
     if (foundPromoCode.usedBy.length > 0) {
       return NextResponse.json({
-        valid: false,
+        success: false,
         message: "Bu promokodu artıq istifadə etmisiniz"
-      });
+      }, { status: 400 });
     }
 
+    // Check usage limit
     if (foundPromoCode.usageLimit && foundPromoCode.usedCount >= foundPromoCode.usageLimit) {
       return NextResponse.json({
-        valid: false,
-        message: "Promokodin istifadə limiti bitib"
-      });
+        success: false,
+        message: "Bu promokoddun istifadə limiti bitib"
+      }, { status: 400 });
     }
 
-    console.log(`✅ Promo code validation successful: ${foundPromoCode.code}`);
+    // Check expiration date
+    if (foundPromoCode.expiresAt && foundPromoCode.expiresAt < new Date()) {
+      return NextResponse.json({
+        success: false,
+        message: "Bu promokoddun vaxtı keçib"
+      }, { status: 400 });
+    }
+
+    // Calculate subscription duration for premium tiers
+    let subscriptionDuration = null;
+    const premiumTiers = ['Medium', 'Pro', 'Populyar', 'Premium', 'Business'];
+
+    if (premiumTiers.includes(foundPromoCode.tier)) {
+      subscriptionDuration = "1 ay";
+    }
+
+    console.log(`✅ Valid promo code: ${foundPromoCode.code} - ${foundPromoCode.tier}`);
 
     return NextResponse.json({
-      valid: true,
-      tier: foundPromoCode.tier,
-      description: foundPromoCode.description,
-      message: `Bu promokod sizə ${foundPromoCode.tier} paketini verəcək`
+      success: true,
+      message: "Promokod keçərlidir",
+      promoCode: {
+        code: foundPromoCode.code,
+        tier: foundPromoCode.tier,
+        description: foundPromoCode.description,
+        subscriptionDuration,
+        usageRemaining: foundPromoCode.usageLimit ? foundPromoCode.usageLimit - foundPromoCode.usedCount : "Limitsiz",
+        expiresAt: foundPromoCode.expiresAt
+      }
     });
 
   } catch (error) {
-    console.error('Promo code validation error:', error);
+    console.error('❌ Promo code validation error:', error);
+
     return NextResponse.json({
-      valid: false,
-      message: "Promokod yoxlanılarkən xəta baş verdi"
+      success: false,
+      message: "Server xətası"
     }, { status: 500 });
   } finally {
     await prisma.$disconnect();

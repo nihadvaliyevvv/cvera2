@@ -20,7 +20,7 @@ interface UserLimits {
   limits: {
     cvCount: number;
     templatesAccess: string[];
-    dailyLimit: number;
+    dailyLimit: number | null;
     aiFeatures: boolean;
     limitType: string;
   };
@@ -66,58 +66,90 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
 
       console.log('📡 Dashboard: API sorğusu göndərilir...');
 
-      const [cvsResponse, limitsResponse] = await Promise.all([
-        apiClient.get('/api/cv'),
-        apiClient.get('/api/user/limits')
-      ]);
+      try {
+        const [cvsResponse, limitsResponse] = await Promise.all([
+          apiClient.get('/api/cv'),
+          apiClient.get('/api/user/limits')
+        ]);
 
-      console.log('📥 Dashboard: CV API tam cavabı:', cvsResponse);
-      console.log('📥 Dashboard: CV data strukturu:', cvsResponse.data);
+        console.log('📥 Dashboard: CV API tam cavabı:', cvsResponse);
+        console.log('📥 Dashboard: Limits API cavabı:', limitsResponse);
 
-      // Handle different response formats
-      let cvsArray = [];
-      if (cvsResponse.data && cvsResponse.data.cvs) {
-        cvsArray = cvsResponse.data.cvs;
-      } else if (Array.isArray(cvsResponse.data)) {
-        cvsArray = cvsResponse.data;
-      } else {
-        console.log('⚠️ Dashboard: Gözlənilməz response formatı');
-        cvsArray = [];
+        // Handle different response formats
+        let cvsArray = [];
+        if (cvsResponse.data && cvsResponse.data.cvs) {
+          cvsArray = cvsResponse.data.cvs;
+        } else if (Array.isArray(cvsResponse.data)) {
+          cvsArray = cvsResponse.data;
+        } else {
+          console.log('⚠️ Dashboard: Gözlənilməz CV response formatı');
+          cvsArray = [];
+        }
+
+        console.log('📥 Dashboard: Çıxarılan CV sayı:', cvsArray.length);
+        setCvs(cvsArray);
+
+        console.log('📥 Dashboard: Limits data:', limitsResponse.data);
+        setUserLimits(limitsResponse.data);
+
+      } catch (apiError) {
+        console.error('❌ Dashboard API Error:', apiError);
+
+        // Handle specific API errors
+        if (apiError instanceof Error) {
+          if (apiError.message.includes('401') || apiError.message.includes('Autentifikasiya')) {
+            console.log('🔐 Dashboard: Authentication error, redirecting to login');
+            router.push('/auth/login');
+            return;
+          } else if (apiError.message.includes('Server error')) {
+            console.log('🔥 Dashboard: Server error detected, setting fallback data');
+            // Set fallback data to prevent complete failure
+            setUserLimits({
+              tier: 'Free',
+              limits: {
+                cvCount: 2,
+                templatesAccess: ['Basic'],
+                dailyLimit: null,
+                aiFeatures: false,
+                limitType: 'total'
+              },
+              usage: {
+                cvCount: 0,
+                dailyUsage: 0,
+                hasReachedLimit: false,
+                remainingLimit: 2
+              },
+              subscription: null
+            });
+            setCvs([]);
+          }
+        }
+
+        // Don't throw the error, just log it and continue with fallback data
+        console.log('📱 Dashboard: Continuing with fallback data due to API error');
       }
-
-      console.log('📥 Dashboard: Çıxarılan CV sayı:', cvsArray.length);
-      console.log('📥 Dashboard: CV array:', cvsArray);
-
-      if (cvsResponse.data.cvs && cvsResponse.data.cvs.length > 0) {
-        console.log('📋 Dashboard: Tapılan CV-lər:', cvsResponse.data.cvs.map((cv: any) => ({ id: cv.id, title: cv.title })));
-      } else {
-        console.log('❌ Dashboard: CV tapılmadı və ya boş array');
-      }
-
-      // Force state update with explicit logging
-      console.log('🔄 Dashboard: setCvs çağırılır, CV sayı:', cvsArray.length);
-      setCvs(cvsArray);
-
-      console.log('🔄 Dashboard: setUserLimits çağırılır');
-      setUserLimits(limitsResponse.data);
-
-      // Verify state was set
-      setTimeout(() => {
-        console.log('✅ Dashboard: State update yoxlanır - CV sayı component-də:', cvsArray.length);
-      }, 100);
 
     } catch (error: unknown) {
-      console.error('❌ Dashboard data fetch error:', error);
-
-      // Type-safe error handling
-      if (error && typeof error === 'object' && 'response' in error) {
-        const apiError = error as any;
-        if (apiError.response?.status === 401) {
-          console.log('🔐 Dashboard: 401 unauthorized, login səhifəsinə yönləndirəcəm');
-          router.push('/auth/login');
-          return;
-        }
-      }
+      console.error('❌ Dashboard general error:', error);
+      // Set fallback data even for general errors
+      setUserLimits({
+        tier: 'Free',
+        limits: {
+          cvCount: 2,
+          templatesAccess: ['Basic'],
+          dailyLimit: null,
+          aiFeatures: false,
+          limitType: 'total'
+        },
+        usage: {
+          cvCount: 0,
+          dailyUsage: 0,
+          hasReachedLimit: false,
+          remainingLimit: 2
+        },
+        subscription: null
+      });
+      setCvs([]);
     } finally {
       setLoading(false);
     }
@@ -165,64 +197,117 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          <div className="bg-white rounded-2xl shadow-lg p-6  border-2 border-blue-600">
-            <div className="flex items-center justify-between ">
-              <div className="flex-1 ">
+          <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-blue-600">
+            <div className="flex items-center justify-between min-h-[100px]">
+              <div className="flex-1">
                 <p className="text-sm font-medium text-blue-700 mb-2">Abunəlik</p>
-                <div className="flex items-center justify-between">
-                  <p className="text-2xl font-bold text-blue-900">
-                    {loading || !userLimits ? '...' : (() => {
-                      const tier = userLimits?.tier;
-                      if (tier === 'Free') return 'Pulsuz';
-                      if (tier === 'Medium' || tier === 'Pro') return 'Orta';
-                      if (tier === 'Premium' || tier === 'Business') return 'Premium';
-                      return 'Pulsuz';
+                <p className="text-2xl font-bold text-blue-900">
+                  {loading || !userLimits ? '...' : (() => {
+                    const tier = userLimits?.tier;
+                    if (tier === 'Free') return 'Pulsuz';
+                    if (tier === 'Medium' || tier === 'Pro') return 'Populyar';
+                    if (tier === 'Premium' || tier === 'Business') return 'Premium';
+                    return 'Pulsuz';
+                  })()}
+                </p>
+                {/* Subscription Expiration Info - Enhanced Display */}
+                {!loading && userLimits?.subscription?.expiresAt && userLimits?.tier !== 'Free' && (
+                  <p className="text-sm text-gray-600 mt-2 font-medium">
+                    {(() => {
+                      try {
+                        const expiresAt = new Date(userLimits.subscription.expiresAt);
+                        const now = new Date();
+
+                        console.log('🗓️ Subscription expires at:', expiresAt);
+                        console.log('🗓️ Current time:', now);
+                        console.log('🗓️ Raw subscription data:', userLimits.subscription);
+
+                        // Make sure we're comparing at the same time (end of day vs start of day)
+                        const expiresDate = new Date(expiresAt.getFullYear(), expiresAt.getMonth(), expiresAt.getDate());
+                        const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+                        const diffTime = expiresDate.getTime() - nowDate.getTime();
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                        console.log('🗓️ Days difference:', diffDays);
+
+                        if (diffDays < 0) {
+                          return '⏰ Abunəlik bitib';
+                        } else if (diffDays === 0) {
+                          return '⚠️ Bu gün bitir';
+                        } else if (diffDays === 1) {
+                          return '📅 1 gün qalıb';
+                        } else if (diffDays <= 30) {
+                          return `📅 ${diffDays} gün qalıb`;
+                        } else {
+                          return `📅 ${diffDays} gün qalıb`;
+                        }
+                      } catch (error) {
+                        console.error('🗓️ Date calculation error:', error);
+                        return '❌ Tarix xətası';
+                      }
                     })()}
                   </p>
-                  <button
-                    onClick={() => router.push('/pricing')}
-                    disabled={loading}
-                    className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-white hover:text-blue-600 hover:border-2 hover:border-blue-600 border-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Yenilə
-                  </button>
-                </div>
+                )}
+                {/* Show message for free users or users without subscription */}
+                {!loading && (!userLimits?.subscription?.expiresAt || userLimits?.tier === 'Free') && (
+                  <p className="text-sm text-gray-500 mt-2">
+                    💡 Premium abunəlik yoxdur
+                  </p>
+                )}
               </div>
-
+              <div className="flex items-center justify-center ml-6">
+                <button
+                  onClick={() => router.push('/pricing')}
+                  disabled={loading}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-white hover:text-blue-600 hover:border-2 hover:border-blue-600 border-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  Yenilə
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6  border-2 border-blue-600">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-700">
+          <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-blue-600">
+            <div className="flex items-center justify-between min-h-[100px]">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-blue-700 mb-2">
                   {loading || !userLimits ? 'Limit' : (
                     userLimits?.limits.limitType === 'total' ? 'Ümumi Limit' :
                     userLimits?.limits.limitType === 'daily' ? 'Günlük Limit' :
                     'Limit'
                   )}
                 </p>
-                <p className="text-2xl font-bold text-blue-900">
+                <p className="text-2xl font-bold text-blue-900 mb-2">
                   {loading || !userLimits ? '...' : (
                     userLimits?.limits.limitType === 'total'
-                      ? `${userLimits?.usage.remainingLimit}/${userLimits?.limits.cvCount}`
+                      ? (() => {
+                          // For free plan (total limit), show only remaining count
+                          if (userLimits?.tier === 'Free') {
+                            return `${userLimits?.usage.remainingLimit}`;
+                          }
+                          // For other plans, keep the old format
+                          return `${userLimits?.usage.remainingLimit}/${userLimits?.limits.cvCount}`;
+                        })()
                       : userLimits?.limits.limitType === 'daily'
                         ? `${userLimits?.usage.remainingLimit}/${userLimits?.limits.dailyLimit}`
                         : '∞'
                   )}
                 </p>
-                <p className="text-xs text-gray-600 mt-1">
+                <p className="text-xs text-gray-600">
                   {loading || !userLimits ? '...' : (
-                    userLimits?.limits.limitType === 'total' ? '' :
+                    userLimits?.limits.limitType === 'total' ? 'CV yaratma limiti' :
                     userLimits?.limits.limitType === 'daily' ? 'Bu gün qalan' :
-                    'Limitsiz'
+                    'Limitsiz istifadə'
                   )}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
+              <div className="flex items-center justify-center ml-6">
+                <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                </div>
               </div>
             </div>
           </div>

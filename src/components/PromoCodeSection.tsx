@@ -20,7 +20,7 @@ export default function PromoCodeSection({ userTier, onTierUpdate }: PromoCodeSe
   // Helper function to get tier level for comparison
   const getTierLevel = (tier: string) => {
     const levels = {
-      'Free': 0, 'Medium': 1, 'Premium': 2, 'Pro': 2,
+      'Free': 0, 'Medium': 1, 'Premium': 2, 'Pro': 1,
       'Pulsuz': 0, 'Orta': 1  // Azərbaycanca adlar
     };
     return levels[tier as keyof typeof levels] || 0;
@@ -30,6 +30,12 @@ export default function PromoCodeSection({ userTier, onTierUpdate }: PromoCodeSe
   const canUsePromoTier = (promoTier: string) => {
     const currentLevel = getTierLevel(userTier);
     const promoLevel = getTierLevel(promoTier);
+
+    // Special case: Pro users can use Premium promo codes
+    if (userTier === 'Pro' && promoTier === 'Premium') {
+      return true;
+    }
+
     return promoLevel > currentLevel;
   };
 
@@ -98,6 +104,14 @@ export default function PromoCodeSection({ userTier, onTierUpdate }: PromoCodeSe
         setPromoMessage(applyData.message);
         setPromoCode('');
         setPromoValidation(null);
+
+        // Trigger tier update notification for other components
+        localStorage.setItem('tierUpdated', Date.now().toString());
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'tierUpdated',
+          newValue: Date.now().toString()
+        }));
+
         // Update the tier in parent component
         onTierUpdate();
         // Redirect to dashboard after successful application
@@ -120,7 +134,7 @@ export default function PromoCodeSection({ userTier, onTierUpdate }: PromoCodeSe
       'Free': 'Pulsuz',
       'Medium': 'Orta',
       'Premium': 'Premium',
-      'Pro': 'Pro'
+      'Pro': 'Populyar'
     };
     return tierDisplayNames[userTier as keyof typeof tierDisplayNames] || userTier;
   };
@@ -216,26 +230,8 @@ export default function PromoCodeSection({ userTier, onTierUpdate }: PromoCodeSe
       )}
 
       {/* Sample Promo Codes for Testing - Improved responsive grid */}
-      <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
-        <h4 className="font-medium text-gray-900 mb-2 sm:mb-3 text-sm sm:text-base">Test promokodları:</h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-gray-600">
-          <div className="flex items-center">
-            <span className="w-2 h-2 bg-gray-400 rounded-full mr-2 flex-shrink-0"></span>
-            <span>PREMIUM2024 (Premium)</span>
-          </div>
-          <div className="flex items-center">
-            <span className="w-2 h-2 bg-gray-400 rounded-full mr-2 flex-shrink-0"></span>
-            <span>PRO2024 (Pro)</span>
-          </div>
-          <div className="flex items-center">
-            <span className="w-2 h-2 bg-gray-400 rounded-full mr-2 flex-shrink-0"></span>
-            <span>WELCOME50 (Premium)</span>
-          </div>
-          <div className="flex items-center">
-            <span className="w-2 h-2 bg-gray-400 rounded-full mr-2 flex-shrink-0"></span>
-            <span>TESTCODE (Pro)</span>
-          </div>
-        </div>
+      <div className=" rounded-lg">
+
         <p className="text-xs text-gray-500 mt-2 sm:mt-3 leading-relaxed">
           * Yalnız cari paketinizdən yüksək paketlər üçün kodlar işləyir
         </p>

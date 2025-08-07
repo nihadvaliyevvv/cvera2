@@ -1,76 +1,69 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { apiClient } from '@/lib/api';
+import StandardHeader from '@/components/ui/StandardHeader';
+import Footer from '@/components/Footer';
 
 function PaymentSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
-  const [paymentDetails, setPaymentDetails] = useState<{
-    transactionId: string;
-    orderId: string;
-    amount?: number;
-    planType?: string;
-  } | null>(null);
-
-  const transactionId = searchParams.get('transactionId');
-  const orderId = searchParams.get('orderId');
+  const [subscriptionCreated, setSubscriptionCreated] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [subscriptionInfo, setSubscriptionInfo] = useState<any>(null);
 
   useEffect(() => {
-    if (!transactionId || !orderId) {
-      router.push('/pricing');
-      return;
-    }
-
-    // Verify payment and activate subscription
-    const verifyPayment = async () => {
+    const createSubscription = async () => {
       try {
-        const token = localStorage.getItem('accessToken');
-        const isDevelopment = searchParams.get('development') === 'true';
-        
-        // Choose the appropriate endpoint based on mode
-        const endpoint = isDevelopment 
-          ? '/api/payments/complete-development'
-          : '/api/payments/verify'; // Use a different endpoint for real payments
-        
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': token ? `Bearer ${token}` : ''
-          },
-          body: JSON.stringify({
-            transactionId,
-            orderId
-          })
+        // Get payment info from URL params
+        const tier = searchParams.get('tier');
+        const paymentId = searchParams.get('payment_id');
+        const amount = searchParams.get('amount');
+
+        console.log('🎯 Payment success params:', { tier, paymentId, amount });
+
+        if (!tier || !paymentId) {
+          throw new Error('Ödəniş məlumatları tapılmadı');
+        }
+
+        // Validate tier for premium subscriptions
+        if (tier !== 'Populyar' && tier !== 'Premium' && tier !== 'Medium' && tier !== 'Pro' && tier !== 'Business') {
+          throw new Error('Keçersiz abunəlik növü');
+        }
+
+        // Create subscription via API
+        const response = await apiClient.post('/api/subscription/create', {
+          tier,
+          paymentId,
+          amount: amount ? parseFloat(amount) : 0
         });
 
-        if (response.ok) {
-          const result = await response.json();
-          
-          setPaymentDetails({
-            transactionId,
-            orderId,
-            amount: 9.99, // Demo amount
-            planType: result.tier || 'Medium'
-          });
-          
-          console.log('✅ Subscription activated:', result);
+        console.log('✅ Subscription creation response:', response.data);
+
+        if (response.data.success) {
+          setSubscriptionCreated(true);
+          setSubscriptionInfo(response.data.subscription);
         } else {
-          console.error('Payment verification failed:', response.status);
+          throw new Error(response.data.error || 'Abunəlik yaradıla bilmədi');
         }
-        
-        setLoading(false);
+
       } catch (error) {
-        console.error('Payment verification failed:', error);
+        console.error('❌ Subscription creation error:', error);
+        setError(error instanceof Error ? error.message : 'Bilinməyən xəta');
+      } finally {
         setLoading(false);
       }
     };
 
-    verifyPayment();
-  }, [transactionId, orderId, router, searchParams]);
+    createSubscription();
+  }, [searchParams]);
+
+  const handleContinue = () => {
+    router.push('/dashboard');
+  };
 
   if (loading) {
     return (
@@ -88,99 +81,90 @@ function PaymentSuccessContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
-              <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Ödəniş Uğurlu!
-            </h2>
-            
-            <p className="text-gray-600 mb-6">
-              Abunəliyiniz uğurla aktivləşdirildi
-            </p>
-
-            {paymentDetails && (
-              <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
-                <h3 className="text-sm font-medium text-gray-900 mb-3">
-                  Ödəniş Məlumatları
-                </h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Plan:</span>
-                    <span className="font-medium">{paymentDetails.planType}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Məbləğ:</span>
-                    <span className="font-medium">{paymentDetails.amount} AZN</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Sifariş ID:</span>
-                    <span className="font-mono text-xs">{paymentDetails.orderId}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tranzaksiya ID:</span>
-                    <span className="font-mono text-xs">{paymentDetails.transactionId}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
-              <div className="flex">
-                <svg className="h-5 w-5 text-blue-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <div className="min-h-screen bg-gray-50">
+      <StandardHeader />
+      
+      <div className="max-w-4xl mx-auto px-4 py-16">
+        <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+          {loading ? (
+            <div>
+              <div className="w-16 h-16 mx-auto mb-6 animate-pulse bg-blue-100 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
                 </svg>
-                <div className="ml-3">
-                  <p className="text-sm text-blue-800">
-                    <strong>Yeni xüsusiyyətlər:</strong>
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">Abunəlik yaradılır...</h1>
+              <p className="text-gray-600">Zəhmət olmasa gözləyin</p>
+            </div>
+          ) : error ? (
+            <div>
+              <div className="w-16 h-16 mx-auto mb-6 bg-red-100 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-bold text-red-900 mb-4">Xəta baş verdi</h1>
+              <p className="text-red-600 mb-6">{error}</p>
+              <button
+                onClick={() => router.push('/pricing')}
+                className="px-6 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+              >
+                Geri qayıt
+              </button>
+            </div>
+          ) : subscriptionCreated ? (
+            <div>
+              <div className="w-16 h-16 mx-auto mb-6 bg-green-100 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h1 className="text-3xl font-bold text-green-900 mb-4">Ödəniş uğurlu!</h1>
+              <p className="text-gray-600 mb-6">
+                <span className="font-semibold text-blue-600">{subscriptionInfo?.tier}</span> abunəliyiniz uğurla yaradıldı.
+              </p>
+              
+              {subscriptionInfo?.expiresAt && (
+                <div className="bg-blue-50 rounded-lg p-4 mb-6">
+                  <p className="text-blue-800">
+                    📅 Abunəliyin bitməsinə: <span className="font-semibold">
+                      {(() => {
+                        const expiresAt = new Date(subscriptionInfo.expiresAt);
+                        const now = new Date();
+                        const diffDays = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                        return `${diffDays} gün`;
+                      })()}
+                    </span> qalıb
                   </p>
-                  <ul className="mt-2 text-sm text-blue-700 list-disc list-inside">
-                    <li>Resumonk Bold template</li>
-                    <li>DOCX export imkanı</li>
-                    <li>LinkedIn import</li>
-                    <li>Prioritet dəstək</li>
-                  </ul>
                 </div>
+              )}
+              
+              <div className="space-y-4">
+                <div className="text-sm text-gray-600 space-y-2">
+                  <p>✅ Premium xüsusiyyətlərə çıxışınız açıldı</p>
+                  <p>✅ Limitsiz CV yaratma imkanı</p>
+                  <p>✅ AI köməkçi xüsusiyyətləri</p>
+                  <p>✅ Bütün şablonlara çıxış</p>
+                </div>
+                
+                <button
+                  onClick={handleContinue}
+                  className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Dashboard-a davam et
+                </button>
               </div>
             </div>
-
-            <div className="space-y-3">
-              <Link
-                href="/dashboard"
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium inline-block text-center"
-              >
-                Dashboard-a Get
-              </Link>
-              
-              <Link
-                href="/cv/new"
-                className="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 transition-colors font-medium inline-block text-center"
-              >
-                Yeni CV Yarat
-              </Link>
-              
-              <Link
-                href="/pricing"
-                className="w-full bg-gray-200 text-gray-800 py-3 px-4 rounded-md hover:bg-gray-300 transition-colors font-medium inline-block text-center"
-              >
-                Planları Gör
-              </Link>
-            </div>
-          </div>
+          ) : null}
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }
 
-export default function PaymentSuccessPage() {
+export default function PaymentSuccessPageWrapper() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <PaymentSuccessContent />

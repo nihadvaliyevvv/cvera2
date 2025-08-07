@@ -51,7 +51,16 @@ export async function GET(request: NextRequest) {
             orderBy: {
               createdAt: 'desc'
             },
-            take: 1
+            take: 1,
+            select: {
+              id: true,
+              tier: true,
+              status: true,
+              provider: true,
+              expiresAt: true,
+              createdAt: true,
+              startedAt: true
+            }
           }
         }
       });

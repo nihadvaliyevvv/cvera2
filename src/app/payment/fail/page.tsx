@@ -1,127 +1,78 @@
 'use client';
 
-import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import { Suspense } from 'react';
+import StandardHeader from '@/components/ui/StandardHeader';
+import Footer from '@/components/Footer';
 
 function PaymentFailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  const transactionId = searchParams.get('transactionId');
-  const orderId = searchParams.get('orderId');
-  const errorMessage = searchParams.get('error') || 'Ödəniş zamanı xəta baş verdi';
-
-  useEffect(() => {
-    // Log failed payment for debugging
-    if (transactionId && orderId) {
-      console.log('Payment failed:', { transactionId, orderId, errorMessage });
-    }
-  }, [transactionId, orderId, errorMessage]);
-
-  const handleTryAgain = () => {
-    router.push('/pricing');
-  };
+  const tier = searchParams.get('tier') || 'Bilinməyən';
+  const error = searchParams.get('error') || 'Ödəniş prosesi dayandırıldı';
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
-              <svg className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+    <div className="min-h-screen bg-gray-50">
+      <StandardHeader />
+      
+      <div className="max-w-4xl mx-auto px-4 py-16">
+        <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+          <div className="w-16 h-16 mx-auto mb-6 bg-red-100 rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          
+          <h1 className="text-3xl font-bold text-red-900 mb-4">Ödəniş uğursuz</h1>
+          
+          <p className="text-gray-600 mb-2">
+            <span className="font-semibold text-blue-600">{tier}</span> abunəliyi üçün ödəniş tamamlana bilmədi.
+          </p>
+          
+          <p className="text-red-600 mb-8">{error}</p>
+          
+          <div className="space-y-4">
+            <div className="bg-yellow-50 rounded-lg p-4 mb-6">
+              <h3 className="text-yellow-800 font-semibold mb-2">Nəyə diqqət etməlisiniz:</h3>
+              <ul className="text-sm text-yellow-700 space-y-1 text-left">
+                <li>• Kart məlumatlarınızın düzgünlüyünü yoxlayın</li>
+                <li>• Kartda kifayət qədər məbləğ olduğunu təmin edin</li>
+                <li>• İnternet bağlantınızı yoxlayın</li>
+                <li>• Bir neçə dəqiqə sonra yenidən cəhd edin</li>
+              </ul>
             </div>
             
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Ödəniş Uğursuz
-            </h2>
-            
-            <p className="text-gray-600 mb-6">
-              Ödəniş zamanı problem yarandı
-            </p>
-
-            <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
-              <div className="flex">
-                <svg className="h-5 w-5 text-red-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div className="ml-3">
-                  <p className="text-sm text-red-800">
-                    <strong>Xəta səbəbi:</strong> {errorMessage}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {transactionId && orderId && (
-              <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
-                <h3 className="text-sm font-medium text-gray-900 mb-3">
-                  Əməliyyat Məlumatları
-                </h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Sifariş ID:</span>
-                    <span className="font-mono text-xs">{orderId}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tranzaksiya ID:</span>
-                    <span className="font-mono text-xs">{transactionId}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
-              <div className="flex">
-                <svg className="h-5 w-5 text-blue-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div className="ml-3">
-                  <p className="text-sm text-blue-800">
-                    <strong>Tövsiyələr:</strong>
-                  </p>
-                  <ul className="mt-2 text-sm text-blue-700 list-disc list-inside">
-                    <li>Kart məlumatlarını yoxlayın</li>
-                    <li>Kifayət qədər balans olub-olmadığını yoxlayın</li>
-                    <li>Bir neçə dəqiqə sonra yenidən cəhd edin</li>
-                    <li>Problem davam edərsə, dəstək komandası ilə əlaqə saxlayın</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
-                onClick={handleTryAgain}
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
+                onClick={() => router.push('/pricing')}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
-                Yenidən Cəhd Et
+                Yenidən cəhd et
               </button>
               
-              <Link
-                href="/dashboard"
-                className="w-full bg-gray-200 text-gray-800 py-3 px-4 rounded-md hover:bg-gray-300 transition-colors font-medium inline-block text-center"
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="px-6 py-3 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition-colors"
               >
-                Dashboard-a Qayıt
-              </Link>
-              
-              <Link
-                href="mailto:support@cvera.az?subject=Ödəniş Problemi&body=Tranzaksiya ID: {transactionId}%0ASifariş ID: {orderId}%0AXəta: {errorMessage}"
-                className="w-full bg-red-600 text-white py-3 px-4 rounded-md hover:bg-red-700 transition-colors font-medium inline-block text-center"
-              >
-                Dəstək Komandası ilə Əlaqə
-              </Link>
+                Dashboard-a qayıt
+              </button>
+            </div>
+            
+            <div className="text-sm text-gray-500 mt-6">
+              <p>Problem davam edərsə, bizimlə əlaqə saxlayın:</p>
+              <p className="text-blue-600">support@cvera.az</p>
             </div>
           </div>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }
 
-export default function PaymentFailPage() {
+export default function PaymentFailPageWrapper() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <PaymentFailContent />
