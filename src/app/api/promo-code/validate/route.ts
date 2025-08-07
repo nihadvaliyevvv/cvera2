@@ -28,9 +28,11 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // Find the promo code
-    const foundPromoCode = await prisma.promoCode.findUnique({
-      where: { code: promoCode.toUpperCase() },
+    console.log(`🔍 Validating promo code: "${promoCode}" for user: ${userId}`);
+
+    // First try exact case match, then fallback to uppercase
+    let foundPromoCode = await prisma.promoCode.findUnique({
+      where: { code: promoCode.trim() },
       include: {
         usedBy: {
           where: { userId }
@@ -38,12 +40,27 @@ export async function POST(req: NextRequest) {
       }
     });
 
+    // If not found with exact case, try uppercase for backward compatibility
     if (!foundPromoCode) {
+      foundPromoCode = await prisma.promoCode.findUnique({
+        where: { code: promoCode.trim().toUpperCase() },
+        include: {
+          usedBy: {
+            where: { userId }
+          }
+        }
+      });
+    }
+
+    if (!foundPromoCode) {
+      console.log(`❌ Promo code not found in database: "${promoCode}"`);
       return NextResponse.json({
         valid: false,
         message: "Promokod tapılmadı"
       });
     }
+
+    console.log(`✅ Found promo code: ${foundPromoCode.code} - ${foundPromoCode.tier}`);
 
     if (!foundPromoCode.isActive) {
       return NextResponse.json({
@@ -72,6 +89,8 @@ export async function POST(req: NextRequest) {
         message: "Promokodin istifadə limiti bitib"
       });
     }
+
+    console.log(`✅ Promo code validation successful: ${foundPromoCode.code}`);
 
     return NextResponse.json({
       valid: true,

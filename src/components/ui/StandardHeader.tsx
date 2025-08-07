@@ -187,74 +187,9 @@ export default function StandardHeader() {
 
             {/* Mobile/Tablet Profile Button - Simplified for smaller screens */}
             <div className="lg:hidden relative" data-profile-menu>
-              <button
-                onClick={toggleProfileMenu}
-                className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 py-2 rounded-full border border-white/20 hover:bg-white/20 transition-all duration-200 cursor-pointer"
-              >
-                <div className="w-7 h-7 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30">
-                  <span className="text-white text-xs font-medium">
-                    {user?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}
-                  </span>
-                </div>
-                <svg
-                  className={`w-3 h-3 text-white/70 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
 
-              {/* Mobile/Tablet Profile Dropdown Menu */}
-              {isProfileMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
-                  {/* User Info in Mobile Dropdown */}
-                  <div className="px-4 py-3 border-b border-gray-100">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 text-sm font-medium">
-                          {user?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900 text-sm">{user?.name || 'İstifadəçi'}</p>
-                        <p className="text-gray-500 text-xs">{user?.email}</p>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Mobile Menu Items */}
-                  <div className="py-1">
-                    <Link
-                      href="/profile/edit"
-                      onClick={closeProfileMenu}
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      Profil Redaktəsi
-                    </Link>
 
-                    <div className="border-t border-gray-100 my-1"></div>
-
-                    <button
-                      onClick={() => {
-                        console.log('🔴 MOBILE LOGOUT FROM DROPDOWN - TEST');
-                        closeProfileMenu();
-                        handleLogout();
-                      }}
-                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      <svg className="w-4 h-4 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                      </svg>
-                      Çıxış
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Mobile hamburger menu button */}
@@ -335,16 +270,16 @@ export default function StandardHeader() {
                     closeMobileMenu();
                     handleLogout();
                   }}
-                  className="flex items-center space-x-3 py-3 px-4 text-red-300 hover:text-red-200 hover:bg-red-500/10 rounded-lg transition-all w-full mt-2"
+                  className="flex items-center space-x-3 py-3 px-4 text-white hover:text-white hover:bg-blue-500/10 rounded-lg transition-all w-full mt-2"
                 >
-                  <div className="w-8 h-8 bg-red-500/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-red-400/30">
-                    <svg className="w-4 h-4 text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-8 h-8 bg-blue-500/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-red-400/30">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
                   </div>
                   <div>
-                    <p className="font-medium text-red-300 text-sm">Çıxış</p>
-                    <p className="text-red-400/70 text-xs">Hesabdan çıx</p>
+                    <p className="font-medium text-left text-white text-sm">Çıxış</p>
+                    <p className="text-gray-300 text-xs">Hesabdan çıx</p>
                   </div>
                 </button>
               </div>

@@ -276,7 +276,7 @@ export default function PricingPage() {
 
   const getTierLevel = (tier: string) => {
     const levels = {
-      Free: 0, Medium: 1, Premium: 2, Pro: 2,
+      Free: 0, Medium: 1, Premium: 2, Pro: 1, // Fix: Pro should map to level 1 (medium plan)
       Pulsuz: 0, Orta: 1  // Azərbaycanca adlar
     };
     return levels[tier as keyof typeof levels] || 0;
@@ -286,7 +286,7 @@ export default function PricingPage() {
     const tierToPlanId: { [key: string]: string } = {
       'Free': 'free',
       'Medium': 'medium',
-      'Pro': 'medium',  // Fix: Pro should map to medium, not premium
+      'Pro': 'medium',  // Pro tier maps to medium plan
       'Premium': 'premium',
       'Pulsuz': 'free',
       'Orta': 'medium'
@@ -421,14 +421,14 @@ export default function PricingPage() {
                     ) : (
                       <button
                           onClick={() => handleUpgrade(plan.id)}
-                          disabled={loading !== null}
+                          disabled={loading === plan.id}
                           className={ ` w-full py-4 px-6 rounded-xl font-medium transition-all duration-200 ${
                               plan.popular
                                   ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl'
                                   : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                          } ${loading !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          } ${loading === plan.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
-                        {loading !== null ? (
+                        {loading === plan.id ? (
                             <div className="flex items-center justify-center ">
                               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current"></div>
                               <span className="ml-2">Yüklənir...</span>

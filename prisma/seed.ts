@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 async function main() {
   // Create sample templates based on existing template images
   const templates = [
-    // Free Templates
+    // All Templates Now FREE
     {
       id: 'basic',
       name: 'Basic Professional',
@@ -35,62 +35,62 @@ async function main() {
       description: 'Sadə və effektiv klassik dizayn',
     },
     
-    // Medium Templates  
+    // Previously Medium Templates - NOW FREE
     {
       id: 'professional-resume',
       name: 'Professional Resume',
-      tier: 'Medium',
+      tier: 'Free',
       previewUrl: '/templates/professional-resume-preview.jpg',
       description: 'Orta səviyyə professional xüsusiyyətlərlə',
     },
     {
       id: 'tech-professional',
       name: 'Tech Professional',
-      tier: 'Medium',
+      tier: 'Free',
       previewUrl: '/templates/tech-professional.png',
       description: 'Texnologiya sahəsində çalışanlar üçün',
     },
     {
       id: 'modern-creative-medium',
       name: 'Modern Creative',
-      tier: 'Medium', 
+      tier: 'Free',
       previewUrl: '/templates/modern-creative.png',
       description: 'Müasir yaradıcı peşələr üçün',
     },
     
-    // Premium Templates
+    // Previously Premium Templates - NOW FREE
     {
       id: 'executive-premium',
       name: 'Executive Premium',
-      tier: 'Premium',
+      tier: 'Free',
       previewUrl: '/templates/executive-preview.jpg',
       description: 'Yüksək səviyyəli mövqelər üçün lüks dizayn',
     },
     {
       id: 'executive-elite', 
       name: 'Executive Elite',
-      tier: 'Premium',
+      tier: 'Free',
       previewUrl: '/templates/executive-elite-preview.jpg',
       description: 'Elit səviyyədə idarəçilər üçün',
     },
     {
       id: 'luxury-executive',
       name: 'Luxury Executive',
-      tier: 'Premium',
+      tier: 'Free',
       previewUrl: '/templates/luxury-executive.png',
       description: 'Lüks və prestij üçün hazırlanmış',
     },
     {
       id: 'designer-pro',
       name: 'Creative Designer Pro',
-      tier: 'Premium',
+      tier: 'Free',
       previewUrl: '/templates/designer-pro.png',
       description: 'Yaradıcı peşələr üçün premium dizayn',
     },
     {
       id: 'executive-premium-alt',
       name: 'Executive Premium Alternative', 
-      tier: 'Premium',
+      tier: 'Free',
       previewUrl: '/templates/executive-premium.png',
       description: 'Premium idarəçi şablonunun alternativ versiyası',
     }

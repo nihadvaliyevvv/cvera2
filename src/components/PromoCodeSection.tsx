@@ -34,42 +34,8 @@ export default function PromoCodeSection({ userTier, onTierUpdate }: PromoCodeSe
   };
 
   const validatePromoCode = async () => {
-    if (!promoCode.trim()) {
-      setPromoValidation(null);
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/promo-code/validate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ promoCode: promoCode.trim() })
-      });
-
-      const data = await response.json();
-
-      // Additional validation for tier level
-      if (data.valid && data.tier) {
-        if (!canUsePromoTier(data.tier)) {
-          setPromoValidation({
-            valid: false,
-            message: `${data.tier} promokodu istifadə edə bilməzsiniz. Siz artıq ${userTier} və ya daha yüksək paketdəsiniz.`
-          });
-          return;
-        }
-      }
-
-      setPromoValidation(data);
-    } catch (error) {
-      setPromoValidation({
-        valid: false,
-        message: 'Promokod yoxlanılarkən xəta baş verdi'
-      });
-    }
+    // Remove real-time validation - only validate when applying
+    return;
   };
 
   const applyPromoCode = async () => {
@@ -85,10 +51,13 @@ export default function PromoCodeSection({ userTier, onTierUpdate }: PromoCodeSe
 
     setPromoLoading(true);
     setPromoMessage('');
+    setPromoValidation(null); // Clear any previous validation
 
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/promo-code/apply', {
+
+      // First validate the promo code
+      const validateResponse = await fetch('/api/promo-code/validate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -97,10 +66,36 @@ export default function PromoCodeSection({ userTier, onTierUpdate }: PromoCodeSe
         body: JSON.stringify({ promoCode: promoCode.trim() })
       });
 
-      const data = await response.json();
+      const validateData = await validateResponse.json();
 
-      if (response.ok) {
-        setPromoMessage(data.message);
+      // Check validation result
+      if (!validateData.valid) {
+        setPromoMessage(validateData.message || 'Promokod etibarsızdır');
+        setPromoLoading(false);
+        return;
+      }
+
+      // Additional validation for tier level
+      if (validateData.tier && !canUsePromoTier(validateData.tier)) {
+        setPromoMessage(`${validateData.tier} promokodu istifadə edə bilməzsiniz. Siz artıq ${userTier} və ya daha yüksək paketdəsiniz.`);
+        setPromoLoading(false);
+        return;
+      }
+
+      // If validation passed, apply the promo code
+      const applyResponse = await fetch('/api/promo-code/apply', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ promoCode: promoCode.trim() })
+      });
+
+      const applyData = await applyResponse.json();
+
+      if (applyResponse.ok) {
+        setPromoMessage(applyData.message);
         setPromoCode('');
         setPromoValidation(null);
         // Update the tier in parent component
@@ -110,7 +105,7 @@ export default function PromoCodeSection({ userTier, onTierUpdate }: PromoCodeSe
           router.push('/dashboard');
         }, 2000);
       } else {
-        setPromoMessage(data.message || 'Promokod tətbiq edilərkən xəta baş verdi');
+        setPromoMessage(applyData.message || 'Promokod tətbiq edilərkən xəta baş verdi');
       }
     } catch (error) {
       setPromoMessage('Promokod tətbiq edilərkən xəta baş verdi');
@@ -131,47 +126,45 @@ export default function PromoCodeSection({ userTier, onTierUpdate }: PromoCodeSe
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 sm:space-y-6">
       {/* Current tier display */}
-      <div className="bg-blue-50 p-3 rounded-lg text-center">
-        <p className="text-blue-800 text-sm">
+      <div className="bg-blue-50 p-3 sm:p-4 rounded-lg text-center">
+        <p className="text-blue-800 text-sm sm:text-base">
           <span className="font-medium">Cari paketiniz:</span> {getCurrentTierDisplay()}
         </p>
         {userTier !== 'Free' && (
-          <p className="text-blue-600 text-xs mt-1">
+          <p className="text-blue-600 text-xs sm:text-sm mt-1">
             Yalnız daha yüksək paketlər üçün promokod istifadə edə bilərsiniz
           </p>
         )}
       </div>
 
-      <div className="flex gap-3">
+      {/* Input and Button - Stack on mobile, side by side on larger screens */}
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <input
           type="text"
           value={promoCode}
-          onChange={(e) => {
-            setPromoCode(e.target.value.toUpperCase());
-            validatePromoCode();
-          }}
+          onChange={(e) => setPromoCode(e.target.value)}
           placeholder="Promokod daxil edin"
-          className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center font-mono text-lg"
+          className="flex-1 px-3 py-3 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center font-mono text-base sm:text-lg transition-all duration-200"
           disabled={promoLoading}
         />
         <button
           onClick={applyPromoCode}
           disabled={promoLoading || !promoCode.trim() || !user || (promoValidation && !promoValidation.valid)}
-          className="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full sm:w-auto bg-blue-600 text-white px-6 sm:px-8 py-3 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-w-fit whitespace-nowrap"
         >
           {promoLoading ? 'Tətbiq edilir...' : 'Tətbiq et'}
         </button>
       </div>
 
       {!user && (
-        <div className="text-center">
-          <p className="text-orange-600 text-sm">
+        <div className="text-center px-4">
+          <p className="text-orange-600 text-sm sm:text-base">
             Promokod istifadə etmək üçün{' '}
             <button
               onClick={() => router.push('/auth/login')}
-              className="text-blue-600 hover:text-blue-700 font-medium underline"
+              className="text-blue-600 hover:text-blue-700 font-medium underline transition-colors"
             >
               giriş edin
             </button>
@@ -181,25 +174,25 @@ export default function PromoCodeSection({ userTier, onTierUpdate }: PromoCodeSe
 
       {/* Promo Code Validation Message */}
       {promoValidation && (
-        <div className={`p-4 rounded-lg text-sm ${
+        <div className={`p-3 sm:p-4 rounded-lg text-sm sm:text-base ${
           promoValidation.valid 
             ? 'bg-green-50 text-green-800 border border-green-200' 
             : 'bg-red-50 text-red-800 border border-red-200'
         }`}>
-          <div className="flex items-center">
+          <div className="flex items-start sm:items-center">
             {promoValidation.valid ? (
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 mr-2 mt-0.5 sm:mt-0 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             ) : (
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 mr-2 mt-0.5 sm:mt-0 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             )}
-            {promoValidation.message}
+            <span className="break-words">{promoValidation.message}</span>
           </div>
           {promoValidation.valid && promoValidation.tier && (
-            <div className="mt-2 font-medium">
+            <div className="mt-2 font-medium text-sm sm:text-base">
               📦 Paket: {promoValidation.tier}
             </div>
           )}
@@ -208,30 +201,42 @@ export default function PromoCodeSection({ userTier, onTierUpdate }: PromoCodeSe
 
       {/* Application Result Message */}
       {promoMessage && (
-        <div className={`p-4 rounded-lg text-sm ${
+        <div className={`p-3 sm:p-4 rounded-lg text-sm sm:text-base ${
           promoMessage.includes('uğurla') 
             ? 'bg-green-50 text-green-800 border border-green-200' 
             : 'bg-red-50 text-red-800 border border-red-200'
         }`}>
-          {promoMessage}
+          <div className="break-words">{promoMessage}</div>
           {promoMessage.includes('uğurla') && (
-            <div className="mt-2 text-xs">
+            <div className="mt-2 text-xs sm:text-sm opacity-75">
               2 saniyə sonra dashboard-a yönləndiriləcəksiniz...
             </div>
           )}
         </div>
       )}
 
-      {/* Sample Promo Codes for Testing */}
-      <div className="bg-gray-50 p-4 rounded-lg">
-        <h4 className="font-medium text-gray-900 mb-2">Test promokodları:</h4>
-        <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
-          <div>• PREMIUM2024 (Premium)</div>
-          <div>• PRO2024 (Pro)</div>
-          <div>• WELCOME50 (Premium)</div>
-          <div>• TESTCODE (Pro)</div>
+      {/* Sample Promo Codes for Testing - Improved responsive grid */}
+      <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+        <h4 className="font-medium text-gray-900 mb-2 sm:mb-3 text-sm sm:text-base">Test promokodları:</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-gray-600">
+          <div className="flex items-center">
+            <span className="w-2 h-2 bg-gray-400 rounded-full mr-2 flex-shrink-0"></span>
+            <span>PREMIUM2024 (Premium)</span>
+          </div>
+          <div className="flex items-center">
+            <span className="w-2 h-2 bg-gray-400 rounded-full mr-2 flex-shrink-0"></span>
+            <span>PRO2024 (Pro)</span>
+          </div>
+          <div className="flex items-center">
+            <span className="w-2 h-2 bg-gray-400 rounded-full mr-2 flex-shrink-0"></span>
+            <span>WELCOME50 (Premium)</span>
+          </div>
+          <div className="flex items-center">
+            <span className="w-2 h-2 bg-gray-400 rounded-full mr-2 flex-shrink-0"></span>
+            <span>TESTCODE (Pro)</span>
+          </div>
         </div>
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-gray-500 mt-2 sm:mt-3 leading-relaxed">
           * Yalnız cari paketinizdən yüksək paketlər üçün kodlar işləyir
         </p>
       </div>

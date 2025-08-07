@@ -83,6 +83,38 @@ interface CVData {
       publisher?: string;
       authors?: string[];
     }>;
+    honorsAwards?: Array<{
+      id?: string;
+      title?: string;
+      description?: string;
+      date?: string;
+      issuer?: string;
+      url?: string;
+    }>;
+    testScores?: Array<{
+      id?: string;
+      testName?: string;
+      score?: string;
+      date?: string;
+      description?: string;
+    }>;
+    recommendations?: Array<{
+      id?: string;
+      recommenderName?: string;
+      recommenderTitle?: string;
+      recommenderCompany?: string;
+      text?: string;
+      date?: string;
+    }>;
+    courses?: Array<{
+      id?: string;
+      name?: string;
+      institution?: string;
+      description?: string;
+      completionDate?: string;
+      certificate?: boolean;
+      url?: string;
+    }>;
   };
 }
 
@@ -91,8 +123,8 @@ interface CVPreviewProps {
 }
 
 const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
-  const { personalInfo, experience, education, skills, languages, projects, certifications, volunteerExperience, publications } = cv.data;
-  
+  const { personalInfo, experience, education, skills, languages, projects, certifications, volunteerExperience, publications, honorsAwards, testScores, recommendations, courses } = cv.data;
+
   const fullName = personalInfo?.fullName || personalInfo?.name || '';
   
   return (
@@ -720,6 +752,288 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
                 }}>
                   <a href={pub.url} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>
                     {pub.url}
+                  </a>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Honors & Awards */}
+      {honorsAwards && honorsAwards.length > 0 && (
+        <div style={{ marginBottom: '0.8rem', pageBreakInside: 'avoid', minHeight: '40px' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: '0.5rem',
+            paddingBottom: '0.3rem',
+            pageBreakAfter: 'avoid',
+            borderBottom: '1px solid #e5e7eb'
+          }}>
+            <h2 style={{
+              fontSize: '1.375rem',
+              fontWeight: '700',
+              color: '#1f2937',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              margin: '0'
+            }}>Honors & Awards</h2>
+          </div>
+          {honorsAwards.map((award, index) => (
+            <div key={index} style={{
+              marginBottom: '0.8rem',
+              padding: '0.8rem',
+              borderLeft: '3px solid #4ade80',
+              background: '#f0fdf4',
+              borderRadius: '0 0.5rem 0.5rem 0',
+              pageBreakInside: 'avoid',
+              minHeight: '60px'
+            }}>
+              <div style={{
+                fontSize: '1.125rem',
+                fontWeight: '600',
+                color: '#1f2937',
+                marginBottom: '0.25rem'
+              }}>{award.title || ''}</div>
+              <div style={{
+                fontSize: '0.875rem',
+                color: '#6b7280',
+                marginBottom: '0.25rem'
+              }}>{award.date || ''}</div>
+              {award.description && (
+                <div style={{
+                  color: '#4b5563',
+                  marginBottom: '0.75rem'
+                }}>{award.description}</div>
+              )}
+              {award.issuer && (
+                <div style={{
+                  fontSize: '0.875rem',
+                  color: '#6b7280',
+                  fontWeight: '500'
+                }}>{award.issuer}</div>
+              )}
+              {award.url && (
+                <div style={{
+                  fontSize: '0.875rem',
+                  color: '#6b7280',
+                  fontStyle: 'italic'
+                }}>
+                  <a href={award.url} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>
+                    {award.url}
+                  </a>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Test Scores */}
+      {testScores && testScores.length > 0 && (
+        <div style={{ marginBottom: '0.8rem', pageBreakInside: 'avoid', minHeight: '40px' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: '0.5rem',
+            paddingBottom: '0.3rem',
+            pageBreakAfter: 'avoid',
+            borderBottom: '1px solid #e5e7eb'
+          }}>
+            <h2 style={{
+              fontSize: '1.375rem',
+              fontWeight: '700',
+              color: '#1f2937',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              margin: '0'
+            }}>Test Scores</h2>
+          </div>
+          {testScores.map((test, index) => (
+            <div key={index} style={{
+              marginBottom: '0.8rem',
+              padding: '0.8rem',
+              borderLeft: '3px solid #f97316',
+              background: '#fff7ed',
+              borderRadius: '0 0.5rem 0.5rem 0',
+              pageBreakInside: 'avoid',
+              minHeight: '60px'
+            }}>
+              <div style={{
+                fontSize: '1.125rem',
+                fontWeight: '600',
+                color: '#1f2937',
+                marginBottom: '0.25rem'
+              }}>{test.testName || ''}</div>
+              <div style={{
+                fontSize: '1rem',
+                fontWeight: '500',
+                color: '#f97316',
+                marginBottom: '0.25rem'
+              }}>{test.score || ''}</div>
+              <div style={{
+                fontSize: '0.875rem',
+                color: '#6b7280',
+                marginBottom: '0.25rem'
+              }}>{test.date || ''}</div>
+              {test.description && (
+                <div style={{
+                  color: '#4b5563',
+                  marginBottom: '0.75rem'
+                }}>{test.description}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Recommendations */}
+      {recommendations && recommendations.length > 0 && (
+        <div style={{ marginBottom: '0.8rem', pageBreakInside: 'avoid', minHeight: '40px' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: '0.5rem',
+            paddingBottom: '0.3rem',
+            pageBreakAfter: 'avoid',
+            borderBottom: '1px solid #e5e7eb'
+          }}>
+            <h2 style={{
+              fontSize: '1.375rem',
+              fontWeight: '700',
+              color: '#1f2937',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              margin: '0'
+            }}>Recommendations</h2>
+          </div>
+          {recommendations.map((rec, index) => (
+            <div key={index} style={{
+              marginBottom: '0.8rem',
+              padding: '0.8rem',
+              borderLeft: '3px solid #3b82f6',
+              background: '#f8fafc',
+              borderRadius: '0 0.5rem 0.5rem 0',
+              pageBreakInside: 'avoid',
+              minHeight: '60px'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: '0.5rem',
+                gap: '1rem'
+              }}>
+                <div>
+                  <div style={{
+                    fontSize: '1.125rem',
+                    fontWeight: '600',
+                    color: '#1f2937',
+                    marginBottom: '0.25rem'
+                  }}>{rec.recommenderName || ''}</div>
+                  <div style={{
+                    fontSize: '1rem',
+                    fontWeight: '500',
+                    color: '#3b82f6',
+                    marginBottom: '0.25rem'
+                  }}>{rec.recommenderTitle || ''} at {rec.recommenderCompany || ''}</div>
+                </div>
+                <div style={{
+                  fontSize: '0.875rem',
+                  color: '#6b7280',
+                  fontWeight: '500'
+                }}>
+                  {rec.date || ''}
+                </div>
+              </div>
+              {rec.text && (
+                <div style={{
+                  color: '#4b5563',
+                  lineHeight: '1.6',
+                  marginTop: '0.3rem',
+                  minHeight: '30px',
+                  paddingTop: '0.3rem',
+                  borderTop: '1px solid #e5e7eb'
+                }}>{rec.text}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Courses */}
+      {courses && courses.length > 0 && (
+        <div style={{ marginBottom: '0.8rem', pageBreakInside: 'avoid', minHeight: '40px' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: '0.5rem',
+            paddingBottom: '0.3rem',
+            pageBreakAfter: 'avoid',
+            borderBottom: '1px solid #e5e7eb'
+          }}>
+            <h2 style={{
+              fontSize: '1.375rem',
+              fontWeight: '700',
+              color: '#1f2937',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              margin: '0'
+            }}>Courses</h2>
+          </div>
+          {courses.map((course, index) => (
+            <div key={index} style={{
+              marginBottom: '0.8rem',
+              padding: '0.8rem',
+              borderLeft: '3px solid #9333ea',
+              background: '#f5f3ff',
+              borderRadius: '0 0.5rem 0.5rem 0',
+              pageBreakInside: 'avoid',
+              minHeight: '60px'
+            }}>
+              <div style={{
+                fontSize: '1.125rem',
+                fontWeight: '600',
+                color: '#1f2937',
+                marginBottom: '0.25rem'
+              }}>{course.name || ''}</div>
+              <div style={{
+                fontSize: '1rem',
+                fontWeight: '500',
+                color: '#9333ea',
+                marginBottom: '0.25rem'
+              }}>{course.institution || ''}</div>
+              <div style={{
+                fontSize: '0.875rem',
+                color: '#6b7280',
+                marginBottom: '0.25rem'
+              }}>{course.completionDate || ''}</div>
+              {course.description && (
+                <div style={{
+                  color: '#4b5563',
+                  marginBottom: '0.75rem'
+                }}>{course.description}</div>
+              )}
+              {course.certificate && (
+                <div style={{
+                  fontSize: '0.875rem',
+                  color: '#6b7280',
+                  fontWeight: '500'
+                }}>Certificate available</div>
+              )}
+              {course.url && (
+                <div style={{
+                  fontSize: '0.875rem',
+                  color: '#6b7280',
+                  fontStyle: 'italic'
+                }}>
+                  <a href={course.url} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>
+                    {course.url}
                   </a>
                 </div>
               )}

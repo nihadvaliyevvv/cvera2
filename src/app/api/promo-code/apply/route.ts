@@ -21,6 +21,8 @@ export async function POST(req: NextRequest) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
     const userId = decoded.userId;
 
+    console.log(`🔍 Applying promo code: "${promoCode}" for user: ${userId}`);
+
     // Validate promo code
     if (!promoCode || typeof promoCode !== 'string') {
       return NextResponse.json({
@@ -28,9 +30,9 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // Find the promo code
-    const foundPromoCode = await prisma.promoCode.findUnique({
-      where: { code: promoCode.toUpperCase() },
+    // First try exact case match, then fallback to uppercase
+    let foundPromoCode = await prisma.promoCode.findUnique({
+      where: { code: promoCode.trim() },
       include: {
         usedBy: {
           where: { userId }
@@ -38,11 +40,26 @@ export async function POST(req: NextRequest) {
       }
     });
 
+    // If not found with exact case, try uppercase for backward compatibility
     if (!foundPromoCode) {
+      foundPromoCode = await prisma.promoCode.findUnique({
+        where: { code: promoCode.trim().toUpperCase() },
+        include: {
+          usedBy: {
+            where: { userId }
+          }
+        }
+      });
+    }
+
+    if (!foundPromoCode) {
+      console.log(`❌ Promo code not found in database: "${promoCode}"`);
       return NextResponse.json({
         message: "Promokod tapılmadı"
       }, { status: 404 });
     }
+
+    console.log(`✅ Found promo code: ${foundPromoCode.code} - ${foundPromoCode.tier}`);
 
     // Check if promo code is active
     if (!foundPromoCode.isActive) {
@@ -83,14 +100,14 @@ export async function POST(req: NextRequest) {
         data: { tier: foundPromoCode.tier }
       });
 
-      // Create subscription
+      // Create subscription with unique providerRef per user
       await tx.subscription.create({
         data: {
           userId,
           tier: foundPromoCode.tier,
           status: 'active',
           provider: 'promo_code',
-          providerRef: `promo_${foundPromoCode.code}`,
+          providerRef: `promo_${foundPromoCode.code}_${userId}_${Date.now()}`, // Make it unique per user
           expiresAt
         }
       });

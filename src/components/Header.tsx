@@ -138,7 +138,7 @@ export default function Header({ showAuthButtons = true, currentPage }: HeaderPr
                   </div>
                   <Link
                     href="/dashboard"
-                    className="block bg-blue-500 hover:bg-blue-400 text-white px-4 py-3 rounded-lg font-medium transition-colors duration-200 text-center"
+                    className="block bg-blue-500 hover:bg-blue-400 text-white font-bold px-4 py-3 rounded-lg transition-colors duration-200 text-center"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Dashboard
@@ -148,7 +148,7 @@ export default function Header({ showAuthButtons = true, currentPage }: HeaderPr
                       handleLogout();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-semibold transition-colors duration-200 text-center"
+                    className="w-full bg-blue-500 text-white px-4 py-3 rounded-lg  transition-colors duration-200 text-center"
                   >
                     Çıxış
                   </button>

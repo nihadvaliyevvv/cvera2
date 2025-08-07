@@ -221,7 +221,7 @@ export default function CVListPage() {
                     LinkedIn Import
                   </Link>
                   <Link
-                    href="/cv/create"
+                    href="/new"
                     className="inline-flex items-center px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 font-medium"
                   >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

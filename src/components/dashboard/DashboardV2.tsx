@@ -171,7 +171,7 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
                 <p className="text-sm font-medium text-blue-700 mb-2">Abunəlik</p>
                 <div className="flex items-center justify-between">
                   <p className="text-2xl font-bold text-blue-900">
-                    {(() => {
+                    {loading || !userLimits ? '...' : (() => {
                       const tier = userLimits?.tier;
                       if (tier === 'Free') return 'Pulsuz';
                       if (tier === 'Medium' || tier === 'Pro') return 'Orta';
@@ -181,7 +181,8 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
                   </p>
                   <button
                     onClick={() => router.push('/pricing')}
-                    className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-white hover:text-blue-600 hover:border-2 hover:border-blue-600 border-2 transition-all duration-200"
+                    disabled={loading}
+                    className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-white hover:text-blue-600 hover:border-2 hover:border-blue-600 border-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Yenilə
                   </button>
@@ -195,22 +196,27 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-blue-700">
-                  {userLimits?.limits.limitType === 'total' ? 'Ümumi Limit' :
-                   userLimits?.limits.limitType === 'daily' ? 'Günlük Limit' :
-                   'Limit'}
+                  {loading || !userLimits ? 'Limit' : (
+                    userLimits?.limits.limitType === 'total' ? 'Ümumi Limit' :
+                    userLimits?.limits.limitType === 'daily' ? 'Günlük Limit' :
+                    'Limit'
+                  )}
                 </p>
                 <p className="text-2xl font-bold text-blue-900">
-                  {userLimits?.limits.limitType === 'total'
-                    ? `${userLimits?.usage.remainingLimit}/${userLimits?.limits.cvCount}`
-                    : userLimits?.limits.limitType === 'daily'
-                      ? `${userLimits?.usage.remainingLimit}/${userLimits?.limits.dailyLimit}`
-                      : '∞'
-                  }
+                  {loading || !userLimits ? '...' : (
+                    userLimits?.limits.limitType === 'total'
+                      ? `${userLimits?.usage.remainingLimit}/${userLimits?.limits.cvCount}`
+                      : userLimits?.limits.limitType === 'daily'
+                        ? `${userLimits?.usage.remainingLimit}/${userLimits?.limits.dailyLimit}`
+                        : '∞'
+                  )}
                 </p>
                 <p className="text-xs text-gray-600 mt-1">
-                  {userLimits?.limits.limitType === 'total' ? '' :
-                   userLimits?.limits.limitType === 'daily' ? 'Bu gün qalan' :
-                   'Limitsiz'}
+                  {loading || !userLimits ? '...' : (
+                    userLimits?.limits.limitType === 'total' ? '' :
+                    userLimits?.limits.limitType === 'daily' ? 'Bu gün qalan' :
+                    'Limitsiz'
+                  )}
                 </p>
               </div>
               <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">

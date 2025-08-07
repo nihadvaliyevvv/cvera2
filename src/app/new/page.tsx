@@ -1,18 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import Link from 'next/link';
 import StandardHeader from '@/components/ui/StandardHeader';
 import Footer from '@/components/Footer';
 
+interface Template {
+  id: string;
+  name: string;
+  tier: string;
+  hasAccess?: boolean;
+}
+
 export default function NewCVPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [formData, setFormData] = useState({
     title: '',
-    templateId: 'professional', // Bazada mövcud olan template
+    templateId: '', // Will be set when templates load
     personalInfo: {
       firstName: '',
       lastName: '',
@@ -23,7 +31,95 @@ export default function NewCVPage() {
     }
   });
   const [loading, setLoading] = useState(false);
+  const [templatesLoading, setTemplatesLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Load templates and LinkedIn data on component mount
+  useEffect(() => {
+    const loadInitialData = async () => {
+      await Promise.all([
+        loadTemplates(),
+        loadLinkedInData()
+      ]);
+    };
+
+    if (user) {
+      loadInitialData();
+    }
+  }, [user]);
+
+  // Load available templates
+  const loadTemplates = async () => {
+    try {
+      setTemplatesLoading(true);
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch('/api/templates', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTemplates(data.templates);
+
+        // Set default template to first accessible one
+        const accessibleTemplate = data.templates.find((t: Template) => t.hasAccess !== false);
+        if (accessibleTemplate && !formData.templateId) {
+          setFormData(prev => ({
+            ...prev,
+            templateId: accessibleTemplate.id
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Templates yüklənərkən xəta:', error);
+    } finally {
+      setTemplatesLoading(false);
+    }
+  };
+
+  // Load LinkedIn data if available
+  const loadLinkedInData = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch('/api/user/linkedin-data', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const linkedinData = await response.json();
+        console.log('📥 LinkedIn məlumatları yükləndi:', linkedinData);
+
+        // Auto-populate form with LinkedIn data
+        if (linkedinData.profile) {
+          const profile = linkedinData.profile;
+
+          setFormData(prev => ({
+            ...prev,
+            personalInfo: {
+              ...prev.personalInfo,
+              firstName: profile.firstName || prev.personalInfo.firstName,
+              lastName: profile.lastName || prev.personalInfo.lastName,
+              email: profile.emailAddress || prev.personalInfo.email,
+              summary: profile.summary || prev.personalInfo.summary,
+              // LinkedIn phone and address might be in different format
+              phone: profile.phoneNumbers?.[0]?.number || prev.personalInfo.phone,
+              address: profile.location?.name || prev.personalInfo.address
+            }
+          }));
+
+          console.log('✅ LinkedIn məlumatları avtomatik dolduruldu');
+        }
+      } else {
+        console.log('LinkedIn məlumatları tapılmadı və ya yüklənmədi');
+      }
+    } catch (error) {
+      console.error('LinkedIn məlumatları yüklənərkən xəta:', error);
+    }
+  };
 
   const handleInputChange = (field: string, value: string) => {
     if (field === 'title' || field === 'templateId') {
@@ -63,6 +159,29 @@ export default function NewCVPage() {
 
       console.log('📤 Göndərilən məlumatlar:', formData);
 
+      // Properly structure the CV data with fullName field
+      const cvData = {
+        personalInfo: {
+          fullName: `${formData.personalInfo.firstName} ${formData.personalInfo.lastName}`.trim() || 'Adsız İstifadəçi',
+          firstName: formData.personalInfo.firstName,
+          lastName: formData.personalInfo.lastName,
+          email: formData.personalInfo.email,
+          phone: formData.personalInfo.phone,
+          website: '',
+          linkedin: '',
+          summary: formData.personalInfo.summary
+        },
+        experience: [],
+        education: [],
+        skills: [],
+        languages: [],
+        projects: [],
+        certifications: [],
+        volunteerExperience: []
+      };
+
+      console.log('📤 Strukturlanmış CV məlumatları:', cvData);
+
       const response = await fetch('/api/cv', {
         method: 'POST',
         headers: {
@@ -72,13 +191,7 @@ export default function NewCVPage() {
         body: JSON.stringify({
           title: formData.title,
           templateId: formData.templateId,
-          cv_data: {
-            personalInfo: formData.personalInfo,
-            experience: [],
-            education: [],
-            skills: [],
-            languages: []
-          }
+          cv_data: cvData
         })
       });
 
@@ -166,12 +279,17 @@ export default function NewCVPage() {
                   value={formData.templateId}
                   onChange={(e) => handleInputChange('templateId', e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all duration-200"
-                  disabled={loading}
+                  disabled={loading || templatesLoading}
                 >
-                  <option value="professional">Professional (Pulsuz)</option>
-                  <option value="modern">Modern Creative (Orta)</option>
-                  <option value="elegant">Elegant Professional (Premium)</option>
-                  <option value="executive">Executive Elite (Premium)</option>
+                  {templatesLoading ? (
+                    <option value="">Yüklənir...</option>
+                  ) : (
+                    templates.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.name} ({template.tier})
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
 
