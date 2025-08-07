@@ -45,6 +45,8 @@ export default function PromoCodeSection({ userTier, onTierUpdate }: PromoCodeSe
   };
 
   const applyPromoCode = async () => {
+    console.log('🔍 Starting promo code application process');
+
     if (!user) {
       setPromoMessage('Promokod istifadə etmək üçün giriş etməlisiniz');
       return;
@@ -61,8 +63,10 @@ export default function PromoCodeSection({ userTier, onTierUpdate }: PromoCodeSe
 
     try {
       const token = localStorage.getItem('accessToken');
+      console.log('🔑 Token exists:', !!token);
 
       // First validate the promo code
+      console.log('🔍 Validating promo code:', promoCode.trim());
       const validateResponse = await fetch('/api/promo-code/validate', {
         method: 'POST',
         headers: {
@@ -73,22 +77,27 @@ export default function PromoCodeSection({ userTier, onTierUpdate }: PromoCodeSe
       });
 
       const validateData = await validateResponse.json();
+      console.log('✅ Validation response:', validateData);
 
       // Check validation result
-      if (!validateData.valid) {
+      if (!validateData.success) {
+        console.log('❌ Validation failed:', validateData.message);
         setPromoMessage(validateData.message || 'Promokod etibarsızdır');
         setPromoLoading(false);
         return;
       }
 
       // Additional validation for tier level
-      if (validateData.tier && !canUsePromoTier(validateData.tier)) {
-        setPromoMessage(`${validateData.tier} promokodu istifadə edə bilməzsiniz. Siz artıq ${userTier} və ya daha yüksək paketdəsiniz.`);
+      if (validateData.promoCode?.tier && !canUsePromoTier(validateData.promoCode.tier)) {
+        const errorMsg = `${validateData.promoCode.tier} promokodu istifadə edə bilməzsiniz. Siz artıq ${userTier} və ya daha yüksək paketdəsiniz.`;
+        console.log('❌ Tier validation failed:', errorMsg);
+        setPromoMessage(errorMsg);
         setPromoLoading(false);
         return;
       }
 
       // If validation passed, apply the promo code
+      console.log('🚀 Applying promo code...');
       const applyResponse = await fetch('/api/promo-code/apply', {
         method: 'POST',
         headers: {
@@ -99,13 +108,16 @@ export default function PromoCodeSection({ userTier, onTierUpdate }: PromoCodeSe
       });
 
       const applyData = await applyResponse.json();
+      console.log('📦 Apply response:', applyData);
 
-      if (applyResponse.ok) {
+      if (applyResponse.ok && applyData.success) {
+        console.log('✅ Promo code applied successfully!');
         setPromoMessage(applyData.message);
         setPromoCode('');
         setPromoValidation(null);
 
         // Trigger tier update notification for other components
+        console.log('🔄 Triggering tier update...');
         localStorage.setItem('tierUpdated', Date.now().toString());
         window.dispatchEvent(new StorageEvent('storage', {
           key: 'tierUpdated',
@@ -113,15 +125,20 @@ export default function PromoCodeSection({ userTier, onTierUpdate }: PromoCodeSe
         }));
 
         // Update the tier in parent component
+        console.log('🔄 Calling onTierUpdate callback...');
         onTierUpdate();
+
         // Redirect to dashboard after successful application
+        console.log('🏠 Redirecting to dashboard in 2 seconds...');
         setTimeout(() => {
           router.push('/dashboard');
         }, 2000);
       } else {
+        console.log('❌ Apply failed:', applyData.message);
         setPromoMessage(applyData.message || 'Promokod tətbiq edilərkən xəta baş verdi');
       }
     } catch (error) {
+      console.error('💥 Promo code error:', error);
       setPromoMessage('Promokod tətbiq edilərkən xəta baş verdi');
     } finally {
       setPromoLoading(false);

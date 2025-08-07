@@ -50,6 +50,37 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
+    // Get current tier features for warning message
+    const currentSubscription = user.subscriptions[0];
+    const currentTier = currentSubscription.tier;
+
+    // Define features that will be lost
+    const tierFeatures = {
+      'Premium': [
+        '📄 Limitsiz CV yaratma',
+        '🎨 Bütün premium şablonlara giriş',
+        '🤖 AI-powered CV təkmilləşdirmə',
+        '📊 CV analitikası və təkliflər',
+        '⚡ Prioritet dəstək',
+        '💼 LinkedIn məlumatlarını avtomatik import'
+      ],
+      'Pro': [
+        '📄 Limitsiz CV yaratma',
+        '🎨 Pro şablonlara giriş',
+        '🤖 AI köməkçisi',
+        '📊 Ətraflı analitika',
+        '⚡ Sürətli dəstək'
+      ],
+      'Medium': [
+        '📄 Daha çox CV yaratma imkanı',
+        '🎨 Medium şablonlara giriş',
+        '🤖 Əsas AI xüsusiyyətləri',
+        '📊 Əsas analitika'
+      ]
+    };
+
+    const lostFeatures = tierFeatures[currentTier as keyof typeof tierFeatures] || [];
+
     await prisma.$transaction(async (tx) => {
       // Cancel all active subscriptions
       await tx.subscription.updateMany({
@@ -73,7 +104,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       message: "Abunəliyiniz uğurla ləğv edildi. İndi pulsuz paketi istifadə edirsiniz.",
       success: true,
-      newTier: 'Free'
+      newTier: 'Free',
+      previousTier: currentTier,
+      lostFeatures: lostFeatures,
+      freeFeatures: [
+        '📄 2 CV yaratma imkanı',
+        '🎨 Əsas şablonlara giriş',
+        '📝 Əsas CV redaktəsi',
+        '💾 CV-ləri yaddaşda saxlama'
+      ],
+      warningMessage: `${currentTier} paketindəki xüsusiyyətlər artıq əlçatan olmayacaq. Pulsuz paketə keçid edildi.`
     });
 
   } catch (error) {

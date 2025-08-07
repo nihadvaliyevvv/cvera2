@@ -1,21 +1,35 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
-  // Debug environment variables in production
+export async function GET(req: NextRequest) {
+  // Only allow in development or with admin access
+  const isDev = process.env.NODE_ENV === 'development';
+  const adminKey = req.headers.get('x-admin-key');
+
+  if (!isDev && adminKey !== 'debug-cvera-2024') {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+  }
+
   const envCheck = {
     NODE_ENV: process.env.NODE_ENV,
-    hasEpointPublicKey: !!process.env.EPOINT_PUBLIC_KEY,
-    hasEpointPrivateKey: !!process.env.EPOINT_PRIVATE_KEY,
-    epointPublicKeyLength: process.env.EPOINT_PUBLIC_KEY?.length || 0,
-    epointPrivateKeyLength: process.env.EPOINT_PRIVATE_KEY?.length || 0,
-    epointDevelopmentMode: process.env.EPOINT_DEVELOPMENT_MODE,
-    hasNextPublicAppUrl: !!process.env.NEXT_PUBLIC_APP_URL,
-    nextPublicAppUrl: process.env.NEXT_PUBLIC_APP_URL,
+    JWT_SECRET: process.env.JWT_SECRET ? '✅ Set' : '❌ Missing',
+    DATABASE_URL: process.env.DATABASE_URL ? '✅ Set' : '❌ Missing',
+    timestamp: new Date().toISOString(),
+    production_mode: process.env.NODE_ENV === 'production',
+    promo_system_status: 'Checking...'
   };
 
-  return NextResponse.json({
-    message: 'Environment Variables Check',
-    environment: envCheck,
-    timestamp: new Date().toISOString()
-  });
+  try {
+    // Test database connection
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+
+    const promoCount = await prisma.promoCode.count();
+    envCheck.promo_system_status = `✅ ${promoCount} promo codes in database`;
+
+    await prisma.$disconnect();
+  } catch (error) {
+    envCheck.promo_system_status = `❌ Database error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+  }
+
+  return NextResponse.json(envCheck);
 }

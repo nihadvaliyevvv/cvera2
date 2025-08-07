@@ -11,37 +11,86 @@ interface JWTPayload {
 
 export async function POST(req: NextRequest) {
   try {
+    // Add CORS headers for production
+    const headers = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    };
+
     const { promoCode } = await req.json();
 
-    // Get user from token
-    const token = req.headers.get('authorization')?.replace('Bearer ', '') ||
-                  req.cookies.get('auth-token')?.value;
+    // Get user from token with production-safe fallbacks
+    const authHeader = req.headers.get('authorization');
+    const cookieToken = req.cookies.get('auth-token')?.value;
+    const token = authHeader?.replace('Bearer ', '') || cookieToken;
+
+    console.log(`🔍 [APPLY] Auth check - Header: ${!!authHeader}, Cookie: ${!!cookieToken}`);
 
     if (!token) {
+      console.log('❌ [APPLY] No token provided for promo application');
       return NextResponse.json({
         success: false,
         message: "Giriş tələb olunur"
-      }, { status: 401 });
+      }, { status: 401, headers });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JWTPayload;
+    // Production-safe JWT verification
+    let decoded: JWTPayload;
+    try {
+      if (!process.env.JWT_SECRET) {
+        console.error('❌ [APPLY] JWT_SECRET not found in environment');
+        throw new Error('Server configuration error');
+      }
+      decoded = jwt.verify(token, process.env.JWT_SECRET) as JWTPayload;
+      console.log(`✅ [APPLY] JWT verification successful for user: ${decoded.userId}`);
+    } catch (jwtError) {
+      console.error('❌ [APPLY] JWT verification failed:', jwtError);
+      return NextResponse.json({
+        success: false,
+        message: "Token etibarsızdır"
+      }, { status: 401, headers });
+    }
+
     const userId = decoded.userId;
 
-    console.log(`🔍 Applying promo code: "${promoCode}" for user: ${userId}`);
+    console.log(`🚀 [APPLY] Starting application for promo code: "${promoCode}" | User: ${userId}`);
 
     // Validate promo code input
     if (!promoCode || typeof promoCode !== 'string') {
+      console.log('❌ [APPLY] Invalid promo code input');
       return NextResponse.json({
         success: false,
         message: "Promokod daxil edin"
-      }, { status: 400 });
+      }, { status: 400, headers });
     }
 
-    // Start database transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // Find promo code (try exact case first, then uppercase)
-      let foundPromoCode = await tx.promoCode.findUnique({
-        where: { code: promoCode.trim() },
+    // Start database transaction with timeout protection
+    const transactionTimeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Transaction timeout')), 15000)
+    );
+
+    // Define the transaction result type
+    interface TransactionResult {
+      subscription: any;
+      promoCode: any;
+      expiresAt: Date;
+    }
+
+    const transactionPromise = prisma.$transaction(async (tx) => {
+      console.log(`🔍 [APPLY] Starting database transaction for: ${promoCode}`);
+
+      // Find promo code with OR query for case-insensitive search
+      const foundPromoCode = await tx.promoCode.findFirst({
+        where: {
+          OR: [
+            { code: promoCode.trim() },
+            { code: promoCode.trim().toUpperCase() }
+          ]
+        },
         include: {
           usedBy: {
             where: { userId }
@@ -49,51 +98,49 @@ export async function POST(req: NextRequest) {
         }
       });
 
-      // If not found with exact case, try uppercase for backward compatibility
       if (!foundPromoCode) {
-        foundPromoCode = await tx.promoCode.findUnique({
-          where: { code: promoCode.trim().toUpperCase() },
-          include: {
-            usedBy: {
-              where: { userId }
-            }
-          }
-        });
-      }
-
-      if (!foundPromoCode) {
+        console.log(`❌ [APPLY] Promo code not found: "${promoCode}"`);
         throw new Error("Promokod tapılmadı");
       }
 
+      console.log(`✅ [APPLY] Found promo code: ${foundPromoCode.code} | Tier: ${foundPromoCode.tier}`);
+
       // Check if promo code is active
       if (!foundPromoCode.isActive) {
+        console.log(`❌ [APPLY] Promo code inactive: ${foundPromoCode.code}`);
         throw new Error("Bu promokod artıq aktiv deyil");
       }
 
       // Check if user already used this promo code
       if (foundPromoCode.usedBy.length > 0) {
+        console.log(`❌ [APPLY] User already used promo: ${foundPromoCode.code}`);
         throw new Error("Bu promokodu artıq istifadə etmisiniz");
       }
 
       // Check usage limit
       if (foundPromoCode.usageLimit && foundPromoCode.usedCount >= foundPromoCode.usageLimit) {
+        console.log(`❌ [APPLY] Usage limit exceeded: ${foundPromoCode.usedCount}/${foundPromoCode.usageLimit}`);
         throw new Error("Bu promokoddun istifadə limiti bitib");
       }
 
       // Check expiration date
       if (foundPromoCode.expiresAt && foundPromoCode.expiresAt < new Date()) {
+        console.log(`❌ [APPLY] Promo code expired: ${foundPromoCode.expiresAt}`);
         throw new Error("Bu promokoddun vaxtı keçib");
       }
 
       // Get user info
       const user = await tx.user.findUnique({
         where: { id: userId },
-        include: { subscriptions: true } // Fixed: use 'subscriptions' not 'subscription'
+        include: { subscriptions: true }
       });
 
       if (!user) {
+        console.log(`❌ [APPLY] User not found: ${userId}`);
         throw new Error("İstifadəçi tapılmadı");
       }
+
+      console.log(`👤 [APPLY] Found user: ${user.email} | Current tier: ${user.tier}`);
 
       // Calculate subscription expiration (1 month from now for premium promo codes)
       let expiresAt;
@@ -102,22 +149,23 @@ export async function POST(req: NextRequest) {
       if (premiumTiers.includes(foundPromoCode.tier)) {
         const now = new Date();
         expiresAt = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
-        console.log(`🗓️ Setting 1 month expiration for ${foundPromoCode.tier} promo: ${expiresAt.toISOString()}`);
+        console.log(`🗓️ [APPLY] Setting 1 month expiration for ${foundPromoCode.tier} promo: ${expiresAt.toISOString()}`);
       } else {
         // For Free tier, set expiration to year 2099 (effectively unlimited)
         expiresAt = new Date('2099-12-31T23:59:59.999Z');
-        console.log(`🗓️ Setting far future expiration for ${foundPromoCode.tier} promo: ${expiresAt.toISOString()}`);
+        console.log(`🗓️ [APPLY] Setting far future expiration for ${foundPromoCode.tier} promo: ${expiresAt.toISOString()}`);
       }
 
       // Delete existing subscriptions if exist (user can have multiple subscriptions)
       if (user.subscriptions && user.subscriptions.length > 0) {
+        console.log(`🗑️ [APPLY] Deleting ${user.subscriptions.length} existing subscriptions for user ${userId}`);
         await tx.subscription.deleteMany({
           where: { userId: userId }
         });
-        console.log(`🗑️ Deleted existing subscriptions for user ${userId}`);
       }
 
       // Update user tier to match the promo code tier
+      console.log(`🔄 [APPLY] Updating user tier from ${user.tier} to ${foundPromoCode.tier}`);
       await tx.user.update({
         where: { id: userId },
         data: { tier: foundPromoCode.tier }
@@ -128,8 +176,8 @@ export async function POST(req: NextRequest) {
         userId: userId,
         tier: foundPromoCode.tier,
         status: 'active',
-        provider: 'promocode', // Use provider field for promo codes
-        providerRef: `promo_${foundPromoCode.code}_${Date.now()}`, // Store promo reference
+        provider: 'promocode',
+        providerRef: `promo_${foundPromoCode.code}_${Date.now()}`,
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -139,11 +187,13 @@ export async function POST(req: NextRequest) {
         subscriptionData.expiresAt = expiresAt;
       }
 
+      console.log(`📦 [APPLY] Creating subscription:`, subscriptionData);
       const subscription = await tx.subscription.create({
         data: subscriptionData
       });
 
       // Mark promo code as used
+      console.log(`✅ [APPLY] Marking promo code as used`);
       await tx.promoCodeUsage.create({
         data: {
           promoCodeId: foundPromoCode.id,
@@ -160,15 +210,34 @@ export async function POST(req: NextRequest) {
         }
       });
 
-      console.log(`✅ Successfully applied promo code ${foundPromoCode.code} for user ${userId}`);
-      console.log(`📦 Created ${foundPromoCode.tier} subscription until ${expiresAt ? expiresAt.toISOString() : 'unlimited'}`);
+      console.log(`🎉 [APPLY] Successfully applied promo code ${foundPromoCode.code} for user ${userId}`);
+      console.log(`📦 [APPLY] Created ${foundPromoCode.tier} subscription until ${expiresAt ? expiresAt.toISOString() : 'unlimited'}`);
 
       return {
         subscription,
         promoCode: foundPromoCode,
         expiresAt
-      };
+      } as TransactionResult;
+    }, {
+      timeout: 15000, // 15 second timeout for the transaction
+      maxWait: 10000, // 10 second max wait for connection
     });
+
+    let result: TransactionResult;
+    try {
+      result = await Promise.race([transactionPromise, transactionTimeout]) as TransactionResult;
+    } catch (error) {
+      console.error('❌ [APPLY] Transaction error:', error);
+      if (error instanceof Error && error.message.includes('timeout')) {
+        return NextResponse.json({
+          success: false,
+          message: "Prosedur çox uzun çəkir, təkrar cəhd edin"
+        }, { status: 408, headers });
+      }
+      throw error; // Re-throw non-timeout errors
+    }
+
+    console.log(`✅ [APPLY] Transaction completed successfully`);
 
     return NextResponse.json({
       success: true,
@@ -179,16 +248,32 @@ export async function POST(req: NextRequest) {
         expiresAt: result.subscription.expiresAt,
         daysRemaining: result.expiresAt ? Math.ceil((result.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null
       }
-    });
+    }, { headers });
 
   } catch (error) {
-    console.error('❌ Promo code application error:', error);
+    console.error('❌ [APPLY] Promo code application error:', error);
 
     return NextResponse.json({
       success: false,
       message: error instanceof Error ? error.message : 'Server xətası'
     }, { status: 500 });
   } finally {
-    await prisma.$disconnect();
+    try {
+      await prisma.$disconnect();
+    } catch (disconnectError) {
+      console.warn('⚠️ [APPLY] Prisma disconnect warning:', disconnectError);
+    }
   }
+}
+
+// Handle OPTIONS request for CORS preflight
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }
