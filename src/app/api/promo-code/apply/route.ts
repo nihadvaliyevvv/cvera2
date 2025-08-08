@@ -258,12 +258,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `${result.promoCode.tier} abunəliyi uğurla aktivləşdirildi!`,
+      message: `${(result as TransactionResult).promoCode.tier} abunəliyi uğurla aktivləşdirildi!`,
       subscription: {
-        tier: result.subscription.tier,
-        status: result.subscription.status,
-        expiresAt: result.subscription.expiresAt,
-        daysRemaining: result.expiresAt ? Math.ceil((result.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null
+        tier: (result as TransactionResult).subscription.tier,
+        status: (result as TransactionResult).subscription.status,
+        expiresAt: (result as TransactionResult).subscription.expiresAt,
+        daysRemaining: (result as TransactionResult).expiresAt ? Math.ceil(((result as TransactionResult).expiresAt!.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null
       }
     }, { headers });
 

@@ -79,8 +79,12 @@ export interface LinkedInImportResult {
 }
 
 export class LinkedInImportService {
-  // Remove hardcoded API key and use database instead
+  // ScrapingDog API for main profile data
   private readonly SCRAPINGDOG_URL = 'https://api.scrapingdog.com/linkedin';
+
+  // RapidAPI for skills only (as backup/enhancement)
+  private readonly RAPIDAPI_URL = 'https://linkedin-data-api.p.rapidapi.com';
+  private readonly RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || 'your-rapidapi-key';
 
   /**
    * Get active ScrapingDog API key from database

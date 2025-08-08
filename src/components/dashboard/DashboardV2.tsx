@@ -109,7 +109,7 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
               limits: {
                 cvCount: 2,
                 templatesAccess: ['Basic'],
-                dailyLimit: null,
+                dailyLimit: 0,
                 aiFeatures: false,
                 limitType: 'total'
               },
@@ -137,7 +137,7 @@ export default function DashboardV2({ user, onEditCV }: DashboardV2Props) {
         limits: {
           cvCount: 2,
           templatesAccess: ['Basic'],
-          dailyLimit: null,
+          dailyLimit: 0,
           aiFeatures: false,
           limitType: 'total'
         },
