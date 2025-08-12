@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getLabel } from '@/lib/cvLanguage';
 
 interface Certification {
@@ -21,9 +21,37 @@ interface CertificationsSectionProps {
 export default function CertificationsSection({ data, onChange }: CertificationsSectionProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  // Create a more robust unique ID generator
+  const generateUniqueId = () => {
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 15);
+    const counterStr = Math.random().toString(36).substring(2, 9);
+    return `cert-${timestamp}-${randomStr}-${counterStr}`;
+  };
+
+  // Fix duplicate IDs in existing data
+  useEffect(() => {
+    const seenIds = new Set();
+    let hasDuplicates = false;
+
+    const fixedData = data.map(cert => {
+      if (seenIds.has(cert.id)) {
+        hasDuplicates = true;
+        return { ...cert, id: generateUniqueId() };
+      }
+      seenIds.add(cert.id);
+      return cert;
+    });
+
+    if (hasDuplicates) {
+      console.log('🔧 Fixed duplicate certification IDs');
+      onChange(fixedData);
+    }
+  }, [data, onChange]);
+
   const addCertification = () => {
     const newCertification: Certification = {
-      id: `cert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${data.length}`,
+      id: generateUniqueId(),
       name: '',
       issuer: '',
       date: '',
@@ -100,7 +128,7 @@ export default function CertificationsSection({ data, onChange }: Certifications
       ) : (
         <div className="space-y-4">
           {data.map((certification, index) => (
-            <div key={certification.id} className="bg-white border border-gray-200 rounded-lg p-4">
+            <div key={`${certification.id}-${index}`} className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">

@@ -101,9 +101,11 @@ export async function PUT(
       data: {
         title: title || existingCV.title,
         cv_data: cv_data ? {
-          // Merge existing CV data with new data to preserve additional sections
+          // Merge existing CV data with new data to preserve all sections
           ...existingCV.cv_data as any,
           ...cv_data,
+          // Specially handle custom sections to ensure they're preserved
+          customSections: cv_data.customSections || (existingCV.cv_data as any)?.customSections || [],
           // Specially handle additional sections to ensure they're preserved
           additionalSections: {
             ...(existingCV.cv_data as any)?.additionalSections,
@@ -118,6 +120,7 @@ export async function PUT(
     console.log('✅ CV updated successfully:', {
       cvId: id,
       title: updatedCV.title,
+      hasCustomSections: !!(updatedCV.cv_data as any)?.customSections && (updatedCV.cv_data as any).customSections.length > 0,
       hasAdditionalSections: !!(updatedCV.cv_data as any)?.additionalSections && Object.keys((updatedCV.cv_data as any).additionalSections).length > 0
     });
 

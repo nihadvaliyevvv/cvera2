@@ -25,6 +25,14 @@ export default function CustomSectionsSection({ data, onChange, userTier = 'Free
   const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
 
+  // Debug məlumatları üçün console.log əlavə edək
+  console.log('🔍 CustomSectionsSection Debug:', {
+    componentName: 'CustomSectionsSection.tsx',
+    dataLength: data.length,
+    data: data,
+    userTier
+  });
+
   const addSection = () => {
     const newSection: CustomSection = {
       id: `custom-section-${Date.now()}`,
@@ -32,7 +40,15 @@ export default function CustomSectionsSection({ data, onChange, userTier = 'Free
       description: '',
       items: []
     };
-    onChange([...data, newSection]);
+    
+    const updatedData = [...data, newSection];
+    
+    console.log('➕ CustomSectionsSection: Yeni bölmə əlavə edildi:', {
+      newSectionId: newSection.id,
+      totalSections: updatedData.length
+    });
+    
+    onChange(updatedData);
     setExpandedSectionId(newSection.id);
   };
 
@@ -40,6 +56,14 @@ export default function CustomSectionsSection({ data, onChange, userTier = 'Free
     const updated = data.map(section =>
       section.id === sectionId ? { ...section, [field]: value } : section
     );
+    
+    console.log('✏️ CustomSectionsSection: Bölmə yeniləndi:', {
+      sectionId,
+      field,
+      value,
+      totalSections: updated.length
+    });
+    
     onChange(updated);
   };
 
@@ -74,6 +98,17 @@ export default function CustomSectionsSection({ data, onChange, userTier = 'Free
           }
         : section
     );
+
+    // Debug: Item update logging
+    console.log('🔧 CustomSectionsSection: Element yeniləndi:', {
+      sectionId,
+      itemId,
+      field,
+      value,
+      totalSections: updated.length,
+      updatedSection: updated.find(s => s.id === sectionId)
+    });
+
     onChange(updated);
   };
 
@@ -243,7 +278,7 @@ export default function CustomSectionsSection({ data, onChange, userTier = 'Free
                         onClick={() => addItemToSection(section.id)}
                         className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
                       >
-                        + Element Əlavə Et
+                        + Element Əlavə Edin
                       </button>
                     </div>
 

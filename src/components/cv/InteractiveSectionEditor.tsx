@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 interface SectionStyle {
   width: number;
@@ -76,41 +75,120 @@ export default function InteractiveSectionEditor({
 }: InteractiveSectionEditorProps) {
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [draggedSection, setDraggedSection] = useState<string | null>(null);
+  const [draggedOverIndex, setDraggedOverIndex] = useState<number | null>(null);
   const [isResizing, setIsResizing] = useState<{
     sectionId: string;
     handle: 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w';
   } | null>(null);
   const [showStylePanel, setShowStylePanel] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const resizeStartRef = useRef<{
-    mouseX: number;
-    mouseY: number;
-    width: number;
-    height: number;
-  } | null>(null);
+
+  // Debug log
+  useEffect(() => {
+    console.log('InteractiveSectionEditor sections:', sections);
+  }, [sections]);
 
   // Snap to grid utility
   const snapToGrid = useCallback((value: number) => {
     return Math.round(value / gridSize) * gridSize;
   }, [gridSize]);
 
-  // Handle drag end for reordering sections
-  const handleDragEnd = useCallback((result: any) => {
-    if (!result.destination) return;
+  // Move section up
+  const moveSectionUp = useCallback((sectionId: string) => {
+    const currentIndex = sections.findIndex(s => s.id === sectionId);
+    if (currentIndex > 0) {
+      const newSections = [...sections];
+      [newSections[currentIndex], newSections[currentIndex - 1]] =
+      [newSections[currentIndex - 1], newSections[currentIndex]];
 
-    const reorderedSections = Array.from(sections);
-    const [removed] = reorderedSections.splice(result.source.index, 1);
-    reorderedSections.splice(result.destination.index, 0, removed);
+      // Update order property
+      const updatedSections = newSections.map((section, index) => ({
+        ...section,
+        order: index
+      }));
+
+      console.log('Moving section up:', sectionId, 'New order:', updatedSections.map(s => s.title));
+      onSectionsChange(updatedSections);
+    }
+  }, [sections, onSectionsChange]);
+
+  // Move section down
+  const moveSectionDown = useCallback((sectionId: string) => {
+    const currentIndex = sections.findIndex(s => s.id === sectionId);
+    if (currentIndex < sections.length - 1) {
+      const newSections = [...sections];
+      [newSections[currentIndex], newSections[currentIndex + 1]] =
+      [newSections[currentIndex + 1], newSections[currentIndex]];
+
+      // Update order property
+      const updatedSections = newSections.map((section, index) => ({
+        ...section,
+        order: index
+      }));
+
+      console.log('Moving section down:', sectionId, 'New order:', updatedSections.map(s => s.title));
+      onSectionsChange(updatedSections);
+    }
+  }, [sections, onSectionsChange]);
+
+  // Handle native drag start
+  const handleDragStart = useCallback((e: React.DragEvent, sectionId: string) => {
+    console.log('Drag started for section:', sectionId);
+    setIsDragging(true);
+    setDraggedSection(sectionId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', sectionId);
+  }, []);
+
+  // Handle drag over
+  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDraggedOverIndex(index);
+  }, []);
+
+  // Handle drag leave
+  const handleDragLeave = useCallback(() => {
+    setDraggedOverIndex(null);
+  }, []);
+
+  // Handle drop
+  const handleDrop = useCallback((e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    const sectionId = e.dataTransfer.getData('text/plain');
+
+    if (!sectionId || !draggedSection) return;
+
+    console.log('Drop event:', { sectionId, targetIndex, draggedSection });
+
+    const sourceIndex = sections.findIndex(s => s.id === sectionId);
+    if (sourceIndex === -1 || sourceIndex === targetIndex) return;
+
+    const newSections = [...sections];
+    const [removed] = newSections.splice(sourceIndex, 1);
+    newSections.splice(targetIndex, 0, removed);
 
     // Update order property
-    const updatedSections = reorderedSections.map((section, index) => ({
+    const updatedSections = newSections.map((section, index) => ({
       ...section,
       order: index
     }));
 
+    console.log('Reordered sections:', updatedSections.map(s => ({ id: s.id, title: s.title, order: s.order })));
     onSectionsChange(updatedSections);
+
     setIsDragging(false);
-  }, [sections, onSectionsChange]);
+    setDraggedSection(null);
+    setDraggedOverIndex(null);
+  }, [sections, onSectionsChange, draggedSection]);
+
+  // Handle drag end
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false);
+    setDraggedSection(null);
+    setDraggedOverIndex(null);
+  }, []);
 
   // Handle resize start
   const handleResizeStart = useCallback((
@@ -554,9 +632,9 @@ export default function InteractiveSectionEditor({
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-4 bg-white rounded-lg shadow-sm border border-gray-200 p-3">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-gray-900">Interactive Section Editor</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Bölmə Redaktoru</h2>
           <span className="text-sm text-gray-500">
-            {sections.filter(s => s.isVisible).length} of {sections.length} sections visible
+            {sections.length} bölmə mövcuddur
           </span>
         </div>
 
@@ -569,128 +647,135 @@ export default function InteractiveSectionEditor({
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            Style Panel
+            Stil Paneli
           </button>
-
-          <div className="text-xs text-gray-500">
-            Grid: {gridSize}px
-          </div>
         </div>
       </div>
 
       {/* Main editor area */}
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="sections" direction="vertical">
-          {(provided, snapshot) => (
-            <div
-              {...provided.droppableProps}
-              ref={provided.innerRef}
-              className={`space-y-4 min-h-96 ${
-                snapshot.isDraggingOver ? 'bg-blue-50' : ''
-              } transition-colors duration-200`}
-            >
-              {sections.map((section, index) => (
-                <Draggable
-                  key={section.id}
-                  draggableId={section.id}
-                  index={index}
-                  isDragDisabled={!!isResizing}
-                >
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      className={`relative group transition-all duration-200 ${
-                        snapshot.isDragging ? 'z-50 rotate-1 scale-105' : ''
-                      } ${!section.isVisible ? 'opacity-50' : ''}`}
-                      style={{
-                        ...provided.draggableProps.style,
-                        width: `${section.style.width}px`,
-                        height: `${section.style.height}px`
-                      }}
-                      onClick={() => {
-                        setSelectedSection(section.id);
-                        setShowStylePanel(true);
-                      }}
-                    >
-                      {/* Section content */}
-                      <div
-                        className="w-full h-full relative overflow-hidden transition-all duration-200 hover:shadow-lg"
-                        style={{
-                          backgroundColor: section.style.backgroundColor,
-                          color: section.style.textColor,
-                          fontSize: `${section.style.fontSize}px`,
-                          fontFamily: section.style.fontFamily,
-                          fontWeight: section.style.fontWeight,
-                          lineHeight: section.style.lineHeight,
-                          letterSpacing: `${section.style.letterSpacing}px`,
-                          padding: `${section.style.padding}px`,
-                          borderRadius: `${section.style.borderRadius}px`,
-                          borderWidth: `${section.style.borderWidth}px`,
-                          borderColor: section.style.borderColor,
-                          borderStyle: 'solid'
-                        }}
-                      >
-                        {/* Drag handle */}
-                        <div
-                          {...provided.dragHandleProps}
-                          className="absolute top-2 left-2 p-1 bg-gray-800 bg-opacity-75 text-white rounded cursor-move opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                          aria-label={`Drag ${section.title}`}
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-                          </svg>
-                        </div>
+      <div className="space-y-4 min-h-96 p-4 border-2 border-dashed border-gray-300 rounded-lg">
+        <div className="text-sm text-gray-500 text-center py-2">
+          Bölmələrin sırasını dəyişmək üçün düymələrdən istifadə edin
+        </div>
 
-                        {/* Section title and content */}
-                        <div className="h-full flex flex-col">
-                          <h3 className="font-semibold mb-2 text-lg">{section.title}</h3>
-                          <div className="flex-1 overflow-hidden">
-                            {typeof section.content === 'string' ? (
-                              <p className="text-sm leading-relaxed">{section.content}</p>
-                            ) : (
-                              <div className="text-sm leading-relaxed">
-                                {JSON.stringify(section.content, null, 2)}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Visibility indicator */}
-                        {!section.isVisible && (
-                          <div className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded text-xs">
-                            Hidden
-                          </div>
-                        )}
-
-                        {/* Selection indicator */}
-                        {selectedSection === section.id && (
-                          <div className="absolute inset-0 border-2 border-blue-500 rounded pointer-events-none" />
-                        )}
-                      </div>
-
-                      {/* Resize handles */}
-                      {selectedSection === section.id && renderResizeHandles(section.id)}
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
+        {sections.map((section, index) => (
+          <div
+            key={section.id}
+            className={`relative group bg-white border-2 rounded-lg p-4 transition-all duration-200 ${
+              draggedSection === section.id 
+                ? 'opacity-50 scale-95' 
+                : 'hover:shadow-md'
+            } ${
+              draggedOverIndex === index 
+                ? 'border-blue-400 bg-blue-50' 
+                : 'border-gray-200 hover:border-gray-300'
+            } ${!section.isVisible ? 'opacity-50' : ''}`}
+            draggable={!isResizing}
+            onDragStart={(e) => handleDragStart(e, section.id)}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, index)}
+            onDragEnd={handleDragEnd}
+            onClick={() => {
+              setSelectedSection(section.id);
+              setShowStylePanel(true);
+            }}
+          >
+            {/* Move buttons */}
+            <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  moveSectionUp(section.id);
+                }}
+                disabled={index === 0}
+                className={`p-1 rounded text-xs ${
+                  index === 0 
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                    : 'bg-blue-500 hover:bg-blue-600 text-white'
+                }`}
+                title="Yuxarı köçür"
+              >
+                ↑
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  moveSectionDown(section.id);
+                }}
+                disabled={index === sections.length - 1}
+                className={`p-1 rounded text-xs ${
+                  index === sections.length - 1 
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                    : 'bg-blue-500 hover:bg-blue-600 text-white'
+                }`}
+                title="Aşağı köçür"
+              >
+                ↓
+              </button>
             </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+
+            {/* Drag handle */}
+            <div
+              className="absolute top-2 left-2 p-1 bg-gray-200 rounded cursor-move opacity-0 group-hover:opacity-100 transition-opacity"
+              title="Sürükləyib sırasını dəyiş"
+            >
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+              </svg>
+            </div>
+
+            {/* Section content */}
+            <div className="pl-8 pr-16">
+              <h3 className="font-semibold mb-2 text-lg text-gray-900">
+                {index + 1}. {section.title}
+              </h3>
+              <div className="text-sm text-gray-600">
+                <p className="mb-2">Tip: {section.type}</p>
+                <p className="text-xs">
+                  {typeof section.content === 'object' && section.content
+                    ? `${Array.isArray(section.content) ? section.content.length : Object.keys(section.content).length} məlumat`
+                    : 'Məlumat yoxdur'}
+                </p>
+              </div>
+
+              {/* Visual indicator */}
+              <div className="mt-3 flex items-center gap-2">
+                <div className={`w-3 h-3 rounded-full ${section.isVisible ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                <span className="text-xs text-gray-500">
+                  {section.isVisible ? 'Görünür' : 'Gizli'}
+                </span>
+              </div>
+            </div>
+
+            {/* Selection indicator */}
+            {selectedSection === section.id && (
+              <div className="absolute inset-0 border-2 border-purple-500 rounded-lg pointer-events-none bg-purple-50 bg-opacity-20" />
+            )}
+
+            {/* Drop indicator */}
+            {draggedOverIndex === index && draggedSection !== section.id && (
+              <div className="absolute inset-0 border-2 border-blue-500 rounded-lg pointer-events-none bg-blue-100 bg-opacity-50" />
+            )}
+          </div>
+        ))}
+
+        {sections.length === 0 && (
+          <div className="text-center py-8 text-gray-400">
+            <p>Redaktə ediləcək bölmə yoxdur</p>
+          </div>
+        )}
+      </div>
 
       {/* Style panel */}
       {showStylePanel && renderStylePanel()}
 
-      {/* Keyboard shortcuts info */}
+      {/* Instructions */}
       <div className="fixed bottom-4 left-4 bg-white rounded-lg shadow-sm border border-gray-200 p-3 text-xs text-gray-600 max-w-xs">
-        <div className="font-medium mb-1">Keyboard Shortcuts:</div>
-        <div>• Click section to select</div>
-        <div>• Drag handles to resize</div>
-        <div>• Drag icon to reorder</div>
-        <div>• Style panel for fine-tuning</div>
+        <div className="font-medium mb-1">Bölmə sırasını dəyişmək:</div>
+        <div>• ↑↓ düymələrindən istifadə edin</div>
+        <div>• Və ya sürükləyib buraxın</div>
+        <div>• Bölməni seçmək üçün klikləyin</div>
       </div>
     </div>
   );

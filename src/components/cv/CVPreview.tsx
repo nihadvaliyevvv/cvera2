@@ -523,13 +523,6 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                       <p className="text-sm text-gray-600 mb-3 italic">{section.description}</p>
                     )}
 
-                    {/* Debug: Items yoxlama */}
-                    {(!section.items || section.items.length === 0) && (
-                      <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
-                        <p className="text-sm text-yellow-800">⚠️ Bu bölmədə element yoxdur</p>
-                      </div>
-                    )}
-
                     {section.items && section.items.length > 0 && (
                       <div className="space-y-3">
                         {section.items.map((item, itemIndex) => {

@@ -56,13 +56,15 @@ export async function POST(request: NextRequest) {
       updatedCvData = {
         ...updatedCvData,
         ...cvData,
+        // Custom sections-ları qoruyub saxla
+        customSections: cvData.customSections || updatedCvData.customSections || [],
         // Əlavə bölmələri qoruyub saxla
         additionalSections: {
           ...updatedCvData.additionalSections,
           ...cvData.additionalSections
         }
       };
-      console.log('📋 CV data birləşdirildi, əlavə bölmələr qorundu');
+      console.log('📋 CV data birləşdirildi, custom və əlavə bölmələr qorundu');
     }
 
     // Section order-i əlavə et və ya yenilə

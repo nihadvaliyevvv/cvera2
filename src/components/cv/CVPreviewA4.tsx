@@ -53,6 +53,7 @@ interface CVData {
     recommendations?: Array<any>;
     courses?: Array<any>;
     customSections?: Array<any>;
+    additionalSections?: Record<string, any>; // FIXED: Added missing additionalSections property
   };
 }
 
@@ -105,6 +106,12 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
   const hasData = (sectionId: string): boolean => {
     if (sectionId === 'personalInfo') return true;
     if (sectionId === 'summary') return !!cv.data.personalInfo?.summary;
+
+    // Check for additional sections
+    if (sectionId === 'additionalSections') {
+      const additionalSections = cv.data.additionalSections;
+      return !!(additionalSections && Object.keys(additionalSections).length > 0);
+    }
 
     const sectionData = cv.data?.[sectionId as keyof typeof cv.data];
     if (Array.isArray(sectionData)) {
@@ -229,6 +236,47 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
     const isSelected = selectedSection === sectionId;
     const isDragged = draggedSection === sectionId;
     const isDraggedOver = dragOverSection === sectionId;
+    const currentIndex = sections.findIndex(s => s.id === sectionId);
+
+    // Move section up
+    const moveSectionUp = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (currentIndex > 0) {
+        const newSections = [...sections];
+        [newSections[currentIndex], newSections[currentIndex - 1]] =
+        [newSections[currentIndex - 1], newSections[currentIndex]];
+
+        const updatedSections = newSections.map((section, index) => ({
+          ...section,
+          order: index
+        }));
+
+        setSections(updatedSections);
+        if (onSectionOrderChange) {
+          onSectionOrderChange(updatedSections);
+        }
+      }
+    };
+
+    // Move section down
+    const moveSectionDown = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (currentIndex < sections.length - 1) {
+        const newSections = [...sections];
+        [newSections[currentIndex], newSections[currentIndex + 1]] =
+        [newSections[currentIndex + 1], newSections[currentIndex]];
+
+        const updatedSections = newSections.map((section, index) => ({
+          ...section,
+          order: index
+        }));
+
+        setSections(updatedSections);
+        if (onSectionOrderChange) {
+          onSectionOrderChange(updatedSections);
+        }
+      }
+    };
 
     return (
       <div
@@ -239,7 +287,6 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
         onDrop={(e) => handleDrop(e, sectionId)}
         onDragEnd={handleDragEnd}
         onDragLeave={(e) => {
-          // Clear drag over when leaving this section
           if (!e.currentTarget.contains(e.relatedTarget as Node)) {
             setDragOverSection(null);
           }
@@ -250,13 +297,14 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
         }}
         className={`
           ${className}
+          group relative
           transition-all duration-200
           ${enableSectionSelection ? 'cursor-grab active:cursor-grabbing select-none' : ''}
-          ${isSelected ? 'ring-4 ring-blue-400 bg-blue-50' : ''}
+          ${isSelected ? 'ring-2 ring-blue-400 bg-blue-50' : ''}
           ${isDragged ? 'opacity-60 scale-105 z-50' : ''}
-          ${isDraggedOver ? 'ring-4 ring-green-400 bg-green-50 scale-102' : ''}
-          ${enableSectionSelection ? 'hover:ring-2 hover:ring-gray-300' : ''}
-          rounded-lg p-2 m-1 relative
+          ${isDraggedOver ? 'ring-2 ring-green-400 bg-green-50' : ''}
+          ${enableSectionSelection ? 'hover:ring-1 hover:ring-gray-300 hover:bg-gray-50' : ''}
+          rounded-lg p-2 m-1
         `}
         style={{
           userSelect: 'none',
@@ -264,28 +312,62 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           MozUserSelect: 'none'
         }}
       >
-        {/* Enhanced drag indicator */}
+        {/* Hover Controls - Always visible on hover */}
         {enableSectionSelection && (
-          <div className="absolute -left-10 top-2 opacity-0 group-hover:opacity-100 transition-opacity group">
-            <div className="w-8 h-8 bg-gradient-to-b from-gray-600 to-gray-800 text-white rounded flex items-center justify-center text-sm cursor-grab active:cursor-grabbing shadow-lg hover:scale-110 transition-transform">
-              ⋮⋮
+          <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
+            <div className="flex items-center gap-1 bg-white shadow-lg rounded-lg border border-gray-200 p-1">
+              {/* Move Up Button */}
+              <button
+                onClick={moveSectionUp}
+                disabled={currentIndex === 0}
+                className={`w-6 h-6 rounded flex items-center justify-center text-xs transition-colors ${
+                  currentIndex === 0 
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                    : 'bg-blue-500 hover:bg-blue-600 text-white hover:scale-110'
+                }`}
+                title="Yuxarı köçür"
+              >
+                ↑
+              </button>
+
+              {/* Move Down Button */}
+              <button
+                onClick={moveSectionDown}
+                disabled={currentIndex === sections.length - 1}
+                className={`w-6 h-6 rounded flex items-center justify-center text-xs transition-colors ${
+                  currentIndex === sections.length - 1 
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                    : 'bg-blue-500 hover:bg-blue-600 text-white hover:scale-110'
+                }`}
+                title="Aşağı köçür"
+              >
+                ↓
+              </button>
+
+              {/* Drag Handle */}
+              <div
+                className="w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded flex items-center justify-center cursor-grab active:cursor-grabbing hover:scale-110 transition-all"
+                title="Sürükləyib sırasını dəyiş"
+              >
+                <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                </svg>
+              </div>
+
+              {/* Section Number Badge */}
+              <div className="w-6 h-6 bg-green-500 text-white rounded flex items-center justify-center text-xs font-bold">
+                {currentIndex + 1}
+              </div>
             </div>
           </div>
         )}
 
-        {/* Enhanced drop indicator */}
+        {/* Drop indicator */}
         {isDraggedOver && draggedSection !== sectionId && (
-          <div className="absolute inset-0 border-4 border-dashed border-green-400 rounded-lg bg-green-100 bg-opacity-50 flex items-center justify-center pointer-events-none z-20">
-            <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg animate-pulse">
+          <div className="absolute inset-0 border-2 border-dashed border-green-400 rounded-lg bg-green-100 bg-opacity-30 flex items-center justify-center pointer-events-none z-10">
+            <div className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm font-medium shadow-lg animate-pulse">
               🎯 Buraya burax
             </div>
-          </div>
-        )}
-
-        {/* Selection badge */}
-        {isSelected && (
-          <div className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-lg z-30 animate-bounce">
-            ✓
           </div>
         )}
 
@@ -325,7 +407,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
   const templateType = getTemplateType(cv.templateId);
 
   // RESTORE ORIGINAL TEMPLATE RENDERING WITH ENHANCED SCROLL
-  if (templateType === 'basic') {
+  if (templateType === 'basic' || enableSectionSelection) {
     return (
       <div
         className="w-full h-full bg-white overflow-y-auto"
@@ -657,12 +739,6 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                               <p className="text-sm text-gray-600 mb-3 italic">{section.description}</p>
                             )}
 
-                            {/* Debug warning for empty items */}
-                            {(!section.items || section.items.length === 0) && (
-                              <div className="p-3 bg-red-50 border border-red-200 rounded">
-                                <p className="text-sm text-red-800">⚠️ CVPreviewA4: Bu bölmədə element yoxdur!</p>
-                              </div>
-                            )}
 
                             {section.items && section.items.length > 0 && (
                               <div className="space-y-3">
@@ -747,8 +823,83 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                   </SimpleDragOverlay>
                 );
 
-              default:
-                return null;
+              // Əlavə bölmələri ayrıca render et (additionalSections)
+              case 'additionalSections':
+                // additionalSections məlumatlarını yoxla
+                const additionalSections = (cv.data as any).additionalSections;
+                if (!additionalSections || Object.keys(additionalSections).length === 0) return null;
+
+                console.log('🔍 CVPreviewA4 Additional Sections Debug:', {
+                  componentName: 'CVPreviewA4.tsx',
+                  additionalSections: additionalSections,
+                  sectionsCount: Object.keys(additionalSections).length
+                });
+
+                return (
+                  <SimpleDragOverlay key="additionalSections" sectionId="additionalSections" className="mb-8">
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b border-orange-300 pb-1">
+                        📋 Əlavə Bölmələr
+                      </h3>
+
+                      {Object.entries(additionalSections).map(([sectionId, sectionData]: [string, any], index: number) => {
+                        if (!sectionData || sectionData.isVisible === false) return null;
+
+                        console.log('🔍 CVPreviewA4 Additional Section Item:', {
+                          sectionId,
+                          title: sectionData.title,
+                          itemsCount: sectionData.items?.length || 0
+                        });
+
+                        return (
+                          <div key={sectionId} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                            <h4 className="text-md font-semibold text-gray-800 mb-3 border-b border-orange-300 pb-1">
+                              {sectionData.title || `Əlavə Bölmə ${index + 1}`}
+                            </h4>
+
+                            {sectionData.description && (
+                              <p className="text-sm text-gray-600 mb-3 italic">{sectionData.description}</p>
+                            )}
+
+                            {(!sectionData.items || sectionData.items.length === 0) && (
+                              <div className="p-3 bg-orange-100 border border-orange-300 rounded">
+                                <p className="text-sm text-orange-800">⚠️ Bu əlavə bölmədə element yoxdur!</p>
+                              </div>
+                            )}
+
+                            {sectionData.items && sectionData.items.length > 0 && (
+                              <div className="space-y-3">
+                                {sectionData.items.map((item: any, itemIndex: number) => (
+                                  <div key={itemIndex} className="border-l-2 border-orange-500 pl-4 bg-white rounded p-3">
+                                    <div>
+                                      <h5 className="font-medium text-gray-900">{item.title || `Element ${itemIndex + 1}`}</h5>
+                                      {item.description && (
+                                        <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                      )}
+                                      {item.date && (
+                                        <p className="text-xs text-gray-500 mt-1">{item.date}</p>
+                                      )}
+                                      {item.url && (
+                                        <a
+                                          href={item.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-xs text-blue-600 hover:text-blue-800 mt-1 inline-block"
+                                        >
+                                          {item.url}
+                                        </a>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </SimpleDragOverlay>
+                );
             }
           }).filter(Boolean)}
         </div>

@@ -3,7 +3,6 @@ import { useNotification } from '@/components/ui/Toast';
 import TemplateSelector from './TemplateSelector';
 import CVPreviewA4 from './CVPreviewA4';
 import CVSectionManager from './CVSectionManager';
-import InteractiveSectionEditor from './InteractiveSectionEditor';
 import styles from './CVEditor.module.css';
 import { CVData, PersonalInfo, Experience, Education, Skill, Language, Project, Certification, VolunteerExperience } from '@/types/cv';
 
@@ -160,26 +159,26 @@ const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
 
     if (Array.isArray(skillsArray) && skillsArray.length > 0) {
       transformedSkills = skillsArray
-        .map((skill: any, index: number) => {
-          let skillName = '';
+          .map((skill: any, index: number) => {
+            let skillName = '';
 
-          if (typeof skill === 'string') {
-            skillName = skill;
-          } else if (skill && typeof skill === 'object') {
-            skillName = skill.name || skill.skill || skill.title || skill.skillName ||
-                       skill.skill_name || skill.text || '';
-          }
+            if (typeof skill === 'string') {
+              skillName = skill;
+            } else if (skill && typeof skill === 'object') {
+              skillName = skill.name || skill.skill || skill.title || skill.skillName ||
+                  skill.skill_name || skill.text || '';
+            }
 
-          if (skillName && skillName.trim()) {
-            return {
-              id: `skill-imported-${Date.now()}-${index}`,
-              name: skillName.trim(),
-              level: 'Intermediate' as const
-            };
-          }
-          return null;
-        })
-        .filter(Boolean);
+            if (skillName && skillName.trim()) {
+              return {
+                id: `skill-imported-${Date.now()}-${index}`,
+                name: skillName.trim(),
+                level: 'Intermediate' as const
+              };
+            }
+            return null;
+          })
+          .filter(Boolean);
     }
 
     // If no direct skills, extract from experience - MAIN FIX FOR SCRAPINGDOG
@@ -187,7 +186,7 @@ const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
       console.log('🔍 CVEditor: No direct skills found, extracting from experience...');
 
       const experienceArray = profileData.experience || profileData.experiences ||
-                             profileData.work_experience || [];
+          profileData.work_experience || [];
 
       const skillsFromExperience = new Set<string>();
 
@@ -243,7 +242,7 @@ const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
   let transformedExperience: any[] = [];
   try {
     const experienceArray = profileData.experience || profileData.experiences ||
-                           profileData.work_experience || profileData.positions || [];
+        profileData.work_experience || profileData.positions || [];
     console.log('💼 CVEditor: Processing experience data:', experienceArray);
 
     if (Array.isArray(experienceArray)) {
@@ -304,7 +303,7 @@ const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
   let transformedEducation: any[] = [];
   try {
     const educationArray = profileData.education || profileData.educations ||
-                          profileData.schools || profileData.academic_background || [];
+        profileData.schools || profileData.academic_background || [];
     console.log('🎓 CVEditor: Processing education data:', educationArray);
 
     if (Array.isArray(educationArray)) {
@@ -313,13 +312,13 @@ const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
           id: `edu-imported-${Date.now()}-${index}`,
           // FIXED: Use correct ScrapingDog field names
           institution: edu.college_name || edu.school || edu.institution || edu.university ||
-                      edu.school_name || edu.college || '',
+              edu.school_name || edu.college || '',
           degree: edu.college_degree || edu.degree || edu.degree_name || edu.qualification ||
-                 edu.program || '',
+              edu.program || '',
           startDate: edu.college_duration?.split(' - ')[0]?.trim() || edu.start_date || edu.startDate ||
-                    edu.starts_at || edu.from || edu.start_year || '',
+              edu.starts_at || edu.from || edu.start_year || '',
           endDate: edu.college_duration?.split(' - ')[1]?.trim() || edu.end_date || edu.endDate ||
-                  edu.ends_at || edu.to || edu.end_year || edu.graduation_year || '',
+              edu.ends_at || edu.to || edu.end_year || edu.graduation_year || '',
           current: edu.current || (edu.college_duration && edu.college_duration.includes('Present')) || false,
           gpa: edu.gpa || '',
           // description: edu.college_activity || edu.description || edu.activities ||
@@ -348,7 +347,7 @@ const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
           id: `lang-imported-${Date.now()}-${index}`,
           name: typeof lang === 'string' ? lang : (lang.name || lang.language || lang.title || ''),
           proficiency: typeof lang === 'string' ? 'Professional' :
-                      (lang.proficiency || lang.level || lang.fluency || 'Professional')
+              (lang.proficiency || lang.level || lang.fluency || 'Professional')
         };
         console.log(`🔧 CVEditor: Transforming language ${index}:`, languageObj);
         return languageObj;
@@ -388,7 +387,7 @@ const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
           id: `proj-imported-${Date.now()}-${index}`,
           name: proj.title || proj.name || proj.project_name || proj.project_title || '',
           description: proj.description || proj.summary || proj.details ||
-                      `${proj.title || proj.name || ''} layihəsi`,
+              `${proj.title || proj.name || ''} layihəsi`,
           startDate: startDate || proj.start_date || proj.startDate || proj.starts_at || '',
           endDate: endDate || proj.end_date || proj.endDate || proj.ends_at || '',
           skills: proj.skills || proj.technologies || proj.tech_stack || '',
@@ -410,7 +409,7 @@ const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
   try {
     // ScrapingDog uses 'awards' field, not 'certifications'
     const certificationsArray = profileData.awards || profileData.certification ||
-                               profileData.certifications || profileData.certificates || [];
+        profileData.certifications || profileData.certificates || [];
     console.log('🏆 CVEditor: Processing certifications/awards data:', certificationsArray);
 
     if (Array.isArray(certificationsArray)) {
@@ -420,9 +419,9 @@ const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
           // FIXED: Use correct ScrapingDog field names
           name: cert.name || cert.title || cert.certification || cert.certificate_name || '',
           issuer: cert.organization || cert.authority || cert.issuer || cert.issuing_organization ||
-                 cert.issued_by || 'Unknown',
+              cert.issued_by || 'Unknown',
           date: cert.duration || cert.start_date || cert.date || cert.issued_date ||
-               cert.issue_date || cert.completion_date || '',
+              cert.issue_date || cert.completion_date || '',
           description: cert.summary || cert.description || cert.details || ''
         };
         console.log(`🔧 CVEditor: Transforming certification/award ${index}:`, certificationObj);
@@ -440,7 +439,7 @@ const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
   let transformedVolunteerExperience: any[] = [];
   try {
     const volunteerArray = profileData.volunteering || profileData.volunteer_experience ||
-                          profileData.volunteer || [];
+        profileData.volunteer || [];
     console.log('❤️ CVEditor: Processing volunteer data:', volunteerArray);
 
     if (Array.isArray(volunteerArray) && volunteerArray.length > 0) {
@@ -484,26 +483,26 @@ const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
   // Enhanced Personal Info transformation - FIXED for actual ScrapingDog fields
   const personalInfo = {
     fullName: profileData.fullName || profileData.full_name || profileData.name ||
-              (profileData.first_name && profileData.last_name ?
-               `${profileData.first_name} ${profileData.last_name}` : ''),
+        (profileData.first_name && profileData.last_name ?
+            `${profileData.first_name} ${profileData.last_name}` : ''),
     firstName: profileData.first_name || profileData.firstName ||
-              profileData.fullName?.split(' ')[0] || '',
+        profileData.fullName?.split(' ')[0] || '',
     lastName: profileData.last_name || profileData.lastName ||
-             profileData.fullName?.split(' ').slice(1).join(' ') || '',
+        profileData.fullName?.split(' ').slice(1).join(' ') || '',
     email: profileData.email || profileData.email_address || '',
     phone: profileData.phone || profileData.phone_number || profileData.contact_number || '',
     website: profileData.public_profile_url || profileData.website ||
-             profileData.personal_website || profileData.portfolio || '',
+        profileData.personal_website || profileData.portfolio || '',
     linkedin: profileData.public_profile_url || profileData.linkedin || profileData.linkedin_url ||
-              (profileData.public_identifier ?
-               `https://linkedin.com/in/${profileData.public_identifier}` : ''),
+        (profileData.public_identifier ?
+            `https://linkedin.com/in/${profileData.public_identifier}` : ''),
     location: profileData.location || profileData.city || profileData.country ||
-             profileData.address || profileData.geographic_area ||
-             `${profileData.city || ''} ${profileData.country || ''}`.trim(),
+        profileData.address || profileData.geographic_area ||
+        `${profileData.city || ''} ${profileData.country || ''}`.trim(),
     profilePicture: profileData.profile_photo || profileData.profile_pic_url ||
-                   profileData.profilePicture || profileData.image_url || profileData.photo || '',
+        profileData.profilePicture || profileData.image_url || profileData.photo || '',
     summary: profileData.about || profileData.headline || profileData.summary ||
-            profileData.bio || profileData.description || ''
+        profileData.bio || profileData.description || ''
   };
 
   const transformedData = {
@@ -781,8 +780,8 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
 
     // Check if user has content to translate
     const hasContent = cv.personalInfo?.summary ||
-                      (cv.experience && cv.experience.length > 0) ||
-                      (cv.education && cv.education.length > 0);
+        (cv.experience && cv.experience.length > 0) ||
+        (cv.education && cv.education.length > 0);
 
     // If user has AI features and content, show translation dialog
     if (canUseAIFeatures(userTier) && hasContent) {
@@ -803,7 +802,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
 
     setTranslating(true);
     setShowTranslationDialog(false);
-    
+
     try {
       console.log('Starting translation to:', pendingLanguage);
 
@@ -899,8 +898,8 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
       // Translate personal info
       if (translatedData.personalInfo) {
         translatedData.personalInfo.summary = translateText(
-          translatedData.personalInfo.summary || '',
-          pendingLanguage
+            translatedData.personalInfo.summary || '',
+            pendingLanguage
         );
       }
 
@@ -945,8 +944,8 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
           name: translateText(project.name || '', pendingLanguage),
           description: translateText(project.description || '', pendingLanguage),
           technologies: Array.isArray(project.technologies)
-            ? project.technologies.map(tech => translateText(tech, pendingLanguage))
-            : project.technologies
+              ? project.technologies.map(tech => translateText(tech, pendingLanguage))
+              : project.technologies
         }));
       }
 
@@ -1010,9 +1009,9 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
         console.log('✅ Translated content saved to database');
       }
 
-      setSuccess(pendingLanguage === 'english' ? 
-        'CV content successfully translated to English and saved!' :
-        'CV məzmunu uğurla Azərbaycan dilinə tərcümə edildi və saxlanıldı!'
+      setSuccess(pendingLanguage === 'english' ?
+          'CV content successfully translated to English and saved!' :
+          'CV məzmunu uğurla Azərbaycan dilinə tərcümə edildi və saxlanıldı!'
       );
     } catch (error) {
       console.error('Translation error:', error);
@@ -1079,10 +1078,10 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
 
   const loadCV = useCallback(async () => {
     if (!cvId) return;
-    
+
     setLoading(true);
     setError('');
-    
+
     try {
       console.log('🔄 CVEditor: Loading CV with ID:', cvId);
       const result = await apiClient.get(`/api/cvs/${cvId}`);
@@ -1091,7 +1090,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
       if (!result) {
         throw new Error('No response from server');
       }
-      
+
       // Extract the actual CV data from the API client response
       const cvData = result.data || result;
       console.log('📋 CVEditor: Processing CV data:', cvData);
@@ -1109,8 +1108,8 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
 
       // CHECK IF THIS IS A LINKEDIN IMPORT CV - MAIN FIX
       const isLinkedInImport = actualCVData.source === 'linkedin_import' ||
-                              actualCVData.importedAt ||
-                              cvData.title?.includes('LinkedIn Import');
+          actualCVData.importedAt ||
+          cvData.title?.includes('LinkedIn Import');
 
       if (isLinkedInImport) {
         console.log('🔗 CVEditor: This is a LinkedIn import CV, processing accordingly...');
@@ -1171,6 +1170,8 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
           testScores: Array.isArray(actualCVData.testScores) ? actualCVData.testScores : [],
           recommendations: Array.isArray(actualCVData.recommendations) ? actualCVData.recommendations : [],
           courses: Array.isArray(actualCVData.courses) ? actualCVData.courses : [],
+          customSections: Array.isArray(actualCVData.customSections) ? actualCVData.customSections : [],
+          sectionOrder: Array.isArray(actualCVData.sectionOrder) ? actualCVData.sectionOrder : [],
           cvLanguage: actualCVData.cvLanguage || getDefaultCVLanguage()
         };
 
@@ -1211,6 +1212,8 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
           testScores: Array.isArray(actualCVData.testScores) ? actualCVData.testScores : [],
           recommendations: Array.isArray(actualCVData.recommendations) ? actualCVData.recommendations : [],
           courses: Array.isArray(actualCVData.courses) ? actualCVData.courses : [],
+          customSections: Array.isArray(actualCVData.customSections) ? actualCVData.customSections : [],
+          sectionOrder: Array.isArray(actualCVData.sectionOrder) ? actualCVData.sectionOrder : [],
           cvLanguage: actualCVData.cvLanguage || getDefaultCVLanguage()
         };
 
@@ -1259,7 +1262,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
   const handleSave = async () => {
     // Basic validation
     const validationErrors = [];
-    
+
     if (!cv.title || cv.title.trim().length === 0) {
       validationErrors.push('CV başlığı tələb olunur');
     }
@@ -1271,7 +1274,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
     if (!cv.personalInfo || !cv.personalInfo.fullName || cv.personalInfo.fullName.trim().length === 0) {
       validationErrors.push('Ad tələb olunur');
     }
-    
+
     if (validationErrors.length > 0) {
       setError(validationErrors.join(', '));
       return;
@@ -1321,7 +1324,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
         result = await apiClient.post('/api/cv', apiData);
         setSuccess('CV uğurla yaradıldı!');
       }
-      
+
       console.log('💾 Save API response:', result);
 
       setTimeout(() => {
@@ -1749,333 +1752,333 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">CV yüklənir...</p>
+        <div className="flex items-center justify-center h-screen bg-gray-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">CV yüklənir...</p>
+          </div>
         </div>
-      </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Header */}
-      <div className="sticky top-0 z-[60] border-b border-gray-200 shadow-sm">
-        <div className="bg-white">
-          <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16 gap-10">
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={onCancel}
-                  className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                  <span className="hidden sm:inline">Geri</span>
-                </button>
-                <input
-                  type="text"
-                  placeholder="CV başlığı..."
-                  value={cv.title}
-                  onChange={(e) => setCv(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full sm:w-64 text-lg font-semibold border-none outline-none focus:ring-2 focus:ring-blue-500 rounded-lg px-3 py-2 bg-gray-50 hover:bg-gray-100 focus:bg-white transition-colors"
-                />
-
-
-
-                {/* AI Translation Button */}
-                <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                  </svg>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+        {/* Header */}
+        <div className="sticky top-0 z-[60] border-b border-gray-200 shadow-sm">
+          <div className="bg-white">
+            <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16 gap-10">
+                <div className="flex items-center space-x-4">
                   <button
-                    onClick={() => setShowTranslationDialog(true)}
-                    disabled={translating || !cv.id}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-all ${
-                      !cv.id || translating
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600'
-                    }`}
+                      onClick={onCancel}
+                      className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
                   >
-                    {translating ? (
-                      <div className="flex items-center gap-2">
-                        <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
-                        <span>Tərcümə...</span>
-                      </div>
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    <span className="hidden sm:inline">Geri</span>
+                  </button>
+                  <input
+                      type="text"
+                      placeholder="CV başlığı..."
+                      value={cv.title}
+                      onChange={(e) => setCv(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full sm:w-64 text-lg font-semibold border-none outline-none focus:ring-2 focus:ring-blue-500 rounded-lg px-3 py-2 bg-gray-50 hover:bg-gray-100 focus:bg-white transition-colors"
+                  />
+
+
+
+                  {/* AI Translation Button */}
+                  <div className="flex items-center space-x-2">
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                    </svg>
+                    <button
+                        onClick={() => setShowTranslationDialog(true)}
+                        disabled={translating || !cv.id}
+                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+                            !cv.id || translating
+                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600'
+                        }`}
+                    >
+                      {translating ? (
+                          <div className="flex items-center gap-2">
+                            <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                            <span>Tərcümə...</span>
+                          </div>
+                      ) : (
+                          <div className="flex items-center gap-2">
+                            <span>🤖</span>
+                            <span>AI Tərcümə</span>
+                          </div>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <button
+                      onClick={() => handleExport('pdf')}
+                      disabled={!cv.id || exporting !== null}
+                      className={`hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                          !cv.id || exporting !== null
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              : 'bg-red-600 text-white hover:bg-red-700'
+                      }`}
+                  >
+                    {exporting === 'pdf' ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <span>🤖</span>
-                        <span>AI Tərcümə</span>
-                      </div>
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 2v4h8V2h2a2 2 0 00-2 2v16a2 2 0 00-2-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                        </svg>
+                    )}
+                    PDF
+                  </button>
+
+                  <button
+                      onClick={() => handleExport('docx')}
+                      disabled={!cv.id || exporting !== null}
+                      className={`hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                          !cv.id || exporting !== null
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                  >
+                    {exporting === 'docx' ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    ) : (
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                    )}
+                    DOCX
+                  </button>
+
+                  <button
+                      onClick={handleSave}
+                      disabled={saving}
+                      className={`inline-flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-medium transition-all ${
+                          saving
+                              ? 'bg-gray-400 text-white cursor-not-allowed'
+                              : 'bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl'
+                      }`}
+                  >
+                    {saving ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                          <span>Saxlanılır...</span>
+                        </>
+                    ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 00-2-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                          </svg>
+                          <span>CV-ni Saxla</span>
+                        </>
                     )}
                   </button>
                 </div>
               </div>
-
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => handleExport('pdf')}
-                  disabled={!cv.id || exporting !== null}
-                  className={`hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    !cv.id || exporting !== null
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-red-600 text-white hover:bg-red-700'
-                  }`}
-                >
-                  {exporting === 'pdf' ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 2v4h8V2h2a2 2 0 00-2 2v16a2 2 0 00-2-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                </svg>
-                )}
-                PDF
-              </button>
-
-                <button
-                  onClick={() => handleExport('docx')}
-                  disabled={!cv.id || exporting !== null}
-                  className={`hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    !cv.id || exporting !== null
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  }`}
-                >
-                  {exporting === 'docx' ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                  </svg>
-                )}
-                DOCX
-              </button>
-
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className={`inline-flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-medium transition-all ${
-                    saving
-                      ? 'bg-gray-400 text-white cursor-not-allowed'
-                      : 'bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl'
-                  }`}
-                >
-                  {saving ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
-                      <span>Saxlanılır...</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 00-2-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                      </svg>
-                      <span>CV-ni Saxla</span>
-                    </>
-                  )}
-                </button>
-              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-        <div className="flex flex-col xl:flex-row gap-10 justify-center">
+        {/* Main Content */}
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+          <div className="flex flex-col xl:flex-row gap-10 justify-center">
 
-        {/* Left Panel - Form */}
-          <div className="flex-1 xl:max-w-xl">
-            {/* Mobile Section Selector */}
-            <div className="xl:hidden mb-5 relative z-40">
-              <select
-                value={activeSection}
-                onChange={(e) => setActiveSection(e.target.value)}
-                className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-3 text-base font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 relative z-40"
-              >
-                {sections.map((section) => (
-                  <option key={section.id} value={section.id}>
-                    {section.icon} {section.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Desktop Section Navigation */}
-            <div className="hidden xl:block mb-5">
-              <nav className="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5">
-                <div className="grid grid-cols-2 gap-1">
+            {/* Left Panel - Form */}
+            <div className="flex-1 xl:max-w-xl">
+              {/* Mobile Section Selector */}
+              <div className="xl:hidden mb-5 relative z-40">
+                <select
+                    value={activeSection}
+                    onChange={(e) => setActiveSection(e.target.value)}
+                    className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-3 text-base font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 relative z-40"
+                >
                   {sections.map((section) => (
-                    <button
-                      key={section.id}
-                      onClick={() => setActiveSection(section.id)}
-                      className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-all text-xs ${
-                        activeSection === section.id
-                          ? 'bg-blue-600 text-white'
-                          : 'hover:bg-gray-50 text-gray-700'
-                      }`}
-                    >
-                      <span>{section.icon}</span>
-                      <span className="font-medium">{section.label}</span>
-                    </button>
+                      <option key={section.id} value={section.id}>
+                        {section.icon} {section.label}
+                      </option>
                   ))}
-                </div>
-              </nav>
-            </div>
+                </select>
+              </div>
 
-            {/* Form Content */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="p-5">
-                {/* Messages */}
-                {error && (
-                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="flex items-center gap-2 text-red-700">
-                      <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                      </svg>
-                      <span className="text-sm">{error}</span>
-                    </div>
+              {/* Desktop Section Navigation */}
+              <div className="hidden xl:block mb-5">
+                <nav className="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5">
+                  <div className="grid grid-cols-2 gap-1">
+                    {sections.map((section) => (
+                        <button
+                            key={section.id}
+                            onClick={() => setActiveSection(section.id)}
+                            className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-all text-xs ${
+                                activeSection === section.id
+                                    ? 'bg-blue-600 text-white'
+                                    : 'hover:bg-gray-50 text-gray-700'
+                            }`}
+                        >
+                          <span>{section.icon}</span>
+                          <span className="font-medium">{section.label}</span>
+                        </button>
+                    ))}
                   </div>
-                )}
-                
-                {success && (
-                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center gap-2 text-green-700">
-                      <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-sm">{success}</span>
-                    </div>
-                  </div>
-                )}
+                </nav>
+              </div>
 
-                {/* LinkedIn Import Info */}
-                {initialData && (
-                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                      </svg>
-                      <span className="font-medium text-green-800 text-sm">LinkedIn məlumatları import edildi</span>
-                    </div>
-                    <p className="text-xs text-green-700">
-                      Məlumatlar uğurla yükləndi və CV-yə əlavə edildi.
-                    </p>
-                  </div>
-                )}
-                
-                {/* Dynamic Section Content */}
-                <div className="space-y-4">
-                  {activeSection === 'personal' && (
-                    <PersonalInfoSection
-                      data={{
-                        fullName: cv.personalInfo.fullName,
-                        firstName: cv.personalInfo.firstName,
-                        lastName: cv.personalInfo.lastName,
-                        email: cv.personalInfo.email,
-                        phone: cv.personalInfo.phone,
-                        website: cv.personalInfo.website,
-                        linkedin: cv.personalInfo.linkedin,
-                        summary: cv.personalInfo.summary,
-                        profileImage: cv.personalInfo.profileImage
-                      }}
-                      userTier={userTier}
-                      cvData={cv}
-                      cvId={cv.id || cvId}
-                      onChange={(data: any) => updateCVData('personalInfo', {
-                        fullName: data.fullName,
-                        firstName: data.firstName,
-                        lastName: data.lastName,
-                        email: data.email,
-                        phone: data.phone,
-                        website: data.website,
-                        linkedin: data.linkedin,
-                        summary: data.summary,
-                        profileImage: data.profileImage
-                      })}
-                    />
+              {/* Form Content */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div className="p-5">
+                  {/* Messages */}
+                  {error && (
+                      <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <div className="flex items-center gap-2 text-red-700">
+                          <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                          </svg>
+                          <span className="text-sm">{error}</span>
+                        </div>
+                      </div>
                   )}
-                  {activeSection === 'experience' && (
-                    <ExperienceSection
-                      data={cv.experience || [] as any}
-                      onChange={(data: any) => updateCVData('experience', data)}
-                    />
-                  )}
-                  {activeSection === 'education' && (
-                    <EducationSection
-                      data={cv.education || [] as any}
-                      onChange={(data: any) => updateCVData('education', data)}
-                    />
-                  )}
-                  {activeSection === 'skills' && (
-                    <SkillsSection
-                      data={cv.skills || [] as any}
-                      onChange={(data: any) => updateCVData('skills', data)}
-                      userTier={userTier}
-                      cvData={cv}
-                      cvId={cv.id || cvId}
-                    />
-                  )}
-                  {activeSection === 'languages' && (
-                    <LanguagesSection
-                      data={(cv.languages || []).map((lang: any) => ({
-                        id: lang.id || `lang-${Date.now()}-${Math.random()}`,
-                        language: lang.language || lang.name || '',
-                        level: lang.level || lang.proficiency || 'Professional'
-                      }))}
-                      onChange={(data: any) => {
-                        console.log('🔄 CVEditor: Languages changed from LanguagesSection:', data);
 
-                        // Store ALL languages during editing (including empty ones for UX)
-                        // But filter out completely empty languages when saving to CV
-                        const allLanguages = data.map((lang: any) => ({
-                          id: lang.id || `lang-${Date.now()}-${Math.random()}`,
-                          language: lang.language || '',
-                          level: lang.level || 'Professional',
-                          name: lang.language || '', // Compatibility field
-                          proficiency: lang.level || 'Professional' // Compatibility field
-                        }));
+                  {success && (
+                      <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center gap-2 text-green-700">
+                          <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span className="text-sm">{success}</span>
+                        </div>
+                      </div>
+                  )}
 
-                        // Filter out only completely empty languages (no name AND no meaningful data)
-                        const validLanguages = allLanguages.filter((lang: any) =>
-                          lang.language.trim() !== '' || lang.level !== 'Professional'
-                        );
+                  {/* LinkedIn Import Info */}
+                  {initialData && (
+                      <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                          </svg>
+                          <span className="font-medium text-green-800 text-sm">LinkedIn məlumatları import edildi</span>
+                        </div>
+                        <p className="text-xs text-green-700">
+                          Məlumatlar uğurla yükləndi və CV-yə əlavə edildi.
+                        </p>
+                      </div>
+                  )}
 
-                        console.log('✅ CVEditor: All languages for editing:', allLanguages);
-                        console.log('✅ CVEditor: Valid languages for storage:', validLanguages);
+                  {/* Dynamic Section Content */}
+                  <div className="space-y-4">
+                    {activeSection === 'personal' && (
+                        <PersonalInfoSection
+                            data={{
+                              fullName: cv.personalInfo.fullName,
+                              firstName: cv.personalInfo.firstName,
+                              lastName: cv.personalInfo.lastName,
+                              email: cv.personalInfo.email,
+                              phone: cv.personalInfo.phone,
+                              website: cv.personalInfo.website,
+                              linkedin: cv.personalInfo.linkedin,
+                              summary: cv.personalInfo.summary,
+                              profileImage: cv.personalInfo.profileImage
+                            }}
+                            userTier={userTier}
+                            cvData={cv}
+                            cvId={cv.id || cvId}
+                            onChange={(data: any) => updateCVData('personalInfo', {
+                              fullName: data.fullName,
+                              firstName: data.firstName,
+                              lastName: data.lastName,
+                              email: data.email,
+                              phone: data.phone,
+                              website: data.website,
+                              linkedin: data.linkedin,
+                              summary: data.summary,
+                              profileImage: data.profileImage
+                            })}
+                        />
+                    )}
+                    {activeSection === 'experience' && (
+                        <ExperienceSection
+                            data={cv.experience || [] as any}
+                            onChange={(data: any) => updateCVData('experience', data)}
+                        />
+                    )}
+                    {activeSection === 'education' && (
+                        <EducationSection
+                            data={cv.education || [] as any}
+                            onChange={(data: any) => updateCVData('education', data)}
+                        />
+                    )}
+                    {activeSection === 'skills' && (
+                        <SkillsSection
+                            data={cv.skills || [] as any}
+                            onChange={(data: any) => updateCVData('skills', data)}
+                            userTier={userTier}
+                            cvData={cv}
+                            cvId={cv.id || cvId}
+                        />
+                    )}
+                    {activeSection === 'languages' && (
+                        <LanguagesSection
+                            data={(cv.languages || []).map((lang: any) => ({
+                              id: lang.id || `lang-${Date.now()}-${Math.random()}`,
+                              language: lang.language || lang.name || '',
+                              level: lang.level || lang.proficiency || 'Professional'
+                            }))}
+                            onChange={(data: any) => {
+                              console.log('🔄 CVEditor: Languages changed from LanguagesSection:', data);
 
-                        // Update CV data with valid languages only
-                        updateCVData('languages', validLanguages);
-                      }}
-                    />
-                  )}
-                  {activeSection === 'projects' && (
-                    <ProjectsSection
-                      data={cv.projects || [] as any}
-                      onChange={(data: any) => updateCVData('projects', data)}
-                    />
-                  )}
-                  {activeSection === 'certifications' && (
-                    <CertificationsSection
-                      data={cv.certifications || [] as any}
-                      onChange={(data: any) => updateCVData('certifications', data)}
-                    />
-                  )}
-                  {activeSection === 'volunteer' && (
-                    <VolunteerExperienceSection
-                      data={cv.volunteerExperience || [] as any}
-                      onChange={(data: any) => updateCVData('volunteerExperience', data)}
-                    />
-                  )}
-                  {activeSection === 'customSections' && (
-                    <CustomSectionsSection
-                      data={cv.customSections || []}
-                      onChange={(data: any) => updateCVData('customSections', data)}
-                    />
-                  )}
-                  {/* {activeSection === 'publications' && (
+                              // Store ALL languages during editing (including empty ones for UX)
+                              // But filter out completely empty languages when saving to CV
+                              const allLanguages = data.map((lang: any) => ({
+                                id: lang.id || `lang-${Date.now()}-${Math.random()}`,
+                                language: lang.language || '',
+                                level: lang.level || 'Professional',
+                                name: lang.language || '', // Compatibility field
+                                proficiency: lang.level || 'Professional' // Compatibility field
+                              }));
+
+                              // Filter out only completely empty languages (no name AND no meaningful data)
+                              const validLanguages = allLanguages.filter((lang: any) =>
+                                  lang.language.trim() !== '' || lang.level !== 'Professional'
+                              );
+
+                              console.log('✅ CVEditor: All languages for editing:', allLanguages);
+                              console.log('✅ CVEditor: Valid languages for storage:', validLanguages);
+
+                              // Update CV data with valid languages only
+                              updateCVData('languages', validLanguages);
+                            }}
+                        />
+                    )}
+                    {activeSection === 'projects' && (
+                        <ProjectsSection
+                            data={cv.projects || [] as any}
+                            onChange={(data: any) => updateCVData('projects', data)}
+                        />
+                    )}
+                    {activeSection === 'certifications' && (
+                        <CertificationsSection
+                            data={cv.certifications || [] as any}
+                            onChange={(data: any) => updateCVData('certifications', data)}
+                        />
+                    )}
+                    {activeSection === 'volunteer' && (
+                        <VolunteerExperienceSection
+                            data={cv.volunteerExperience || [] as any}
+                            onChange={(data: any) => updateCVData('volunteerExperience', data)}
+                        />
+                    )}
+                    {activeSection === 'customSections' && (
+                        <CustomSectionsSection
+                            data={cv.customSections || []}
+                            onChange={(data: any) => updateCVData('customSections', data)}
+                        />
+                    )}
+                    {/* {activeSection === 'publications' && (
                     <PublicationsSection
                       data={cv.data.publications || []}
                       onChange={(data: any) => updateCVData('publications', data)}
@@ -2105,636 +2108,577 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                       onChange={(data: any) => updateCVData('courses', data)}
                     />
                   )} */}
-                  {activeSection === 'template' && (
-                    <div>
-                      <h3 className="text-lg font-semibold mb-4 text-gray-800">Şablon Seçimi</h3>
-                      <TemplateSelector
-                        selectedTemplateId={cv.templateId}
-                        onTemplateSelect={(templateId: string) => setCv(prev => ({ ...prev, templateId }))}
-                        userTier={userTier}
-                      />
-                    </div>
-                  )}
-                  {activeSection === 'interactiveEditor' && (
-                    <div>
-                      <h3 className="text-lg font-semibold mb-4 text-gray-800">
-                        {cv.cvLanguage === 'english' ? 'Interactive Section Editor' : 'İnteraktiv Bölmə Redaktoru'}
-                      </h3>
-                      <div className="mb-4 p-4 bg-gradient-to-r from-blue-500 to-purple-500 border border-blue-200 rounded-lg">
-                        <div className="flex items-start gap-3">
-                          <span className="text-2xl">✨</span>
-                          <div>
-                            <h4 className="font-semibold text-gray-900 mb-2">
-                              {cv.cvLanguage === 'english'
-                                ? 'Advanced Visual Editor'
-                                : 'Qabaqcıl Vizual Redaktor'
-                              }
-                            </h4>
-                            <p className="text-sm text-gray-700 mb-3">
-                              {cv.cvLanguage === 'english'
-                                ? 'Use the interactive editor to visually customize your CV sections with drag-and-drop, resizing, and real-time style adjustments.'
-                                : 'İnteraktiv redaktordan istifadə edərək CV bölmələrinizi vizual olaraq fərdiləşdirin - sürükləyib buraxın, ölçü dəyişdirin və canlı stil tənzimləmələri edin.'
-                              }
-                            </p>
-                            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                              <div className="flex items-center gap-1">
-                                <span>🖱️</span>
-                                <span>{cv.cvLanguage === 'english' ? 'Drag & Drop' : 'Sürükləyib burax'}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span>📐</span>
-                                <span>{cv.cvLanguage === 'english' ? 'Resize Sections' : 'Bölmə ölçüsü'}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span>🎨</span>
-                                <span>{cv.cvLanguage === 'english' ? 'Live Styling' : 'Canlı stil'}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span>📱</span>
-                                <span>{cv.cvLanguage === 'english' ? 'Touch Friendly' : 'Toxunma dəstəyi'}</span>
+                    {activeSection === 'template' && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4 text-gray-800">Şablon Seçimi</h3>
+                          <TemplateSelector
+                              selectedTemplateId={cv.templateId}
+                              onTemplateSelect={(templateId: string) => setCv(prev => ({ ...prev, templateId }))}
+                              userTier={userTier}
+                          />
+                        </div>
+                    )}
+                    {activeSection === 'interactiveEditor' && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                            {cv.cvLanguage === 'english' ? 'Interactive Section Editor' : 'İnteraktiv Bölmə Redaktoru'}
+                          </h3>
+                          <div className="mb-4 p-4 bg-gradient-to-r from-blue-500 to-purple-500 border border-blue-200 rounded-lg">
+                            <div className="flex items-start gap-3">
+                              <span className="text-2xl">✨</span>
+                              <div>
+                                <h4 className="font-semibold text-gray-900 mb-2">
+                                  {cv.cvLanguage === 'english'
+                                      ? 'Advanced Visual Editor'
+                                      : 'Qabaqcıl Vizual Redaktor'
+                                  }
+                                </h4>
+                                <p className="text-sm text-gray-700 mb-3">
+                                  {cv.cvLanguage === 'english'
+                                      ? 'Use the interactive editor to visually customize your CV sections with drag-and-drop, resizing, and real-time style adjustments.'
+                                      : 'İnteraktiv redaktordan istifadə edərək CV bölmələrinizi vizual olaraq fərdiləşdirin - sürükləyib buraxın, ölçü dəyişdirin və canlı stil tənzimləmələri edin.'
+                                  }
+                                </p>
+                                <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                                  <div className="flex items-center gap-1">
+                                    <span>🖱️</span>
+                                    <span>{cv.cvLanguage === 'english' ? 'Drag & Drop' : 'Sürükləyib burax'}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span>📐</span>
+                                    <span>{cv.cvLanguage === 'english' ? 'Resize Sections' : 'Bölmə ölçüsü'}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span>🎨</span>
+                                    <span>{cv.cvLanguage === 'english' ? 'Live Styling' : 'Canlı stil'}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span>📱</span>
+                                    <span>{cv.cvLanguage === 'english' ? 'Touch Friendly' : 'Toxunma dəstəyi'}</span>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
 
-                      {/* Convert CV data to interactive sections format */}
-                      {(() => {
-                        const cvSections = [
-                          {
-                            id: 'personal',
-                            type: 'personalInfo',
-                            title: cv.cvLanguage === 'english' ? 'Personal Information' : 'Şəxsi Məlumatlar',
-                            content: cv.personalInfo,
-                            style: {
-                              width: 100,
-                              height: 200,
-                              fontSize: 14,
-                              padding: 16,
-                              fontWeight: 'normal' as const,
-                              fontFamily: 'Inter, system-ui, sans-serif',
-                              lineHeight: 1.5,
-                              letterSpacing: 0,
-                              backgroundColor: '#ffffff',
-                              textColor: '#374151',
-                              borderRadius: 8,
-                              borderWidth: 1,
-                              borderColor: '#e5e7eb'
-                            },
-                            order: 0,
-                            isVisible: true
-                          },
-                          {
-                            id: 'experience',
-                            type: 'experience',
-                            title: cv.cvLanguage === 'english' ? 'Work Experience' : 'İş Təcrübəsi',
-                            content: cv.experience,
-                            style: {
-                              width: 100,
-                              height: 300,
-                              fontSize: 14,
-                              padding: 16,
-                              fontWeight: 'normal' as const,
-                              fontFamily: 'Inter, system-ui, sans-serif',
-                              lineHeight: 1.5,
-                              letterSpacing: 0,
-                              backgroundColor: '#ffffff',
-                              textColor: '#374151',
-                              borderRadius: 8,
-                              borderWidth: 1,
-                              borderColor: '#e5e7eb'
-                            },
-                            order: 1,
-                            isVisible: !!(cv.experience && cv.experience.length > 0)
-                          },
-                          {
-                            id: 'education',
-                            type: 'education',
-                            title: cv.cvLanguage === 'english' ? 'Education' : 'Təhsil',
-                            content: cv.education,
-                            style: {
-                              width: 100,
-                              height: 250,
-                              fontSize: 14,
-                              padding: 16,
-                              fontWeight: 'normal' as const,
-                              fontFamily: 'Inter, system-ui, sans-serif',
-                              lineHeight: 1.5,
-                              letterSpacing: 0,
-                              backgroundColor: '#ffffff',
-                              textColor: '#374151',
-                              borderRadius: 8,
-                              borderWidth: 1,
-                              borderColor: '#e5e7eb'
-                            },
-                            order: 2,
-                            isVisible: !!(cv.education && cv.education.length > 0)
-                          },
-                          {
-                            id: 'skills',
-                            type: 'skills',
-                            title: cv.cvLanguage === 'english' ? 'Skills' : 'Bacarıqlar',
-                            content: cv.skills,
-                            style: {
-                              width: 100,
-                              height: 200,
-                              fontSize: 14,
-                              padding: 16,
-                              fontWeight: 'normal' as const,
-                              fontFamily: 'Inter, system-ui, sans-serif',
-                              lineHeight: 1.5,
-                              letterSpacing: 0,
-                              backgroundColor: '#f8fafc',
-                              textColor: '#374151',
-                              borderRadius: 8,
-                              borderWidth: 1,
-                              borderColor: '#e5e7eb'
-                            },
-                            order: 3,
-                            isVisible: !!(cv.skills && cv.skills.length > 0)
-                          },
-                          {
-                            id: 'languages',
-                            type: 'languages',
-                            title: cv.cvLanguage === 'english' ? 'Languages' : 'Dillər',
-                            content: cv.languages,
-                            style: {
-                              width: 100,
-                              height: 180,
-                              fontSize: 14,
-                              padding: 16,
-                              fontWeight: 'normal' as const,
-                              fontFamily: 'Inter, system-ui, sans-serif',
-                              lineHeight: 1.5,
-                              letterSpacing: 0,
-                              backgroundColor: '#ffffff',
-                              textColor: '#374151',
-                              borderRadius: 8,
-                              borderWidth: 1,
-                              borderColor: '#e5e7eb'
-                            },
-                            order: 4,
-                            isVisible: !!(cv.languages && cv.languages.length > 0)
-                          },
-                          {
-                            id: 'projects',
-                            type: 'projects',
-                            title: cv.cvLanguage === 'english' ? 'Projects' : 'Layihələr',
-                            content: cv.projects,
-                            style: {
-                              width: 100,
-                              height: 250,
-                              fontSize: 14,
-                              padding: 16,
-                              fontWeight: 'normal' as const,
-                              fontFamily: 'Inter, system-ui, sans-serif',
-                              lineHeight: 1.5,
-                              letterSpacing: 0,
-                              backgroundColor: '#ffffff',
-                              textColor: '#374151',
-                              borderRadius: 8,
-                              borderWidth: 1,
-                              borderColor: '#e5e7eb'
-                            },
-                            order: 5,
-                            isVisible: !!(cv.projects && cv.projects.length > 0)
-                          }
-                        ].filter(section => section.isVisible);
-
-                        return (
-                          <div className="h-96 border border-gray-200 rounded-lg overflow-hidden">
-                            <InteractiveSectionEditor
-                              sections={cvSections}
-                              onSectionsChange={(updatedSections) => {
-                                console.log('Interactive editor sections updated:', updatedSections);
-                                // Optionally sync changes back to CV data
-                                showInfo('Dəyişikliklər interaktiv redaktorda tətbiq edildi!');
-                              }}
-                              gridSize={8}
-                              minSectionWidth={200}
-                              minSectionHeight={100}
-                              maxSectionWidth={600}
-                              maxSectionHeight={400}
-                            />
-                          </div>
-                        );
-                      })()}
-
-                      <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <div className="flex items-start gap-2">
-                          <span className="text-yellow-600 text-lg">💡</span>
-                          <div className="text-sm text-yellow-800">
-                            <p className="font-medium mb-1">
-                              {cv.cvLanguage === 'english' ? 'Pro Tip:' : 'Məsləhət:'}
-                            </p>
-                            <p>
-                              {cv.cvLanguage === 'english'
-                                ? 'Use the interactive editor to experiment with section layouts. Changes here are for visual exploration - your actual CV data remains safe!'
-                                : 'Bölmə düzülüşləri ilə təcrübə etmək üçün interaktiv redaktordan istifadə edin. Buradakı dəyişikliklər yalnız vizual kəşfiyyat üçündür - əsl CV məlumatlarınız təhlükəsizdir!'
+                          {/* Convert CV data to interactive sections format */}
+                          {(() => {
+                            const cvSections = [
+                              {
+                                id: 'personal',
+                                type: 'personalInfo',
+                                title: cv.cvLanguage === 'english' ? 'Personal Information' : 'Şəxsi Məlumatlar',
+                                content: cv.personalInfo,
+                                isVisible: true
+                              },
+                              {
+                                id: 'experience',
+                                type: 'experience',
+                                title: cv.cvLanguage === 'english' ? 'Work Experience' : 'İş Təcrübəsi',
+                                content: cv.experience,
+                                isVisible: !!(cv.experience && cv.experience.length > 0)
+                              },
+                              {
+                                id: 'education',
+                                type: 'education',
+                                title: cv.cvLanguage === 'english' ? 'Education' : 'Təhsil',
+                                content: cv.education,
+                                isVisible: !!(cv.education && cv.education.length > 0)
+                              },
+                              {
+                                id: 'skills',
+                                type: 'skills',
+                                title: cv.cvLanguage === 'english' ? 'Skills' : 'Bacarıqlar',
+                                content: cv.skills,
+                                isVisible: !!(cv.skills && cv.skills.length > 0)
+                              },
+                              {
+                                id: 'languages',
+                                type: 'languages',
+                                title: cv.cvLanguage === 'english' ? 'Languages' : 'Dillər',
+                                content: cv.languages,
+                                isVisible: !!(cv.languages && cv.languages.length > 0)
+                              },
+                              {
+                                id: 'projects',
+                                type: 'projects',
+                                title: cv.cvLanguage === 'english' ? 'Projects' : 'Layihələr',
+                                content: cv.projects,
+                                isVisible: !!(cv.projects && cv.projects.length > 0)
+                              },
+                              {
+                                id: 'certifications',
+                                type: 'certifications',
+                                title: cv.cvLanguage === 'english' ? 'Certifications' : 'Sertifikatlar',
+                                content: cv.certifications,
+                                isVisible: !!(cv.certifications && cv.certifications.length > 0)
+                              },
+                              {
+                                id: 'volunteerExperience',
+                                type: 'volunteerExperience',
+                                title: cv.cvLanguage === 'english' ? 'Volunteer Experience' : 'Könüllü Təcrübə',
+                                content: cv.volunteerExperience,
+                                isVisible: !!(cv.volunteerExperience && cv.volunteerExperience.length > 0)
+                              },
+                              {
+                                id: 'customSections',
+                                type: 'customSections',
+                                title: cv.cvLanguage === 'english' ? 'Additional Sections' : 'Əlavə Bölmələr',
+                                content: cv.customSections,
+                                isVisible: !!(cv.customSections && cv.customSections.length > 0)
                               }
-                            </p>
-                          </div>
+                            ].filter(section => section.isVisible);
+
+                            return (
+                                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                  <div className="text-center text-gray-600">
+                                    <div className="mb-4">
+                                      <svg className="w-16 h-16 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                      </svg>
+                                      <h4 className="text-lg font-medium text-gray-700 mb-2">
+                                        {cv.cvLanguage === 'english' ? 'CV Sections Overview' : 'CV Bölmələrinə Baxış'}
+                                      </h4>
+                                      <p className="text-sm text-gray-600 mb-4">
+                                        {cv.cvLanguage === 'english'
+                                          ? 'Your CV contains the following sections:'
+                                          : 'CV-nizdə aşağıdakı bölmələr var:'
+                                        }
+                                      </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                      {cvSections.map((section, index) => (
+                                        <div key={section.id} className="bg-white rounded-lg p-3 border border-gray-200 text-left">
+                                          <div className="flex items-center justify-between">
+                                            <h5 className="font-medium text-gray-800">{section.title}</h5>
+                                            <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">
+                                              {cv.cvLanguage === 'english' ? 'Active' : 'Aktiv'}
+                                            </span>
+                                          </div>
+                                          <p className="text-xs text-gray-500 mt-1">
+                                            {Array.isArray(section.content)
+                                              ? `${section.content.length} ${cv.cvLanguage === 'english' ? 'items' : 'element'}`
+                                              : cv.cvLanguage === 'english' ? 'Configured' : 'Konfiqurasiya edilib'
+                                            }
+                                          </p>
+                                        </div>
+                                      ))}
+                                    </div>
+
+                                    <div className="mt-4 text-sm text-gray-600">
+                                      <p>
+                                        {cv.cvLanguage === 'english'
+                                          ? 'Use the preview panel on the right to see how your CV looks.'
+                                          : 'CV-nizin necə göründüyünü sağdakı önizləmə panelində görün.'
+                                        }
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                            );
+                          })()}
                         </div>
-                      </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Export Buttons */}
+              <div className="sm:hidden mt-5 bg-white rounded-lg shadow-sm border border-gray-200 p-3.5">
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                      onClick={() => handleExport('pdf')}
+                      disabled={!cv.id || exporting !== null}
+                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+                          !cv.id || exporting !== null
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              : 'bg-red-600 text-white hover:bg-red-700'
+                      }`}
+                  >
+                    {exporting === 'pdf' ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    ) : (
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 2v4h8V2h2a2 2 0 00-2 2v16a2 2 0 00-2-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                        </svg>
+                    )}
+                    PDF
+                  </button>
+
+                  <button
+                      onClick={() => handleExport('docx')}
+                      disabled={!cv.id || exporting !== null}
+                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+                          !cv.id || exporting !== null
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                  >
+                    {exporting === 'docx' ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    ) : (
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                    )}
+                    DOCX
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Mobile Export Buttons */}
-            <div className="sm:hidden mt-5 bg-white rounded-lg shadow-sm border border-gray-200 p-3.5">
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => handleExport('pdf')}
-                  disabled={!cv.id || exporting !== null}
-                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                    !cv.id || exporting !== null
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-red-600 text-white hover:bg-red-700'
-                  }`}
-                >
-                  {exporting === 'pdf' ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 2v4h8V2h2a2 2 0 00-2 2v16a2 2 0 00-2-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                </svg>
-                )}
-                PDF
-              </button>
-
-                <button
-                  onClick={() => handleExport('docx')}
-                  disabled={!cv.id || exporting !== null}
-                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                    !cv.id || exporting !== null
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  }`}
-                >
-                  {exporting === 'docx' ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                  </svg>
-                )}
-                DOCX
-              </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Panel - Preview */}
-          <div className="flex-1 xl:max-w-5xl">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            {/* Right Panel - Preview */}
+            <div className="flex-1 xl:max-w-5xl">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                 <div className="px-5 py-3.5 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-semibold text-gray-800">Canlı Önizləmə</h3>
-                    <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full font-medium">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-semibold text-gray-800">Canlı Önizləmə</h3>
+                      <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full font-medium">
                       A4 Format
                     </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {/* Section Selection Mode Toggle */}
-                    <button
-                      onClick={() => setEnablePreviewSelection(!enablePreviewSelection)}
-                      className={`px-3 py-2 text-xs font-medium rounded-lg transition-all ${
-                        enablePreviewSelection
-                          ? 'bg-blue-600 text-white shadow-md'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                      title={enablePreviewSelection ? 'Seçim modunu söndür' : 'Seçim modunu aç'}
-                    >
-                      <div className="flex items-center gap-2">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M4 4h2v2H4V4zm0 5h2v2H4V9zm0 5h2v2H4v-2zm5-10h2v2H9V4zm0 5h2v2H9V9zm0 5h2v2H9v-2zm5-10h2v2h-2V4zm0 5h2v2h-2V9zm0 5h2v2h-2v-2z"/>
-                        </svg>
-                        <span className="hidden sm:inline">
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {/* Section Selection Mode Toggle */}
+                      <button
+                          onClick={() => setEnablePreviewSelection(!enablePreviewSelection)}
+                          className={`px-3 py-2 text-xs font-medium rounded-lg transition-all ${
+                              enablePreviewSelection
+                                  ? 'bg-blue-600 text-white shadow-md'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                          title={enablePreviewSelection ? 'Seçim modunu söndür' : 'Seçim modunu aç'}
+                      >
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M4 4h2v2H4V4zm0 5h2v2H4V9zm0 5h2v2H4v-2zm5-10h2v2H9V4zm0 5h2v2H9V9zm0 5h2v2H9v-2zm5-10h2v2h-2V4zm0 5h2v2h-2V9zm0 5h2v2h-2v-2z"/>
+                          </svg>
+                          <span className="hidden sm:inline">
                           {enablePreviewSelection ? 'Seçim ON' : 'Seçim OFF'}
                         </span>
-                      </div>
-                    </button>
+                        </div>
+                      </button>
 
-                    <div className="text-sm text-gray-600 flex items-center gap-2">
-                      <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                      <span className="hidden sm:inline text-xs">Canlı güncəllənir</span>
+                      <div className="text-sm text-gray-600 flex items-center gap-2">
+                        <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                        <span className="hidden sm:inline text-xs">Canlı güncəllənir</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-                
-                <div className="bg-gray-50" style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
+
+                <div className="bg-gray-50" style={{
+                  display: 'flex',
+                  alignItems: 'center',
                   justifyContent: 'center',
                   minHeight: '95vh',
                   width: '100%',
                   padding: '25px'
                 }}>
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
                     justifyContent: 'center',
                     width: '100%',
                     height: '100%'
                   }}>
                     {cv.templateId ? (
-                      <div className="shadow-lg bg-white rounded-lg overflow-hidden" style={{ 
-                        width: '794px', // Exact A4 width at 96 DPI
-                        height: '95vh',
-                        minHeight: '900px',
-                        maxHeight: '1600px',
-                        border: '1px solid #e5e7eb',
-                        aspectRatio: '794/1123', // Real A4 aspect ratio
-                        margin: '0 auto'
-                      }}>
-                        <div className={`w-full h-full ${styles.responsivePreview}`} style={{
-                          scrollbarWidth: 'thin',
-                          scrollbarColor: '#cbd5e1 #f1f5f9',
-                          minHeight: '100%',
-                          boxSizing: 'border-box'
+                        <div className="shadow-lg bg-white rounded-lg overflow-hidden" style={{
+                          width: '794px', // Exact A4 width at 96 DPI
+                          height: '95vh',
+                          minHeight: '900px',
+                          maxHeight: '1600px',
+                          border: '1px solid #e5e7eb',
+                          aspectRatio: '794/1123', // Real A4 aspect ratio
+                          margin: '0 auto'
                         }}>
-                          <CVPreviewA4
-                            cv={{
-                              ...cv,
-                              data: {
-                                personalInfo: {
-                                  ...cv.personalInfo,
-                                  name: cv.personalInfo.fullName
-                                },
-                                experience: cv.experience || [],
-                                education: cv.education || [],
-                                skills: cv.skills || [],
-                                languages: cv.languages || [],
-                                projects: cv.projects || [],
-                                certifications: cv.certifications || [],
-                                volunteerExperience: cv.volunteerExperience || [],
-                                publications: cv.publications || [],
-                                honorsAwards: cv.honorsAwards || [],
-                                testScores: cv.testScores || [],
-                                recommendations: cv.recommendations || [],
-                                courses: cv.courses || [],
-                                cvLanguage: cv.cvLanguage || 'azerbaijani'
-                              } as any
-                            }}
-                            enableSectionSelection={enablePreviewSelection}
-                            onSectionOrderChange={handleSectionOrderChange}
-                          />
+                          <div className={`w-full h-full ${styles.responsivePreview}`} style={{
+                            scrollbarWidth: 'thin',
+                            scrollbarColor: '#cbd5e1 #f1f5f9',
+                            minHeight: '100%',
+                            boxSizing: 'border-box'
+                          }}>
+                            <CVPreviewA4
+                                cv={{
+                                  ...cv,
+                                  data: {
+                                    personalInfo: {
+                                      ...cv.personalInfo,
+                                      name: cv.personalInfo.fullName
+                                    },
+                                    experience: cv.experience || [],
+                                    education: cv.education || [],
+                                    skills: cv.skills || [],
+                                    languages: cv.languages || [],
+                                    projects: cv.projects || [],
+                                    certifications: cv.certifications || [],
+                                    volunteerExperience: cv.volunteerExperience || [],
+                                    publications: cv.publications || [],
+                                    honorsAwards: cv.honorsAwards || [],
+                                    testScores: cv.testScores || [],
+                                    recommendations: cv.recommendations || [],
+                                    courses: cv.courses || [],
+                                    customSections: cv.customSections || [],
+                                    cvLanguage: cv.cvLanguage || 'azerbaijani'
+                                  } as any
+                                }}
+                                enableSectionSelection={enablePreviewSelection}
+                                onSectionOrderChange={handleSectionOrderChange}
+                            />
+                          </div>
                         </div>
-                      </div>
                     ) : (
-                      <div className="shadow-lg bg-white rounded-lg flex items-center justify-center text-center" style={{ 
-                        width: '794px', // Match A4 width
-                        height: '95vh', // Match the preview height
-                        minHeight: '900px',
-                        maxHeight: '1600px',
-                        border: '1px solid #e5e7eb',
-                        margin: '0 auto'
-                      }}>
-                        <div>
-                          <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002-2V8l-6-6z"/>
-                            <path d="M14 2v6h6V2h2a2 2 0 00-2 2v16a2 2 0 00-2-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                          </svg>
-                          <h3 className="text-lg font-medium mb-2 text-gray-600">Şablon Seçin</h3>
-                          <p className="text-sm text-gray-500 mb-4">CV önizləməsini görmək üçün bir şablon seçin</p>
-                          <button
-                            onClick={() => setActiveSection('template')}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                          >
-                            Şablon Seç
-                          </button>
+                        <div className="shadow-lg bg-white rounded-lg flex items-center justify-center text-center" style={{
+                          width: '794px', // Match A4 width
+                          height: '95vh', // Match the preview height
+                          minHeight: '900px',
+                          maxHeight: '1600px',
+                          border: '1px solid #e5e7eb',
+                          margin: '0 auto'
+                        }}>
+                          <div>
+                            <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002-2V8l-6-6z"/>
+                              <path d="M14 2v6h6V2h2a2 2 0 00-2 2v16a2 2 0 00-2-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                            </svg>
+                            <h3 className="text-lg font-medium mb-2 text-gray-600">Şablon Seçin</h3>
+                            <p className="text-sm text-gray-500 mb-4">CV önizləməsini görmək üçün bir şablon seçin</p>
+                            <button
+                                onClick={() => setActiveSection('template')}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                              Şablon Seç
+                            </button>
+                          </div>
                         </div>
-                      </div>
                     )}
                   </div>              </div>
-              
-              {/* Export disclaimer */}
-              {cv.id && (
-                <div className="px-5 py-2.5 bg-yellow-50 border-t border-yellow-200">
-                  <div className="flex items-start gap-2">
-                    <span className="text-yellow-600 flex-shrink-0">💡</span>
-                    <div className="text-xs text-yellow-800">
-                      <strong>Qeyd:</strong> Önizləmə tam hazır olmaya bilər, ancaq export edilən faylda bütün məlumatlarınız düzgün görünəcək.
+
+                {/* Export disclaimer */}
+                {cv.id && (
+                    <div className="px-5 py-2.5 bg-yellow-50 border-t border-yellow-200">
+                      <div className="flex items-start gap-2">
+                        <span className="text-yellow-600 flex-shrink-0">💡</span>
+                        <div className="text-xs text-yellow-800">
+                          <strong>Qeyd:</strong> Önizləmə tam hazır olmaya bilər, ancaq export edilən faylda bütün məlumatlarınız düzgün görünəcək.
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Section Manager Dialog */}
-      {showSectionManager && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
-          style={{ zIndex: 999999 }}
-          onClick={() => setShowSectionManager(false)}
-        >
-          <div
-            className="bg-white rounded-lg w-full max-w-6xl max-h-[95vh] overflow-hidden shadow-2xl"
-            style={{ zIndex: 1000000, position: 'relative' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header - Fixed to top of dialog */}
+        {/* Section Manager Dialog */}
+        {showSectionManager && (
             <div
-              className="px-4 sm:px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-500 to-pink-500"
-              style={{ position: 'sticky', top: 0, zIndex: 1000001 }}
+                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
+                style={{ zIndex: 999999 }}
+                onClick={() => setShowSectionManager(false)}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                    <span className="text-white text-lg">📋</span>
+              <div
+                  className="bg-white rounded-lg w-full max-w-6xl max-h-[95vh] overflow-hidden shadow-2xl"
+                  style={{ zIndex: 1000000, position: 'relative' }}
+                  onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header - Fixed to top of dialog */}
+                <div
+                    className="px-4 sm:px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-500 to-pink-500"
+                    style={{ position: 'sticky', top: 0, zIndex: 1000001 }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                        <span className="text-white text-lg">📋</span>
+                      </div>
+                      <div>
+                        <h3 className="text-lg sm:text-xl font-semibold text-white">
+                          CV Bölmə Sıralaması
+                        </h3>
+                        <p className="text-sm text-purple-100 hidden sm:block">
+                          Bölmələri sürükləyib buraxaraq yenidən sıralayın
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                        onClick={() => setShowSectionManager(false)}
+                        className="text-white hover:text-purple-200 transition-colors p-2 rounded-full hover:bg-white hover:bg-opacity-10"
+                        aria-label="Bağla"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Content with improved scrolling */}
+                <div
+                    className="p-4 sm:p-6 overflow-y-auto"
+                    style={{
+                      position: 'relative',
+                      zIndex: 1000000,
+                      maxHeight: 'calc(95vh - 140px)',
+                      scrollbarWidth: 'thin',
+                      scrollbarColor: '#cbd5e1 #f1f5f9'
+                    }}
+                >
+                  <div className="max-w-4xl mx-auto">
+                    {/* Mobile Instructions */}
+                    <div className="sm:hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <span className="text-blue-600 text-lg flex-shrink-0">ℹ️</span>
+                        <div className="text-sm text-blue-800">
+                          <p className="font-medium mb-1">Mobil istifadə üçün:</p>
+                          <p className="text-blue-700">Bölmələri tutub sürükləyərək yenidən sıralayın</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <CVSectionManager
+                        cvData={{
+                          personalInfo: cv.personalInfo,
+                          experience: cv.experience || [],
+                          education: cv.education || [],
+                          skills: cv.skills || [],
+                          languages: cv.languages || [],
+                          projects: cv.projects || [],
+                          certifications: cv.certifications || [],
+                          volunteerExperience: cv.volunteerExperience || [],
+                          publications: cv.publications || [],
+                          honorsAwards: cv.honorsAwards || [],
+                          testScores: cv.testScores || [],
+                          recommendations: cv.recommendations || [],
+                          courses: cv.courses || [],
+                          cvLanguage: cv.cvLanguage || 'azerbaijani'
+                        }}
+                        onSectionOrderChange={handleSectionOrderChange}
+                        language={cv.cvLanguage || 'azerbaijani'}
+                    />
+                  </div>
+                </div>
+
+                {/* Footer - Fixed to bottom of dialog */}
+                <div
+                    className="px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50"
+                    style={{ position: 'sticky', bottom: 0, zIndex: 1000001 }}
+                >
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="text-sm text-gray-600 text-center sm:text-left">
+                      <span className="font-medium">💡 Məsləhət:</span>
+                      <span className="hidden sm:inline ml-1">Dəyişikliklər avtomatik olaraq saxlanılır</span>
+                      <span className="sm:hidden ml-1">Avtomatik saxlanılır</span>
+                    </div>
+                    <button
+                        onClick={() => setShowSectionManager(false)}
+                        className="w-full sm:w-auto px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all shadow-md transform hover:scale-105 active:scale-95"
+                    >
+                      Tamam
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+        )}
+
+        {/* Enhanced AI Translation Dialog */}
+        {showTranslationDialog && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
+                <div className="flex items-center mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center mr-3">
+                    <span className="text-white text-lg">🤖</span>
                   </div>
                   <div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-white">
-                      CV Bölmə Sıralaması
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      AI Professional Translation
                     </h3>
-                    <p className="text-sm text-purple-100 hidden sm:block">
-                      Bölmələri sürükləyib buraxaraq yenidən sıralayın
+                    <p className="text-sm text-gray-600">
+                      {canUseAIFeatures(userTier) ?
+                          `${userTier} üzvü - Professional tərcümə xidməti` :
+                          'Premium və Medium üzvlər üçün mövcuddur'
+                      }
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setShowSectionManager(false)}
-                  className="text-white hover:text-purple-200 transition-colors p-2 rounded-full hover:bg-white hover:bg-opacity-10"
-                  aria-label="Bağla"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
 
-            {/* Content with improved scrolling */}
-            <div
-              className="p-4 sm:p-6 overflow-y-auto"
-              style={{
-                position: 'relative',
-                zIndex: 1000000,
-                maxHeight: 'calc(95vh - 140px)',
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#cbd5e1 #f1f5f9'
-              }}
-            >
-              <div className="max-w-4xl mx-auto">
-                {/* Mobile Instructions */}
-                <div className="sm:hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-start gap-2">
-                    <span className="text-blue-600 text-lg flex-shrink-0">ℹ️</span>
-                    <div className="text-sm text-blue-800">
-                      <p className="font-medium mb-1">Mobil istifadə üçün:</p>
-                      <p className="text-blue-700">Bölmələri tutub sürükləyərək yenidən sıralayın</p>
-                    </div>
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">AI Tərcümə Xidməti</h4>
+                    <p className="text-sm text-blue-800">
+                      AI sizin CV məzmununuzu professional olaraq tərcümə edəcək:
+                    </p>
+                    <ul className="text-xs text-blue-700 mt-2 space-y-1">
+                      <li>• Peşəkar Xülasə və iş təcrübələri</li>
+                      <li>• Təhsil və layihə təsvirləri</li>
+                      <li>• Sertifikat və könüllü təcrübələr</li>
+                      <li>• İndustiya terminologiyası korunur</li>
+                      <li>• Şirkət və təşkilat adları dəyişilmir</li>
+                    </ul>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                        onClick={() => handleAITranslation('azerbaijani')}
+                        disabled={translating || !canUseAIFeatures(userTier)}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                            translating || !canUseAIFeatures(userTier)
+                                ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
+                                : 'border-blue-200 bg-blue-50 text-blue-800 hover:border-blue-300 hover:bg-blue-100'
+                        }`}
+                    >
+                      <div className="text-2xl mb-2">🇦🇿</div>
+                      <div className="font-medium">Azərbaycan dilinə</div>
+                      <div className="text-xs mt-1">Professional tərcümə</div>
+                    </button>
+
+                    <button
+                        onClick={() => handleAITranslation('english')}
+                        disabled={translating || !canUseAIFeatures(userTier)}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                            translating || !canUseAIFeatures(userTier)
+                                ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
+                                : 'border-green-200 bg-green-50 text-green-800 hover:border-green-300 hover:bg-green-100'
+                        }`}
+                    >
+                      <div className="text-2xl mb-2">🇺🇸</div>
+                      <div className="font-medium">English Translation</div>
+                      <div className="text-xs mt-1">Professional quality</div>
+                    </button>
+                  </div>
+
+                  {!canUseAIFeatures(userTier) && (
+                      <div className="p-4 bg-gradient-to-r from-purple-100 to-indigo-100 border border-purple-200 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <span className="text-purple-600 text-lg">💎</span>
+                          <div>
+                            <p className="text-sm font-medium text-purple-800 mb-1">
+                              AI Professional Translation
+                            </p>
+                            <p className="text-xs text-purple-700">
+                              CV məzmununuzu dərin analiz edərək professional tərcümə xidməti verir.
+                              Premium və Medium planlar üçün mövcuddur.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                  )}
+
+                  <div className="flex justify-end">
+                    <button
+                        onClick={() => setShowTranslationDialog(false)}
+                        className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      Bağla
+                    </button>
                   </div>
                 </div>
-
-                <CVSectionManager
-                  cvData={{
-                    personalInfo: cv.personalInfo,
-                    experience: cv.experience || [],
-                    education: cv.education || [],
-                    skills: cv.skills || [],
-                    languages: cv.languages || [],
-                    projects: cv.projects || [],
-                    certifications: cv.certifications || [],
-                    volunteerExperience: cv.volunteerExperience || [],
-                    publications: cv.publications || [],
-                    honorsAwards: cv.honorsAwards || [],
-                    testScores: cv.testScores || [],
-                    recommendations: cv.recommendations || [],
-                    courses: cv.courses || [],
-                    cvLanguage: cv.cvLanguage || 'azerbaijani'
-                  }}
-                  onSectionOrderChange={handleSectionOrderChange}
-                  language={cv.cvLanguage || 'azerbaijani'}
-                />
               </div>
             </div>
-
-            {/* Footer - Fixed to bottom of dialog */}
-            <div
-              className="px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50"
-              style={{ position: 'sticky', bottom: 0, zIndex: 1000001 }}
-            >
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="text-sm text-gray-600 text-center sm:text-left">
-                  <span className="font-medium">💡 Məsləhət:</span>
-                  <span className="hidden sm:inline ml-1">Dəyişikliklər avtomatik olaraq saxlanılır</span>
-                  <span className="sm:hidden ml-1">Avtomatik saxlanılır</span>
-                </div>
-                <button
-                  onClick={() => setShowSectionManager(false)}
-                  className="w-full sm:w-auto px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all shadow-md transform hover:scale-105 active:scale-95"
-                >
-                  Tamam
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Enhanced AI Translation Dialog */}
-      {showTranslationDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center mr-3">
-                <span className="text-white text-lg">🤖</span>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  AI Professional Translation
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {canUseAIFeatures(userTier) ?
-                    `${userTier} üzvü - Professional tərcümə xidməti` :
-                    'Premium və Medium üzvlər üçün mövcuddur'
-                  }
-                </p>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-2">AI Tərcümə Xidməti</h4>
-                <p className="text-sm text-blue-800">
-                  AI sizin CV məzmununuzu professional olaraq tərcümə edəcək:
-                </p>
-                <ul className="text-xs text-blue-700 mt-2 space-y-1">
-                  <li>• Peşəkar Xülasə və iş təcrübələri</li>
-                  <li>• Təhsil və layihə təsvirləri</li>
-                  <li>• Sertifikat və könüllü təcrübələr</li>
-                  <li>• İndustiya terminologiyası korunur</li>
-                  <li>• Şirkət və təşkilat adları dəyişilmir</li>
-                </ul>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => handleAITranslation('azerbaijani')}
-                  disabled={translating || !canUseAIFeatures(userTier)}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    translating || !canUseAIFeatures(userTier)
-                      ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
-                      : 'border-blue-200 bg-blue-50 text-blue-800 hover:border-blue-300 hover:bg-blue-100'
-                  }`}
-                >
-                  <div className="text-2xl mb-2">🇦🇿</div>
-                  <div className="font-medium">Azərbaycan dilinə</div>
-                  <div className="text-xs mt-1">Professional tərcümə</div>
-                </button>
-
-                <button
-                  onClick={() => handleAITranslation('english')}
-                  disabled={translating || !canUseAIFeatures(userTier)}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    translating || !canUseAIFeatures(userTier)
-                      ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
-                      : 'border-green-200 bg-green-50 text-green-800 hover:border-green-300 hover:bg-green-100'
-                  }`}
-                >
-                  <div className="text-2xl mb-2">🇺🇸</div>
-                  <div className="font-medium">English Translation</div>
-                  <div className="text-xs mt-1">Professional quality</div>
-                </button>
-              </div>
-
-              {!canUseAIFeatures(userTier) && (
-                <div className="p-4 bg-gradient-to-r from-purple-100 to-indigo-100 border border-purple-200 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <span className="text-purple-600 text-lg">💎</span>
-                    <div>
-                      <p className="text-sm font-medium text-purple-800 mb-1">
-                        AI Professional Translation
-                      </p>
-                      <p className="text-xs text-purple-700">
-                        CV məzmununuzu dərin analiz edərək professional tərcümə xidməti verir.
-                        Premium və Medium planlar üçün mövcuddur.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-end">
-                <button
-                  onClick={() => setShowTranslationDialog(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Bağla
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
   );
 }
+
