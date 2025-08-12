@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useNotification } from '@/components/ui/Toast';
 
 interface ApiKey {
   id: string;
@@ -27,6 +28,12 @@ export default function ApiKeysPage() {
   const [testingKey, setTestingKey] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState('all');
   const [authenticated, setAuthenticated] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{ show: boolean; keyId: string; keyName: string }>({
+    show: false,
+    keyId: '',
+    keyName: ''
+  });
+  const { showSuccess, showError, showWarning } = useNotification();
   const router = useRouter();
 
   // Add API Key Form State
@@ -186,12 +193,12 @@ export default function ApiKeysPage() {
       const data = await response.json();
 
       if (data.success) {
-        alert(`✅ ${data.message}\n\nDetails: ${JSON.stringify(data.details, null, 2)}`);
+        showSuccess(`✅ ${data.message}\n\nDetails: ${JSON.stringify(data.details, null, 2)}`);
       } else {
-        alert(`❌ Test uğursuz: ${data.error}\n\nDetails: ${JSON.stringify(data.details || {}, null, 2)}`);
+        showError(`❌ Test uğursuz: ${data.error}\n\nDetails: ${JSON.stringify(data.details || {}, null, 2)}`);
       }
     } catch (error) {
-      alert('Test xətası: ' + error);
+      showError('Test xətası: ' + error);
     } finally {
       setTestingKey(null);
     }
@@ -222,13 +229,20 @@ export default function ApiKeysPage() {
   };
 
   const deleteApiKey = async (id: string) => {
-    if (!confirm('Bu API key-i silmək istədiyinizə əminsiniz?')) {
-      return;
-    }
+    const keyToDelete = apiKeys.find(key => key.id === id);
+    if (!keyToDelete) return;
 
+    setDeleteModal({
+      show: true,
+      keyId: id,
+      keyName: keyToDelete.service
+    });
+  };
+
+  const confirmDelete = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`/api/sistem/api-keys?id=${id}`, {
+      const response = await fetch(`/api/sistem/api-keys?id=${deleteModal.keyId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -239,12 +253,16 @@ export default function ApiKeysPage() {
       const data = await response.json();
 
       if (data.success) {
+        setDeleteModal({ show: false, keyId: '', keyName: '' });
         fetchApiKeys();
+        showSuccess('API key uğurla silindi');
       } else {
-        setError(data.error || 'API key silinə bilmədi');
+        showError(data.error || 'API key silinə bilmədi');
+        setDeleteModal({ show: false, keyId: '', keyName: '' });
       }
     } catch (error) {
-      setError('Server xətası');
+      showError('API key silmə zamanı xəta baş verdi');
+      setDeleteModal({ show: false, keyId: '', keyName: '' });
     }
   };
 
@@ -501,6 +519,34 @@ export default function ApiKeysPage() {
             </div>
           )}
         </div>
+
+        {/* Delete Confirmation Modal */}
+        {deleteModal.show && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
+              <h3 className="text-lg font-semibold mb-4">
+                API Key Silinməsi Təsdiqi
+              </h3>
+              <p className="text-gray-700 mb-4">
+                {deleteModal.keyName} adlı API key-i silmək istədiyinizə əminsiniz?
+              </p>
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={() => setDeleteModal({ show: false, keyId: '', keyName: '' })}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  İmtina et
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                >
+                  Bəli, sil
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

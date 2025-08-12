@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { apiClient } from '@/lib/api';
+import { useNotification } from '@/components/ui/Toast';
 import Link from 'next/link';
 import StandardHeader from '@/components/ui/StandardHeader';
 import Footer from '@/components/Footer';
@@ -22,6 +23,12 @@ export default function CVListPage() {
   const [cvs, setCvs] = useState<CV[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [deleteModal, setDeleteModal] = useState<{ show: boolean; cvId: string; title: string }>({
+    show: false,
+    cvId: '',
+    title: ''
+  });
+  const { showSuccess, showError, showWarning } = useNotification();
 
   const fetchCVs = useCallback(async () => {
     try {
@@ -73,17 +80,23 @@ export default function CVListPage() {
   };
 
   const handleDelete = async (cvId: string, title: string) => {
-    if (!confirm(`"${title}" CV-ni silmək istədiyinizdən əminsiniz?`)) {
-      return;
-    }
+    setDeleteModal({
+      show: true,
+      cvId,
+      title
+    });
+  };
 
+  const confirmDelete = async () => {
     try {
-      await apiClient.delete(`/api/cv/${cvId}`);
+      await apiClient.delete(`/api/cv/${deleteModal.cvId}`);
+      setDeleteModal({ show: false, cvId: '', title: '' });
       await fetchCVs(); // Reload the list
-      alert('CV uğurla silindi');
+      showSuccess('CV uğurla silindi');
     } catch (error) {
       console.error('❌ CV silmə xətası:', error);
-      alert('CV silinərkən xəta baş verdi');
+      showError('CV silinərkən xəta baş verdi');
+      setDeleteModal({ show: false, cvId: '', title: '' });
     }
   };
 
@@ -262,6 +275,32 @@ export default function CVListPage() {
         </main>
       </div>
       <Footer />
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal.show && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Silmək üçün təsdiq edin</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              "{deleteModal.title}" CV-ni silmək istədiyinizə əminsiniz? Bu əməliyyatı geri qaytarmaq mümkün olmayacaq.
+            </p>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setDeleteModal({ show: false, cvId: '', title: '' })}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-200"
+              >
+                İmtina et
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200"
+              >
+                Bəli, sil
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

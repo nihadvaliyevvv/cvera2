@@ -1,10 +1,13 @@
-'use client';
+import { useState, useCallback, useEffect } from 'react';
+import { useNotification } from '@/components/ui/Toast';
+import TemplateSelector from './TemplateSelector';
+import CVPreviewA4 from './CVPreviewA4';
+import CVSectionManager from './CVSectionManager';
+import InteractiveSectionEditor from './InteractiveSectionEditor';
+import styles from './CVEditor.module.css';
+import { CVData, PersonalInfo, Experience, Education, Skill, Language, Project, Certification, VolunteerExperience } from '@/types/cv';
 
-import { useState, useEffect, useCallback } from 'react';
-import { apiClient } from '@/lib/api';
-import { CVData as CVDataType } from '@/types/cv';
-import { CVLanguage, getDefaultCVLanguage, getLabel, SECTION_LABELS } from '@/lib/cvLanguage';
-import { canUseAIFeatures } from '@/lib/aiSummary';
+// Import section components
 import PersonalInfoSection from './sections/PersonalInfoSection';
 import ExperienceSection from './sections/ExperienceSection';
 import EducationSection from './sections/EducationSection';
@@ -13,29 +16,112 @@ import LanguagesSection from './sections/LanguagesSection';
 import ProjectsSection from './sections/ProjectsSection';
 import CertificationsSection from './sections/CertificationsSection';
 import VolunteerExperienceSection from './sections/VolunteerExperienceSection';
-// import PublicationsSection from './sections/PublicationsSection';
-// import HonorsAwardsSection from './sections/HonorsAwardsSection';
-// import TestScoresSection from './sections/TestScoresSection';
-// import RecommendationsSection from './sections/RecommendationsSection';
-// import CoursesSection from './sections/CoursesSection';
-import TemplateSelector from './TemplateSelector';
-import CVPreviewA4 from './CVPreviewA4';
-import styles from './CVEditor.module.css';
+import CustomSectionsSection from './sections/CustomSectionsSection';
 
-interface CVData {
+// API client for HTTP requests
+const apiClient = {
+  get: async (url: string) => {
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken') || localStorage.getItem('token')}`,
+      },
+    });
+    if (!response.ok) throw new Error(`API Error: ${response.status}`);
+    return response.json();
+  },
+  post: async (url: string, data: any) => {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken') || localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error(`API Error: ${response.status}`);
+    return response.json();
+  },
+  put: async (url: string, data: any) => {
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken') || localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error(`API Error: ${response.status}`);
+    return response.json();
+  },
+};
+
+// Type definitions for the CV editor
+type CVLanguage = 'azerbaijani' | 'english';
+
+interface CVDataType {
+  personalInfo: PersonalInfo;
+  experience: Experience[];
+  education: Education[];
+  skills: Skill[];
+  languages: Language[];
+  projects: Project[];
+  certifications: Certification[];
+  volunteerExperience: VolunteerExperience[];
+  publications: any[];
+  honorsAwards: any[];
+  testScores: any[];
+  recommendations: any[];
+  courses: any[];
+  customSections?: any[];
+  sectionOrder?: any[];
+  cvLanguage: CVLanguage;
+}
+
+interface CVEditorData {
   id?: string;
   title: string;
   templateId: string;
   data: CVDataType;
 }
 
+interface CVEditorState {
+  id?: string;
+  title: string;
+  templateId: string;
+  createdAt?: string;
+  personalInfo: PersonalInfo;
+  experience?: Experience[];
+  education?: Education[];
+  skills?: Skill[];
+  languages?: Language[];
+  projects?: Project[];
+  certifications?: Certification[];
+  volunteerExperience?: VolunteerExperience[];
+  publications?: any[];
+  honorsAwards?: any[];
+  testScores?: any[];
+  recommendations?: any[];
+  courses?: any[];
+  customSections?: any[];
+  sectionOrder?: any[];
+  cvLanguage?: CVLanguage;
+  translationMetadata?: any;
+}
+
 interface CVEditorProps {
   cvId?: string;
-  onSave: (cv: CVData) => void;
+  onSave: (cv: CVEditorData) => void;
   onCancel: () => void;
   initialData?: any;
   userTier?: string;
 }
+
+// Utility functions
+const getDefaultCVLanguage = (): CVLanguage => 'azerbaijani';
+
+const canUseAIFeatures = (tier: string): boolean => {
+  return tier === 'Premium' || tier === 'Medium';
+};
 
 // Transform LinkedIn data to CV data format with enhanced field mapping
 const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
@@ -230,16 +316,14 @@ const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
                       edu.school_name || edu.college || '',
           degree: edu.college_degree || edu.degree || edu.degree_name || edu.qualification ||
                  edu.program || '',
-          field: edu.college_degree_field || edu.field_of_study || edu.field || edu.major ||
-                edu.specialization || '',
           startDate: edu.college_duration?.split(' - ')[0]?.trim() || edu.start_date || edu.startDate ||
                     edu.starts_at || edu.from || edu.start_year || '',
           endDate: edu.college_duration?.split(' - ')[1]?.trim() || edu.end_date || edu.endDate ||
                   edu.ends_at || edu.to || edu.end_year || edu.graduation_year || '',
           current: edu.current || (edu.college_duration && edu.college_duration.includes('Present')) || false,
           gpa: edu.gpa || '',
-          description: edu.college_activity || edu.description || edu.activities ||
-                      edu.notes || edu.details || ''
+          // description: edu.college_activity || edu.description || edu.activities ||
+          //             edu.notes || edu.details || ''
         };
         console.log(`🔧 CVEditor: Transforming education ${index}:`, educationObj);
         return educationObj;
@@ -467,7 +551,8 @@ const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
     honorsAwards: [],
     testScores: [],
     recommendations: [],
-    courses: []
+    courses: [],
+    cvLanguage: 'azerbaijani' as const
   };
 
   console.log('🎉 CVEditor: Final transformed CV data:', transformedData);
@@ -475,6 +560,9 @@ const transformLinkedInDataToCVData = (linkedInData: any): CVDataType => {
 };
 
 export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier = 'Premium' }: CVEditorProps) {
+  // Add the useNotification hook
+  const { showSuccess, showError, showWarning, showInfo } = useNotification();
+
   // Enhanced logging for LinkedIn import debugging
   console.log('🎯 CVEditor initialized with:', {
     cvId,
@@ -502,7 +590,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
     userTier
   });
 
-  const [cv, setCv] = useState<CVData>(() => {
+  const [cv, setCv] = useState<CVEditorState>(() => {
     if (initialData) {
       console.log('🔄 Processing initial data in CVEditor...');
       console.log('Raw initialData:', JSON.stringify(initialData, null, 2));
@@ -519,12 +607,24 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
         });
 
         return {
+          id: undefined,
           title: 'LinkedIn Import CV',
-          templateId: 'professional',
-          data: {
-            ...transformedData,
-            cvLanguage: getDefaultCVLanguage()
-          }
+          templateId: 'basic',
+          createdAt: new Date().toISOString(),
+          personalInfo: transformedData.personalInfo,
+          experience: transformedData.experience || [],
+          education: transformedData.education || [],
+          skills: transformedData.skills || [],
+          languages: transformedData.languages || [],
+          projects: transformedData.projects || [],
+          certifications: transformedData.certifications || [],
+          volunteerExperience: transformedData.volunteerExperience || [],
+          publications: transformedData.publications || [],
+          honorsAwards: transformedData.honorsAwards || [],
+          testScores: transformedData.testScores || [],
+          recommendations: transformedData.recommendations || [],
+          courses: transformedData.courses || [],
+          cvLanguage: transformedData.cvLanguage || getDefaultCVLanguage()
         };
       } else if (initialData.cv_data || initialData.data) {
         // This is existing CV data from database
@@ -536,16 +636,24 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
           console.log('🔗 This CV was created from LinkedIn import, ensuring proper format...');
 
           // Ensure LinkedIn import data is in correct format
-          const processedData = {
-            personalInfo: cvData.personalInfo || {
-              fullName: '',
-              email: '',
-              phone: '',
-              address: '',
-              location: '',
-              linkedin: '',
-              summary: ''
-            },
+          const processedPersonalInfo = cvData.personalInfo || {
+            fullName: '',
+            firstName: '',
+            lastName: '',
+            email: '',
+            phone: '',
+            website: '',
+            linkedin: '',
+            location: '',
+            summary: ''
+          };
+
+          return {
+            id: initialData.id,
+            title: initialData.title || 'LinkedIn Import CV',
+            templateId: initialData.templateId || 'basic',
+            createdAt: initialData.createdAt || new Date().toISOString(),
+            personalInfo: processedPersonalInfo,
             experience: Array.isArray(cvData.experience) ? cvData.experience.map((exp: any) => ({
               id: exp.id || `exp-${Date.now()}-${Math.random()}`,
               company: exp.company || '',
@@ -572,6 +680,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
               name: typeof skill === 'string' ? skill : skill.name || '',
               level: typeof skill === 'object' ? skill.level || 'Intermediate' : 'Intermediate'
             })) : [],
+            languages: cvData.languages || [],
             projects: cvData.projects || [],
             certifications: cvData.certifications || [],
             volunteerExperience: cvData.volunteerExperience || [],
@@ -582,27 +691,37 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
             courses: cvData.courses || [],
             cvLanguage: cvData.cvLanguage || getDefaultCVLanguage()
           };
-
-          console.log('✅ LinkedIn CV data processed:', {
-            skillsCount: processedData.skills.length,
-            experienceCount: processedData.experience.length,
-            educationCount: processedData.education.length
-          });
-
-          return {
-            title: initialData.title || 'LinkedIn Import CV',
-            templateId: initialData.templateId || 'professional',
-            data: processedData
-          };
         } else {
           // Regular existing CV data
           return {
+            id: initialData.id,
             title: initialData.title || '',
             templateId: initialData.templateId || '',
-            data: {
-              ...cvData,
-              cvLanguage: cvData.cvLanguage || getDefaultCVLanguage()
-            }
+            createdAt: initialData.createdAt || new Date().toISOString(),
+            personalInfo: cvData.personalInfo || {
+              fullName: '',
+              firstName: '',
+              lastName: '',
+              email: '',
+              phone: '',
+              website: '',
+              linkedin: '',
+              location: '',
+              summary: ''
+            },
+            experience: cvData.experience || [],
+            education: cvData.education || [],
+            skills: cvData.skills || [],
+            languages: cvData.languages || [],
+            projects: cvData.projects || [],
+            certifications: cvData.certifications || [],
+            volunteerExperience: cvData.volunteerExperience || [],
+            publications: cvData.publications || [],
+            honorsAwards: cvData.honorsAwards || [],
+            testScores: cvData.testScores || [],
+            recommendations: cvData.recommendations || [],
+            courses: cvData.courses || [],
+            cvLanguage: cvData.cvLanguage || getDefaultCVLanguage()
           };
         }
       }
@@ -610,32 +729,34 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
 
     // Default empty CV
     return {
+      id: undefined,
       title: '',
       templateId: '',
-      data: {
-        personalInfo: {
-          firstName: '',
-          fullName: '',
-          email: '',
-          phone: '',
-          website: '',
-          linkedin: '',
-          summary: ''
-        },
-        experience: [],
-        education: [],
-        skills: [],
-        languages: [],
-        projects: [],
-        certifications: [],
-        volunteerExperience: [],
-        publications: [],
-        honorsAwards: [],
-        testScores: [],
-        recommendations: [],
-        courses: [],
-        cvLanguage: getDefaultCVLanguage()
-      }
+      createdAt: new Date().toISOString(),
+      personalInfo: {
+        firstName: '',
+        lastName: '',
+        fullName: '',
+        email: '',
+        phone: '',
+        website: '',
+        linkedin: '',
+        location: '',
+        summary: ''
+      },
+      experience: [],
+      education: [],
+      skills: [],
+      languages: [],
+      projects: [],
+      certifications: [],
+      volunteerExperience: [],
+      publications: [],
+      honorsAwards: [],
+      testScores: [],
+      recommendations: [],
+      courses: [],
+      cvLanguage: getDefaultCVLanguage()
     };
   });
 
@@ -648,18 +769,20 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
   const [translating, setTranslating] = useState(false);
   const [showTranslationDialog, setShowTranslationDialog] = useState(false);
   const [pendingLanguage, setPendingLanguage] = useState<CVLanguage | null>(null);
+  const [showSectionManager, setShowSectionManager] = useState(false);
+  const [enablePreviewSelection, setEnablePreviewSelection] = useState(false);
 
   // Handle CV language change with translation option
   const handleLanguageChange = async (newLanguage: CVLanguage) => {
-    const currentLanguage = cv.data.cvLanguage || 'azerbaijani';
-    
+    const currentLanguage = cv.cvLanguage || 'azerbaijani';
+
     // If language is the same, no need to change
     if (currentLanguage === newLanguage) return;
 
     // Check if user has content to translate
-    const hasContent = cv.data.personalInfo?.summary || 
-                      (cv.data.experience && cv.data.experience.length > 0) ||
-                      (cv.data.education && cv.data.education.length > 0);
+    const hasContent = cv.personalInfo?.summary ||
+                      (cv.experience && cv.experience.length > 0) ||
+                      (cv.education && cv.education.length > 0);
 
     // If user has AI features and content, show translation dialog
     if (canUseAIFeatures(userTier) && hasContent) {
@@ -669,10 +792,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
       // Just change language without translation
       setCv(prevCv => ({
         ...prevCv,
-        data: {
-          ...prevCv.data,
-          cvLanguage: newLanguage
-        }
+        cvLanguage: newLanguage
       }));
     }
   };
@@ -685,12 +805,214 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
     setShowTranslationDialog(false);
     
     try {
-      // Translation functionality will be implemented in future
-      console.log('Translation requested for language:', pendingLanguage);
-      
+      console.log('Starting translation to:', pendingLanguage);
+
+      // Create translated content - now using flat CV structure
+      const translatedData: CVData = {
+        personalInfo: cv.personalInfo,
+        experience: cv.experience,
+        education: cv.education,
+        skills: cv.skills,
+        languages: cv.languages,
+        projects: cv.projects,
+        certifications: cv.certifications,
+        volunteerExperience: cv.volunteerExperience,
+        publications: cv.publications,
+        honorsAwards: cv.honorsAwards,
+        testScores: cv.testScores,
+        recommendations: cv.recommendations,
+        courses: cv.courses,
+        cvLanguage: cv.cvLanguage
+      };
+
+      // Simple translation mapping for common fields
+      const translations: Record<string, Record<string, string>> = {
+        azerbaijani: {
+          'Software Engineer': 'Proqram Mühəndisi',
+          'Frontend Developer': 'Frontend Proqramçısı',
+          'Backend Developer': 'Backend Proqramçısı',
+          'Full Stack Developer': 'Full Stack Proqramçısı',
+          'Project Manager': 'Layihə Meneceri',
+          'Data Analyst': 'Məlumat Analitiki',
+          'UI/UX Designer': 'UI/UX Dizayner',
+          'Bachelor of Science': 'Bakalavr dərəcəsi',
+          'Master of Science': 'Magistr dərəcəsi',
+          'Computer Science': 'Kompüter Elmləri',
+          'Information Technology': 'İnformasiya Texnologiyaları',
+          'Business Administration': 'Biznes İdarəetməsi',
+          'Present': 'Hazırda',
+          'Current': 'Hazırda',
+          'JavaScript': 'JavaScript',
+          'Python': 'Python',
+          'React': 'React',
+          'Node.js': 'Node.js',
+          'HTML/CSS': 'HTML/CSS',
+          'English': 'İngilis dili',
+          'Native': 'Ana dili',
+          'Fluent': 'Səlis',
+          'Advanced': 'Yüksək səviyyə',
+          'Intermediate': 'Orta səviyyə',
+          'Beginner': 'Başlanğıc səviyyə'
+        },
+        english: {
+          'Proqram Mühəndisi': 'Software Engineer',
+          'Frontend Proqramçısı': 'Frontend Developer',
+          'Backend Proqramçısı': 'Backend Developer',
+          'Full Stack Proqramçısı': 'Full Stack Developer',
+          'Layihə Meneceri': 'Project Manager',
+          'Məlumat Analitiki': 'Data Analyst',
+          'UI/UX Dizayner': 'UI/UX Designer',
+          'Bakalavr dərəcəsi': 'Bachelor of Science',
+          'Magistr dərəcəsi': 'Master of Science',
+          'Kompüter Elmləri': 'Computer Science',
+          'İnformasiya Texnologiyaları': 'Information Technology',
+          'Biznes İdarəetməsi': 'Business Administration',
+          'Hazırda': 'Present',
+          'İngilis dili': 'English',
+          'Ana dili': 'Native',
+          'Səlis': 'Fluent',
+          'Yüksək səviyyə': 'Advanced',
+          'Orta səviyyə': 'Intermediate',
+          'Başlanğıc səviyyə': 'Beginner'
+        }
+      };
+
+      const translateText = (text: string, targetLanguage: string): string => {
+        if (!text) return text;
+        const translationMap: Record<string, string> = translations[targetLanguage] || {};
+
+        // Check for exact matches first
+        if (translationMap[text]) {
+          return translationMap[text];
+        }
+
+        // Check for partial matches and replace
+        let translatedText = text;
+        Object.keys(translationMap).forEach(key => {
+          const regex = new RegExp(key, 'gi');
+          translatedText = translatedText.replace(regex, translationMap[key]);
+        });
+
+        return translatedText;
+      };
+
+      // Translate personal info
+      if (translatedData.personalInfo) {
+        translatedData.personalInfo.summary = translateText(
+          translatedData.personalInfo.summary || '',
+          pendingLanguage
+        );
+      }
+
+      // Translate experience
+      if (translatedData.experience) {
+        translatedData.experience = translatedData.experience.map(exp => ({
+          ...exp,
+          position: translateText(exp.position || '', pendingLanguage),
+          description: translateText(exp.description || '', pendingLanguage)
+        }));
+      }
+
+      // Translate education
+      if (translatedData.education) {
+        translatedData.education = translatedData.education.map(edu => ({
+          ...edu,
+          degree: translateText(edu.degree || '', pendingLanguage)
+        }));
+      }
+
+      // Translate skills
+      if (translatedData.skills) {
+        translatedData.skills = translatedData.skills.map(skill => ({
+          ...skill,
+          name: translateText(skill.name || '', pendingLanguage)
+        }));
+      }
+
+      // Translate languages
+      if (translatedData.languages) {
+        translatedData.languages = translatedData.languages.map(lang => ({
+          ...lang,
+          language: translateText(lang.language || '', pendingLanguage),
+          level: translateText(lang.level || '', pendingLanguage)
+        }));
+      }
+
+      // Translate projects
+      if (translatedData.projects) {
+        translatedData.projects = translatedData.projects.map(project => ({
+          ...project,
+          name: translateText(project.name || '', pendingLanguage),
+          description: translateText(project.description || '', pendingLanguage),
+          technologies: Array.isArray(project.technologies)
+            ? project.technologies.map(tech => translateText(tech, pendingLanguage))
+            : project.technologies
+        }));
+      }
+
+      // Translate certifications
+      if (translatedData.certifications) {
+        translatedData.certifications = translatedData.certifications.map(cert => ({
+          ...cert,
+          name: translateText(cert.name || '', pendingLanguage),
+          issuer: translateText(cert.issuer || '', pendingLanguage),
+          description: translateText(cert.description || '', pendingLanguage)
+        }));
+      }
+
+      // Set the new language and add translation metadata
+      translatedData.cvLanguage = pendingLanguage;
+      translatedData.translationMetadata = {
+        translatedAt: new Date().toISOString(),
+        fromLanguage: cv.cvLanguage,
+        toLanguage: pendingLanguage,
+        translationLock: true
+      };
+
+      // Update CV state with translated content
+      const updatedCV = {
+        ...cv,
+        cvLanguage: pendingLanguage,
+        ...translatedData
+      };
+
+      setCv(updatedCV);
+
+      // Immediately save the translated content to database
+      console.log('Saving translated content to database...');
+
+      const sanitizedData = {
+        personalInfo: translatedData.personalInfo,
+        experience: Array.isArray(translatedData.experience) ? translatedData.experience : [],
+        education: Array.isArray(translatedData.education) ? translatedData.education : [],
+        skills: Array.isArray(translatedData.skills) ? translatedData.skills : [],
+        languages: Array.isArray(translatedData.languages) ? translatedData.languages : [],
+        projects: Array.isArray(translatedData.projects) ? translatedData.projects : [],
+        certifications: Array.isArray(translatedData.certifications) ? translatedData.certifications : [],
+        volunteerExperience: Array.isArray(translatedData.volunteerExperience) ? translatedData.volunteerExperience : [],
+        publications: Array.isArray(translatedData.publications) ? translatedData.publications : [],
+        honorsAwards: Array.isArray(translatedData.honorsAwards) ? translatedData.honorsAwards : [],
+        testScores: Array.isArray(translatedData.testScores) ? translatedData.testScores : [],
+        recommendations: Array.isArray(translatedData.recommendations) ? translatedData.recommendations : [],
+        courses: Array.isArray(translatedData.courses) ? translatedData.courses : [],
+        sectionOrder: translatedData.sectionOrder || [],
+        cvLanguage: pendingLanguage,
+        translationMetadata: translatedData.translationMetadata
+      };
+
+      const apiData = {
+        title: cv.title,
+        cv_data: sanitizedData
+      };
+
+      if (cvId) {
+        await apiClient.put(`/api/cv/${cvId}`, apiData);
+        console.log('✅ Translated content saved to database');
+      }
+
       setSuccess(pendingLanguage === 'english' ? 
-        'CV content translation requested for English!' : 
-        'CV məzmunu Azərbaycan dilinə tərcümə tələb edildi!'
+        'CV content successfully translated to English and saved!' :
+        'CV məzmunu uğurla Azərbaycan dilinə tərcümə edildi və saxlanıldı!'
       );
     } catch (error) {
       console.error('Translation error:', error);
@@ -698,10 +1020,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
       // Still change the language even if translation fails
       setCv(prevCv => ({
         ...prevCv,
-        data: {
-          ...prevCv.data,
-          cvLanguage: pendingLanguage
-        }
+        cvLanguage: pendingLanguage
       }));
     } finally {
       setTranslating(false);
@@ -710,17 +1029,50 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
   };
 
   // Skip translation and just change language
-  const handleSkipTranslation = () => {
+  const handleSkipTranslation = async () => {
     if (!pendingLanguage) return;
-    
-    setCv(prevCv => ({
-      ...prevCv,
-      data: {
-        ...prevCv.data,
-        cvLanguage: pendingLanguage
+
+    const updatedCV = {
+      ...cv,
+      cvLanguage: pendingLanguage
+    };
+
+    setCv(updatedCV);
+
+    // Save the language change to database immediately
+    if (cvId) {
+      try {
+        const sanitizedData = {
+          personalInfo: cv.personalInfo,
+          experience: Array.isArray(cv.experience) ? cv.experience : [],
+          education: Array.isArray(cv.education) ? cv.education : [],
+          skills: Array.isArray(cv.skills) ? cv.skills : [],
+          languages: Array.isArray(cv.languages) ? cv.languages : [],
+          projects: Array.isArray(cv.projects) ? cv.projects : [],
+          certifications: Array.isArray(cv.certifications) ? cv.certifications : [],
+          volunteerExperience: Array.isArray(cv.volunteerExperience) ? cv.volunteerExperience : [],
+          publications: Array.isArray(cv.publications) ? cv.publications : [],
+          honorsAwards: Array.isArray(cv.honorsAwards) ? cv.honorsAwards : [],
+          testScores: Array.isArray(cv.testScores) ? cv.testScores : [],
+          recommendations: Array.isArray(cv.recommendations) ? cv.recommendations : [],
+          courses: Array.isArray(cv.courses) ? cv.courses : [],
+          sectionOrder: cv.sectionOrder || [],
+          cvLanguage: pendingLanguage
+        };
+
+        const apiData = {
+          title: cv.title,
+          cv_data: sanitizedData
+        };
+
+        await apiClient.put(`/api/cv/${cvId}`, apiData);
+        console.log('✅ Language change saved to database');
+      } catch (error) {
+        console.error('❌ Failed to save language change:', error);
+        setError('Dil dəyişikliyi saxlanmadı. Yenidən cəhd edin.');
       }
-    }));
-    
+    }
+
     setShowTranslationDialog(false);
     setPendingLanguage(null);
   };
@@ -749,7 +1101,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
         throw new Error('CV data is missing or corrupted');
       }
 
-      const templateId = cvData.templateId || 'professional';
+      const templateId = cvData.templateId || 'basic'; // "professional" deyil, "basic"
 
       // Extract the actual CV data from the cv_data field
       const actualCVData = cvData.cv_data;
@@ -768,68 +1120,66 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
           id: cvData.id,
           title: cvData.title || 'LinkedIn Import CV',
           templateId: templateId,
-          data: {
-            personalInfo: {
-              fullName: actualCVData.personalInfo?.fullName || actualCVData.personalInfo?.name || '',
-              firstName: actualCVData.personalInfo?.firstName || '',
-              lastName: actualCVData.personalInfo?.lastName || '',
-              email: actualCVData.personalInfo?.email || '',
-              phone: actualCVData.personalInfo?.phone || '',
-              website: actualCVData.personalInfo?.website || '',
-              linkedin: actualCVData.personalInfo?.linkedin || '',
-              location: actualCVData.personalInfo?.location || actualCVData.personalInfo?.address || '',
-              summary: actualCVData.personalInfo?.summary || '',
-              profileImage: actualCVData.personalInfo?.profileImage || actualCVData.personalInfo?.profilePicture || ''
-            },
-            experience: Array.isArray(actualCVData.experience) ? actualCVData.experience.map((exp: any) => ({
-              id: exp.id || `exp-loaded-${Date.now()}-${Math.random()}`,
-              company: exp.company || exp.company_name || '',
-              position: exp.position || exp.title || '',
-              startDate: exp.startDate || exp.duration?.split(' - ')[0] || '',
-              endDate: exp.endDate || exp.duration?.split(' - ')[1] || '',
-              current: exp.current || false,
-              description: exp.description || '',
-              location: exp.location || ''
-            })) : [],
-            education: Array.isArray(actualCVData.education) ? actualCVData.education.map((edu: any) => ({
-              id: edu.id || `edu-loaded-${Date.now()}-${Math.random()}`,
-              institution: edu.institution || edu.school || '',
-              degree: edu.degree || '',
-              field: edu.field || '',
-              startDate: edu.startDate || edu.duration?.split(' - ')[0] || '',
-              endDate: edu.endDate || edu.duration?.split(' - ')[1] || '',
-              current: edu.current || false,
-              gpa: edu.gpa || '',
-              description: edu.description || ''
-            })) : [],
-            skills: Array.isArray(actualCVData.skills) ? actualCVData.skills.map((skill: any, index: number) => ({
-              id: skill.id || `skill-loaded-${Date.now()}-${index}`,
-              name: typeof skill === 'string' ? skill : (skill.name || ''),
-              level: typeof skill === 'object' && skill.level ? skill.level : 'Intermediate'
-            })) : [],
-            languages: Array.isArray(actualCVData.languages) ? actualCVData.languages.map((lang: any, index: number) => ({
-              id: lang.id || `lang-loaded-${Date.now()}-${index}`,
-              name: typeof lang === 'string' ? lang : (lang.name || ''),
-              proficiency: typeof lang === 'object' && lang.proficiency ? lang.proficiency : 'Professional'
-            })) : [],
-            projects: Array.isArray(actualCVData.projects) ? actualCVData.projects : [],
-            certifications: Array.isArray(actualCVData.certifications) ? actualCVData.certifications : [],
-            volunteerExperience: Array.isArray(actualCVData.volunteerExperience) ? actualCVData.volunteerExperience : [],
-            publications: Array.isArray(actualCVData.publications) ? actualCVData.publications : [],
-            honorsAwards: Array.isArray(actualCVData.honorsAwards) ? actualCVData.honorsAwards : [],
-            testScores: Array.isArray(actualCVData.testScores) ? actualCVData.testScores : [],
-            recommendations: Array.isArray(actualCVData.recommendations) ? actualCVData.recommendations : [],
-            courses: Array.isArray(actualCVData.courses) ? actualCVData.courses : [],
-            cvLanguage: actualCVData.cvLanguage || getDefaultCVLanguage()
-          }
+          personalInfo: {
+            fullName: actualCVData.personalInfo?.fullName || actualCVData.personalInfo?.name || '',
+            firstName: actualCVData.personalInfo?.firstName || '',
+            lastName: actualCVData.personalInfo?.lastName || '',
+            email: actualCVData.personalInfo?.email || '',
+            phone: actualCVData.personalInfo?.phone || '',
+            website: actualCVData.personalInfo?.website || '',
+            linkedin: actualCVData.personalInfo?.linkedin || '',
+            location: actualCVData.personalInfo?.location || actualCVData.personalInfo?.address || '',
+            summary: actualCVData.personalInfo?.summary || '',
+            profileImage: actualCVData.personalInfo?.profileImage || actualCVData.personalInfo?.profilePicture || ''
+          },
+          experience: Array.isArray(actualCVData.experience) ? actualCVData.experience.map((exp: any) => ({
+            id: exp.id || `exp-loaded-${Date.now()}-${Math.random()}`,
+            company: exp.company || exp.company_name || '',
+            position: exp.position || exp.title || '',
+            startDate: exp.startDate || exp.duration?.split(' - ')[0] || '',
+            endDate: exp.endDate || exp.duration?.split(' - ')[1] || '',
+            current: exp.current || false,
+            description: exp.description || '',
+            location: exp.location || ''
+          })) : [],
+          education: Array.isArray(actualCVData.education) ? actualCVData.education.map((edu: any) => ({
+            id: edu.id || `edu-loaded-${Date.now()}-${Math.random()}`,
+            institution: edu.institution || edu.school || '',
+            degree: edu.degree || '',
+            field: edu.field || '',
+            startDate: edu.startDate || edu.duration?.split(' - ')[0] || '',
+            endDate: edu.endDate || edu.duration?.split(' - ')[1] || '',
+            current: edu.current || false,
+            gpa: edu.gpa || '',
+            description: edu.description || ''
+          })) : [],
+          skills: Array.isArray(actualCVData.skills) ? actualCVData.skills.map((skill: any, index: number) => ({
+            id: skill.id || `skill-loaded-${Date.now()}-${index}`,
+            name: typeof skill === 'string' ? skill : (skill.name || ''),
+            level: typeof skill === 'object' && skill.level ? skill.level : 'Intermediate'
+          })) : [],
+          languages: Array.isArray(actualCVData.languages) ? actualCVData.languages.map((lang: any) => ({
+            id: lang.id || `lang-loaded-${Date.now()}-${Math.random()}`,
+            name: typeof lang === 'string' ? lang : (lang.name || ''),
+            proficiency: typeof lang === 'object' && lang.proficiency ? lang.proficiency : 'Professional'
+          })) : [],
+          projects: Array.isArray(actualCVData.projects) ? actualCVData.projects : [],
+          certifications: Array.isArray(actualCVData.certifications) ? actualCVData.certifications : [],
+          volunteerExperience: Array.isArray(actualCVData.volunteerExperience) ? actualCVData.volunteerExperience : [],
+          publications: Array.isArray(actualCVData.publications) ? actualCVData.publications : [],
+          honorsAwards: Array.isArray(actualCVData.honorsAwards) ? actualCVData.honorsAwards : [],
+          testScores: Array.isArray(actualCVData.testScores) ? actualCVData.testScores : [],
+          recommendations: Array.isArray(actualCVData.recommendations) ? actualCVData.recommendations : [],
+          courses: Array.isArray(actualCVData.courses) ? actualCVData.courses : [],
+          cvLanguage: actualCVData.cvLanguage || getDefaultCVLanguage()
         };
 
         console.log('✅ CVEditor: LinkedIn CV transformed for editing:', {
-          personalInfo: transformedCV.data.personalInfo.fullName,
-          experienceCount: transformedCV.data.experience.length,
-          educationCount: transformedCV.data.education.length,
-          skillsCount: transformedCV.data.skills.length,
-          languagesCount: transformedCV.data.languages.length
+          personalInfo: transformedCV.personalInfo.fullName,
+          experienceCount: transformedCV.experience.length,
+          educationCount: transformedCV.education.length,
+          skillsCount: transformedCV.skills.length,
+          languagesCount: transformedCV.languages.length
         });
 
         setCv(transformedCV);
@@ -841,29 +1191,27 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
           id: cvData.id,
           title: cvData.title || 'Untitled CV',
           templateId: templateId,
-          data: {
-            personalInfo: actualCVData.personalInfo || {
-              fullName: '',
-              email: '',
-              phone: '',
-              website: '',
-              linkedin: '',
-              summary: ''
-            },
-            experience: Array.isArray(actualCVData.experience) ? actualCVData.experience : [],
-            education: Array.isArray(actualCVData.education) ? actualCVData.education : [],
-            skills: Array.isArray(actualCVData.skills) ? actualCVData.skills : [],
-            languages: Array.isArray(actualCVData.languages) ? actualCVData.languages : [],
-            projects: Array.isArray(actualCVData.projects) ? actualCVData.projects : [],
-            certifications: Array.isArray(actualCVData.certifications) ? actualCVData.certifications : [],
-            volunteerExperience: Array.isArray(actualCVData.volunteerExperience) ? actualCVData.volunteerExperience : [],
-            publications: Array.isArray(actualCVData.publications) ? actualCVData.publications : [],
-            honorsAwards: Array.isArray(actualCVData.honorsAwards) ? actualCVData.honorsAwards : [],
-            testScores: Array.isArray(actualCVData.testScores) ? actualCVData.testScores : [],
-            recommendations: Array.isArray(actualCVData.recommendations) ? actualCVData.recommendations : [],
-            courses: Array.isArray(actualCVData.courses) ? actualCVData.courses : [],
-            cvLanguage: actualCVData.cvLanguage || getDefaultCVLanguage()
-          }
+          personalInfo: actualCVData.personalInfo || {
+            fullName: '',
+            email: '',
+            phone: '',
+            website: '',
+            linkedin: '',
+            summary: ''
+          },
+          experience: Array.isArray(actualCVData.experience) ? actualCVData.experience : [],
+          education: Array.isArray(actualCVData.education) ? actualCVData.education : [],
+          skills: Array.isArray(actualCVData.skills) ? actualCVData.skills : [],
+          languages: Array.isArray(actualCVData.languages) ? actualCVData.languages : [],
+          projects: Array.isArray(actualCVData.projects) ? actualCVData.projects : [],
+          certifications: Array.isArray(actualCVData.certifications) ? actualCVData.certifications : [],
+          volunteerExperience: Array.isArray(actualCVData.volunteerExperience) ? actualCVData.volunteerExperience : [],
+          publications: Array.isArray(actualCVData.publications) ? actualCVData.publications : [],
+          honorsAwards: Array.isArray(actualCVData.honorsAwards) ? actualCVData.honorsAwards : [],
+          testScores: Array.isArray(actualCVData.testScores) ? actualCVData.testScores : [],
+          recommendations: Array.isArray(actualCVData.recommendations) ? actualCVData.recommendations : [],
+          courses: Array.isArray(actualCVData.courses) ? actualCVData.courses : [],
+          cvLanguage: actualCVData.cvLanguage || getDefaultCVLanguage()
         };
 
         console.log('✅ CVEditor: Regular CV transformed for editing:', transformedCV);
@@ -890,7 +1238,20 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
       setCv({
         title: 'Imported CV',
         templateId: 'professional',
-        data: transformedData
+        personalInfo: transformedData.personalInfo,
+        experience: transformedData.experience || [],
+        education: transformedData.education || [],
+        skills: transformedData.skills || [],
+        languages: transformedData.languages || [],
+        projects: transformedData.projects || [],
+        certifications: transformedData.certifications || [],
+        volunteerExperience: transformedData.volunteerExperience || [],
+        publications: transformedData.publications || [],
+        honorsAwards: transformedData.honorsAwards || [],
+        testScores: transformedData.testScores || [],
+        recommendations: transformedData.recommendations || [],
+        courses: transformedData.courses || [],
+        cvLanguage: transformedData.cvLanguage || getDefaultCVLanguage()
       });
     }
   }, [cvId, loadCV, initialData]);
@@ -907,7 +1268,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
       validationErrors.push('Şablon seçimi tələb olunur');
     }
 
-    if (!cv.data.personalInfo || !cv.data.personalInfo.fullName || cv.data.personalInfo.fullName.trim().length === 0) {
+    if (!cv.personalInfo || !cv.personalInfo.fullName || cv.personalInfo.fullName.trim().length === 0) {
       validationErrors.push('Ad tələb olunur');
     }
     
@@ -921,27 +1282,36 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
     setSuccess('');
 
     try {
+      // FIXED: Access properties directly from cv object (not cv.data)
       const sanitizedData = {
-        personalInfo: cv.data.personalInfo,
-        experience: Array.isArray(cv.data.experience) ? cv.data.experience : [],
-        education: Array.isArray(cv.data.education) ? cv.data.education : [],
-        skills: Array.isArray(cv.data.skills) ? cv.data.skills : [],
-        languages: Array.isArray(cv.data.languages) ? cv.data.languages : [],
-        projects: Array.isArray(cv.data.projects) ? cv.data.projects : [],
-        certifications: Array.isArray(cv.data.certifications) ? cv.data.certifications : [],
-        volunteerExperience: Array.isArray(cv.data.volunteerExperience) ? cv.data.volunteerExperience : [],
-        publications: Array.isArray(cv.data.publications) ? cv.data.publications : [],
-        honorsAwards: Array.isArray(cv.data.honorsAwards) ? cv.data.honorsAwards : [],
-        testScores: Array.isArray(cv.data.testScores) ? cv.data.testScores : [],
-        recommendations: Array.isArray(cv.data.recommendations) ? cv.data.recommendations : [],
-        courses: Array.isArray(cv.data.courses) ? cv.data.courses : [],
-        templateId: cv.templateId
+        personalInfo: cv.personalInfo,
+        experience: Array.isArray(cv.experience) ? cv.experience : [],
+        education: Array.isArray(cv.education) ? cv.education : [],
+        skills: Array.isArray(cv.skills) ? cv.skills : [],
+        languages: Array.isArray(cv.languages) ? cv.languages : [],
+        projects: Array.isArray(cv.projects) ? cv.projects : [],
+        certifications: Array.isArray(cv.certifications) ? cv.certifications : [],
+        volunteerExperience: Array.isArray(cv.volunteerExperience) ? cv.volunteerExperience : [],
+        publications: Array.isArray(cv.publications) ? cv.publications : [],
+        honorsAwards: Array.isArray(cv.honorsAwards) ? cv.honorsAwards : [],
+        testScores: Array.isArray(cv.testScores) ? cv.testScores : [],
+        recommendations: Array.isArray(cv.recommendations) ? cv.recommendations : [],
+        courses: Array.isArray(cv.courses) ? cv.courses : [],
+        sectionOrder: cv.sectionOrder || [],
+        cvLanguage: cv.cvLanguage || getDefaultCVLanguage(),
+        // PRESERVE ALL TRANSLATION METADATA AND LOCKS if they exist
+        translationMetadata: cv.translationMetadata || null,
+        customSections: cv.customSections || []
       };
 
+      // FIXED: Include templateId in the API request
       const apiData = {
         title: cv.title,
-        cv_data: sanitizedData
+        cv_data: sanitizedData,
+        templateId: cv.templateId // This was missing before!
       };
+
+      console.log('💾 Saving CV with template:', cv.templateId);
 
       let result;
       if (cvId) {
@@ -952,32 +1322,239 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
         setSuccess('CV uğurla yaradıldı!');
       }
       
+      console.log('💾 Save API response:', result);
+
       setTimeout(() => {
-        const cvForSave = {
-          id: result.data.cv.id,
-          title: result.data.cv.title,
-          templateId: result.data.cv.templateId,
-          data: result.data.cv.cv_data
-        };
-        onSave(cvForSave);
+        // COMPLETELY PREVENT CV DATA OVERRIDE WHEN TRANSLATION LOCKS EXIST
+        const hasAnyTranslationLock = cv.translationMetadata?.translationLock;
+
+        if (hasAnyTranslationLock) {
+          console.log('🔒 TRANSLATION LOCK DETECTED - COMPLETELY PREVENTING CV DATA OVERRIDE');
+
+          // Only update the CV ID if it's a new CV, absolutely preserve everything else
+          if (!cvId && result?.data?.cv?.id) {
+            setCv(prev => ({
+              ...prev,
+              id: result.data.cv.id
+            }));
+
+            // Update URL for new CV
+            if (typeof window !== 'undefined') {
+              const newUrl = `/cv/edit/${result.data.cv.id}`;
+              window.history.replaceState({}, '', newUrl);
+              console.log('📝 Updated URL for new CV:', newUrl);
+            }
+          }
+
+          // ABSOLUTELY DO NOT UPDATE CV DATA - PRESERVE TRANSLATION COMPLETELY
+          console.log('🛡️ Translation preserved - no CV data update from server');
+
+        } else {
+          // No translation lock - safe to update with server data as before
+          console.log('✅ No translation lock - safe to update CV data');
+
+          // Handle different API response structures safely
+          let cvForSave: CVEditorState;
+          if (result?.data?.cv) {
+            const serverCvData = result.data.cv.cv_data || {};
+            cvForSave = {
+              id: result.data.cv.id,
+              title: result.data.cv.title,
+              templateId: cv.templateId, // Preserve current template selection
+              personalInfo: serverCvData.personalInfo || cv.personalInfo,
+              experience: serverCvData.experience || cv.experience,
+              education: serverCvData.education || cv.education,
+              skills: serverCvData.skills || cv.skills,
+              languages: serverCvData.languages || cv.languages,
+              projects: serverCvData.projects || cv.projects,
+              certifications: serverCvData.certifications || cv.certifications,
+              volunteerExperience: serverCvData.volunteerExperience || cv.volunteerExperience,
+              publications: serverCvData.publications || cv.publications,
+              honorsAwards: serverCvData.honorsAwards || cv.honorsAwards,
+              testScores: serverCvData.testScores || cv.testScores,
+              recommendations: serverCvData.recommendations || cv.recommendations,
+              courses: serverCvData.courses || cv.courses,
+              customSections: serverCvData.customSections || cv.customSections,
+              sectionOrder: serverCvData.sectionOrder || cv.sectionOrder,
+              cvLanguage: serverCvData.cvLanguage || cv.cvLanguage,
+              translationMetadata: serverCvData.translationMetadata || cv.translationMetadata
+            };
+          } else if (result?.data?.id) {
+            const serverCvData = result.data.cv_data || {};
+            cvForSave = {
+              id: result.data.id,
+              title: result.data.title || cv.title,
+              templateId: cv.templateId, // Preserve current template selection
+              personalInfo: serverCvData.personalInfo || cv.personalInfo,
+              experience: serverCvData.experience || cv.experience,
+              education: serverCvData.education || cv.education,
+              skills: serverCvData.skills || cv.skills,
+              languages: serverCvData.languages || cv.languages,
+              projects: serverCvData.projects || cv.projects,
+              certifications: serverCvData.certifications || cv.certifications,
+              volunteerExperience: serverCvData.volunteerExperience || cv.volunteerExperience,
+              publications: serverCvData.publications || cv.publications,
+              honorsAwards: serverCvData.honorsAwards || cv.honorsAwards,
+              testScores: serverCvData.testScores || cv.testScores,
+              recommendations: serverCvData.recommendations || cv.recommendations,
+              courses: serverCvData.courses || cv.courses,
+              customSections: serverCvData.customSections || cv.customSections,
+              sectionOrder: serverCvData.sectionOrder || cv.sectionOrder,
+              cvLanguage: serverCvData.cvLanguage || cv.cvLanguage,
+              translationMetadata: serverCvData.translationMetadata || cv.translationMetadata
+            };
+          } else if (result?.id) {
+            const serverCvData = result.cv_data || {};
+            cvForSave = {
+              id: result.id,
+              title: result.title || cv.title,
+              templateId: cv.templateId, // Preserve current template selection
+              personalInfo: serverCvData.personalInfo || cv.personalInfo,
+              experience: serverCvData.experience || cv.experience,
+              education: serverCvData.education || cv.education,
+              skills: serverCvData.skills || cv.skills,
+              languages: serverCvData.languages || cv.languages,
+              projects: serverCvData.projects || cv.projects,
+              certifications: serverCvData.certifications || cv.certifications,
+              volunteerExperience: serverCvData.volunteerExperience || cv.volunteerExperience,
+              publications: serverCvData.publications || cv.publications,
+              honorsAwards: serverCvData.honorsAwards || cv.honorsAwards,
+              testScores: serverCvData.testScores || cv.testScores,
+              recommendations: serverCvData.recommendations || cv.recommendations,
+              courses: serverCvData.courses || cv.courses,
+              customSections: serverCvData.customSections || cv.customSections,
+              sectionOrder: serverCvData.sectionOrder || cv.sectionOrder,
+              cvLanguage: serverCvData.cvLanguage || cv.cvLanguage,
+              translationMetadata: serverCvData.translationMetadata || cv.translationMetadata
+            };
+          } else {
+            cvForSave = {
+              id: cvId || cv.id || `cv-${Date.now()}`,
+              title: cv.title,
+              templateId: cv.templateId, // Keep current template selection
+              personalInfo: cv.personalInfo,
+              experience: cv.experience,
+              education: cv.education,
+              skills: cv.skills,
+              languages: cv.languages,
+              projects: cv.projects,
+              certifications: cv.certifications,
+              volunteerExperience: cv.volunteerExperience,
+              publications: cv.publications,
+              honorsAwards: cv.honorsAwards,
+              testScores: cv.testScores,
+              recommendations: cv.recommendations,
+              courses: cv.courses,
+              customSections: cv.customSections,
+              sectionOrder: cv.sectionOrder,
+              cvLanguage: cv.cvLanguage,
+              translationMetadata: cv.translationMetadata
+            };
+          }
+
+          console.log('✅ Template preserved after save:', cvForSave.templateId);
+          setCv(cvForSave);
+
+          // Update URL for new CV
+          if (!cvId && cvForSave.id && typeof window !== 'undefined') {
+            const newUrl = `/cv/edit/${cvForSave.id}`;
+            window.history.replaceState({}, '', newUrl);
+            console.log('📝 Updated URL for new CV:', newUrl);
+          }
+        }
+
+        // Show extended success message
+        setSuccess('CV və şablon seçimi uğurla saxlanıldı!');
+        showSuccess('CV və şablon seçimi uğurla saxlanıldı!');
+
+        // Don't call onSave to prevent redirect to dashboard
+        // onSave(cvForSave); // REMOVED: This was causing redirect to dashboard
       }, 1500);
     } catch (err) {
       console.error('CV save error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(`CV saxlanarkən xəta baş verdi: ${errorMessage}`);
+      showError(`CV saxlanarkən xəta baş verdi: ${errorMessage}`);
     } finally {
       setSaving(false);
     }
   };
 
-  const updateCVData = (section: keyof CVData['data'], data: CVData['data'][typeof section]) => {
+  const updateCVData = (section: keyof CVEditorState, data: any) => {
     setCv(prev => ({
       ...prev,
-      data: {
-        ...prev.data,
-        [section]: data
-      }
+      [section]: data
     }));
+  };
+
+  // Handle section order changes
+  const handleSectionOrderChange = async (sections: any[]) => {
+    console.log('🔄 Section order changed, auto-saving...', sections.map(s => ({ id: s.id, order: s.order })));
+
+    // Update local state immediately to prevent UI revert
+    setCv(prev => ({
+      ...prev,
+      sectionOrder: sections
+    }));
+
+    // AUTO-SAVE immediately to prevent data loss on drag & drop
+    if (cv.id) {
+      try {
+        // Prepare the data in the correct format that the API expects
+        const updatedCVData = {
+          ...cv,
+          sectionOrder: sections
+        };
+
+        const apiData = {
+          title: cv.title,
+          cv_data: updatedCVData
+        };
+
+        // Use the same API client and endpoint as the regular save function
+        const result = await apiClient.put(`/api/cv/${cv.id}`, apiData);
+
+        if (result && result.data) {
+          console.log('✅ Section order auto-saved successfully');
+
+          // FIXED: Do not override CV data from server response to preserve translation locks
+          // Check if CV has translation locks and preserve them
+          const hasTranslationLock = cv.translationMetadata?.translationLock;
+
+          if (hasTranslationLock) {
+            console.log('🔒 Translation lock detected - preserving current CV data');
+            // Only update the sectionOrder, preserve all other data including translation locks
+            setCv(prev => ({
+              ...prev,
+              sectionOrder: sections // Only update section order
+            }));
+          } else {
+            // No translation lock - safe to update with server data
+            if (result.data.cv && result.data.cv.cv_data) {
+              setCv(prev => ({
+                ...prev,
+                ...result.data.cv.cv_data
+              }));
+            }
+          }
+
+          setSuccess('Bölmə sırası avtomatik saxlanıldı');
+          setTimeout(() => setSuccess(''), 2000);
+        } else {
+          throw new Error('Auto-save failed - no response data');
+        }
+      } catch (error) {
+        console.error('❌ Auto-save failed:', error);
+        setError('Avtomatik saxlama xətası. Yenidən cəhd edin.');
+        setTimeout(() => setError(''), 3000);
+
+        // Revert local state if save failed
+        setCv(prev => ({
+          ...prev,
+          sectionOrder: prev.sectionOrder || []
+        }));
+      }
+    }
   };
 
   const handleExport = async (format: 'pdf' | 'docx') => {
@@ -1028,13 +1605,13 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
   // AI Translation Functions
   const handleAITranslation = async (targetLanguage: 'azerbaijani' | 'english') => {
     if (!cv.id) {
-      alert('AI tərcümə üçün CV-ni əvvəlcə saxlamalısınız');
+      showWarning('AI tərcümə üçün CV-ni əvvəlcə saxlamalısınız');
       return;
     }
 
     const canUseAI = userTier === 'Premium' || userTier === 'Medium';
     if (!canUseAI) {
-      alert(`AI tərcümə funksiyası Premium və Medium istifadəçilər üçün mövcuddur! Sizin tier: ${userTier}`);
+      showWarning(`AI tərcümə funksiyası Premium və Medium istifadəçilər üçün mövcuddur! Sizin tier: ${userTier}`);
       return;
     }
 
@@ -1047,7 +1624,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
       const token = localStorage.getItem('accessToken') || localStorage.getItem('token') || localStorage.getItem('auth-token');
 
       if (!token) {
-        alert('Giriş icazəsi yoxdur. Yenidən giriş edin.');
+        showError('Giriş icazəsi yoxdur. Yenidən giriş edin.');
         setTranslating(false);
         return;
       }
@@ -1068,36 +1645,68 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
 
       if (!response.ok) {
         if (response.status === 401) {
-          alert('Giriş icazəsi yoxdur. Yenidən giriş edin.');
+          showError('Giriş icazəsi yoxdur. Yenidən giriş edin.');
         } else if (response.status === 403) {
-          alert(result.error || 'AI tərcümə üçün Premium/Medium planı lazımdır');
+          showError(result.error || 'AI tərcümə üçün Premium/Medium planı lazımdır');
+        } else if (response.status === 429) {
+          showError('Çox sayda sorğu göndərildi. Bir neçə dəqiqə sonra yenidən cəhd edin.');
+        } else if (response.status >= 500) {
+          showError('Server xətası. Tərcümə xidməti müvəqqəti olaraq əlçatan deyil.');
         } else {
-          throw new Error(result.error || 'Tərcümə xətası');
+          // More detailed error handling for other status codes
+          const errorMessage = result.error || `API xətası: ${response.status} - ${response.statusText}`;
+          showError(`Tərcümə xətası: ${errorMessage}`);
         }
         return;
       }
 
+      // Check if the response has the expected structure
       if (result.success && result.translatedData) {
+        // Validate that translatedData contains the expected fields
+        if (!result.translatedData.personalInfo && !result.translatedData.experience &&
+            !result.translatedData.education && !result.translatedData.skills) {
+          showWarning('Tərcümə tamamlandı, lakin bəzi məlumatlar eksik ola bilər.');
+        }
+
         // Update CV with translated data
         setCv(prev => ({
           ...prev,
-          data: result.translatedData
+          ...result.translatedData,
+          // Preserve important fields that shouldn't be translated
+          cvLanguage: targetLanguage,
+          sectionOrder: prev.sectionOrder || []
         }));
 
-        setSuccess(`CV uğurla ${targetLanguage === 'english' ? 'İngilis' : 'Azərbaycan'} dilinə tərcümə edildi! 🎉`);
-        setShowTranslationDialog(false);
+        showSuccess(`CV uğurla ${targetLanguage === 'azerbaijani' ? 'Azərbaycan' : 'İngilis'} dilinə tərcümə edildi!`);
 
-        // Reload the CV to get the updated data
+        // Auto-save the translated CV
         setTimeout(() => {
-          loadCV();
+          handleSave();
         }, 1000);
+      } else if (result.success === false) {
+        // Handle specific error cases from the API
+        if (result.error) {
+          if (result.error.includes('comprehensive')) {
+            showError('AI tərcümə xidməti şu anda əlçatan deyil. Daha sonra yenidən cəhd edin.');
+          } else if (result.error.includes('content')) {
+            showError('CV məzmunu tərcümə üçün uyğun deyil. Məzmunu yoxlayın və yenidən cəhd edin.');
+          } else if (result.error.includes('token') || result.error.includes('auth')) {
+            showError('Giriş icazəsi yoxdur. Yenidən giriş edin.');
+          } else {
+            showError(`Tərcümə xətası: ${result.error}`);
+          }
+        } else {
+          showError('Bilinməyən tərcümə xətası. Yenidən cəhd edin.');
+        }
       } else {
-        throw new Error('Tərcümə alına bilmədi');
+        // Fallback for unexpected response structure
+        console.warn('Unexpected API response structure:', result);
+        showError('Tərcümə cavabı gözlənilməyən formatdadır. Dəstək komandası ilə əlaqə saxlayın.');
       }
 
     } catch (error) {
       console.error('AI Translation error:', error);
-      alert('AI tərcümə zamanı xəta baş verdi. Yenidən cəhd edin.');
+      showError(error instanceof Error ? error.message : 'AI tərcümə zamanı xəta baş verdi');
     } finally {
       setTranslating(false);
     }
@@ -1115,7 +1724,9 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
         { id: 'projects', label: 'Projects', icon: '🚀' },
         { id: 'certifications', label: 'Certifications', icon: '🏆' },
         { id: 'volunteer', label: 'Volunteer Experience', icon: '❤️' },
-        { id: 'template', label: 'Template Selection', icon: '🎨' }
+        { id: 'customSections', label: 'Custom Sections', icon: '📝' },
+        { id: 'template', label: 'Template Selection', icon: '🎨' },
+        { id: 'interactiveEditor', label: 'Interactive Editor', icon: '✨' }
       ];
     } else {
       return [
@@ -1127,12 +1738,14 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
         { id: 'projects', label: 'Layihələr', icon: '🚀' },
         { id: 'certifications', label: 'Sertifikatlar', icon: '🏆' },
         { id: 'volunteer', label: 'Könüllü Təcrübə', icon: '❤️' },
-        { id: 'template', label: 'Şablon Seçimi', icon: '🎨' }
+        { id: 'customSections', label: 'Əlavə Bölmələr', icon: '📝' },
+        { id: 'template', label: 'Şablon Seçimi', icon: '🎨' },
+        { id: 'interactiveEditor', label: 'İnteraktiv Redaktor', icon: '✨' }
       ];
     }
   };
 
-  const sections = getSections(cv.data.cvLanguage || 'azerbaijani');
+  const sections = getSections(cv.cvLanguage || 'azerbaijani');
 
   if (loading) {
     return (
@@ -1148,128 +1761,132 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Header */}
-      <div className="sticky top-0 z-[60] bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={onCancel}
-                className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                <span className="hidden sm:inline">Geri</span>
-              </button>
-              <input
-                type="text"
-                placeholder="CV başlığı..."
-                value={cv.title}
-                onChange={(e) => setCv(prev => ({ ...prev, title: e.target.value }))}
-                className="w-full sm:w-64 text-lg font-semibold border-none outline-none focus:ring-2 focus:ring-blue-500 rounded-lg px-3 py-2 bg-gray-50 hover:bg-gray-100 focus:bg-white transition-colors"
-              />
-              
-              {/* AI Translation Button */}
-              <div className="flex items-center space-x-2">
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                </svg>
+      <div className="sticky top-0 z-[60] border-b border-gray-200 shadow-sm">
+        <div className="bg-white">
+          <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16 gap-10">
+              <div className="flex items-center space-x-4">
                 <button
-                  onClick={() => setShowTranslationDialog(true)}
-                  disabled={translating || !cv.id}
-                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-all ${
-                    !cv.id || translating
-                      ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600'
+                  onClick={onCancel}
+                  className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span className="hidden sm:inline">Geri</span>
+                </button>
+                <input
+                  type="text"
+                  placeholder="CV başlığı..."
+                  value={cv.title}
+                  onChange={(e) => setCv(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full sm:w-64 text-lg font-semibold border-none outline-none focus:ring-2 focus:ring-blue-500 rounded-lg px-3 py-2 bg-gray-50 hover:bg-gray-100 focus:bg-white transition-colors"
+                />
+
+
+
+                {/* AI Translation Button */}
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                  </svg>
+                  <button
+                    onClick={() => setShowTranslationDialog(true)}
+                    disabled={translating || !cv.id}
+                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+                      !cv.id || translating
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600'
+                    }`}
+                  >
+                    {translating ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                        <span>Tərcümə...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span>🤖</span>
+                        <span>AI Tərcümə</span>
+                      </div>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => handleExport('pdf')}
+                  disabled={!cv.id || exporting !== null}
+                  className={`hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    !cv.id || exporting !== null
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-red-600 text-white hover:bg-red-700'
                   }`}
                 >
-                  {translating ? (
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
-                      <span>Tərcümə...</span>
-                    </div>
+                  {exporting === 'pdf' ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   ) : (
-                    <div className="flex items-center gap-2">
-                      <span>🤖</span>
-                      <span>AI Tərcümə</span>
-                    </div>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => handleExport('pdf')}
-                disabled={!cv.id || exporting !== null}
-                className={`hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  !cv.id || exporting !== null
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-red-600 text-white hover:bg-red-700'
-                }`}
-              >
-                {exporting === 'pdf' ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                ) : (
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 2v4h8V2h2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h2z"/>
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 2v4h8V2h2a2 2 0 00-2 2v16a2 2 0 00-2-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                 </svg>
                 )}
                 PDF
               </button>
 
-              <button
-                onClick={() => handleExport('docx')}
-                disabled={!cv.id || exporting !== null}
-                className={`hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  !cv.id || exporting !== null
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-              >
-                {exporting === 'docx' ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                ) : (
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                <button
+                  onClick={() => handleExport('docx')}
+                  disabled={!cv.id || exporting !== null}
+                  className={`hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    !cv.id || exporting !== null
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  {exporting === 'docx' ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                   </svg>
                 )}
                 DOCX
               </button>
 
-              {/* SAVE BUTTON - ƏN VACIB! */}
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className={`inline-flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-medium transition-all ${
-                  saving
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl'
-                }`}
-              >
-                {saving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
-                    <span>Saxlanılır...</span>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                    </svg>
-                    <span>CV-ni Saxla</span>
-                  </>
-                )}
-              </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className={`inline-flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-medium transition-all ${
+                    saving
+                      ? 'bg-gray-400 text-white cursor-not-allowed'
+                      : 'bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl'
+                  }`}
+                >
+                  {saving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                      <span>Saxlanılır...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 00-2-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                      </svg>
+                      <span>CV-ni Saxla</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-        <div className="flex flex-col xl:flex-row gap-5">
-          {/* Left Panel - Form */}
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+        <div className="flex flex-col xl:flex-row gap-10 justify-center">
+
+        {/* Left Panel - Form */}
           <div className="flex-1 xl:max-w-xl">
             {/* Mobile Section Selector */}
             <div className="xl:hidden mb-5 relative z-40">
@@ -1354,18 +1971,18 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                   {activeSection === 'personal' && (
                     <PersonalInfoSection
                       data={{
-                        fullName: cv.data.personalInfo.fullName,
-                        firstName: cv.data.personalInfo.firstName,
-                        lastName: cv.data.personalInfo.lastName,
-                        email: cv.data.personalInfo.email,
-                        phone: cv.data.personalInfo.phone,
-                        website: cv.data.personalInfo.website,
-                        linkedin: cv.data.personalInfo.linkedin,
-                        summary: cv.data.personalInfo.summary,
-                        profileImage: cv.data.personalInfo.profileImage
+                        fullName: cv.personalInfo.fullName,
+                        firstName: cv.personalInfo.firstName,
+                        lastName: cv.personalInfo.lastName,
+                        email: cv.personalInfo.email,
+                        phone: cv.personalInfo.phone,
+                        website: cv.personalInfo.website,
+                        linkedin: cv.personalInfo.linkedin,
+                        summary: cv.personalInfo.summary,
+                        profileImage: cv.personalInfo.profileImage
                       }}
                       userTier={userTier}
-                      cvData={cv.data}
+                      cvData={cv}
                       cvId={cv.id || cvId}
                       onChange={(data: any) => updateCVData('personalInfo', {
                         fullName: data.fullName,
@@ -1382,47 +1999,80 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                   )}
                   {activeSection === 'experience' && (
                     <ExperienceSection
-                      data={cv.data.experience || [] as any}
-                      onChange={(data: CVData['data']['experience']) => updateCVData('experience', data)}
+                      data={cv.experience || [] as any}
+                      onChange={(data: any) => updateCVData('experience', data)}
                     />
                   )}
                   {activeSection === 'education' && (
                     <EducationSection
-                      data={cv.data.education || [] as any}
-                      onChange={(data: CVData['data']['education']) => updateCVData('education', data)}
+                      data={cv.education || [] as any}
+                      onChange={(data: any) => updateCVData('education', data)}
                     />
                   )}
                   {activeSection === 'skills' && (
                     <SkillsSection
-                      data={cv.data.skills || [] as any}
+                      data={cv.skills || [] as any}
                       onChange={(data: any) => updateCVData('skills', data)}
                       userTier={userTier}
-                      cvData={cv.data}
+                      cvData={cv}
                       cvId={cv.id || cvId}
                     />
                   )}
                   {activeSection === 'languages' && (
                     <LanguagesSection
-                      data={cv.data.languages || [] as any}
-                      onChange={(data: any) => updateCVData('languages', data)}
+                      data={(cv.languages || []).map((lang: any) => ({
+                        id: lang.id || `lang-${Date.now()}-${Math.random()}`,
+                        language: lang.language || lang.name || '',
+                        level: lang.level || lang.proficiency || 'Professional'
+                      }))}
+                      onChange={(data: any) => {
+                        console.log('🔄 CVEditor: Languages changed from LanguagesSection:', data);
+
+                        // Store ALL languages during editing (including empty ones for UX)
+                        // But filter out completely empty languages when saving to CV
+                        const allLanguages = data.map((lang: any) => ({
+                          id: lang.id || `lang-${Date.now()}-${Math.random()}`,
+                          language: lang.language || '',
+                          level: lang.level || 'Professional',
+                          name: lang.language || '', // Compatibility field
+                          proficiency: lang.level || 'Professional' // Compatibility field
+                        }));
+
+                        // Filter out only completely empty languages (no name AND no meaningful data)
+                        const validLanguages = allLanguages.filter((lang: any) =>
+                          lang.language.trim() !== '' || lang.level !== 'Professional'
+                        );
+
+                        console.log('✅ CVEditor: All languages for editing:', allLanguages);
+                        console.log('✅ CVEditor: Valid languages for storage:', validLanguages);
+
+                        // Update CV data with valid languages only
+                        updateCVData('languages', validLanguages);
+                      }}
                     />
                   )}
                   {activeSection === 'projects' && (
                     <ProjectsSection
-                      data={cv.data.projects || [] as any}
+                      data={cv.projects || [] as any}
                       onChange={(data: any) => updateCVData('projects', data)}
                     />
                   )}
                   {activeSection === 'certifications' && (
                     <CertificationsSection
-                      data={cv.data.certifications || [] as any}
+                      data={cv.certifications || [] as any}
                       onChange={(data: any) => updateCVData('certifications', data)}
                     />
                   )}
                   {activeSection === 'volunteer' && (
                     <VolunteerExperienceSection
-                      data={cv.data.volunteerExperience || [] as any}
+                      data={cv.volunteerExperience || [] as any}
                       onChange={(data: any) => updateCVData('volunteerExperience', data)}
+                    />
+                  )}
+                  {activeSection === 'customSections' && (
+                    <CustomSectionsSection
+                      data={cv.customSections || []}
+                      onChange={(data: any) => updateCVData('customSections', data)}
                     />
                   )}
                   {/* {activeSection === 'publications' && (
@@ -1465,6 +2115,229 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                       />
                     </div>
                   )}
+                  {activeSection === 'interactiveEditor' && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                        {cv.cvLanguage === 'english' ? 'Interactive Section Editor' : 'İnteraktiv Bölmə Redaktoru'}
+                      </h3>
+                      <div className="mb-4 p-4 bg-gradient-to-r from-blue-500 to-purple-500 border border-blue-200 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <span className="text-2xl">✨</span>
+                          <div>
+                            <h4 className="font-semibold text-gray-900 mb-2">
+                              {cv.cvLanguage === 'english'
+                                ? 'Advanced Visual Editor'
+                                : 'Qabaqcıl Vizual Redaktor'
+                              }
+                            </h4>
+                            <p className="text-sm text-gray-700 mb-3">
+                              {cv.cvLanguage === 'english'
+                                ? 'Use the interactive editor to visually customize your CV sections with drag-and-drop, resizing, and real-time style adjustments.'
+                                : 'İnteraktiv redaktordan istifadə edərək CV bölmələrinizi vizual olaraq fərdiləşdirin - sürükləyib buraxın, ölçü dəyişdirin və canlı stil tənzimləmələri edin.'
+                              }
+                            </p>
+                            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                              <div className="flex items-center gap-1">
+                                <span>🖱️</span>
+                                <span>{cv.cvLanguage === 'english' ? 'Drag & Drop' : 'Sürükləyib burax'}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span>📐</span>
+                                <span>{cv.cvLanguage === 'english' ? 'Resize Sections' : 'Bölmə ölçüsü'}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span>🎨</span>
+                                <span>{cv.cvLanguage === 'english' ? 'Live Styling' : 'Canlı stil'}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span>📱</span>
+                                <span>{cv.cvLanguage === 'english' ? 'Touch Friendly' : 'Toxunma dəstəyi'}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Convert CV data to interactive sections format */}
+                      {(() => {
+                        const cvSections = [
+                          {
+                            id: 'personal',
+                            type: 'personalInfo',
+                            title: cv.cvLanguage === 'english' ? 'Personal Information' : 'Şəxsi Məlumatlar',
+                            content: cv.personalInfo,
+                            style: {
+                              width: 100,
+                              height: 200,
+                              fontSize: 14,
+                              padding: 16,
+                              fontWeight: 'normal' as const,
+                              fontFamily: 'Inter, system-ui, sans-serif',
+                              lineHeight: 1.5,
+                              letterSpacing: 0,
+                              backgroundColor: '#ffffff',
+                              textColor: '#374151',
+                              borderRadius: 8,
+                              borderWidth: 1,
+                              borderColor: '#e5e7eb'
+                            },
+                            order: 0,
+                            isVisible: true
+                          },
+                          {
+                            id: 'experience',
+                            type: 'experience',
+                            title: cv.cvLanguage === 'english' ? 'Work Experience' : 'İş Təcrübəsi',
+                            content: cv.experience,
+                            style: {
+                              width: 100,
+                              height: 300,
+                              fontSize: 14,
+                              padding: 16,
+                              fontWeight: 'normal' as const,
+                              fontFamily: 'Inter, system-ui, sans-serif',
+                              lineHeight: 1.5,
+                              letterSpacing: 0,
+                              backgroundColor: '#ffffff',
+                              textColor: '#374151',
+                              borderRadius: 8,
+                              borderWidth: 1,
+                              borderColor: '#e5e7eb'
+                            },
+                            order: 1,
+                            isVisible: !!(cv.experience && cv.experience.length > 0)
+                          },
+                          {
+                            id: 'education',
+                            type: 'education',
+                            title: cv.cvLanguage === 'english' ? 'Education' : 'Təhsil',
+                            content: cv.education,
+                            style: {
+                              width: 100,
+                              height: 250,
+                              fontSize: 14,
+                              padding: 16,
+                              fontWeight: 'normal' as const,
+                              fontFamily: 'Inter, system-ui, sans-serif',
+                              lineHeight: 1.5,
+                              letterSpacing: 0,
+                              backgroundColor: '#ffffff',
+                              textColor: '#374151',
+                              borderRadius: 8,
+                              borderWidth: 1,
+                              borderColor: '#e5e7eb'
+                            },
+                            order: 2,
+                            isVisible: !!(cv.education && cv.education.length > 0)
+                          },
+                          {
+                            id: 'skills',
+                            type: 'skills',
+                            title: cv.cvLanguage === 'english' ? 'Skills' : 'Bacarıqlar',
+                            content: cv.skills,
+                            style: {
+                              width: 100,
+                              height: 200,
+                              fontSize: 14,
+                              padding: 16,
+                              fontWeight: 'normal' as const,
+                              fontFamily: 'Inter, system-ui, sans-serif',
+                              lineHeight: 1.5,
+                              letterSpacing: 0,
+                              backgroundColor: '#f8fafc',
+                              textColor: '#374151',
+                              borderRadius: 8,
+                              borderWidth: 1,
+                              borderColor: '#e5e7eb'
+                            },
+                            order: 3,
+                            isVisible: !!(cv.skills && cv.skills.length > 0)
+                          },
+                          {
+                            id: 'languages',
+                            type: 'languages',
+                            title: cv.cvLanguage === 'english' ? 'Languages' : 'Dillər',
+                            content: cv.languages,
+                            style: {
+                              width: 100,
+                              height: 180,
+                              fontSize: 14,
+                              padding: 16,
+                              fontWeight: 'normal' as const,
+                              fontFamily: 'Inter, system-ui, sans-serif',
+                              lineHeight: 1.5,
+                              letterSpacing: 0,
+                              backgroundColor: '#ffffff',
+                              textColor: '#374151',
+                              borderRadius: 8,
+                              borderWidth: 1,
+                              borderColor: '#e5e7eb'
+                            },
+                            order: 4,
+                            isVisible: !!(cv.languages && cv.languages.length > 0)
+                          },
+                          {
+                            id: 'projects',
+                            type: 'projects',
+                            title: cv.cvLanguage === 'english' ? 'Projects' : 'Layihələr',
+                            content: cv.projects,
+                            style: {
+                              width: 100,
+                              height: 250,
+                              fontSize: 14,
+                              padding: 16,
+                              fontWeight: 'normal' as const,
+                              fontFamily: 'Inter, system-ui, sans-serif',
+                              lineHeight: 1.5,
+                              letterSpacing: 0,
+                              backgroundColor: '#ffffff',
+                              textColor: '#374151',
+                              borderRadius: 8,
+                              borderWidth: 1,
+                              borderColor: '#e5e7eb'
+                            },
+                            order: 5,
+                            isVisible: !!(cv.projects && cv.projects.length > 0)
+                          }
+                        ].filter(section => section.isVisible);
+
+                        return (
+                          <div className="h-96 border border-gray-200 rounded-lg overflow-hidden">
+                            <InteractiveSectionEditor
+                              sections={cvSections}
+                              onSectionsChange={(updatedSections) => {
+                                console.log('Interactive editor sections updated:', updatedSections);
+                                // Optionally sync changes back to CV data
+                                showInfo('Dəyişikliklər interaktiv redaktorda tətbiq edildi!');
+                              }}
+                              gridSize={8}
+                              minSectionWidth={200}
+                              minSectionHeight={100}
+                              maxSectionWidth={600}
+                              maxSectionHeight={400}
+                            />
+                          </div>
+                        );
+                      })()}
+
+                      <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <span className="text-yellow-600 text-lg">💡</span>
+                          <div className="text-sm text-yellow-800">
+                            <p className="font-medium mb-1">
+                              {cv.cvLanguage === 'english' ? 'Pro Tip:' : 'Məsləhət:'}
+                            </p>
+                            <p>
+                              {cv.cvLanguage === 'english'
+                                ? 'Use the interactive editor to experiment with section layouts. Changes here are for visual exploration - your actual CV data remains safe!'
+                                : 'Bölmə düzülüşləri ilə təcrübə etmək üçün interaktiv redaktordan istifadə edin. Buradakı dəyişikliklər yalnız vizual kəşfiyyat üçündür - əsl CV məlumatlarınız təhlükəsizdir!'
+                              }
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1485,12 +2358,12 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   ) : (
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 2v4h8V2h2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h2z"/>
-                  </svg>
-                  )}
-                  PDF
-                </button>
-                
+                      <path d="M8 2v4h8V2h2a2 2 0 00-2 2v16a2 2 0 00-2-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                </svg>
+                )}
+                PDF
+              </button>
+
                 <button
                   onClick={() => handleExport('docx')}
                   disabled={!cv.id || exporting !== null}
@@ -1505,10 +2378,10 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                   ) : (
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                    </svg>
-                  )}
-                  DOCX
-                </button>
+                  </svg>
+                )}
+                DOCX
+              </button>
               </div>
             </div>
           </div>
@@ -1524,9 +2397,31 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                       A4 Format
                     </span>
                   </div>
-                  <div className="text-sm text-gray-600 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                    <span className="hidden sm:inline text-xs">Canlı güncəllənir</span>
+                  <div className="flex items-center gap-3">
+                    {/* Section Selection Mode Toggle */}
+                    <button
+                      onClick={() => setEnablePreviewSelection(!enablePreviewSelection)}
+                      className={`px-3 py-2 text-xs font-medium rounded-lg transition-all ${
+                        enablePreviewSelection
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                      title={enablePreviewSelection ? 'Seçim modunu söndür' : 'Seçim modunu aç'}
+                    >
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M4 4h2v2H4V4zm0 5h2v2H4V9zm0 5h2v2H4v-2zm5-10h2v2H9V4zm0 5h2v2H9V9zm0 5h2v2H9v-2zm5-10h2v2h-2V4zm0 5h2v2h-2V9zm0 5h2v2h-2v-2z"/>
+                        </svg>
+                        <span className="hidden sm:inline">
+                          {enablePreviewSelection ? 'Seçim ON' : 'Seçim OFF'}
+                        </span>
+                      </div>
+                    </button>
+
+                    <div className="text-sm text-gray-600 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                      <span className="hidden sm:inline text-xs">Canlı güncəllənir</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1562,16 +2457,32 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                           minHeight: '100%',
                           boxSizing: 'border-box'
                         }}>
-                          <CVPreviewA4 cv={{
-                            ...cv,
-                            data: {
-                              ...cv.data,
-                              personalInfo: {
-                                ...cv.data.personalInfo,
-                                name: cv.data.personalInfo.fullName
-                              }
-                            } as any
-                          }} />
+                          <CVPreviewA4
+                            cv={{
+                              ...cv,
+                              data: {
+                                personalInfo: {
+                                  ...cv.personalInfo,
+                                  name: cv.personalInfo.fullName
+                                },
+                                experience: cv.experience || [],
+                                education: cv.education || [],
+                                skills: cv.skills || [],
+                                languages: cv.languages || [],
+                                projects: cv.projects || [],
+                                certifications: cv.certifications || [],
+                                volunteerExperience: cv.volunteerExperience || [],
+                                publications: cv.publications || [],
+                                honorsAwards: cv.honorsAwards || [],
+                                testScores: cv.testScores || [],
+                                recommendations: cv.recommendations || [],
+                                courses: cv.courses || [],
+                                cvLanguage: cv.cvLanguage || 'azerbaijani'
+                              } as any
+                            }}
+                            enableSectionSelection={enablePreviewSelection}
+                            onSectionOrderChange={handleSectionOrderChange}
+                          />
                         </div>
                       </div>
                     ) : (
@@ -1585,8 +2496,8 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                       }}>
                         <div>
                           <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
-                            <path d="M14 2v6h6"/>
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002-2V8l-6-6z"/>
+                            <path d="M14 2v6h6V2h2a2 2 0 00-2 2v16a2 2 0 00-2-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                           </svg>
                           <h3 className="text-lg font-medium mb-2 text-gray-600">Şablon Seçin</h3>
                           <p className="text-sm text-gray-500 mb-4">CV önizləməsini görmək üçün bir şablon seçin</p>
@@ -1617,6 +2528,118 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
         </div>
       </div>
 
+      {/* Section Manager Dialog */}
+      {showSectionManager && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
+          style={{ zIndex: 999999 }}
+          onClick={() => setShowSectionManager(false)}
+        >
+          <div
+            className="bg-white rounded-lg w-full max-w-6xl max-h-[95vh] overflow-hidden shadow-2xl"
+            style={{ zIndex: 1000000, position: 'relative' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header - Fixed to top of dialog */}
+            <div
+              className="px-4 sm:px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-500 to-pink-500"
+              style={{ position: 'sticky', top: 0, zIndex: 1000001 }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-lg">📋</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-semibold text-white">
+                      CV Bölmə Sıralaması
+                    </h3>
+                    <p className="text-sm text-purple-100 hidden sm:block">
+                      Bölmələri sürükləyib buraxaraq yenidən sıralayın
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowSectionManager(false)}
+                  className="text-white hover:text-purple-200 transition-colors p-2 rounded-full hover:bg-white hover:bg-opacity-10"
+                  aria-label="Bağla"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Content with improved scrolling */}
+            <div
+              className="p-4 sm:p-6 overflow-y-auto"
+              style={{
+                position: 'relative',
+                zIndex: 1000000,
+                maxHeight: 'calc(95vh - 140px)',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#cbd5e1 #f1f5f9'
+              }}
+            >
+              <div className="max-w-4xl mx-auto">
+                {/* Mobile Instructions */}
+                <div className="sm:hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-600 text-lg flex-shrink-0">ℹ️</span>
+                    <div className="text-sm text-blue-800">
+                      <p className="font-medium mb-1">Mobil istifadə üçün:</p>
+                      <p className="text-blue-700">Bölmələri tutub sürükləyərək yenidən sıralayın</p>
+                    </div>
+                  </div>
+                </div>
+
+                <CVSectionManager
+                  cvData={{
+                    personalInfo: cv.personalInfo,
+                    experience: cv.experience || [],
+                    education: cv.education || [],
+                    skills: cv.skills || [],
+                    languages: cv.languages || [],
+                    projects: cv.projects || [],
+                    certifications: cv.certifications || [],
+                    volunteerExperience: cv.volunteerExperience || [],
+                    publications: cv.publications || [],
+                    honorsAwards: cv.honorsAwards || [],
+                    testScores: cv.testScores || [],
+                    recommendations: cv.recommendations || [],
+                    courses: cv.courses || [],
+                    cvLanguage: cv.cvLanguage || 'azerbaijani'
+                  }}
+                  onSectionOrderChange={handleSectionOrderChange}
+                  language={cv.cvLanguage || 'azerbaijani'}
+                />
+              </div>
+            </div>
+
+            {/* Footer - Fixed to bottom of dialog */}
+            <div
+              className="px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50"
+              style={{ position: 'sticky', bottom: 0, zIndex: 1000001 }}
+            >
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="text-sm text-gray-600 text-center sm:text-left">
+                  <span className="font-medium">💡 Məsləhət:</span>
+                  <span className="hidden sm:inline ml-1">Dəyişikliklər avtomatik olaraq saxlanılır</span>
+                  <span className="sm:hidden ml-1">Avtomatik saxlanılır</span>
+                </div>
+                <button
+                  onClick={() => setShowSectionManager(false)}
+                  className="w-full sm:w-auto px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all shadow-md transform hover:scale-105 active:scale-95"
+                >
+                  Tamam
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Enhanced AI Translation Dialog */}
       {showTranslationDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -1645,7 +2668,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                   AI sizin CV məzmununuzu professional olaraq tərcümə edəcək:
                 </p>
                 <ul className="text-xs text-blue-700 mt-2 space-y-1">
-                  <li>• Professional özət və iş təcrübələri</li>
+                  <li>• Peşəkar Xülasə və iş təcrübələri</li>
                   <li>• Təhsil və layihə təsvirləri</li>
                   <li>• Sertifikat və könüllü təcrübələr</li>
                   <li>• İndustiya terminologiyası korunur</li>

@@ -85,15 +85,29 @@ export default function AnalyticsPage() {
             <p className="text-gray-600">Platform performansı və istifadəçi statistikası</p>
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <span className="flex items-center space-x-2">
+                <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a4 4 0 118 0v4m-4 12v6m0 0l3-3m-3 3l-3-3M3 5h18M5 5a2 2 0 012-2h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5z" />
+                </svg>
+                <span>Tarix Aralığı</span>
+              </span>
+            </label>
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200 shadow-sm hover:shadow-md appearance-none cursor-pointer"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                backgroundPosition: 'right 0.75rem center',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: '1.5em 1.5em'
+              }}
             >
-              <option value="7">Son 7 gün</option>
-              <option value="30">Son 30 gün</option>
-              <option value="90">Son 90 gün</option>
-              <option value="365">Son 1 il</option>
+              <option value="7">📅 Son 7 gün</option>
+              <option value="30">📅 Son 30 gün</option>
+              <option value="90">📅 Son 90 gün</option>
+              <option value="365">📅 Son 1 il</option>
             </select>
           </div>
         </div>

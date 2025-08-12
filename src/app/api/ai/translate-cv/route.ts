@@ -199,7 +199,11 @@ export async function POST(request: NextRequest) {
 
     const cvData = cv.cv_data as any;
 
-    console.log('🌍 Starting comprehensive AI translation to:', targetLanguage);
+    // Get current CV language from metadata or detect from content
+    const currentCvLanguage = cvData.cvLanguage || cvData.translationMetadata?.targetLanguage || 'english';
+    const sourceLangName = currentCvLanguage === 'azerbaijani' ? 'Azerbaijani (Azərbaycan dili)' : 'English (Professional/Business)';
+
+    console.log('🌍 Starting comprehensive AI translation from:', currentCvLanguage, 'to:', targetLanguage);
 
     // Create enhanced professional translation prompt
     const isAzerbaijani = targetLanguage === 'azerbaijani';
@@ -211,7 +215,13 @@ export async function POST(request: NextRequest) {
       
       You are an expert professional CV translator specializing in career documents with deep knowledge of both Azerbaijani and English business terminology. 
       
+      SOURCE LANGUAGE: ${sourceLangName}
       TRANSLATION TARGET: ${targetLangName}
+      
+      CRITICAL INSTRUCTION: You MUST translate ALL textual content from ${sourceLangName} to ${targetLangName}. 
+      Do NOT leave any content untranslated. Every description, summary, and text field must be fully translated.
+      
+      IMPORTANT: The CV content below is currently in ${sourceLangName}. You need to translate it completely to ${targetLangName}.
       
       COMPREHENSIVE TRANSLATION REQUIREMENTS:
       =====================================
@@ -222,23 +232,28 @@ export async function POST(request: NextRequest) {
       4. CULTURAL ADAPTATION: Adapt content for target language professional culture
       5. CONSISTENCY: Maintain consistent terminology throughout the document
       6. IMPACT PRESERVATION: Keep the professional impact and meaning of statements
+      7. COMPLETENESS: Every single text field must be translated - no exceptions
       
       SPECIFIC RULES:
       ==============
       
-      ✅ TRANSLATE:
+      ✅ MUST TRANSLATE (EVERYTHING):
       - All section names and headers
       - Job titles and positions (using professional equivalents)
-      - Job descriptions and responsibilities
-      - Educational descriptions
-      - Project descriptions
+      - Job descriptions and responsibilities (FULLY TRANSLATE EVERY WORD)
+      - Educational descriptions (FULLY TRANSLATE)
+      - Project descriptions (FULLY TRANSLATE)
       - Skill names (soft skills and general professional skills)
-      - Certification descriptions
-      - Personal summary/objective
-      - Achievement descriptions
-      - All narrative text
+      - Certification descriptions (FULLY TRANSLATE)
+      - Personal summary/objective (FULLY TRANSLATE)
+      - Achievement descriptions (FULLY TRANSLATE)
+      - All narrative text (FULLY TRANSLATE)
+      - Location names (cities, countries)
+      - Role descriptions in volunteer work
+      - Award descriptions
+      - Any other descriptive text
       
-      ❌ KEEP ORIGINAL:
+      ❌ KEEP ORIGINAL (ONLY THESE):
       - Company names (Google, Microsoft, etc.)
       - Institution names (Harvard University, etc.)
       - Programming languages (JavaScript, Python, etc.)
@@ -259,6 +274,7 @@ export async function POST(request: NextRequest) {
       - Adapt Western business concepts to Azerbaijani professional culture
       - Use correct Azerbaijani grammar and sentence structure
       - Translate soft skills to culturally appropriate equivalents
+      - Translate ALL English text to Azerbaijani
       ` : `
       ENGLISH TRANSLATION SPECIFICS:
       =============================
@@ -269,6 +285,9 @@ export async function POST(request: NextRequest) {
       - Follow Western CV writing conventions
       - Use appropriate professional jargon
       - Ensure grammatical accuracy and fluency
+      - Translate ALL Azerbaijani text to English
+      - Use strong action verbs (managed, developed, implemented, etc.)
+      - Make descriptions concise yet impactful
       `}
       
       CV CONTENT TO TRANSLATE:
@@ -308,14 +327,14 @@ export async function POST(request: NextRequest) {
       SKILLS SECTION:
       Technical Skills: ${(cvData.skills || []).filter((skill: any) => 
         typeof skill === 'string' ? 
-        /javascript|python|java|react|angular|css|html|sql|aws|azure/i.test(skill) :
-        /javascript|python|java|react|angular|css|html|sql|aws|azure/i.test(skill.name || '')
+        /javascript|python|java|react|angular|css|html|sql|aws|azure|php|node|vue|laravel|docker|kubernetes/i.test(skill) :
+        /javascript|python|java|react|angular|css|html|sql|aws|azure|php|node|vue|laravel|docker|kubernetes/i.test(skill.name || '')
       ).map((skill: any) => typeof skill === 'string' ? skill : skill.name).join(', ')}
       
       Soft Skills: ${(cvData.skills || []).filter((skill: any) => 
         typeof skill === 'string' ? 
-        !/javascript|python|java|react|angular|css|html|sql|aws|azure/i.test(skill) :
-        !/javascript|python|java|react|angular|css|html|sql|aws|azure/i.test(skill.name || '')
+        !/javascript|python|java|react|angular|css|html|sql|aws|azure|php|node|vue|laravel|docker|kubernetes/i.test(skill) :
+        !/javascript|python|java|react|angular|css|html|sql|aws|azure|php|node|vue|laravel|docker|kubernetes/i.test(skill.name || '')
       ).map((skill: any) => typeof skill === 'string' ? skill : skill.name).join(', ')}
       
       CERTIFICATIONS SECTION:
@@ -350,94 +369,87 @@ export async function POST(request: NextRequest) {
       
       RESPONSE FORMAT:
       ===============
-      Return the translated content in this exact JSON format with ALL sections translated:
+      Return the translated content in this exact JSON format with ALL sections fully translated.
+      CRITICAL: Every text field must contain translated content, not the original text.
       
       {
         "sectionNames": {
-          "personalInfo": "Translated section name",
-          "experience": "Translated section name",
-          "education": "Translated section name",
-          "skills": "Translated section name",
-          "projects": "Translated section name",
-          "certifications": "Translated section name",
-          "volunteerExperience": "Translated section name",
-          "languages": "Translated section name",
-          "awards": "Translated section name"
+          "personalInfo": "${isAzerbaijani ? 'Şəxsi Məlumat' : 'Personal Information'}",
+          "experience": "${isAzerbaijani ? 'İş Təcrübəsi' : 'Work Experience'}",
+          "education": "${isAzerbaijani ? 'Təhsil' : 'Education'}",
+          "skills": "${isAzerbaijani ? 'Bacarıqlar' : 'Skills'}",
+          "projects": "${isAzerbaijani ? 'Layihələr' : 'Projects'}",
+          "certifications": "${isAzerbaijani ? 'Sertifikatlar' : 'Certifications'}",
+          "volunteerExperience": "${isAzerbaijani ? 'Könüllü Təcrübəsi' : 'Volunteer Experience'}",
+          "languages": "${isAzerbaijani ? 'Dillər' : 'Languages'}",
+          "awards": "${isAzerbaijani ? 'Mükafatlar' : 'Awards'}"
         },
         "personalInfo": {
-          "summary": "Fully translated professional summary with impact and professional terminology"
+          "summary": "FULLY TRANSLATED professional summary with impact and professional terminology - MUST BE COMPLETELY TRANSLATED"
         },
         "experience": [
           {
-            "position": "Translated position title using professional equivalent",
-            "location": "Translated location if applicable",
-            "description": "Fully translated job description with professional terminology and impact statements",
-            "achievements": "Translated achievements with quantifiable results where possible"
+            "position": "FULLY TRANSLATED position title using professional equivalent",
+            "location": "FULLY TRANSLATED location if applicable",
+            "description": "COMPLETELY TRANSLATED job description with professional terminology and impact statements - EVERY WORD TRANSLATED",
+            "achievements": "COMPLETELY TRANSLATED achievements with quantifiable results where possible - EVERY WORD TRANSLATED"
           }
         ],
         "education": [
           {
-            "degree": "Translated degree name using educational terminology",
-            "field": "Translated field of study",
-            "location": "Translated location if applicable", 
-            "description": "Translated education description",
-            "achievements": "Translated academic achievements"
+            "degree": "FULLY TRANSLATED degree name using educational terminology",
+            "field": "FULLY TRANSLATED field of study",
+            "location": "FULLY TRANSLATED location if applicable", 
+            "description": "COMPLETELY TRANSLATED education description - EVERY WORD TRANSLATED",
+            "achievements": "COMPLETELY TRANSLATED academic achievements - EVERY WORD TRANSLATED"
           }
         ],
         "projects": [
           {
-            "name": "Translated project name (if not technical)",
-            "role": "Translated role/position in project",
-            "description": "Fully translated project description with technical and business context",
-            "achievements": "Translated project achievements and impact"
+            "name": "TRANSLATED project name (if not technical)",
+            "role": "FULLY TRANSLATED role/position in project",
+            "description": "COMPLETELY TRANSLATED project description with technical and business context - EVERY WORD TRANSLATED",
+            "achievements": "COMPLETELY TRANSLATED project achievements and impact - EVERY WORD TRANSLATED"
           }
         ],
         "skills": [
           {
-            "name": "Translated skill name (keep technical terms, translate soft skills)",
-            "category": "Translated skill category if applicable"
+            "name": "TRANSLATED skill name (keep technical terms, translate soft skills)",
+            "category": "TRANSLATED skill category if applicable"
           }
         ],
         "certifications": [
           {
-            "name": "Translated certification name (if general term, keep specific brand names)",
-            "description": "Translated certification description with professional context"
+            "name": "TRANSLATED certification name (if general term, keep specific brand names)",
+            "description": "COMPLETELY TRANSLATED certification description with professional context - EVERY WORD TRANSLATED"
           }
         ],
         "volunteerExperience": [
           {
-            "role": "Translated volunteer role with appropriate terminology",
-            "description": "Translated volunteer description with impact and skills demonstrated",
-            "impact": "Translated impact statement with quantifiable results"
+            "role": "FULLY TRANSLATED volunteer role with appropriate terminology",
+            "description": "COMPLETELY TRANSLATED volunteer description with impact and skills demonstrated - EVERY WORD TRANSLATED",
+            "impact": "COMPLETELY TRANSLATED impact statement with quantifiable results - EVERY WORD TRANSLATED"
           }
         ],
         "languages": [
           {
             "name": "Language name in target language",
-            "level": "Translated proficiency level using standard terms"
+            "level": "TRANSLATED proficiency level using standard terms"
           }
         ],
         "awards": [
           {
-            "name": "Translated award name (if general term)",
-            "description": "Translated award description with achievement context"
+            "name": "TRANSLATED award name (if general term)",
+            "description": "COMPLETELY TRANSLATED award description with achievement context - EVERY WORD TRANSLATED"
           }
         ]
       }
       
-      CRITICAL QUALITY REQUIREMENTS:
-      =============================
-      - COMPREHENSIVE: Translate EVERYTHING that should be translated
-      - PROFESSIONAL: Use appropriate business/professional terminology
-      - CONSISTENT: Maintain consistent terminology throughout
-      - CULTURAL: Adapt to target language professional norms
-      - ACCURATE: Preserve meaning and professional impact
-      - COMPLETE: Include ALL sections with translations
-      - NATURAL: Sound natural and fluent in target language
+      FINAL WARNING: DO NOT RETURN ANY UNTRANSLATED TEXT. Every description, summary, and text field must be fully translated to ${targetLangName}. 
       
       ${isAzerbaijani ? 
-        'Azərbaycan dilində peşəkar və rəsmi ton istifadə edin. Bütün məzmunu hərtərəfli tərcümə edin.' :
-        'Use professional and formal English tone. Translate all content comprehensively.'
+        'HƏR ŞEYI Azərbaycan dilinə tərcümə edin. Heç bir mətn tərcümə edilməmiş qalmamalıdır!' :
+        'TRANSLATE EVERYTHING to English. No text should remain untranslated!'
       }
     `;
 
@@ -472,17 +484,33 @@ export async function POST(request: NextRequest) {
 
     // Apply professional terminology enhancements
     const applyTerminologyEnhancement = (text: string, targetLang: string): string => {
-      if (!text) return text;
+      if (!text || typeof text !== 'string') return text || '';
 
       let enhancedText = text;
       const terms = PROFESSIONAL_TERMS[targetLang] || {};
 
-      Object.entries(terms).forEach(([original, translation]) => {
-        const regex = new RegExp(`\\b${original}\\b`, 'gi');
-        enhancedText = enhancedText.replace(regex, translation);
-      });
+      try {
+        Object.entries(terms).forEach(([original, translation]) => {
+          if (!original || !translation || typeof original !== 'string' || typeof translation !== 'string') {
+            return;
+          }
 
-      return enhancedText;
+          // Escape special regex characters in the original term
+          const escapedOriginal = original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(`\\b${escapedOriginal}\\b`, 'gi');
+
+          // Ensure enhancedText is still a string before replacing
+          if (enhancedText && typeof enhancedText === 'string') {
+            const replaced = enhancedText.replace(regex, translation);
+            enhancedText = replaced || enhancedText;
+          }
+        });
+      } catch (error) {
+        console.error('Error in terminology enhancement:', error);
+        return text; // Return original text if enhancement fails
+      }
+
+      return enhancedText || text;
     };
 
     // Translate personal info with enhanced terminology
@@ -497,8 +525,9 @@ export async function POST(request: NextRequest) {
     if (translatedContent.experience && Array.isArray(translatedContent.experience)) {
       translatedContent.experience.forEach((translatedExp: any, index: number) => {
         if (translatedCvData.experience[index]) {
+          // Apply all translated fields from AI response
           Object.keys(translatedExp).forEach((key: string) => {
-            if (translatedExp[key]) {
+            if (translatedExp[key] && typeof translatedExp[key] === 'string') {
               translatedCvData.experience[index][key] = applyTerminologyEnhancement(
                 translatedExp[key],
                 targetLanguage
@@ -512,9 +541,10 @@ export async function POST(request: NextRequest) {
     // Translate education comprehensively
     if (translatedContent.education && Array.isArray(translatedContent.education)) {
       translatedContent.education.forEach((translatedEdu: any, index: number) => {
-        if (translatedCvData.education[index]) {
+        if (translatedCvData.education && translatedCvData.education[index]) {
+          // Apply all translated fields from AI response
           Object.keys(translatedEdu).forEach((key: string) => {
-            if (translatedEdu[key]) {
+            if (translatedEdu[key] && typeof translatedEdu[key] === 'string') {
               translatedCvData.education[index][key] = applyTerminologyEnhancement(
                 translatedEdu[key],
                 targetLanguage
@@ -528,9 +558,10 @@ export async function POST(request: NextRequest) {
     // Translate projects with technical awareness
     if (translatedContent.projects && Array.isArray(translatedContent.projects)) {
       translatedContent.projects.forEach((translatedProj: any, index: number) => {
-        if (translatedCvData.projects[index]) {
+        if (translatedCvData.projects && translatedCvData.projects[index]) {
+          // Apply all translated fields except technologies (keep technical terms)
           Object.keys(translatedProj).forEach((key: string) => {
-            if (translatedProj[key] && key !== 'technologies') {
+            if (translatedProj[key] && typeof translatedProj[key] === 'string' && key !== 'technologies') {
               translatedCvData.projects[index][key] = applyTerminologyEnhancement(
                 translatedProj[key],
                 targetLanguage
@@ -544,14 +575,16 @@ export async function POST(request: NextRequest) {
     // Translate skills with professional categorization
     if (translatedContent.skills && Array.isArray(translatedContent.skills)) {
       translatedContent.skills.forEach((translatedSkill: any, index: number) => {
-        if (translatedCvData.skills[index] && translatedSkill.name) {
-          if (typeof translatedCvData.skills[index] === 'object') {
-            translatedCvData.skills[index].name = translatedSkill.name;
-            if (translatedSkill.category) {
-              translatedCvData.skills[index].category = translatedSkill.category;
+        if (translatedCvData.skills && translatedCvData.skills[index]) {
+          if (translatedSkill.name) {
+            if (typeof translatedCvData.skills[index] === 'object') {
+              translatedCvData.skills[index].name = translatedSkill.name;
+              if (translatedSkill.category) {
+                translatedCvData.skills[index].category = translatedSkill.category;
+              }
+            } else {
+              translatedCvData.skills[index] = translatedSkill.name;
             }
-          } else {
-            translatedCvData.skills[index] = translatedSkill.name;
           }
         }
       });
@@ -560,9 +593,10 @@ export async function POST(request: NextRequest) {
     // Translate certifications comprehensively
     if (translatedContent.certifications && Array.isArray(translatedContent.certifications)) {
       translatedContent.certifications.forEach((translatedCert: any, index: number) => {
-        if (translatedCvData.certifications[index]) {
+        if (translatedCvData.certifications && translatedCvData.certifications[index]) {
+          // Apply all translated fields except issuer (keep company names)
           Object.keys(translatedCert).forEach((key: string) => {
-            if (translatedCert[key] && key !== 'issuer') {
+            if (translatedCert[key] && typeof translatedCert[key] === 'string' && key !== 'issuer') {
               translatedCvData.certifications[index][key] = applyTerminologyEnhancement(
                 translatedCert[key],
                 targetLanguage
@@ -576,9 +610,10 @@ export async function POST(request: NextRequest) {
     // Translate volunteer experience with impact focus
     if (translatedContent.volunteerExperience && Array.isArray(translatedContent.volunteerExperience)) {
       translatedContent.volunteerExperience.forEach((translatedVol: any, index: number) => {
-        if (translatedCvData.volunteerExperience[index]) {
+        if (translatedCvData.volunteerExperience && translatedCvData.volunteerExperience[index]) {
+          // Apply all translated fields except organization (keep organization names)
           Object.keys(translatedVol).forEach((key: string) => {
-            if (translatedVol[key] && key !== 'organization') {
+            if (translatedVol[key] && typeof translatedVol[key] === 'string' && key !== 'organization') {
               translatedCvData.volunteerExperience[index][key] = applyTerminologyEnhancement(
                 translatedVol[key],
                 targetLanguage
@@ -594,7 +629,7 @@ export async function POST(request: NextRequest) {
       translatedContent.languages.forEach((translatedLang: any, index: number) => {
         if (translatedCvData.languages && translatedCvData.languages[index]) {
           Object.keys(translatedLang).forEach((key: string) => {
-            if (translatedLang[key]) {
+            if (translatedLang[key] && typeof translatedLang[key] === 'string') {
               if (typeof translatedCvData.languages[index] === 'object') {
                 translatedCvData.languages[index][key] = translatedLang[key];
               }
@@ -608,8 +643,9 @@ export async function POST(request: NextRequest) {
     if (translatedContent.awards && Array.isArray(translatedContent.awards)) {
       translatedContent.awards.forEach((translatedAward: any, index: number) => {
         if (translatedCvData.awards && translatedCvData.awards[index]) {
+          // Apply all translated fields except issuer (keep organization names)
           Object.keys(translatedAward).forEach((key: string) => {
-            if (translatedAward[key] && key !== 'issuer') {
+            if (translatedAward[key] && typeof translatedAward[key] === 'string' && key !== 'issuer') {
               translatedCvData.awards[index][key] = applyTerminologyEnhancement(
                 translatedAward[key],
                 targetLanguage
@@ -620,20 +656,81 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Update CV language and add translation metadata
+    // Add a delay and additional verification to prevent automatic reversion
+    const translationTimestamp = Date.now();
+
+    // Update CV language and add translation metadata with lock mechanism
     translatedCvData.cvLanguage = targetLanguage;
     translatedCvData.translationMetadata = {
       translatedAt: new Date().toISOString(),
-      translatedBy: 'AI_Professional_Translator_v2.0',
-      sourceLanguage: targetLanguage === 'english' ? 'azerbaijani' : 'english',
+      translatedBy: 'AI_Professional_Translator_v2.2',
+      sourceLanguage: currentCvLanguage,
       targetLanguage: targetLanguage,
-      comprehensiveTranslation: true
+      comprehensiveTranslation: true,
+      previousLanguage: currentCvLanguage,
+      translationLock: true, // Prevent automatic re-translation
+      lastTranslationId: `${translationTimestamp}-${targetLanguage}`, // Unique translation ID
+      translationLockUntil: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // Lock for 10 minutes
+      forceLanguage: targetLanguage, // Force this language to stay
+      PERMANENT_LOCK: true, // Never allow automatic changes
+      API_TRANSLATION: true // Mark as API translation
     };
 
-    // Save the professionally translated CV
+    // Add language indicator to all major sections to prevent confusion
+    translatedCvData.languageIndicator = {
+      currentLanguage: targetLanguage,
+      lastUpdated: new Date().toISOString(),
+      isTranslated: true,
+      translationComplete: true,
+      locked: true,
+      lockExpires: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+      NEVER_AUTO_CHANGE: true
+    };
+
+    // Add a strong language lock at the root level
+    translatedCvData.LANGUAGE_LOCK = {
+      language: targetLanguage,
+      timestamp: translationTimestamp,
+      DO_NOT_CHANGE: true,
+      TRANSLATION_IN_PROGRESS: false,
+      FINAL_LANGUAGE: targetLanguage,
+      LOCK_VERSION: "v2.2",
+      PERMANENT: true
+    };
+
+    // Add language markers to each section to prevent individual section changes
+    if (translatedCvData.personalInfo) {
+      translatedCvData.personalInfo.__language = targetLanguage;
+      translatedCvData.personalInfo.__locked = true;
+    }
+    if (translatedCvData.experience) {
+      translatedCvData.experience.forEach((exp: any) => {
+        exp.__language = targetLanguage;
+        exp.__locked = true;
+      });
+    }
+    if (translatedCvData.education) {
+      translatedCvData.education.forEach((edu: any) => {
+        edu.__language = targetLanguage;
+        edu.__locked = true;
+      });
+    }
+    if (translatedCvData.projects) {
+      translatedCvData.projects.forEach((proj: any) => {
+        proj.__language = targetLanguage;
+        proj.__locked = true;
+      });
+    }
+
+    console.log(`✅ Translation completed and PERMANENTLY LOCKED to ${targetLanguage} with timestamp ${translationTimestamp}`);
+
+    // Save the professionally translated CV with explicit language lock
     await prisma.cV.update({
       where: { id: cvId },
-      data: { cv_data: translatedCvData }
+      data: {
+        cv_data: translatedCvData
+        // Language is now tracked within cv_data.cvLanguage and cv_data.languageIndicator
+      }
     });
 
     // Log the comprehensive translation for analytics

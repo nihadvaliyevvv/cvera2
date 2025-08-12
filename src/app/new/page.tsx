@@ -272,21 +272,32 @@ export default function NewCVPage() {
               {/* Template Selection */}
               <div>
                 <label htmlFor="templateId" className="block text-sm font-medium text-gray-700 mb-2">
-                  Template Seçin
+                  <span className="flex items-center space-x-2">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>CV Şablonu</span>
+                  </span>
                 </label>
                 <select
                   id="templateId"
                   value={formData.templateId}
                   onChange={(e) => handleInputChange('templateId', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-600/20 focus:border-blue-600 transition-all duration-200 shadow-sm hover:shadow-md appearance-none cursor-pointer"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                    backgroundPosition: 'right 0.75rem center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: '1.5em 1.5em'
+                  }}
                   disabled={loading || templatesLoading}
                 >
                   {templatesLoading ? (
-                    <option value="">Yüklənir...</option>
+                    <option value="">⏳ Yüklənir...</option>
                   ) : (
                     templates.map((template) => (
                       <option key={template.id} value={template.id}>
-                        {template.name} ({template.tier})
+                        📄 {template.name} ({template.tier})
                       </option>
                     ))
                   )}

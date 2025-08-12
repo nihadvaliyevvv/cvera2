@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNotification } from '@/components/ui/Toast';
 import { User } from '@/lib/auth';
 
 interface Subscription {
@@ -87,6 +88,7 @@ export default function SubscriptionManagement({ user, onUserUpdate }: Subscript
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelConfirmation, setCancelConfirmation] = useState('');
+  const { showSuccess, showError, showWarning } = useNotification();
 
   const currentSubscription = user.subscriptions?.find(sub => sub.status === 'active');
   const currentTier = currentSubscription?.tier || 'Free';
@@ -162,14 +164,13 @@ export default function SubscriptionManagement({ user, onUserUpdate }: Subscript
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Abunəlik ləğv edilmədi');
+        throw new Error('Abunəlik ləğv edilə bilmədi');
       }
 
       const result = await response.json();
 
       // Show success message with lost features
-      alert(`Abunəlik uğurla ləğv edildi!\n\n${result.warningMessage}\n\nİtirilən xüsusiyyətlər:\n${result.lostFeatures?.join('\n')}`);
+      showSuccess(`Abunəlik uğurla ləğv edildi!\n\n${result.warningMessage}\n\nİtirilən xüsusiyyətlər:\n${result.lostFeatures?.join('\n')}`);
 
       // Update user data
       const updatedUser = { ...user, tier: 'Free' };
@@ -181,10 +182,9 @@ export default function SubscriptionManagement({ user, onUserUpdate }: Subscript
       onUserUpdate(updatedUser);
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Xəta baş verdi');
+      showError(err instanceof Error ? err.message : 'Xəta baş verdi');
     } finally {
       setLoading(false);
-      setCancelConfirmation('');
     }
   };
 

@@ -23,7 +23,7 @@ export default function CertificationsSection({ data, onChange }: Certifications
 
   const addCertification = () => {
     const newCertification: Certification = {
-      id: Date.now().toString(),
+      id: `cert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${data.length}`,
       name: '',
       issuer: '',
       date: '',
@@ -67,101 +67,75 @@ export default function CertificationsSection({ data, onChange }: Certifications
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">🏆</span>
-          <h2 className="text-xl font-semibold text-gray-900">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">
             {getLabel('certifications', 'azerbaijani')}
-          </h2>
+          </h3>
         </div>
         <button
           onClick={addCertification}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          <span className="text-lg">+</span>
-          {getLabel('add', 'azerbaijani')}
+          + Əlavə edin
         </button>
       </div>
 
       {data.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-          <span className="text-4xl mb-4 block">🏆</span>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {'Hələ sertifikat əlavə edilməyib'}
-          </h3>
-          <p className="text-gray-600 mb-4">
-            {'Peşəkar inkişafınızı göstərmək üçün sertifikatlarınızı əlavə edin'
-            }
+          <div className="text-gray-400 mb-4">
+            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+            </svg>
+          </div>
+          <p className="text-gray-500 mb-4">
+            Hələ heç bir sertifikat əlavə etməmisiniz
           </p>
           <button
             onClick={addCertification}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            <span className="text-lg">+</span>
-            {'İlk sertifikatı əlavə et'}
+            İlk sertifikatınızı əlavə edin
           </button>
         </div>
       ) : (
         <div className="space-y-4">
           {data.map((certification, index) => (
-            <div key={certification.id} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+            <div key={certification.id} className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-lg">🏆</span>
-                    <h3 className="font-medium text-gray-900">
-                      {certification.name || ('Sertifikat adı')}
-                    </h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-blue-500">🏆</span>
+                    <h4 className="font-medium text-gray-900">
+                      {certification.name || 'Yeni sertifikat'}
+                    </h4>
                   </div>
-                  <div className="text-sm text-gray-600">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span>🏢</span>
-                      <span>{certification.issuer || ('Verən təşkilat')}</span>
-                    </div>
-                    {certification.date && (
-                      <div className="flex items-center gap-2">
-                        <span>📅</span>
-                        <span>{formatDate(certification.date)}</span>
-                      </div>
-                    )}
-                  </div>
+                  <p className="text-sm text-gray-600">
+                    {certification.issuer || 'Verən təşkilat'}
+                  </p>
+                  {certification.date && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {formatDate(certification.date)}
+                    </p>
+                  )}
                 </div>
-
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => moveCertification(certification.id, 'up')}
-                    disabled={index === 0}
-                    className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    title={'Yuxarı köçür'}
-                  >
-                    ↑
-                  </button>
-                  <button
-                    onClick={() => moveCertification(certification.id, 'down')}
-                    disabled={index === data.length - 1}
-                    className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    title={'Aşağı köçür'}
-                  >
-                    ↓
-                  </button>
-                  <button
                     onClick={() => setExpandedId(expandedId === certification.id ? null : certification.id)}
-                    className="p-2 text-gray-500 hover:text-gray-700"
-                    title={'Redaktə et'}
+                    className="text-blue-600 hover:text-blue-800 transition-colors"
                   >
-                    ✏️
+                    {expandedId === certification.id ? 'Bağlayın' : 'Redaktə edin'}
                   </button>
                   <button
                     onClick={() => removeCertification(certification.id)}
-                    className="p-2 text-red-500 hover:text-red-700"
-                    title={'Sil'}
+                    className="text-red-600 hover:text-red-800 transition-colors"
                   >
-                    🗑️
+                    Silin
                   </button>
                 </div>
               </div>
 
               {expandedId === certification.id && (
-                <div className="border-t border-gray-200 pt-4 space-y-4">
+                <div className="space-y-4 border-t border-gray-200 pt-4">
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -171,20 +145,20 @@ export default function CertificationsSection({ data, onChange }: Certifications
                         type="text"
                         value={certification.name}
                         onChange={(e) => updateCertification(certification.id, 'name', e.target.value)}
-                        placeholder={'AWS Cloud Practitioner'}
+                        placeholder="AWS Cloud Practitioner"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {'Verən təşkilat'} <span className="text-red-500">*</span>
+                        Verən təşkilat <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={certification.issuer}
                         onChange={(e) => updateCertification(certification.id, 'issuer', e.target.value)}
-                        placeholder={'Amazon Web Services'}
+                        placeholder="Amazon Web Services"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                       />
                     </div>
@@ -203,7 +177,7 @@ export default function CertificationsSection({ data, onChange }: Certifications
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {'Sertifikat URL-i'}
+                        Sertifikat URL-i
                       </label>
                       <input
                         type="url"
@@ -222,8 +196,7 @@ export default function CertificationsSection({ data, onChange }: Certifications
                     <textarea
                       value={certification.description || ''}
                       onChange={(e) => updateCertification(certification.id, 'description', e.target.value)}
-                      placeholder={'Sertifikatın təsviri və əldə edilən bacarıqlar...'
-                      }
+                      placeholder="Sertifikatın təsviri və əldə edilən bacarıqlar..."
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     />
@@ -244,7 +217,7 @@ export default function CertificationsSection({ data, onChange }: Certifications
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:text-blue-800 underline"
                           >
-                            {'Sertifikatı görüntülə'}
+                            Sertifikatı görüntüləyin
                           </a>
                         </div>
                       )}
@@ -261,10 +234,9 @@ export default function CertificationsSection({ data, onChange }: Certifications
         <div className="text-center">
           <button
             onClick={addCertification}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            className="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
           >
-            <span className="text-lg">+</span>
-            {'Başqa sertifikat əlavə et'}
+            + Başqa sertifikat əlavə edin
           </button>
         </div>
       )}

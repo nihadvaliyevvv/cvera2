@@ -1,432 +1,181 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyJWT } from '@/lib/jwt';
 import { PrismaClient } from '@prisma/client';
-import { callRapidAPIForSkills } from '@/lib/api-fallback-system';
 
 const prisma = new PrismaClient();
 
-// Function to get active ScrapingDog API key from admin panel
-async function getActiveScrapingDogApiKey() {
-  try {
-    const activeApiKey = await prisma.apiKey.findFirst({
-      where: {
-        service: 'scrapingdog',
-        active: true
-      },
-      orderBy: {
-        priority: 'asc' // Lower number = higher priority
-      }
-    });
-
-    if (!activeApiKey) {
-      throw new Error('Aktiv ScrapingDog API key tapılmadı. Admin paneldə API key əlavə edin.');
-    }
-
-    console.log('✅ Active ScrapingDog API key found:', activeApiKey.apiKey.substring(0, 8) + '***');
-    return activeApiKey.apiKey;
-  } catch (error) {
-    console.error('❌ API key lookup failed:', error);
-    throw new Error('ScrapingDog API key əldə edilə bilmədi');
-  }
-}
-
-// ScrapingDog API call with proper TypeScript types
-async function callScrapingDogAPIInternal(linkedinUrl: string) {
+// RapidAPI LinkedIn Skills - paralel skills extraction
+async function getRapidAPISkills(linkedinUrl: string) {
   const axios = require('axios');
 
-  // Get active API key from admin panel - with better error handling
-  let api_key;
-  try {
-    api_key = await getActiveScrapingDogApiKey();
-  } catch (error) {
-    console.error('❌ API key əldə edilə bilmədi:', error);
-    // Fallback to your working key if database lookup fails
-    api_key = '6882894b855f5678d36484c8';
-    console.log('🔄 Fallback API key istifadə edilir');
-  }
+  console.log(`🎯 RapidAPI skills extraction başladı: ${linkedinUrl}`);
 
-  const url = 'https://api.scrapingdog.com/linkedin';
-
-  // Extract LinkedIn username/ID - exactly like your working code
-  let linkId = '';
   try {
-    if (linkedinUrl.includes('linkedin.com/in/')) {
-      linkId = linkedinUrl.split('linkedin.com/in/')[1].split('/')[0].split('?')[0];
-    } else {
-      linkId = linkedinUrl.trim();
+    const options = {
+      method: 'GET',
+      url: 'https://linkedin-data-api.p.rapidapi.com/get-profile-data-by-url',
+      params: {
+        url: linkedinUrl
+      },
+      headers: {
+        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY || 'your-rapidapi-key',
+        'X-RapidAPI-Host': 'linkedin-data-api.p.rapidapi.com'
+      },
+      timeout: 20000
+    };
+
+    const response = await axios.request(options);
+
+    if (response.status === 200 && response.data) {
+      console.log('✅ RapidAPI skills məlumatları alındı');
+      return response.data;
     }
-  } catch (error) {
-    throw new Error('LinkedIn URL formatı səhvdir');
-  }
 
-  // Use exact same parameters as your working code
-  const params = {
-    api_key: api_key,
-    type: 'profile',
-    linkId: linkId,
-    premium: 'false',
-  };
+    throw new Error(`RapidAPI error: ${response.status}`);
 
-  console.log('🔄 ScrapingDog API call with params:', {
-    ...params,
-    api_key: api_key.substring(0, 8) + '***',
-    linkId: linkId
-  });
-
-  try {
-    // Use exact same code structure as your working example
-    const response = await axios
-      .get(url, { params: params, timeout: 30000 })
-      .then(function (response: any) {
-        if (response.status === 200) {
-          const data = response.data;
-          console.log('✅ ScrapingDog API success - data received');
-
-          // Update API key usage in database
-          updateApiKeyUsage(api_key).catch(err => console.log('Usage update failed:', err.message));
-
-          return { success: true, data: data, attemptsCount: 1 };
-        } else {
-          console.log('❌ Request failed with status code: ' + response.status);
-          return {
-            success: false,
-            error: 'Request failed with status code: ' + response.status,
-            attemptsCount: 1
-          };
-        }
-      })
-      .catch(function (error: any) {
-        console.error('❌ Error making the request: ' + error.message);
-
-        // Better error handling for common issues
-        if (error.response?.status === 403) {
-          return {
-            success: false,
-            error: 'API key-ə giriş qadağandır (403). API key-inizi yoxlayın.',
-            details: 'API key səhv və ya limiti tükənib',
-            attemptsCount: 1
-          };
-        }
-
-        if (error.response?.status === 429) {
-          return {
-            success: false,
-            error: 'API limit aşıldı (429). Admin paneldə başqa API key əlavə edin.',
-            details: 'Rate limit exceeded',
-            attemptsCount: 1
-          };
-        }
-
-        if (error.message.includes('Unexpected token')) {
-          return {
-            success: false,
-            error: 'API key limiti tükənib və ya səhvdir. Admin paneldə yeni key əlavə edin.',
-            details: 'JSON parse xətası - API HTML qaytarır',
-            attemptsCount: 1
-          };
-        }
-
-        return {
-          success: false,
-          error: error.message,
-          attemptsCount: 1
-        };
-      });
-
-    return response;
   } catch (error: any) {
-    console.error('❌ ScrapingDog API error:', error.message);
-    throw new Error('LinkedIn profil məlumatları əldə edilə bilmədi: ' + error.message);
+    console.error('❌ RapidAPI skills xətası:', error.message);
+    return null; // Skills optional olduğu üçün null qaytarırıq
   }
 }
 
-// Helper function to update API key usage
-async function updateApiKeyUsage(apiKey: string) {
+// BrightData LinkedIn Import - optimizə edilmiş sürətli cavab
+async function callBrightDataAPI(linkedinUrl: string) {
+  const axios = require('axios');
+
+  console.log(`🔄 BrightData LinkedIn scraping başladı (optimizə edilmiş): ${linkedinUrl}`);
+  console.log(`⚡ Yalnız lazım olan məlumatlar üçün sürətli sorğu...`);
+
   try {
-    await prisma.apiKey.updateMany({
-      where: { apiKey: apiKey },
-      data: {
-        usageCount: { increment: 1 },
-        dailyUsage: { increment: 1 },
-        lastUsed: new Date(),
-        lastResult: 'success'
+    // BrightData API konfigurasiyası
+    const api_key = 'da77d05e80aa038856c04cb0e96d34a267be39e89a46c03ed15e68b38353eaae';
+    const dataset_id = 'gd_l1viktl72bvl7bjuj0';
+
+    console.log(`🔍 BrightData optimizə edilmiş request: ${linkedinUrl}`);
+    console.log(`⚡ include_errors=false aktiv - sürətli cavab üçün`);
+
+    // BrightData üçün düzgün request formatı
+    const requestData = [{
+      url: linkedinUrl
+    }];
+
+    // include_errors=false və format=json - sürətli cavab üçün
+    const triggerUrl = `https://api.brightdata.com/datasets/v3/trigger?dataset_id=${dataset_id}&include_errors=false&format=json`;
+    console.log(`📡 Trigger URL: ${triggerUrl}`);
+
+    const response = await axios.post(
+      triggerUrl,
+      requestData,
+      {
+        headers: {
+          'Authorization': `Bearer ${api_key}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 25000 // Azaldılmış timeout
       }
-    });
-  } catch (error) {
-    console.log('Usage update failed:', error);
+    );
+
+    console.log('✅ BrightData sürətli trigger response:', response.data);
+
+    if (response.status === 200 && response.data.snapshot_id) {
+      const snapshotId = response.data.snapshot_id;
+      console.log(`⚡ Snapshot yaradıldı (sürətli). Snapshot ID: ${snapshotId}`);
+
+      // Optimizə edilmiş snapshot gözlə
+      return await waitForBrightDataSnapshot(snapshotId, api_key);
+    } else {
+      console.log('Request failed with status code: ' + response.status);
+      throw new Error(`BrightData API error: ${response.status}`);
+    }
+
+  } catch (error: any) {
+    console.error('Error making the request: ' + error.message);
+    throw new Error(`BrightData import uğursuz oldu: ${error.message}`);
   }
 }
 
-// Enhanced data transformation function with specialized data sources
-function transformLinkedInData(scrapingdogData: any, rapidApiData: any = null) {
-  console.log('�� Transforming LinkedIn data...');
-  console.log('📊 ScrapingDog data type:', Array.isArray(scrapingdogData) ? 'Array' : typeof scrapingdogData);
-  console.log('📊 RapidAPI skills data available:', !!rapidApiData?.skills);
+// BrightData snapshot cavabını gözlə - optimizə edilmiş
+async function waitForBrightDataSnapshot(snapshotId: string, apiKey: string) {
+  const axios = require('axios');
+  let attempts = 0;
+  const maxAttempts = 15; // Azaldılmış cəhd sayı
+  const pollInterval = 8000; // 8 saniyə - daha sürətli yoxlama
 
-  // Handle ScrapingDog array response format - the API returns an array with profile data
-  let profileData = {};
-  if (Array.isArray(scrapingdogData) && scrapingdogData.length > 0) {
-    profileData = scrapingdogData[0];
-    console.log('✅ Extracted profile from ScrapingDog array format');
-    console.log('📊 Profile data keys:', Object.keys(profileData));
-  } else if (scrapingdogData && typeof scrapingdogData === 'object') {
-    profileData = scrapingdogData;
-    console.log('✅ Using ScrapingDog object format');
-  }
+  console.log(`⚡ BrightData snapshot sürətli cavab gözlənilir... Snapshot ID: ${snapshotId}`);
 
-  // Use ScrapingDog as primary data source
-  const combinedData: any = { ...profileData };
+  while (attempts < maxAttempts) {
+    try {
+      const elapsedTime = Math.round((attempts * pollInterval) / 1000);
+      console.log(`🔄 Sürətli snapshot yoxlama ${attempts + 1}/${maxAttempts} (${elapsedTime}s keçdi)...`);
+      console.log(`⚡ include_errors=false aktiv - snapshot polling`);
 
-  // Transform personal info from ScrapingDog data
-  const personalInfo = {
-    firstName: combinedData.first_name || combinedData.firstName ||
-               (combinedData.full_name || combinedData.fullName || combinedData.name || '').split(' ')[0] || '',
-    lastName: combinedData.last_name || combinedData.lastName ||
-              (combinedData.full_name || combinedData.fullName || combinedData.name || '').split(' ').slice(1).join(' ') || '',
-    fullName: combinedData.full_name || combinedData.fullName || combinedData.name ||
-              `${combinedData.first_name || ''} ${combinedData.last_name || ''}`.trim() ||
-              combinedData.headline?.split(' at ')[0] || '',
-    email: combinedData.email || combinedData.email_address || '',
-    phone: combinedData.phone || combinedData.phone_number || combinedData.phoneNumber || '',
-    location: combinedData.location || combinedData.city || combinedData.country ||
-              combinedData.geo_location || combinedData.address ||
-              `${combinedData.city || ''} ${combinedData.country || ''}`.trim(),
-    profilePicture: combinedData.profile_photo || combinedData.profile_pic_url ||
-                   combinedData.profilePicture || combinedData.image_url ||
-                   combinedData.profile_image || combinedData.avatar_url || '',
-    summary: combinedData.summary || combinedData.about || combinedData.headline ||
-             combinedData.bio || combinedData.description || '',
-    linkedin: combinedData.linkedin_url || combinedData.public_profile_url ||
-              combinedData.profile_url ||
-              (combinedData.public_identifier ? `https://linkedin.com/in/${combinedData.public_identifier}` : '') ||
-              (combinedData.username ? `https://linkedin.com/in/${combinedData.username}` : ''),
-    website: combinedData.website || combinedData.personal_website || combinedData.website_url || ''
-  };
+      // include_errors=false və format=json - sürətli cavab
+      const snapshotUrl = `https://api.brightdata.com/datasets/v3/snapshot/${snapshotId}?format=json`;
+      console.log(`📡 Snapshot URL: ${snapshotUrl}`);
 
-  // Transform experience from ScrapingDog data
-  const experienceArray = combinedData.experience || combinedData.experiences || combinedData.work_experience || [];
-  const experience = experienceArray.map((exp: any, index: number) => ({
-    id: `exp-${Date.now()}-${index}`,
-    company: exp.company_name || exp.company || exp.organization || exp.employer || '',
-    position: exp.position || exp.title || exp.role || exp.job_title || exp.designation || '',
-    startDate: exp.starts_at || exp.start_date || exp.startDate || exp.from || exp.start_year || '',
-    endDate: exp.ends_at || exp.end_date || exp.endDate || exp.to || exp.end_year ||
-             (exp.is_current || exp.current ? 'Hazırda' : ''),
-    description: exp.summary || exp.description || exp.details || '',
-    location: exp.location || exp.company_location || exp.workplace_location || ''
-  })).filter((exp: any) => exp.company.trim() !== '' || exp.position.trim() !== '');
-
-  // Transform education from ScrapingDog data
-  const educationArray = combinedData.education || combinedData.educations || combinedData.schools || [];
-  let education = educationArray.map((edu: any, index: number) => ({
-    id: `edu-${Date.now()}-${index}`,
-    institution: edu.college_name || edu.school || edu.institution || edu.university ||
-                edu.school_name || edu.college || '',
-    degree: edu.college_degree || edu.degree || edu.degree_name || edu.qualification ||
-            edu.program || edu.field_of_study || '',
-    field: edu.college_degree_field || edu.field_of_study || edu.field || edu.major ||
-           edu.specialization || '',
-    startDate: edu.college_duration?.split(' - ')[0] || edu.start_date || edu.startDate ||
-               edu.start_year || '',
-    endDate: edu.college_duration?.split(' - ')[1] || edu.end_date || edu.endDate ||
-             edu.end_year || edu.graduation_year || '',
-    description: edu.college_activity || edu.description || edu.activities ||
-                edu.details || ''
-  })).filter((edu: any) => edu.institution.trim() !== '');
-
-  // If no education data, create placeholder
-  if (education.length === 0) {
-    education = [{
-      id: `edu-placeholder-${Date.now()}`,
-      institution: '',
-      degree: '',
-      field: '',
-      startDate: '',
-      endDate: '',
-      description: ''
-    }];
-  }
-
-  // SKILLS: Use RapidAPI as primary source, fallback to ScrapingDog + text extraction
-  let skills: any[] = [];
-
-  // 1. First priority: RapidAPI skills (if available)
-  if (rapidApiData?.skills && Array.isArray(rapidApiData.skills)) {
-    console.log('✅ Using RapidAPI skills data');
-    skills = rapidApiData.skills.map((skill: any, index: number) => ({
-      id: `skill-rapidapi-${Date.now()}-${index}`,
-      name: typeof skill === 'string' ? skill : skill.name || skill.skill || skill.title || '',
-      level: typeof skill === 'object' ? (skill.level || skill.proficiency || 'Intermediate') : 'Intermediate'
-    })).filter((skill: any) => skill.name.trim() !== '');
-  }
-
-  // 2. If no RapidAPI skills, use ScrapingDog skills
-  if (skills.length === 0 && combinedData.skills) {
-    console.log('📡 Using ScrapingDog skills data');
-    const scrapingdogSkills = Array.isArray(combinedData.skills) ? combinedData.skills : [combinedData.skills];
-    skills = scrapingdogSkills.map((skill: any, index: number) => ({
-      id: `skill-scrapingdog-${Date.now()}-${index}`,
-      name: typeof skill === 'string' ? skill : skill.name || skill.skill || '',
-      level: typeof skill === 'object' ? (skill.level || 'Intermediate') : 'Intermediate'
-    })).filter((skill: any) => skill.name.trim() !== '');
-  }
-
-  // 3. If still no skills, extract from experience text (ScrapingDog data)
-  if (skills.length === 0) {
-    console.log('🔍 Extracting skills from experience text');
-    const skillsFromText = new Set<string>();
-
-    experience.forEach((exp: any) => {
-      const textToAnalyze = `${exp.description || ''} ${exp.position || ''} ${exp.company || ''}`.toLowerCase();
-
-      // Enhanced skill detection patterns
-      const skillPatterns = [
-        // Programming Languages
-        'java(?!script)', 'javascript', 'typescript', 'python', 'php', 'c#', 'c\\+\\+', 'ruby', 'go', 'rust', 'swift', 'kotlin',
-        // Frontend
-        'react', 'vue\\.js', 'angular', 'html', 'css', 'sass', 'scss', 'tailwind', 'bootstrap', 'jquery',
-        // Backend
-        'node\\.js', 'express', 'django', 'flask', 'spring', 'laravel', 'symfony', 'rails',
-        // Databases
-        'sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'elasticsearch', 'oracle',
-        // Cloud & DevOps
-        'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'jenkins', 'git', 'gitlab', 'github',
-        // Tools & Methodologies
-        'agile', 'scrum', 'jira', 'confluence', 'slack', 'teams', 'figma', 'adobe',
-        // Business Skills
-        'project management', 'team leadership', 'business analysis', 'problem solving',
-        'communication', 'presentation', 'negotiation', 'strategic planning'
-      ];
-
-      skillPatterns.forEach(pattern => {
-        const regex = new RegExp(`\\b${pattern}\\b`, 'gi');
-        const matches = textToAnalyze.match(regex);
-        if (matches) {
-          matches.forEach(match => {
-            let skillName = match.toLowerCase();
-            if (skillName === 'node.js') skillName = 'Node.js';
-            else if (skillName === 'vue.js') skillName = 'Vue.js';
-            else if (skillName === 'c#') skillName = 'C#';
-            else if (skillName === 'c++') skillName = 'C++';
-            else skillName = skillName.charAt(0).toUpperCase() + skillName.slice(1);
-            skillsFromText.add(skillName);
-          });
+      const response = await axios.get(
+        snapshotUrl,
+        {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 15000 // Azaldılmış timeout
         }
-      });
-    });
+      );
 
-    skills = Array.from(skillsFromText).map((skillName, index) => ({
-      id: `skill-extracted-${Date.now()}-${index}`,
-      name: skillName,
-      level: 'Intermediate' as const
-    }));
+      console.log(`📊 Snapshot status: ${response.status}`);
+
+      if (response.status === 200) {
+        const data = response.data;
+
+        if (data && Array.isArray(data) && data.length > 0) {
+          const profileData = data[0];
+
+          if (profileData && Object.keys(profileData).length > 0) {
+            console.log('⚡ BrightData sürətli məlumat alındı!');
+            console.log(`👤 Profile məlumatları hazır:`, {
+              name: profileData.name || profileData.full_name,
+              experience: profileData.experience?.length || 0,
+              education: profileData.educations_details?.length || 0,
+              skills: profileData.skills?.length || 0
+            });
+
+            return profileData;
+          }
+        }
+      } else if (response.status === 202) {
+        console.log('⏳ Snapshot işlənir (202)...');
+      } else if (response.status === 404) {
+        console.log('⏳ Snapshot hazırlanır (404)...');
+      }
+
+      console.log(`⏳ ${pollInterval / 1000}s gözləyirik (optimizə edilmiş)...`);
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+      attempts++;
+
+    } catch (error: any) {
+      console.error(`❌ Snapshot xətası: ${error.message}`);
+
+      if (error.response?.status === 404 || error.response?.status === 202) {
+        console.log('⏳ Snapshot hələ hazırlanır...');
+      }
+
+      if (attempts === maxAttempts - 1) {
+        throw new Error(`BrightData snapshot ${maxAttempts} cəhd sonra timeout`);
+      }
+
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+      attempts++;
+    }
   }
 
-  // 4. If still no skills, add basic skills
-  if (skills.length === 0) {
-    const basicSkills = ['Communication', 'Problem Solving', 'Team Collaboration', 'Time Management'];
-    skills = basicSkills.map((skillName, index) => ({
-      id: `skill-basic-${Date.now()}-${index}`,
-      name: skillName,
-      level: 'Advanced' as const
-    }));
-  }
-
-  // Transform languages from ScrapingDog data
-  let languages = (combinedData.languages || []).map((lang: any, index: number) => ({
-    id: `lang-${Date.now()}-${index}`,
-    name: typeof lang === 'string' ? lang : lang.name || lang.language || '',
-    proficiency: typeof lang === 'string' ? 'Professional' : lang.proficiency || lang.level || 'Professional'
-  })).filter((lang: any) => lang.name.trim() !== '');
-
-  // Add default languages if none provided
-  if (languages.length === 0) {
-    languages = [
-      { id: `lang-default-az-${Date.now()}`, name: 'Azərbaycan dili', proficiency: 'Native' },
-      { id: `lang-default-en-${Date.now()}`, name: 'English', proficiency: 'Professional' }
-    ];
-  }
-
-  // Transform projects from ScrapingDog data
-  let projects = (combinedData.projects || []).map((proj: any, index: number) => ({
-    id: `proj-${Date.now()}-${index}`,
-    name: proj.title || proj.name || proj.project_name || '',
-    description: proj.description || proj.summary || `${proj.title || ''} layihəsi`,
-    startDate: proj.duration || proj.start_date || proj.startDate || '',
-    endDate: proj.end_date || proj.endDate || '',
-    skills: proj.skills || proj.technologies || '',
-    url: proj.link || proj.url || proj.project_url || ''
-  })).filter((proj: any) => proj.name.trim() !== '');
-
-  // Add placeholder project if none
-  if (projects.length === 0) {
-    projects = [{
-      id: `proj-placeholder-${Date.now()}`,
-      name: '',
-      description: '',
-      startDate: '',
-      endDate: '',
-      skills: '',
-      url: ''
-    }];
-  }
-
-  // Transform certifications from ScrapingDog data
-  let certifications = (combinedData.awards || combinedData.certification || combinedData.certifications || []).map((cert: any, index: number) => ({
-    id: `cert-${Date.now()}-${index}`,
-    name: cert.name || cert.title || cert.certification || '',
-    issuer: cert.organization || cert.authority || cert.issuer || '',
-    date: cert.duration || cert.start_date || cert.date || cert.issued_date || '',
-    description: cert.summary || cert.description || ''
-  })).filter((cert: any) => cert.name.trim() !== '');
-
-  // Add placeholder certification if none
-  if (certifications.length === 0) {
-    certifications = [{
-      id: `cert-placeholder-${Date.now()}`,
-      name: '',
-      issuer: '',
-      date: '',
-      description: ''
-    }];
-  }
-
-  // Transform volunteer experience from ScrapingDog data
-  let volunteerExperience = (combinedData.volunteering || []).map((vol: any, index: number) => ({
-    id: `vol-${Date.now()}-${index}`,
-    organization: vol.organization || vol.company || '',
-    role: vol.role || vol.title || vol.position || '',
-    startDate: vol.start_date || vol.startDate || '',
-    endDate: vol.end_date || vol.endDate || '',
-    description: vol.description || vol.summary || '',
-    cause: vol.cause || vol.topic || ''
-  })).filter((vol: any) => vol.organization.trim() !== '' || vol.role.trim() !== '');
-
-  console.log('📊 Transformation Results:');
-  console.log(`- Personal Info: ${personalInfo.fullName} (ScrapingDog)`);
-  console.log(`- Experience: ${experience.length} items (ScrapingDog)`);
-  console.log(`- Education: ${education.length} items (ScrapingDog)`);
-  console.log(`- Skills: ${skills.length} items (${rapidApiData?.skills ? 'RapidAPI' : 'ScrapingDog/Extracted'})`);
-  console.log(`- Languages: ${languages.length} items (ScrapingDog)`);
-  console.log(`- Projects: ${projects.length} items (ScrapingDog)`);
-  console.log(`- Certifications: ${certifications.length} items (ScrapingDog)`);
-  console.log(`- Volunteer: ${volunteerExperience.length} items (ScrapingDog)`);
-
-  return {
-    personalInfo,
-    experience,
-    education,
-    skills,
-    languages,
-    projects,
-    certifications,
-    volunteerExperience
-  };
+  throw new Error(`BrightData snapshot timeout: sürətli məlumat alınmadı`);
 }
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🚀 LinkedIn import API started');
+    console.log('🚀 LinkedIn import - BrightData + RapidAPI paralel');
 
     // Verify JWT token
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
@@ -454,134 +203,302 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Extract LinkedIn username from URL
-    const extractLinkedInUsername = (url: string): string => {
-      const cleanUrl = url.replace(/\/$/, '');
-      const match = cleanUrl.match(/\/in\/([^\/]+)/);
-      return match ? match[1] : url;
-    };
+    console.log('📝 LinkedIn URL:', linkedinUrl);
 
-    const linkedinUsername = extractLinkedInUsername(linkedinUrl.trim());
-    console.log('📝 LinkedIn username:', linkedinUsername);
+    // Paralel olaraq BrightData və RapidAPI çağır
+    console.log('📡 BrightData və RapidAPI paralel başlayır...');
 
-    let scrapingdogData = null;
-    let rapidApiSkillsData = null;
+    const [brightDataResponse, rapidApiResponse] = await Promise.allSettled([
+      callBrightDataAPI(linkedinUrl),
+      getRapidAPISkills(linkedinUrl)
+    ]);
 
-    // Call ScrapingDog API for ALL main data (experience, education, personal info, etc.)
-    console.log('📡 ScrapingDog API çağırışı başlanır (əsas məlumatlar üçün)...');
-    const scrapingdogResult = await callScrapingDogAPIInternal(linkedinUsername);
-
-    if (scrapingdogResult.success) {
-      scrapingdogData = scrapingdogResult.data;
-      console.log(`✅ ScrapingDog əsas məlumatlar alındı (${scrapingdogResult.attemptsCount} cəhddə)`);
+    // BrightData nəticəsini yoxla
+    let brightDataResult = null;
+    if (brightDataResponse.status === 'fulfilled' && brightDataResponse.value) {
+      brightDataResult = brightDataResponse.value;
+      console.log('✅ BrightData uğurludur!');
     } else {
-      console.warn(`⚠️ ScrapingDog API tamamilə uğursuz: ${scrapingdogResult.error}`);
+      console.error('❌ BrightData xətası:', brightDataResponse.status === 'rejected' ? brightDataResponse.reason : 'No data');
+      return NextResponse.json({
+        success: false,
+        error: `BrightData import uğursuz: ${brightDataResponse.status === 'rejected' ? brightDataResponse.reason.message : 'No data received'}`
+      }, { status: 500 });
     }
 
-    // Call RapidAPI ONLY for skills data
-    console.log('📡 RapidAPI çağırışı başlanır (YALNIZ skills üçün)...');
-    const rapidApiSkillsResult = await callRapidAPIForSkills(linkedinUrl);
-
-    if (rapidApiSkillsResult.success) {
-      rapidApiSkillsData = rapidApiSkillsResult.data;
-      console.log(`✅ RapidAPI skills data alındı (${rapidApiSkillsResult.attemptsCount} cəhddə)`);
+    // RapidAPI nəticəsini yoxla (optional)
+    let rapidApiResult = null;
+    if (rapidApiResponse.status === 'fulfilled' && rapidApiResponse.value) {
+      rapidApiResult = rapidApiResponse.value;
+      console.log('✅ RapidAPI skills uğurludur!');
     } else {
-      console.warn(`⚠️ RapidAPI skills uğursuz: ${rapidApiSkillsResult.error}`);
+      console.log('⚠️ RapidAPI skills alınmadı (optional):', rapidApiResponse.status === 'rejected' ? rapidApiResponse.reason : 'No data');
     }
 
-    // Check if we have main data from ScrapingDog
-    if (!scrapingdogData) {
-      return NextResponse.json(
-        { error: 'LinkedIn profili əsas məlumatları alına bilmədi. ScrapingDog API-lər işləmir.' },
-        { status: 404 }
-      );
+    // BrightData məlumatlarını CV formatına çevir
+    console.log('📍 BrightData məlumatları formatlanır...');
+    const transformedData = transformBrightDataToCVFormat(brightDataResult);
+
+    // RapidAPI skills-ləri əlavə et (əgər varsa)
+    if (rapidApiResult) {
+      console.log('🎯 RapidAPI skills birləşdirilir...');
+      const rapidApiSkills = extractRapidAPISkills(rapidApiResult);
+      if (rapidApiSkills.length > 0) {
+        // Mövcud skills-lərlə birləşdir, duplikatları çıxar
+        const existingSkills = transformedData.skills.map(s => s.name.toLowerCase());
+        const newSkills = rapidApiSkills.filter(skill =>
+          !existingSkills.includes(skill.name.toLowerCase())
+        );
+        transformedData.skills = [...transformedData.skills, ...newSkills];
+        console.log(`✅ ${newSkills.length} yeni skill RapidAPI-dən əlavə edildi`);
+      }
     }
 
-    // Transform the combined data (ScrapingDog main + RapidAPI skills)
-    const transformedData = transformLinkedInData(scrapingdogData, rapidApiSkillsData);
-
-    // Enhanced debug logging for CV data
-    console.log('🎉 LinkedIn Import SUCCESS! Transformed data:', {
-      personalInfo: {
-        fullName: transformedData.personalInfo.fullName,
-        email: transformedData.personalInfo.email,
-        location: transformedData.personalInfo.location,
-        summary: transformedData.personalInfo.summary ? 'Present' : 'Missing'
-      },
-      experienceCount: transformedData.experience.length,
-      educationCount: transformedData.education.length,
-      skillsCount: transformedData.skills.length,
-      projectsCount: transformedData.projects.length,
-      certificationsCount: transformedData.certifications.length,
-      languagesCount: transformedData.languages.length
+    console.log('📋 Combined data preview:', {
+      fullName: transformedData.personalInfo?.fullName,
+      title: transformedData.personalInfo?.title,
+      location: transformedData.personalInfo?.location,
+      experienceCount: transformedData.experience?.length || 0,
+      educationCount: transformedData.education?.length || 0,
+      skillsCount: transformedData.skills?.length || 0,
+      dataSource: 'brightdata + rapidapi'
     });
 
-    // Create CV data structure
+    // Ad-soyad yoxlanışı - mütləq şərt
+    const fullName = transformedData.personalInfo?.fullName?.trim();
+    const firstName = brightDataResult.first_name?.trim();
+    const lastName = brightDataResult.last_name?.trim();
+    const name = brightDataResult.name?.trim();
+
+    // Müxtəlif ad formatlarını yoxla
+    const hasValidName = fullName || name || (firstName && lastName);
+
+    if (!hasValidName) {
+      console.log('❌ Heç bir ad formatı tapılmadı:', {
+        fullName,
+        name,
+        firstName,
+        lastName
+      });
+      return NextResponse.json({
+        success: false,
+        error: 'Ad və soyad məlumatı tapılmadı. CV yaratmaq üçün ən azından ad-soyad lazımdır.'
+      }, { status: 400 });
+    }
+
+    // Ən yaxşı adı seç
+    const finalName = fullName || name || `${firstName} ${lastName}`.trim();
+    console.log(`✅ Ad tapıldı: ${finalName}`);
+
+    // Final adı yenidən təyin et
+    if (!transformedData.personalInfo.fullName) {
+      transformedData.personalInfo.fullName = finalName;
+    }
+
+    console.log('🎉 Bütün məlumatlar hazır:', {
+      name: transformedData.personalInfo.fullName,
+      experienceCount: transformedData.experience?.length || 0,
+      educationCount: transformedData.education?.length || 0,
+      skillsCount: transformedData.skills?.length || 0,
+      languagesCount: transformedData.languages?.length || 0,
+      certificationsCount: transformedData.certifications?.length || 0,
+      projectsCount: transformedData.projects?.length || 0,
+      volunteerCount: transformedData.volunteerExperience?.length || 0,
+      dataSource: 'brightdata + rapidapi'
+    });
+
+    // CV yarad - bütün məlumatlarla
+    console.log('💾 CV yaradılır (BrightData + RapidAPI)...');
     const cvData = {
       userId: decoded.userId,
-      title: `${transformedData.personalInfo.fullName || 'LinkedIn Import'} - CV`,
+      title: `${transformedData.personalInfo.fullName} - CV`,
       ...transformedData,
-      template: 'modern'
+      templateId: 'basic' // İlk yaradılarkən basic template
     };
 
-    // Save CV to database
     const newCV = await prisma.cV.create({
       data: {
         userId: decoded.userId,
         title: cvData.title,
         cv_data: cvData,
-        templateId: 'modern'
+        templateId: 'basic' // Database-də də basic template
       }
     });
 
-    console.log('💾 CV created successfully:', newCV.id);
+    console.log('✅ CV uğurla yaradıldı (BrightData + RapidAPI):', newCV.id);
 
-    // Return success with CV ID for redirection
     return NextResponse.json({
       success: true,
-      message: 'LinkedIn profili uğurla import edildi və CV yaradıldı',
+      message: 'LinkedIn profili uğurla import edildi və CV yaradıldı (BrightData + RapidAPI)',
       cvId: newCV.id,
       profileData: {
         name: transformedData.personalInfo.fullName,
-        headline: transformedData.personalInfo.summary,
+        headline: transformedData.personalInfo.title,
         location: transformedData.personalInfo.location,
-        experienceCount: transformedData.experience.length,
-        educationCount: transformedData.education.length,
-        skillsCount: transformedData.skills.length,
-        projectsCount: transformedData.projects.length,
-        certificationsCount: transformedData.certifications.length,
-        dataSource: {
-          scrapingdog: !!scrapingdogData,
-          rapidapi: !!rapidApiSkillsData
-        }
+        experienceCount: transformedData.experience?.length || 0,
+        educationCount: transformedData.education?.length || 0,
+        skillsCount: transformedData.skills?.length || 0,
+        projectsCount: transformedData.projects?.length || 0,
+        certificationsCount: transformedData.certifications?.length || 0,
+        volunteerCount: transformedData.volunteerExperience?.length || 0,
+        languagesCount: transformedData.languages?.length || 0,
+        dataSource: 'brightdata + rapidapi'
       },
-      // IMPORTANT: Return transformed data for direct CV editor use
       transformedData: transformedData
     });
 
   } catch (error: any) {
-    console.error('❌ LinkedIn import error:', error);
+    console.error('❌ LinkedIn import critical error:', error);
 
-    let errorMessage = 'LinkedIn import zamanı xəta baş verdi';
-
-    if (error.response?.status === 429) {
-      errorMessage = 'API limit aşıldı. Zəhmət olmasa bir az sonra yenidən cəhd edin';
-    } else if (error.response?.status === 404) {
-      errorMessage = 'LinkedIn profili tapılmadı. URL-i yoxlayın';
-    } else if (error.code === 'ECONNABORTED') {
-      errorMessage = 'Sorğu vaxtı bitdi. Yenidən cəhd edin';
-    } else if (error.message) {
-      errorMessage = error.message;
-    }
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: errorMessage
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: false,
+      error: `LinkedIn import xətası: ${error.message}`
+    }, { status: 500 });
   } finally {
     await prisma.$disconnect();
+  }
+}
+
+// BrightData məlumatlarını CV formatına çevir
+function transformBrightDataToCVFormat(rawData: any) {
+  return {
+    personalInfo: {
+      fullName: rawData.name || rawData.full_name || '',
+      title: rawData.headline || rawData.position || '',
+      email: rawData.email || '',
+      phone: rawData.phone || '',
+      location: rawData.location || rawData.geo_location || rawData.city || '',
+      linkedin: rawData.url || rawData.input_url || '',
+      summary: rawData.summary || rawData.about || ''
+    },
+    experience: formatExperience(rawData.experience || []),
+    education: formatEducation(rawData.educations_details || rawData.education || []),
+    skills: formatSkills(rawData.skills || []),
+    languages: formatLanguages(rawData.languages || []),
+    certifications: [
+      ...formatCertifications(rawData.certifications || []),
+      ...formatCertifications(rawData.honors_and_awards || [])
+    ],
+    volunteerExperience: formatVolunteerExperience(rawData.volunteering || rawData.volunteer_experience || []),
+    projects: formatProjects(rawData.projects || []),
+    importSource: 'brightdata',
+    importDate: new Date().toISOString()
+  };
+}
+
+// Format functions for BrightData data
+function formatExperience(experiences: any[]) {
+  if (!Array.isArray(experiences)) return [];
+  return experiences.map((exp, index) => ({
+    id: `exp-brightdata-${Date.now()}-${index}`,
+    position: exp.title || exp.position || '',
+    company: exp.company || exp.company_name || '',
+    location: exp.location || '',
+    startDate: formatDate(exp.start_date || exp.startDate),
+    endDate: formatDate(exp.end_date || exp.endDate),
+    current: exp.current || exp.is_current || false,
+    description: exp.description || ''
+  })).filter(exp => exp.position || exp.company);
+}
+
+function formatEducation(education: any[]) {
+  if (!Array.isArray(education)) return [];
+  return education.map((edu, index) => ({
+    id: `edu-brightdata-${Date.now()}-${index}`,
+    degree: edu.degree || '',
+    institution: edu.school || edu.institution || edu.university || '',
+    field: edu.field || edu.field_of_study || '',
+    startDate: formatDate(edu.start_date || edu.startDate),
+    endDate: formatDate(edu.end_date || edu.endDate),
+    current: edu.current || false,
+    gpa: edu.gpa || ''
+  })).filter(edu => edu.degree || edu.institution);
+}
+
+function formatSkills(skills: any[]) {
+  if (!Array.isArray(skills)) return [];
+  return skills.map((skill, index) => ({
+    id: `skill-brightdata-${Date.now()}-${index}`,
+    name: typeof skill === 'string' ? skill : (skill.name || skill.skill || ''),
+    level: skill.level || ''
+  })).filter(skill => skill.name);
+}
+
+function formatLanguages(languages: any[]) {
+  if (!Array.isArray(languages)) return [];
+  return languages.map((lang, index) => ({
+    id: `lang-brightdata-${Date.now()}-${index}`,
+    language: typeof lang === 'string' ? lang : (lang.name || lang.language || ''),
+    proficiency: lang.proficiency || lang.level || ''
+  })).filter(lang => lang.language);
+}
+
+function formatCertifications(certifications: any[]) {
+  if (!Array.isArray(certifications)) return [];
+  return certifications.map((cert, index) => ({
+    id: `cert-brightdata-${Date.now()}-${index}`,
+    name: cert.name || cert.title || '',
+    issuer: cert.issuer || cert.organization || '',
+    date: formatDate(cert.date || cert.issue_date),
+    url: cert.url || ''
+  })).filter(cert => cert.name);
+}
+
+function formatVolunteerExperience(volunteer: any[]) {
+  if (!Array.isArray(volunteer)) return [];
+  return volunteer.map((vol, index) => ({
+    id: `vol-brightdata-${Date.now()}-${index}`,
+    role: vol.role || vol.title || '',
+    organization: vol.organization || vol.company || '',
+    cause: vol.cause || '',
+    startDate: formatDate(vol.start_date || vol.startDate),
+    endDate: formatDate(vol.end_date || vol.endDate),
+    current: vol.current || false,
+    description: vol.description || ''
+  })).filter(vol => vol.role || vol.organization);
+}
+
+function formatProjects(projects: any[]) {
+  if (!Array.isArray(projects)) return [];
+  return projects.map((project, index) => ({
+    id: `proj-brightdata-${Date.now()}-${index}`,
+    name: project.name || project.title || '',
+    description: project.description || '',
+    url: project.url || project.link || '',
+    startDate: formatDate(project.start_date || project.startDate),
+    endDate: formatDate(project.end_date || project.endDate),
+    technologies: project.technologies || project.skills || []
+  })).filter(project => project.name);
+}
+
+function formatDate(dateInput: any): string {
+  if (!dateInput) return '';
+  if (typeof dateInput === 'string') return dateInput;
+  if (typeof dateInput === 'object' && dateInput.year) {
+    const month = dateInput.month ? String(dateInput.month).padStart(2, '0') : '01';
+    return `${dateInput.year}-${month}`;
+  }
+  return String(dateInput);
+}
+
+// RapidAPI skills-ləri extract et
+function extractRapidAPISkills(rapidApiData: any) {
+  if (!rapidApiData) return [];
+
+  try {
+    // RapidAPI-dən skills-ləri çıxar
+    const skills = rapidApiData.skills || rapidApiData.data?.skills || [];
+
+    if (!Array.isArray(skills)) return [];
+
+    return skills.map((skill, index) => ({
+      id: `skill-rapidapi-${Date.now()}-${index}`,
+      name: typeof skill === 'string' ? skill : (skill.name || skill.skill || ''),
+      level: skill.level || skill.proficiency || ''
+    })).filter(skill => skill.name && skill.name.trim().length > 0);
+
+  } catch (error) {
+    console.error('❌ RapidAPI skills extract xətası:', error);
+    return [];
   }
 }

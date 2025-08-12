@@ -279,32 +279,8 @@ export default function ContactPage() {
             </div>
           </div>
 
-          {/* FAQ Section */}
-          <div className="mt-16 bg-white/80 backdrop-blur-md rounded-3xl  border-2 border-blue-600 p-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Tez-tez Verilən Suallar</h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">CVERA.net nədir?</h3>
-                  <p className="text-gray-600 text-sm">cvera.net LinkedIn və süni intellekt texnologiyalarından istifadə edərək peşəkar CV yaratmaq üçün nəzərdə tutulmuş platformadır.</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">CV yaratmaq ödənişlidir?</h3>
-                  <p className="text-gray-600 text-sm">Bəzi əsas funksiyalar pulsuz təqdim olunur, əlavə funksiyalar üçün Premium planlar mövcuddur.</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Texniki dəstək alа bilərəmmi?</h3>
-                  <p className="text-gray-600 text-sm">Bəli, support@cvera.net ünvanı vasitəsilə bizə müraciət edə bilərsiniz.</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">LinkedIn inteqrasiyası necə işləyir?</h3>
-                  <p className="text-gray-600 text-sm">LinkedIn hesabınızın linkini yazaraq profil məlumatlarınızı avtomatik olaraq CV-nizə əlavə edə bilərsiniz.</p>
-                </div>
-              </div>
-            </div>
-          </div>
+
+
         </div>
       </div>
       <Footer />

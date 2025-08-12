@@ -1,133 +1,252 @@
-# CVERA - Professional CV Builder Website Design Prompt
+const axios = require('axios');
+const { PrismaClient } = require('@prisma/client');
 
-Create a modern, professional website for "CVERA" - a CV/resume creation platform. The design should be clean, professional, and emphasize career success and professional growth.
+const prisma = new PrismaClient();
 
-## Header/Navigation
-- Company logo "CVERA" with a professional icon (document or career-related symbol)
-- Navigation menu: About Us, Templates, Features, Pricing, Blog
-- "Create CV" button (prominent call-to-action in bright green)
-- Clean, minimal header with white background
-- Professional, corporate styling
+// LinkedIn profile URLs to scrape
+const linkedinProfiles = [
+    "https://www.linkedin.com/in/elad-moshe-05a90413/",
+    "https://www.linkedin.com/in/jonathan-myrvik-3baa01109",
+    "https://www.linkedin.com/in/aviv-tal-75b81/",
+    "https://www.linkedin.com/in/bulentakar/"
+];
 
-## Hero Section - "Build Your Career Success"
-- Split layout: Left side with illustration, right side with content
-- Illustration elements (modern, minimalist style):
-  - Trophy/achievement icon in bright blue ()
-  - Professional CV/document graphics
-  - Career ladder or growth symbols
-  - Abstract geometric shapes
-  - Professional figure silhouettes
-  - Star accents representing success
-- Main headline: "Build Your Career Success"
-- Subheading: "Create professional CVs that help you land your dream job. Our platform provides expert templates and guidance for career advancement."
-- Primary CTA button: "Start Building Your CV"
-- Light gray/off-white background (#F8F9FA)
+// Extract LinkedIn ID from URL
+function extractLinkedInId(url) {
+    const match = url.match(/linkedin\.com\/in\/([^\/]+)/);
+    return match ? match[1] : null;
+}
 
-## Success Statistics Section
-- Section header: "Our Impact on Careers"
-- Subheader: "Join thousands of professionals who've advanced their careers with CVERA"
-- 5 key metrics in prominent display:
-  - "50K+" (CVs Created)
-  - "85%" (Interview Success Rate)
-  - "200+" (Professional Templates)
-  - "15+" (Industries Covered)
-  - "95%" (User Satisfaction)
-- Clean card-based layout with proper spacing
-- Each metric with brief descriptive text
+// ScrapingDog API scraper
+async function scrapeWithScrapingDog(linkedinId, apiKey) {
+    try {
+        console.log(`🐕 Trying ScrapingDog API for: ${linkedinId}`);
 
-## Platform Evolution Timeline
-- Section header: "Our Journey"
-- Subheader: "From startup to the leading CV creation platform"
-- Vertical timeline with 4 key milestones:
-  - **2019 - The Beginning**: "Launched with basic CV templates to help job seekers create professional resumes"
-  - **2021 - Industry Recognition**: "Received awards for best career tools and expanded template library"
-  - **2023 - Innovation and Growth**: "Introduced AI-powered suggestions and industry-specific templates"
-  - **2024 - Leading the Future**: "Now the top choice for professionals worldwide seeking career advancement"
-- Each milestone in dark card (#2D3748) with bright green star icon
-- Connecting timeline line on the left side
+        const params = {
+            api_key: apiKey,
+            type: 'profile',
+            linkId: linkedinId,
+            premium: 'false',
+        };
 
-## Core Features Section
-- Section header: "Why Choose CVERA"
-- 4 feature cards in 2x2 grid layout:
-  - **Professional Templates**: "Access 200+ ATS-friendly templates designed by career experts" (with document/template illustration)
-  - **AI-Powered Suggestions**: "Get personalized content recommendations based on your industry" (with lightbulb/AI illustration)
-  - **Easy Collaboration**: "Share and get feedback from mentors and career advisors" (with collaboration/handshake illustration)
-  - **Real-Time Preview**: "See exactly how your CV will look to employers instantly" (with preview/eye illustration)
-- Light background cards with small colored illustrations
-- Professional, feature-focused descriptions
+        const response = await axios.get('https://api.scrapingdog.com/linkedin', { params });
 
-## Testimonial Section
-- Dark background (#2D3748)
-- Decorative elements: stars, sparkles, professional icons
-- Featured testimonial: "CVERA transformed my job search completely. The professional templates and AI suggestions helped me land my dream role in just 3 weeks!"
-- Attribution: "- Sarah Johnson, Marketing Manager"
-- Bright green accent elements and quote styling
+        if (response.status === 200 && response.data) {
+            console.log(`✅ ScrapingDog success for: ${linkedinId}`);
+            return {
+                success: true,
+                data: response.data,
+                service: 'scrapingdog'
+            };
+        } else {
+            throw new Error(`ScrapingDog returned status: ${response.status}`);
+        }
+    } catch (error) {
+        console.log(`❌ ScrapingDog failed for ${linkedinId}:`, error.message);
+        return {
+            success: false,
+            error: error.message,
+            service: 'scrapingdog'
+        };
+    }
+}
 
-## Recognition & Partnerships
-- Section header: "Trusted by Industry Leaders"
-- Subheader: "Recognized by career experts and trusted by top companies"
-- 4 award/certification badges:
-  - Best Career Tool 2024
-  - HR Excellence Award
-  - Top Resume Builder
-  - Career Innovation Award
-- Professional badge designs in mix of circular and rectangular formats
-- Corporate partnership logos if applicable
+// BrightData API scraper (fallback)
+async function scrapeWithBrightData(profileUrls, apiKey) {
+    try {
+        console.log(`🌟 Trying BrightData API for ${profileUrls.length} profiles`);
 
-## Join Our Community CTA
-- Bright green background section (#7ED321)
-- "Start Your Career Journey" headline
-- Description: "Join thousands of professionals who've advanced their careers with CVERA. Create your professional CV in minutes."
-- "Create Your CV Now" button (dark button on green background)
-- Illustration: diverse professionals celebrating career success
-- Positive, career-focused messaging
+        const data = JSON.stringify(profileUrls.map(url => ({ url })));
 
-## Footer
-- Dark background (#2D3748)
-- CVERA logo and branding
-- Contact information:
-  - Email: support@cvera.com
-  - Career guidance resources
-  - Help center link
-- Newsletter signup: "Get career tips and CV advice"
-- Social media links (LinkedIn prominent)
-- Legal links: Privacy Policy, Terms of Service
-- Copyright notice
+        const response = await fetch(
+            "https://api.brightdata.com/datasets/v3/trigger?dataset_id=gd_l1viktl72bvl7bjuj0&include_errors=true",
+            {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${apiKey}`,
+                    "Content-Type": "application/json",
+                },
+                body: data,
+            }
+        );
 
-## Design Specifications
-- **Primary Color**: Bright green (#7ED321) - represents growth and success
-- **Secondary Colors**: Dark gray (#2D3748), white (#FFFFFF), light gray (#F8F9FA)
-- **Typography**: Clean, professional sans-serif fonts (similar to Inter or Roboto)
-- **Illustrations**: Professional, career-focused, minimalist geometric style
-- **Icons**: Career and professional development themed
-- **Layout**: Clean sections with generous whitespace
-- **Cards**: Subtle shadows and rounded corners
-- **Buttons**: Prominent CTAs with hover effects
+        const result = await response.json();
 
-## Content Focus Areas
-- Professional CV creation
-- Career advancement
-- Job search success
-- Template variety
-- Industry expertise
-- ATS compatibility
-- Professional growth
-- Interview success
+        if (response.ok && result) {
+            console.log(`✅ BrightData success for ${profileUrls.length} profiles`);
+            return {
+                success: true,
+                data: result,
+                service: 'brightdata'
+            };
+        } else {
+            throw new Error(`BrightData returned status: ${response.status}`);
+        }
+    } catch (error) {
+        console.log(`❌ BrightData failed:`, error.message);
+        return {
+            success: false,
+            error: error.message,
+            service: 'brightdata'
+        };
+    }
+}
 
-## Key Visual Elements
-- Consistent bright green accent color throughout
-- Professional CV/document illustrations
-- Career growth and success imagery
-- Clean, card-based information architecture
-- Strong typographic hierarchy
-- Balanced whitespace usage
-- Corporate professional color palette
-- Modern, trustworthy design aesthetic
+// Get active API key from database
+async function getActiveApiKey(service) {
+    try {
+        const apiKey = await prisma.apiKey.findFirst({
+            where: {
+                service: service,
+                active: true
+            },
+            orderBy: {
+                priority: 'asc'
+            }
+        });
 
-## Mobile Responsiveness
-- Ensure all sections stack properly on mobile
-- Maintain readability and usability
-- Optimize CTA buttons for touch interaction
-- Preserve visual hierarchy on smaller screens
+        return apiKey?.apiKey || null;
+    } catch (error) {
+        console.error(`❌ Error getting ${service} API key:`, error);
+        return null;
+    }
+}
 
-The overall design should convey professionalism, career success, reliability, and expertise in CV creation while maintaining a modern, accessible, and conversion-focused user experience.
+// Update API key usage
+async function updateApiKeyUsage(service, success, errorMessage = null) {
+    try {
+        await prisma.apiKey.updateMany({
+            where: {
+                service: service,
+                active: true
+            },
+            data: {
+                usageCount: {
+                    increment: 1
+                },
+                dailyUsage: {
+                    increment: 1
+                },
+                lastUsed: new Date(),
+                lastResult: success ? 'success' : 'failure',
+                lastError: errorMessage
+            }
+        });
+    } catch (error) {
+        console.error(`❌ Error updating ${service} API usage:`, error);
+    }
+}
+
+// Main scraping function with fallback
+async function scrapeLinkedInProfiles() {
+    console.log('🚀 Starting LinkedIn profile scraping...');
+
+    const results = [];
+
+    // Try ScrapingDog for each profile first
+    const scrapingDogApiKey = await getActiveApiKey('scrapingdog');
+
+    if (scrapingDogApiKey) {
+        console.log('📡 Using ScrapingDog API as primary method');
+
+        for (const profileUrl of linkedinProfiles) {
+            const linkedinId = extractLinkedInId(profileUrl);
+            if (!linkedinId) {
+                console.log(`❌ Could not extract LinkedIn ID from: ${profileUrl}`);
+                continue;
+            }
+
+            const result = await scrapeWithScrapingDog(linkedinId, scrapingDogApiKey);
+            await updateApiKeyUsage('scrapingdog', result.success, result.error);
+
+            if (result.success) {
+                results.push({
+                    profile: profileUrl,
+                    data: result.data,
+                    service: 'scrapingdog'
+                });
+            } else {
+                // If ScrapingDog fails for this profile, we'll try BrightData later
+                results.push({
+                    profile: profileUrl,
+                    data: null,
+                    service: 'scrapingdog',
+                    error: result.error,
+                    needsFallback: true
+                });
+            }
+
+            // Add delay between requests
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+    } else {
+        console.log('❌ No active ScrapingDog API key found');
+    }
+
+    // Check if we need to use BrightData fallback
+    const failedProfiles = results
+        .filter(r => r.needsFallback)
+        .map(r => r.profile);
+
+    if (failedProfiles.length > 0) {
+        console.log(`🔄 ${failedProfiles.length} profiles failed with ScrapingDog, trying BrightData...`);
+
+        const brightDataApiKey = await getActiveApiKey('brightdata');
+
+        if (brightDataApiKey) {
+            const brightDataResult = await scrapeWithBrightData(failedProfiles, brightDataApiKey);
+            await updateApiKeyUsage('brightdata', brightDataResult.success, brightDataResult.error);
+
+            if (brightDataResult.success) {
+                console.log('✅ BrightData fallback successful');
+
+                // Update results with BrightData data
+                failedProfiles.forEach((profile, index) => {
+                    const resultIndex = results.findIndex(r => r.profile === profile);
+                    if (resultIndex !== -1) {
+                        results[resultIndex] = {
+                            profile: profile,
+                            data: brightDataResult.data,
+                            service: 'brightdata'
+                        };
+                    }
+                });
+            } else {
+                console.log('❌ BrightData fallback also failed');
+            }
+        } else {
+            console.log('❌ No active BrightData API key found');
+        }
+    }
+
+    // Display results
+    console.log('\n📊 SCRAPING RESULTS:');
+    console.log('===================');
+
+    results.forEach((result, index) => {
+        console.log(`\n${index + 1}. ${result.profile}`);
+        console.log(`   Service: ${result.service}`);
+        console.log(`   Status: ${result.data ? '✅ Success' : '❌ Failed'}`);
+        if (result.error) {
+            console.log(`   Error: ${result.error}`);
+        }
+        if (result.data) {
+            console.log(`   Data: ${JSON.stringify(result.data).substring(0, 200)}...`);
+        }
+    });
+
+    await prisma.$disconnect();
+    return results;
+}
+
+// Run the scraper
+scrapeLinkedInProfiles()
+    .then((results) => {
+        console.log('\n✅ Scraping completed successfully');
+        console.log(`📊 Total profiles processed: ${results.length}`);
+        console.log(`✅ Successful scrapes: ${results.filter(r => r.data).length}`);
+        console.log(`❌ Failed scrapes: ${results.filter(r => !r.data).length}`);
+    })
+    .catch((error) => {
+        console.error('❌ Scraping failed:', error);
+    });

@@ -74,6 +74,7 @@ export async function GET(
     console.log('CV fetched successfully:', {
       id: cv.id,
       title: cv.title,
+      templateId: cv.templateId, // Database template ID
       hasData: !!cv.cv_data,
       dataKeys: cv.cv_data ? Object.keys(cv.cv_data as Record<string, unknown>) : []
     });
@@ -86,8 +87,33 @@ export async function GET(
         details: "cv_data is not a valid object"
       }, { status: 500 });
     }
-    
-    return NextResponse.json(cv);
+
+    // Ensure cv_data has templateId synchronized with database
+    const cvData = cv.cv_data as any;
+    if (!cvData.templateId || cvData.templateId !== cv.templateId) {
+      console.log('🔄 Synchronizing template ID in cv_data:', {
+        dbTemplateId: cv.templateId,
+        cvDataTemplateId: cvData.templateId
+      });
+
+      // Update cv_data with correct templateId from database
+      cvData.templateId = cv.templateId || 'basic';
+
+      // Update database to ensure synchronization
+      await prisma.cV.update({
+        where: { id, userId },
+        data: { cv_data: cvData }
+      });
+
+      console.log('✅ Template ID synchronized:', cvData.templateId);
+    }
+
+    console.log('📤 Returning CV with template:', cvData.templateId);
+
+    return NextResponse.json({
+      ...cv,
+      cv_data: cvData
+    });
   } catch (error) {
     console.error('CV fetch error:', error);
     if (error instanceof Error) {
@@ -113,8 +139,8 @@ export async function PUT(
   
   try {
     const body = await req.json();
-    console.log('CV update request body for ID:', id, JSON.stringify(body, null, 2));
-    
+    console.log('🔍 CV UPDATE DEBUG - Request Body:', JSON.stringify(body, null, 2));
+
     const { title, cv_data } = body;
     
     if (!title || !cv_data) {
@@ -139,25 +165,82 @@ export async function PUT(
     console.log('Updating CV with ID:', id, 'userId:', userId);
     
     // Extract templateId from cv_data for database field
-    const templateId = (cv_data as any)?.templateId || null;
-    
+    const requestTemplateId = (cv_data as any)?.templateId;
+    console.log('🎨 Template ID from request:', requestTemplateId);
+
+    // Get current CV to compare
+    const currentCV = await prisma.cV.findUnique({
+      where: { id, userId },
+      select: { templateId: true, cv_data: true }
+    });
+
+    if (!currentCV) {
+      return NextResponse.json({ error: "CV not found" }, { status: 404 });
+    }
+
+    console.log('🎨 Current CV template:', currentCV.templateId);
+
+    // Determine final template ID
+    let finalTemplateId = requestTemplateId;
+    if (!requestTemplateId) {
+      finalTemplateId = currentCV.templateId || 'basic';
+      console.log('⚠️ No template ID in request, using existing:', finalTemplateId);
+    } else {
+      console.log('✅ Using template ID from request:', finalTemplateId);
+    }
+
     // Validate template access
-    if (templateId && !(await validateTemplateAccess(userId, templateId))) {
-      return NextResponse.json({ 
+    if (finalTemplateId && !(await validateTemplateAccess(userId, finalTemplateId))) {
+      return NextResponse.json({
         error: "Template access denied. Please upgrade your subscription." 
       }, { status: 403 });
     }
     
+    // Ensure templateId is consistent in both cv_data and database field
+    (cv_data as any).templateId = finalTemplateId;
+
+    console.log('💾 SAVING WITH TEMPLATE:', finalTemplateId);
+    console.log('💾 cv_data templateId set to:', (cv_data as any).templateId);
+
     const cv = await prisma.cV.update({
       where: { id, userId },
       data: { 
         title, 
-        cv_data,
-        templateId 
+        cv_data: {
+          // Merge existing CV data with new data to preserve additional sections
+          ...currentCV.cv_data as any,
+          ...cv_data,
+          // Specially handle additional sections to ensure they're preserved
+          additionalSections: {
+            ...(currentCV.cv_data as any)?.additionalSections,
+            ...(cv_data as any)?.additionalSections
+          }
+        },
+        templateId: finalTemplateId // Database field updated with final templateId
       },
     });
     
-    console.log('CV updated successfully:', cv.id);
+    console.log('✅ CV updated successfully with merged data!');
+    console.log('✅ Database templateId:', cv.templateId);
+    console.log('✅ cv_data templateId:', (cv.cv_data as any)?.templateId);
+    console.log('✅ Additional sections preserved:', !!(cv.cv_data as any)?.additionalSections && Object.keys((cv.cv_data as any).additionalSections).length > 0);
+
+    // Verify the save worked
+    const verifyCV = await prisma.cV.findUnique({
+      where: { id, userId },
+      select: { templateId: true, cv_data: true }
+    });
+
+    console.log('🔍 VERIFICATION AFTER SAVE:');
+    console.log('  Database templateId:', verifyCV?.templateId);
+    console.log('  cv_data templateId:', (verifyCV?.cv_data as any)?.templateId);
+
+    if (verifyCV?.templateId === (verifyCV?.cv_data as any)?.templateId) {
+      console.log('✅ VERIFICATION SUCCESS: Templates are synchronized!');
+    } else {
+      console.log('❌ VERIFICATION FAILED: Templates are NOT synchronized!');
+    }
+
     return NextResponse.json(cv);
   } catch (error) {
     console.error('CV update error:', error);

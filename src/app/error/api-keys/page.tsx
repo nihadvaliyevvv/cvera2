@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
+import { useNotification } from '@/components/ui/Toast';
 
 interface ApiKey {
   id: string;
@@ -23,12 +24,19 @@ export default function AdminApiKeys() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{ show: boolean; keyId: string; keyName: string }>({
+    show: false,
+    keyId: '',
+    keyName: ''
+  });
+  const { showSuccess, showError, showWarning } = useNotification();
   const [newKey, setNewKey] = useState({
     name: '',
     key: '',
     service: 'linkedin',
     host: '',
     priority: 0,
+    active: true
   });
 
   const fetchApiKeys = async () => {
@@ -77,7 +85,7 @@ export default function AdminApiKeys() {
       }
 
       setShowAddForm(false);
-      setNewKey({ name: '', key: '', service: 'linkedin', host: '', priority: 0 });
+      setNewKey({ name: '', key: '', service: 'linkedin', host: '', priority: 0, active: true });
       fetchApiKeys();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add API key');
@@ -106,27 +114,31 @@ export default function AdminApiKeys() {
     }
   };
 
-  const handleDeleteKey = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this API key?')) {
-      return;
-    }
+  const deleteApiKey = async (id: string, name: string) => {
+    setDeleteModal({
+      show: true,
+      keyId: id,
+      keyName: name
+    });
+  };
 
+  const confirmDelete = async () => {
     try {
-      const token = localStorage.getItem('admin-token');
-      const response = await fetch(`/api/system/api-keys?id=${id}`, {
+      const response = await fetch(`/api/admin/api-keys/${deleteModal.keyId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to delete API key');
+      if (response.ok) {
+        setDeleteModal({ show: false, keyId: '', keyName: '' });
+        fetchApiKeys();
+        showSuccess('API key successfully deleted');
+      } else {
+        showError('Failed to delete API key');
+        setDeleteModal({ show: false, keyId: '', keyName: '' });
       }
-
-      fetchApiKeys();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete API key');
+    } catch (error) {
+      showError('Error occurred while deleting API key');
+      setDeleteModal({ show: false, keyId: '', keyName: '' });
     }
   };
 
@@ -218,13 +230,26 @@ export default function AdminApiKeys() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Service</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <span className="flex items-center space-x-2">
+                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    <span>Service</span>
+                  </span>
+                </label>
                 <select
                   value={newKey.service}
                   onChange={(e) => setNewKey({ ...newKey, service: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 shadow-sm hover:shadow-md appearance-none cursor-pointer"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                    backgroundPosition: 'right 0.75rem center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: '1.5em 1.5em'
+                  }}
                 >
-                  <option value="linkedin">LinkedIn</option>
+                  <option value="linkedin">🔗 LinkedIn</option>
                 </select>
               </div>
               <div>
@@ -401,7 +426,7 @@ export default function AdminApiKeys() {
                         )}
                         
                         <button
-                          onClick={() => handleDeleteKey(apiKey.id)}
+                          onClick={() => deleteApiKey(apiKey.id, apiKey.name)}
                           className="px-3 py-1 bg-red-100 text-red-800 hover:bg-red-200 rounded text-xs"
                         >
                           Delete
@@ -414,6 +439,36 @@ export default function AdminApiKeys() {
             </tbody>
           </table>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        {deleteModal.show && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-lg max-w-sm w-full">
+              <div className="p-4 border-b">
+                <h3 className="text-lg font-semibold text-gray-900">Confirm Deletion</h3>
+              </div>
+              <div className="p-4">
+                <p className="text-sm text-gray-700">
+                  Are you sure you want to delete the API key "<span className="font-medium">{deleteModal.keyName}</span>"?
+                </p>
+              </div>
+              <div className="p-4 border-t flex justify-end space-x-2">
+                <button
+                  onClick={() => setDeleteModal({ show: false, keyId: '', keyName: '' })}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );

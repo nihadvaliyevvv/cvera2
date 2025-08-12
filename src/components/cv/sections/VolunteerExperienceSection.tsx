@@ -63,15 +63,12 @@ export default function VolunteerExperienceSection({ data, onChange }: Volunteer
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Könüllü təcrübə</h3>
-          <p className="text-sm text-gray-600">
-            Könüllü fəaliyyətlərinizi və sosial töhfələrinizi əlavə edin (ixtiyari)
-          </p>
         </div>
         <button
           onClick={addVolunteerExperience}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          + Əlavə et
+          + Əlavə edin
         </button>
       </div>
 
@@ -87,7 +84,7 @@ export default function VolunteerExperienceSection({ data, onChange }: Volunteer
             onClick={addVolunteerExperience}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            İlk könüllü təcrübəni əlavə et
+            İlk könüllü təcrübəni əlavə edin
           </button>
         </div>
       ) : (
@@ -116,13 +113,13 @@ export default function VolunteerExperienceSection({ data, onChange }: Volunteer
                     onClick={() => setEditingIndex(editingIndex === index ? null : index)}
                     className="text-blue-600 hover:text-blue-800 transition-colors"
                   >
-                    {editingIndex === index ? 'Bağla' : 'Redaktə et'}
+                    {editingIndex === index ? 'Bağlayın' : 'Redaktə edin'}
                   </button>
                   <button
                     onClick={() => removeVolunteerExperience(index)}
                     className="text-red-600 hover:text-red-800 transition-colors"
                   >
-                    Sil
+                    Silin
                   </button>
                 </div>
               </div>
@@ -231,7 +228,7 @@ export default function VolunteerExperienceSection({ data, onChange }: Volunteer
             onClick={addVolunteerExperience}
             className="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
           >
-            + Başqa könüllü təcrübə əlavə et
+            + Başqa könüllü təcrübə əlavə edin
           </button>
         </div>
       )}

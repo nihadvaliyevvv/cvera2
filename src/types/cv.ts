@@ -59,6 +59,7 @@ export interface Certification {
   name: string;
   issuer: string;
   date: string;
+  description?: string;
   url?: string;
 }
 
@@ -119,6 +120,39 @@ export interface Course {
   url?: string;
 }
 
+export interface CustomSection {
+  id: string;
+  title: string;
+  description?: string;
+  items: CustomSectionItem[];
+  type?: 'simple' | 'detailed' | 'timeline';
+  isVisible?: boolean;
+  priority?: number;
+  icon?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CustomSectionItem {
+  id: string;
+  title: string;
+  description?: string;
+  date?: string;
+  url?: string;
+  location?: string;
+  skills?: string[];
+  metadata?: Record<string, any>;
+  priority?: number;
+  isVisible?: boolean;
+}
+
+export interface TranslationMetadata {
+  translatedAt: string;
+  fromLanguage?: 'azerbaijani' | 'english';
+  toLanguage: 'azerbaijani' | 'english';
+  translationLock?: boolean;
+}
+
 export interface CVData {
   personalInfo: PersonalInfo;
   experience?: Experience[];
@@ -133,7 +167,10 @@ export interface CVData {
   testScores?: TestScore[];
   recommendations?: Recommendation[];
   courses?: Course[];
+  customSections?: CustomSection[];
   cvLanguage?: 'azerbaijani' | 'english'; // CV display language
+  translationMetadata?: TranslationMetadata;
+  sectionOrder?: any[];
 }
 
 export interface CV {

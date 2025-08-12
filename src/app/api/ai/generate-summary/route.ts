@@ -83,13 +83,13 @@ Qaydalar:
 4. Azərbaycan dilində yazın
 5. Özət birbaşa başlasın, giriş sözləri yazmayın
 
-Professional özət:`;
+Peşəkar Xülasə:`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const generatedSummary = response.text().trim();
 
-    console.log('✅ AI Professional Summary generasiya edildi');
+    console.log('✅ AI Peşəkar Xülasə generasiya edildi');
 
     return NextResponse.json({
       success: true,
@@ -97,15 +97,15 @@ Professional özət:`;
         professionalSummary: generatedSummary,
         timestamp: new Date().toISOString()
       },
-      message: 'Professional özət uğurla generasiya edildi'
+      message: 'Peşəkar Xülasə uğurla generasiya edildi'
     });
 
   } catch (error) {
-    console.error('❌ AI Professional Summary generasiya xətası:', error);
+    console.error('❌ AI Peşəkar Xülasə generasiya xətası:', error);
 
     return NextResponse.json({
       success: false,
-      error: 'Professional özət generasiya edilərkən xəta baş verdi',
+      error: 'Peşəkar Xülasə generasiya edilərkən xəta baş verdi',
       details: process.env.NODE_ENV === 'development' ?
         (error instanceof Error ? error.message : 'Unknown error') : undefined
     }, { status: 500 });

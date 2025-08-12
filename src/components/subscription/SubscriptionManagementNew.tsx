@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useNotification } from '@/components/ui/Toast';
 
 interface Subscription {
   id: string;
@@ -73,6 +74,7 @@ export default function SubscriptionManagement({ user, onUserUpdate }: Subscript
   const [error, setError] = useState('');
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelConfirmation, setCancelConfirmation] = useState('');
+  const { showSuccess, showError, showWarning } = useNotification();
 
   const currentSubscription = user.subscriptions?.find(sub => sub.status === 'active');
   const currentTier = currentSubscription?.tier || 'Free';
@@ -179,11 +181,7 @@ export default function SubscriptionManagement({ user, onUserUpdate }: Subscript
         warningMessage += `\n\nİtirilən xüsusiyyətlər:\n${lostFeatures.join('\n')}`;
       }
 
-      if (result.freeFeatures) {
-        warningMessage += `\n\nPulsuz paketdə mövcud olan xüsusiyyətlər:\n${result.freeFeatures.join('\n')}`;
-      }
-
-      alert(warningMessage);
+      showSuccess(warningMessage);
 
       // Update user data
       const updatedUser = { ...user, tier: 'Free' };
@@ -195,7 +193,7 @@ export default function SubscriptionManagement({ user, onUserUpdate }: Subscript
       onUserUpdate(updatedUser);
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Xəta baş verdi');
+      showError(err instanceof Error ? err.message : 'Xəta baş verdi');
     } finally {
       setLoading(false);
       setCancelConfirmation('');

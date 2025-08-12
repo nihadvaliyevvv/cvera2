@@ -124,6 +124,22 @@ interface CVData {
       certificate?: boolean;
       url?: string;
     }>;
+    customSections?: Array<{
+      id: string;
+      title: string;
+      description?: string;
+      type?: 'simple' | 'detailed' | 'timeline';
+      isVisible?: boolean;
+      priority?: number;
+      items?: Array<{
+        id: string;
+        title: string;
+        description?: string;
+        date?: string;
+        location?: string;
+        url?: string;
+      }>;
+    }>;
   };
 }
 
@@ -141,6 +157,15 @@ interface CVPreviewProps {
 export default function CVPreview({ cv }: CVPreviewProps) {
   const [template, setTemplate] = useState<Template | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Debug: Custom sections məlumatını console-da göstər
+  console.log('🔍 CVPreview Debug:', {
+    componentName: 'CVPreview.tsx',
+    customSections: cv.data.customSections,
+    customSectionsLength: cv.data.customSections?.length || 0,
+    hasItems: cv.data.customSections?.some(section => section.items && section.items.length > 0),
+    visibleSections: cv.data.customSections?.filter(section => section.isVisible !== false) || []
+  });
 
   const loadTemplate = useCallback(async () => {
     setLoading(true);
@@ -466,6 +491,128 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Custom Sections */}
+          {cv.data.customSections && cv.data.customSections.length > 0 && (
+            <div className="space-y-6">
+              {cv.data.customSections.map((section) => {
+                // Debug: Hər bölmə üçün ayrıca məlumat
+                console.log('🔍 Section Debug:', {
+                  sectionTitle: section.title,
+                  isVisible: section.isVisible,
+                  itemsLength: section.items?.length || 0,
+                  items: section.items,
+                  type: section.type
+                });
+
+                // Only render visible sections
+                if (section.isVisible === false) {
+                  console.log('❌ Section gizli:', section.title);
+                  return null;
+                }
+
+                return (
+                  <div key={section.id} className="mb-6">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-3 border-b border-gray-200 pb-1">
+                      {section.title || 'Əlavə Bölmə'}
+                    </h2>
+
+                    {section.description && (
+                      <p className="text-sm text-gray-600 mb-3 italic">{section.description}</p>
+                    )}
+
+                    {/* Debug: Items yoxlama */}
+                    {(!section.items || section.items.length === 0) && (
+                      <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
+                        <p className="text-sm text-yellow-800">⚠️ Bu bölmədə element yoxdur</p>
+                      </div>
+                    )}
+
+                    {section.items && section.items.length > 0 && (
+                      <div className="space-y-3">
+                        {section.items.map((item, itemIndex) => {
+                          // Debug: Hər element üçün ayrıca məlumat
+                          console.log('🔍 Item Debug:', {
+                            itemIndex,
+                            itemTitle: item.title,
+                            itemDescription: item.description,
+                            sectionType: section.type
+                          });
+
+                          return (
+                            <div key={item.id} className="border-l-2 border-indigo-200 pl-4 bg-blue-50 p-2 rounded">
+                              {/* Different rendering based on section type */}
+                              {section.type === 'simple' && (
+                                <div>
+                                  <h3 className="font-medium text-gray-900">{item.title}</h3>
+                                  {item.description && (
+                                    <p className="text-sm text-gray-700 mt-1">{item.description}</p>
+                                  )}
+                                </div>
+                              )}
+
+                              {section.type === 'detailed' && (
+                                <div>
+                                  <div className="flex items-center justify-between">
+                                    <h3 className="font-medium text-gray-900">{item.title}</h3>
+                                    {item.location && (
+                                      <span className="text-xs text-gray-500">{item.location}</span>
+                                    )}
+                                  </div>
+                                  {item.description && (
+                                    <p className="text-sm text-gray-700 mt-1">{item.description}</p>
+                                  )}
+                                  {item.url && (
+                                    <a
+                                      href={item.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xs text-blue-600 hover:underline mt-1 inline-block"
+                                    >
+                                      Görüntülə
+                                    </a>
+                                  )}
+                                </div>
+                              )}
+
+                              {section.type === 'timeline' && (
+                                <div>
+                                  <div className="flex items-center justify-between">
+                                    <h3 className="font-medium text-gray-900">{item.title}</h3>
+                                    {item.date && (
+                                      <span className="text-xs text-gray-500">{item.date}</span>
+                                    )}
+                                  </div>
+                                  {item.description && (
+                                    <p className="text-sm text-gray-700 mt-1">{item.description}</p>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Default rendering if no type is specified */}
+                              {!section.type && (
+                                <div>
+                                  <h3 className="font-medium text-gray-900">{item.title}</h3>
+                                  {item.description && (
+                                    <p className="text-sm text-gray-700 mt-1">{item.description}</p>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Əlavə debug məlumatı */}
+                              <div className="mt-2 text-xs text-gray-500 bg-gray-100 p-1 rounded">
+                                Debug: ID={item.id}, Type={section.type || 'undefined'}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
 

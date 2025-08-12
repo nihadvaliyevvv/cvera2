@@ -116,8 +116,15 @@ export async function POST(req: NextRequest) {
       }, { status: 403 });
     }
     
-    // Extract templateId from cv_data for database field
-    const templateId = (cv_data as any)?.templateId || null;
+    // Extract templateId from cv_data for database field, default to 'basic'
+    const templateId = (cv_data as any)?.templateId || 'basic';
+
+    // Ensure cv_data also has templateId set to basic if not specified
+    if (!(cv_data as any).templateId) {
+      (cv_data as any).templateId = 'basic';
+    }
+
+    console.log('🎨 Template ID for new CV:', templateId);
 
     // Check template access if templateId is present
     if (templateId) {
@@ -148,14 +155,14 @@ export async function POST(req: NextRequest) {
         userId, 
         title, 
         cv_data,
-        templateId 
+        templateId // Both cv_data and database field have same templateId
       },
     });
     
     // Increment daily CV creation count
     await incrementDailyUsage(userId, 'cv');
     
-    console.log('CV created successfully:', cv.id);
+    console.log('✅ CV created successfully with template:', templateId, 'CV ID:', cv.id);
     return NextResponse.json(cv, { status: 201 });
   } catch (error) {
     console.error('CV creation error:', error);

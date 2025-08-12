@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { format } from 'date-fns';
+import { useNotification } from '@/components/ui/Toast';
 
 interface User {
   id: string;
@@ -26,6 +27,7 @@ export default function UsersManagement() {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const { showSuccess, showError } = useNotification();
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -73,15 +75,15 @@ export default function UsersManagement() {
 
       const data = await response.json();
       if (data.success) {
+        showSuccess('İstifadəçi planı uğurla yeniləndi');
         fetchUsers(); // Refresh the list
         setShowModal(false);
-        alert('İstifadəçi planı uğurla yeniləndi');
       } else {
-        alert('Xəta baş verdi: ' + data.message);
+        showError('Xəta baş verdi: ' + data.message);
       }
     } catch (error) {
       console.error('Failed to update user tier:', error);
-      alert('Xəta baş verdi');
+      showError('Xəta baş verdi');
     }
   };
 
@@ -98,14 +100,14 @@ export default function UsersManagement() {
 
       const data = await response.json();
       if (data.success) {
+        showSuccess(`İstifadəçi ${!isActive ? 'aktivləşdirildi' : 'deaktivləşdirildi'}`);
         fetchUsers(); // Refresh the list
-        alert(`İstifadəçi ${!isActive ? 'aktivləşdirildi' : 'deaktivləşdirildi'}`);
       } else {
-        alert('Xəta baş verdi: ' + data.message);
+        showError('Xəta baş verdi: ' + data.message);
       }
     } catch (error) {
       console.error('Failed to toggle user status:', error);
-      alert('Xəta baş verdi');
+      showError('Xəta baş verdi');
     }
   };
 
@@ -163,16 +165,29 @@ export default function UsersManagement() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Plan</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <span className="flex items-center space-x-2">
+                <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+                <span>Plan</span>
+              </span>
+            </label>
             <select
               value={filterTier}
               onChange={(e) => setFilterTier(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200 shadow-sm hover:shadow-md appearance-none cursor-pointer"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                backgroundPosition: 'right 0.75rem center',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: '1.5em 1.5em'
+              }}
             >
-              <option value="all">Bütün planlar</option>
-              <option value="Free">Pulsuz</option>
-              <option value="Medium">Orta</option>
-              <option value="Premium">Premium</option>
+              <option value="all">📦 Bütün planlar</option>
+              <option value="Free">🆓 Pulsuz</option>
+              <option value="Medium">🎯 Orta</option>
+              <option value="Premium">💎 Premium</option>
             </select>
           </div>
           <div className="flex items-end">
@@ -357,15 +372,28 @@ export default function UsersManagement() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <span className="flex items-center space-x-2">
+                      <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                      <span>Plan</span>
+                    </span>
+                  </label>
                   <select
                     defaultValue={selectedUser.tier}
                     onChange={(e) => setSelectedUser({...selectedUser, tier: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200 shadow-sm hover:shadow-md appearance-none cursor-pointer"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                      backgroundPosition: 'right 0.75rem center',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: '1.5em 1.5em'
+                    }}
                   >
-                    <option value="Free">Pulsuz</option>
-                    <option value="Medium">Orta</option>
-                    <option value="Premium">Premium</option>
+                    <option value="Free">🆓 Pulsuz</option>
+                    <option value="Medium">🎯 Orta</option>
+                    <option value="Premium">💎 Premium</option>
                   </select>
                 </div>
               </div>

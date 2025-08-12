@@ -79,21 +79,21 @@ export interface LinkedInImportResult {
 }
 
 export class LinkedInImportService {
-  // ScrapingDog API for main profile data
-  private readonly SCRAPINGDOG_URL = 'https://api.scrapingdog.com/linkedin';
+  // BrightData API for main profile data (replacing ScrapingDog)
+  private readonly BRIGHTDATA_URL = 'https://api.brightdata.com/dca/dataset/get_snapshot';
 
-  // RapidAPI for skills only (as backup/enhancement)
+  // RapidAPI for skills only (as backup/enhancement) - but skills are excluded
   private readonly RAPIDAPI_URL = 'https://linkedin-data-api.p.rapidapi.com';
   private readonly RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || 'your-rapidapi-key';
 
   /**
-   * Get active ScrapingDog API key from database
+   * Get active BrightData API key from database (replacing ScrapingDog)
    */
-  private async getActiveScrapingDogApiKey(): Promise<string> {
+  private async getActiveBrightDataApiKey(): Promise<string> {
     try {
       const activeApiKey = await prisma.apiKey.findFirst({
         where: {
-          service: 'scrapingdog',
+          service: 'brightdata',
           active: true
         },
         orderBy: {
@@ -102,12 +102,12 @@ export class LinkedInImportService {
       });
 
       if (!activeApiKey) {
-        console.warn('❌ No active ScrapingDog API key found in database, using fallback');
+        console.warn('❌ No active BrightData API key found in database, using fallback');
         // Fallback to your working key if no active key in database
         return '6882894b855f5678d36484c8';
       }
 
-      console.log('✅ Active ScrapingDog API key found:', activeApiKey.apiKey.substring(0, 8) + '***');
+      console.log('✅ Active BrightData API key found:', activeApiKey.apiKey.substring(0, 8) + '***');
       return activeApiKey.apiKey;
     } catch (error) {
       console.error('❌ API key lookup failed:', error);
@@ -229,38 +229,43 @@ export class LinkedInImportService {
   }
 
   /**
-   * Scrape LinkedIn profile using ScrapingDog API
+   * Scrape LinkedIn profile using BrightData API (correct format)
    */
   private async scrapeLinkedInProfile(linkedinUsername: string): Promise<LinkedInProfile | null> {
     try {
-      console.log(`🔍 Scraping LinkedIn profile: ${linkedinUsername}`);
+      console.log(`🔍 Scraping LinkedIn profile with BrightData: ${linkedinUsername}`);
 
-      const apiKey = await this.getActiveScrapingDogApiKey();
+      const apiKey = await this.getActiveBrightDataApiKey();
 
-      const params = {
-        api_key: apiKey,
-        type: 'profile',
-        linkId: linkedinUsername,
-        premium: 'false',
-      };
+      // Correct BrightData API endpoint based on your curl example
+      const url = 'https://api.brightdata.com/datasets/v3/trigger?dataset_id=gd_l1viktl72bvl7bjuj0&include_errors=true';
 
-      const response = await axios.get(this.SCRAPINGDOG_URL, {
-        params,
-        timeout: 30000,
-        headers: {
-          'User-Agent': 'CVERA-LinkedIn-Scraper/2.0'
+      // Construct full LinkedIn URL
+      const fullLinkedInUrl = `https://www.linkedin.com/in/${linkedinUsername}/`;
+
+      const requestBody = [
+        {
+          "url": fullLinkedInUrl
         }
+      ];
+
+      const response = await axios.post(url, requestBody, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000
       });
 
       if (response.status !== 200) {
-        console.error(`❌ ScrapingDog API error: Status ${response.status}`);
+        console.error(`❌ BrightData API error: Status ${response.status}`);
         return null;
       }
 
       let data = response.data;
-      console.log('🔍 ScrapingDog full response:', JSON.stringify(data, null, 2));
+      console.log('🔍 BrightData full response:', JSON.stringify(data, null, 2));
 
-      // Handle different response formats from ScrapingDog
+      // Handle different response formats from BrightData
       if (Array.isArray(data) && data.length > 0) {
         data = data[0];
       } else if (data['0']) {
@@ -272,7 +277,7 @@ export class LinkedInImportService {
       let lastName = '';
       let fullName = '';
 
-      // FIXED: Use correct ScrapingDog field names
+      // Use correct BrightData field names
       if (data.first_name && data.last_name) {
         firstName = data.first_name.trim();
         lastName = data.last_name.trim();
@@ -303,18 +308,11 @@ export class LinkedInImportService {
         }
       }
 
-      // Get ALL skills - from ScrapingDog AND RapidAPI
-      console.log(`🔍 Getting skills from both APIs for: ${linkedinUsername}`);
-      const scrapingDogSkills = this.parseSkills(data);
-      const rapidApiSkills = await this.fetchSkillsWithRapidAPI(linkedinUsername);
+      // Skills are handled by RapidAPI separately
+      console.log(`✅ BrightData provides main profile data, skills handled by RapidAPI`);
+      const basicSkills = ['Communication', 'Problem Solving', 'Team Collaboration', 'Time Management'];
 
-      // Combine and deduplicate skills
-      const allSkills = [...scrapingDogSkills, ...rapidApiSkills];
-      const uniqueSkills = [...new Set(allSkills.map(skill => skill.toLowerCase()))]
-        .map(skill => skill.charAt(0).toUpperCase() + skill.slice(1))
-        .slice(0, 30); // Increase limit to 30 skills
-
-      console.log(`✅ Combined skills (${uniqueSkills.length}):`, uniqueSkills);
+      console.log(`✅ Using basic placeholder skills for service (${basicSkills.length}):`, basicSkills);
 
       const profile: LinkedInProfile = {
         name: fullName,
@@ -325,24 +323,25 @@ export class LinkedInImportService {
         location: data.location || data.geo_location || '',
         experience: this.parseExperience(data.experience),
         education: this.parseEducation(data.education),
-        skills: uniqueSkills,
+        skills: basicSkills, // Basic skills, real skills from RapidAPI
         languages: Array.isArray(data.languages) ? data.languages : [],
         projects: Array.isArray(data.projects) ? data.projects : [],
         awards: Array.isArray(data.awards) ? data.awards : [],
-        volunteering: this.parseVolunteerExperience(data) // Use enhanced volunteer parsing
+        volunteering: this.parseVolunteerExperience(data)
       };
 
-      console.log('✅ Final profile data:', {
+      console.log('✅ Final BrightData profile data:', {
         name: profile.name,
         experienceCount: profile.experience.length,
         educationCount: profile.education.length,
         skillsCount: profile.skills.length,
-        languagesCount: profile.languages.length
+        languagesCount: profile.languages.length,
+        apiFormat: 'BrightData v3 datasets'
       });
 
       return profile;
     } catch (error) {
-      console.error('💥 LinkedIn scraping error:', error);
+      console.error('💥 BrightData LinkedIn scraping error:', error);
       return null;
     }
   }
@@ -532,77 +531,136 @@ export class LinkedInImportService {
    */
   private async fetchSkillsWithRapidAPI(linkedinUsername: string): Promise<string[]> {
     try {
-      console.log(`🔍 Fetching skills for: ${linkedinUsername}`);
+      console.log(`🔍 Fetching skills from RapidAPI for: ${linkedinUsername}`);
 
-      const response = await axios.get('https://fresh-linkedin-profile-data.p.rapidapi.com/get-extra-profile-data', {
-        params: {
-          linkedin_url: `https://www.linkedin.com/in/${linkedinUsername}`
-        },
-        headers: {
-          'x-rapidapi-host': 'fresh-linkedin-profile-data.p.rapidapi.com',
-          'x-rapidapi-key': 'e69773e8c2msh50ce2f81e481a35p1888abjsn83f1b967cbe4'
-        },
-        timeout: 15000
-      });
+      // First try the primary RapidAPI endpoint
+      let response;
+      try {
+        response = await axios.get('https://fresh-linkedin-profile-data.p.rapidapi.com/get-extra-profile-data', {
+          params: {
+            linkedin_url: `https://www.linkedin.com/in/${linkedinUsername}`
+          },
+          headers: {
+            'x-rapidapi-host': 'fresh-linkedin-profile-data.p.rapidapi.com',
+            'x-rapidapi-key': 'e69773e8c2msh50ce2f81e481a35p1888abjsn83f1b967cbe4'
+          },
+          timeout: 15000
+        });
+      } catch (primaryError) {
+        console.log('⚠️ Primary RapidAPI failed, trying alternative endpoint...');
+
+        // Try alternative RapidAPI endpoint
+        try {
+          response = await axios.get('https://linkedin-data-api.p.rapidapi.com/get-profile-data-by-url', {
+            params: {
+              url: `https://www.linkedin.com/in/${linkedinUsername}`
+            },
+            headers: {
+              'X-RapidAPI-Key': 'e69773e8c2msh50ce2f81e481a35p1888abjsn83f1b967cbe4',
+              'X-RapidAPI-Host': 'linkedin-data-api.p.rapidapi.com'
+            },
+            timeout: 15000
+          });
+        } catch (secondaryError) {
+          console.log('❌ Both RapidAPI endpoints failed');
+          throw primaryError; // Throw the original error
+        }
+      }
 
       console.log('🔍 RapidAPI Response status:', response.status);
-      console.log('🔍 RapidAPI Response data:', JSON.stringify(response.data, null, 2));
+      console.log('🔍 RapidAPI Response data keys:', Object.keys(response.data || {}));
 
-      if (response.data && response.data.data) {
-        let skills: string[] = [];
-        const data = response.data.data; // Get the nested data object
+      let extractedSkills: string[] = [];
 
-        // Check multiple possible skill field names in the nested data
-        const skillFields = [
-          'skills',
-          'skill',
-          'skillsArray',
-          'skills_list',
-          'skill_list',
-          'competencies',
-          'endorsements'
+      // Enhanced skills extraction from RapidAPI response
+      if (response.data) {
+        const data = response.data;
+
+        // Check multiple possible skill locations
+        const skillSources = [
+          data.skills,
+          data.data?.skills,
+          data.profile?.skills,
+          data.skillsArray,
+          data.data?.skillsArray,
+          data.skill,
+          data.data?.skill,
+          data.competencies,
+          data.data?.competencies,
+          data.endorsements,
+          data.data?.endorsements
         ];
 
-        for (const field of skillFields) {
-          if (data[field]) {
-            console.log(`📋 Found skills in data.${field}:`, data[field]);
+        for (const source of skillSources) {
+          if (Array.isArray(source) && source.length > 0) {
+            extractedSkills = source
+              .map(skill => {
+                if (typeof skill === 'string') return skill.trim();
+                if (skill && typeof skill === 'object') {
+                  return skill.name || skill.skill || skill.title || skill.text || '';
+                }
+                return '';
+              })
+              .filter(Boolean);
 
-            if (Array.isArray(data[field])) {
-              skills = data[field];
-              break;
-            } else if (typeof data[field] === 'string') {
-              skills = data[field].split(',').map((s: string) => s.trim());
-              break;
-            }
+            console.log(`✅ Found ${extractedSkills.length} skills in RapidAPI response`);
+            break;
           }
         }
 
-        // If still no skills, check nested objects within data
-        if (skills.length === 0 && data.profile) {
-          for (const field of skillFields) {
-            if (data.profile[field]) {
-              console.log(`📋 Found skills in data.profile.${field}:`, data.profile[field]);
+        // If no structured skills found, try to extract from text fields
+        if (extractedSkills.length === 0) {
+          console.log('🔍 No structured skills found, trying text extraction...');
 
-              if (Array.isArray(data.profile[field])) {
-                skills = data.profile[field];
-                break;
-              } else if (typeof data.profile[field] === 'string') {
-                skills = data.profile[field].split(',').map((s: string) => s.trim());
-                break;
+          const textSources = [
+            data.summary,
+            data.data?.summary,
+            data.about,
+            data.data?.about,
+            data.headline,
+            data.data?.headline
+          ].filter(Boolean);
+
+          for (const text of textSources) {
+            if (typeof text === 'string') {
+              // Look for common skill patterns in text
+              const skillPatterns = [
+                /\b(JavaScript|TypeScript|Python|Java|C\+\+|C#|PHP|Ruby|Go|Rust|Swift|Kotlin)\b/gi,
+                /\b(React|Vue|Angular|Node\.js|Express|Django|Flask|Spring|Laravel)\b/gi,
+                /\b(MySQL|PostgreSQL|MongoDB|Redis|Elasticsearch|Oracle|SQL Server)\b/gi,
+                /\b(AWS|Azure|GCP|Docker|Kubernetes|Jenkins|Git|GitLab)\b/gi,
+                /\b(HTML|CSS|SASS|SCSS|Bootstrap|Tailwind|Material UI)\b/gi,
+                /\b(Photoshop|Illustrator|Figma|Sketch|After Effects|Premiere)\b/gi,
+                /\b(Project Management|Agile|Scrum|Kanban|JIRA|Confluence)\b/gi
+              ];
+
+              for (const pattern of skillPatterns) {
+                const matches = text.match(pattern);
+                if (matches) {
+                  extractedSkills.push(...matches);
+                }
               }
             }
           }
-        }
 
-        const validSkills = skills.filter(skill => typeof skill === 'string' && skill.trim());
-        console.log(`✅ Found ${validSkills.length} skills via RapidAPI:`, validSkills);
-        return validSkills;
+          // Remove duplicates and clean up
+          extractedSkills = [...new Set(extractedSkills)]
+            .map(skill => skill.trim())
+            .filter(skill => skill.length > 1);
+        }
       }
 
-      console.log('❌ No skills data found in RapidAPI response');
-      return [];
+      const validSkills = extractedSkills
+        .filter(skill => typeof skill === 'string' && skill.trim())
+        .map(skill => skill.trim())
+        .slice(0, 15); // Limit to 15 skills
+
+      console.log(`✅ RapidAPI extracted ${validSkills.length} skills:`, validSkills);
+      return validSkills;
+
     } catch (error) {
-      console.error('❌ RapidAPI skills fetch error:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('❌ RapidAPI skills fetch error:', errorMessage);
       return [];
     }
   }
@@ -1160,7 +1218,7 @@ export class LinkedInImportService {
         startDate = parsedDates.startDate;
         endDate = parsedDates.endDate;
         current = endDate === 'Present';
-      } else if (vol.start_date || vol.end_date || vol.starts_at || vol.ends_at) {
+      } else if (vol.start_date || vol.end_date) {
         startDate = vol.start_date || vol.starts_at || '';
         endDate = vol.end_date || vol.ends_at || (vol.current ? 'Present' : '');
         current = vol.current || endDate === 'Present';
@@ -1189,6 +1247,73 @@ export class LinkedInImportService {
       console.log(`🔧 Transformed volunteer entry ${index + 1}:`, volunteerEntry);
       return volunteerEntry;
     }).filter((vol: any) => vol.organization.trim() !== '' || vol.role.trim() !== '');
+  }
+
+  /**
+   * Extract skills from profile text using AI when direct skills are not available
+   */
+  private async extractSkillsFromTextWithAI(profile: any): Promise<string[]> {
+    try {
+      console.log('🤖 Extracting skills from profile text using AI...');
+
+      // Collect all text content from profile
+      const textContent = [
+        profile.headline || '',
+        profile.about || profile.summary || '',
+        ...(profile.experience || []).map((exp: any) => exp.summary || exp.description || ''),
+        ...(profile.education || []).map((edu: any) => edu.college_degree_field || edu.field || ''),
+        ...(profile.projects || []).map((proj: any) => proj.title || '')
+      ].join(' ');
+
+      if (!textContent.trim()) {
+        console.log('❌ No text content found for AI skills extraction');
+        return [];
+      }
+
+      const model = geminiAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+      const prompt = `
+        Analyze this LinkedIn profile text and extract technical skills, programming languages, frameworks, tools, and technologies mentioned. 
+        Return ONLY a JSON array of skill names, no explanations:
+
+        Profile Text: "${textContent.substring(0, 2000)}"
+
+        Examples of skills to look for:
+        - Programming languages (JavaScript, Python, Java, etc.)
+        - Frameworks (React, Next.js, Spring, etc.) 
+        - Databases (PostgreSQL, MongoDB, etc.)
+        - Tools (Docker, Git, etc.)
+        - Cloud platforms (AWS, Azure, etc.)
+        - Other technical skills
+
+        Return format: ["skill1", "skill2", "skill3"]
+        Maximum 15 skills.
+      `;
+
+      const result = await model.generateContent(prompt);
+      const aiResponse = result.response.text().trim();
+
+      // Parse AI response
+      try {
+        const extractedSkills = JSON.parse(aiResponse);
+        if (Array.isArray(extractedSkills)) {
+          const validSkills = extractedSkills
+            .filter(skill => typeof skill === 'string' && skill.trim())
+            .map(skill => skill.trim())
+            .slice(0, 15);
+
+          console.log(`🤖 AI extracted ${validSkills.length} skills:`, validSkills);
+          return validSkills;
+        }
+      } catch (parseError) {
+        console.log('❌ Failed to parse AI skills response:', aiResponse);
+      }
+
+      return [];
+    } catch (error) {
+      console.error('❌ AI skills extraction failed:', error);
+      return [];
+    }
   }
 }
 

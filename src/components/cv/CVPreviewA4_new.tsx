@@ -115,6 +115,22 @@ interface CVData {
       certificate?: boolean;
       url?: string;
     }>;
+    customSections?: Array<{
+      id: string;
+      title: string;
+      description?: string;
+      type?: 'simple' | 'detailed' | 'timeline';
+      isVisible?: boolean;
+      priority?: number;
+      items?: Array<{
+        id: string;
+        title: string;
+        description?: string;
+        date?: string;
+        location?: string;
+        url?: string;
+      }>;
+    }>;
   };
 }
 
@@ -123,7 +139,15 @@ interface CVPreviewProps {
 }
 
 const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
-  const { personalInfo, experience, education, skills, languages, projects, certifications, volunteerExperience, publications, honorsAwards, testScores, recommendations, courses } = cv.data;
+  const { personalInfo, experience, education, skills, languages, projects, certifications, volunteerExperience, publications, honorsAwards, testScores, recommendations, courses, customSections } = cv.data;
+
+  // Debug: Custom sections məlumatını console-da göstər
+  console.log('🔍 CVPreviewA4_new Debug:', {
+    customSections,
+    customSectionsLength: customSections?.length || 0,
+    hasItems: customSections?.some(section => section.items && section.items.length > 0),
+    visibleSections: customSections?.filter(section => section.isVisible !== false) || []
+  });
 
   const fullName = personalInfo?.fullName || personalInfo?.name || '';
   
@@ -234,9 +258,10 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
                 margin: '0'
               }}>Summary</h2>
             </div>
-            <p style={{ marginBottom: '0.5rem', color: '#4b5563', margin: '0' }}>
-              {personalInfo.summary}
-            </p>
+            <div
+                            className="text-gray-700 leading-relaxed prose prose-sm max-w-none"
+                            dangerouslySetInnerHTML={{ __html: personalInfo.summary || '' }}
+                          />
           </div>
         )}
       </div>
@@ -1038,6 +1063,102 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
                 </div>
               )}
             </div>
+          ))}
+        </div>
+      )}
+
+      {/* Custom Sections */}
+      {customSections && customSections.length > 0 && (
+        <div>
+          {customSections.map((section) => (
+            section.isVisible !== false && (
+              <div key={section.id} style={{ marginBottom: '0.8rem', pageBreakInside: 'avoid' }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  marginBottom: '0.5rem',
+                  paddingBottom: '0.3rem',
+                  pageBreakAfter: 'avoid',
+                  borderBottom: '1px solid #e5e7eb'
+                }}>
+                  <h2 style={{
+                    fontSize: '1.375rem',
+                    fontWeight: '700',
+                    color: '#1f2937',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    margin: '0'
+                  }}>{section.title}</h2>
+                </div>
+                {section.description && (
+                  <div style={{
+                    color: '#4b5563',
+                    marginBottom: '0.5rem',
+                    lineHeight: '1.6'
+                  }}>{section.description}</div>
+                )}
+                {section.items && section.items.length > 0 && (
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                    gap: '0.8rem',
+                    width: '100%',
+                    marginTop: '0.5rem'
+                  }}>
+                    {section.items.map((item) => (
+                      <div key={item.id} style={{
+                        padding: '0.8rem',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '0.5rem',
+                        background: '#fafafa',
+                        pageBreakInside: 'avoid',
+                        minHeight: '60px'
+                      }}>
+                        <div style={{
+                          fontSize: '1.125rem',
+                          fontWeight: '600',
+                          color: '#1f2937',
+                          marginBottom: '0.25rem'
+                        }}>{item.title}</div>
+                        {item.description && (
+                          <div style={{
+                            color: '#4b5563',
+                            marginBottom: '0.5rem',
+                            lineHeight: '1.6'
+                          }}>{item.description}</div>
+                        )}
+                        {item.date && (
+                          <div style={{
+                            fontSize: '0.875rem',
+                            color: '#6b7280',
+                            marginBottom: '0.5rem'
+                          }}>{item.date}</div>
+                        )}
+                        {item.location && (
+                          <div style={{
+                            fontSize: '0.875rem',
+                            color: '#6b7280',
+                            marginBottom: '0.5rem'
+                          }}>{item.location}</div>
+                        )}
+                        {item.url && (
+                          <div style={{
+                            fontSize: '0.875rem',
+                            color: '#6b7280',
+                            fontStyle: 'italic'
+                          }}>
+                            <a href={item.url} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>
+                              {item.url}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
           ))}
         </div>
       )}

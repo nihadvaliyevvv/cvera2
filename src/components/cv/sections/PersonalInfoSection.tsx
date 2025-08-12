@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getLabel } from '@/lib/cvLanguage';
+import { useNotification } from '@/components/ui/Toast';
 
 interface PersonalInfo {
   fullName: string;      // Tam ad - API-dən gələn
@@ -13,6 +14,14 @@ interface PersonalInfo {
   linkedin?: string;
   summary?: string;
   profileImage?: string; // Premium feature
+  additionalLinks?: AdditionalLink[]; // Yeni: əlavə linklər və məlumatlar
+}
+
+interface AdditionalLink {
+  id: string;
+  label: string;
+  value: string;
+  type: 'url' | 'text' | 'email' | 'phone';
 }
 
 interface PersonalInfoSectionProps {
@@ -28,6 +37,40 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
   const [aiGenerating, setAiGenerating] = useState(false);
   const isPremium = userTier === 'Premium';
   const canUseAI = userTier === 'Premium' || userTier === 'Medium';
+  const { showSuccess, showError, showWarning, showInfo } = useNotification();
+
+  // Clean HTML content for proper display
+  const cleanHtmlContent = (htmlContent: string): string => {
+    if (!htmlContent) return '';
+
+    let cleaned = htmlContent;
+
+    // Replace &nbsp; with regular spaces
+    cleaned = cleaned.replace(/&nbsp;/g, ' ');
+
+    // Replace div tags with p tags
+    cleaned = cleaned.replace(/<div>/g, '<p>');
+    cleaned = cleaned.replace(/<\/div>/g, '</p>');
+
+    // Remove empty paragraphs and clean up spacing
+    cleaned = cleaned.replace(/<p><\/p>/g, '');
+    cleaned = cleaned.replace(/<p>\s*<\/p>/g, '');
+    cleaned = cleaned.replace(/<p><br><\/p>/g, '<p></p>');
+
+    // Clean up multiple consecutive spaces
+    cleaned = cleaned.replace(/\s+/g, ' ');
+
+    // Ensure proper paragraph wrapping for plain text
+    if (cleaned && !cleaned.includes('<') && cleaned.trim()) {
+      cleaned = `<p>${cleaned.trim()}</p>`;
+    }
+
+    // Fix malformed HTML
+    cleaned = cleaned.replace(/<p>\s*<p>/g, '<p>');
+    cleaned = cleaned.replace(/<\/p>\s*<\/p>/g, '</p>');
+
+    return cleaned.trim();
+  };
 
   // Form validasiya mesajlarını Azərbaycan dilinə çevirmək
   useEffect(() => {
@@ -88,13 +131,13 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Yalnız şəkil faylları qəbul edilir');
+      showError('Yalnız şəkil faylları qəbul edilir', 'Fayl növü xətası');
       return;
     }
 
     // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      alert('Şəkil ölçüsü 2MB-dan çox ola bilməz');
+      showError('Şəkil ölçüsü 2MB-dan çox ola bilməz', 'Fayl ölçüsü xətası');
       return;
     }
 
@@ -105,12 +148,13 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
       reader.onload = (e) => {
         const base64String = e.target?.result as string;
         handleChange('profileImage', base64String);
+        showSuccess('Şəkil uğurla yükləndi!', 'Yükləmə tamamlandı');
         setImageUploading(false);
       };
       reader.readAsDataURL(file);
     } catch (error) {
       console.error('Image upload error:', error);
-      alert('Şəkil yüklənərkən xəta baş verdi');
+      showError('Şəkil yüklənərkən xəta baş verdi', 'Yükləmə xətası');
       setImageUploading(false);
     }
   };
@@ -131,13 +175,13 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
 
     if (!canUseAI) {
       console.log('❌ Cannot use AI. User tier:', userTier);
-      alert(`AI professional summary Premium və Medium istifadəçilər üçün mövcuddur! Sizin tier: ${userTier}`);
+      showWarning(`AI professional summary Premium və Medium istifadəçilər üçün mövcuddur! Sizin tier: ${userTier}`, 'Giriş məhdudiyyəti');
       return;
     }
 
     if (!cvId) {
       console.log('❌ No CV ID provided');
-      alert('AI summary yaratmaq üçün CV ID lazımdır');
+      showError('AI summary yaratmaq üçün CV ID lazımdır', 'Məlumat çatışmır');
       return;
     }
 
@@ -147,7 +191,7 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
         hasPersonalInfo: !!(cvData?.personalInfo),
         hasFullName: !!(cvData?.personalInfo?.fullName)
       });
-      alert('AI summary yaratmaq üçün əvvəlcə əsas məlumatları doldurun');
+      showWarning('AI summary yaratmaq üçün əvvəlcə əsas məlumatları doldurun', 'Məlumat çatışmır');
       return;
     }
 
@@ -159,7 +203,7 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
       const token = localStorage.getItem('accessToken') || localStorage.getItem('token') || localStorage.getItem('auth-token');
       
       if (!token) {
-        alert('Giriş icazəsi yoxdur. Yenidən giriş edin.');
+        showError('Giriş icazəsi yoxdur. Yenidən giriş edin.', 'Autentifikasiya xətası');
         setAiGenerating(false);
         return;
       }
@@ -184,9 +228,9 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
 
       if (!response.ok) {
         if (response.status === 401) {
-          alert('Giriş icazəsi yoxdur. Yenidən giriş edin.');
+          showError('Giriş icazəsi yoxdur. Yenidən giriş edin.', 'Autentifikasiya xətası');
         } else if (response.status === 403) {
-          alert(result.error || 'AI funksiyalar üçün Premium/Medium planı lazımdır');
+          showWarning(result.error || 'AI funksiyalar üçün Premium/Medium planı lazımdır', 'Plan məhdudiyyəti');
         } else {
           throw new Error(result.error || 'API xətası');
         }
@@ -196,7 +240,10 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
       if (result.success && result.summary) {
         console.log('✅ AI Summary generated successfully:', result.summary.length, 'characters');
         handleChange('summary', result.summary);
-        alert(`AI professional summary yaradıldı! 🎉\n\n${userTier === 'Premium' ? 'Executive-level' : 'Professional'} səviyyədə hazırlandı və ATS üçün optimallaşdırıldı.`);
+        showSuccess(
+          `${userTier === 'Premium' ? 'Executive-level' : 'Professional'} səviyyədə hazırlandı və ATS üçün optimallaşdırıldı.`,
+          'AI Professional Summary Yaradıldı! 🎉'
+        );
       } else {
         console.log('❌ API returned success=false or no summary');
         throw new Error('AI summary yaradıla bilmədi');
@@ -204,29 +251,18 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
 
     } catch (error) {
       console.error('💥 AI Summary error:', error);
-      alert('AI summary yaradarkən xəta baş verdi. Yenidən cəhd edin.');
+      showError('AI summary yaradarkən xəta baş verdi. Yenidən cəhd edin.', 'AI Xətası');
     } finally {
       setAiGenerating(false);
     }
   };
 
-  // Debug logging to check userTier
-  useEffect(() => {
-    console.log('🔍 PersonalInfoSection Debug:', {
-      userTier,
-      isPremium,
-      canUseAI,
-      cvId,
-      hasData: !!data,
-      hasCvData: !!cvData
-    });
-  }, [userTier, isPremium, canUseAI, cvId, data, cvData]);
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-6">
-        <span className="text-2xl">👤</span>
-        <h2 className="text-xl font-semibold text-gray-900">{getLabel('personalInfo', 'azerbaijani')}</h2>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">Şəxsi məlumatlar</h3>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -382,17 +418,17 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="block text-sm font-medium text-gray-700">
-            Professional özət
+            Peşəkar Xülasə
           </label>
           <button
             type="button"
             onClick={generateAISummary}
             disabled={aiGenerating || !canUseAI}
-            className={`px-3 py-1 text-xs rounded-full font-medium transition-all ${
+            className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors ${
               canUseAI
                 ? aiGenerating
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 hover:scale-105 shadow-md'
+                  : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600'
                 : 'bg-gray-200 text-gray-500 cursor-not-allowed'
             }`}
             title={canUseAI ? 'AI ilə avtomatik professional özət yaradın' : 'AI funksiyalar Premium/Medium üçün mövcuddur'}
@@ -426,17 +462,172 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
             </div>
           </div>
         )}
-        
-        <textarea
-          value={data.summary || ''}
-          onChange={(e) => handleChange('summary', e.target.value)}
-          rows={4}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
-          placeholder={canUseAI 
-            ? "Professional təcrübənizi yazın və ya yuxarıdakı AI butonundan avtomatik yaradın..." 
+
+        {/* Rich Text Editor Toolbar */}
+        <div className="border border-gray-300 rounded-t-lg bg-gray-50 p-2 flex flex-wrap gap-1">
+          <button
+            type="button"
+            onClick={() => document.execCommand('bold', false)}
+            className="p-2 rounded hover:bg-gray-200 transition-colors"
+            title="Bold"
+          >
+            <span className="font-bold">B</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => document.execCommand('italic', false)}
+            className="p-2 rounded hover:bg-gray-200 transition-colors"
+            title="Italic"
+          >
+            <span className="italic">I</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => document.execCommand('underline', false)}
+            className="p-2 rounded hover:bg-gray-200 transition-colors"
+            title="Underline"
+          >
+            <span className="underline">U</span>
+          </button>
+          <div className="w-px bg-gray-300 mx-1"></div>
+          <button
+            type="button"
+            onClick={() => document.execCommand('insertUnorderedList', false)}
+            className="p-2 rounded hover:bg-gray-200 transition-colors"
+            title="Bullet List"
+          >
+            •
+          </button>
+          <button
+            type="button"
+            onClick={() => document.execCommand('insertOrderedList', false)}
+            className="p-2 rounded hover:bg-gray-200 transition-colors"
+            title="Numbered List"
+          >
+            1.
+          </button>
+          <div className="w-px bg-gray-300 mx-1"></div>
+          <button
+            type="button"
+            onClick={() => document.execCommand('justifyLeft', false)}
+            className="p-2 rounded hover:bg-gray-200 transition-colors"
+            title="Align Left"
+          >
+            ←
+          </button>
+          <button
+            type="button"
+            onClick={() => document.execCommand('justifyCenter', false)}
+            className="p-2 rounded hover:bg-gray-200 transition-colors"
+            title="Align Center"
+          >
+            ↔
+          </button>
+          <button
+            type="button"
+            onClick={() => document.execCommand('justifyRight', false)}
+            className="p-2 rounded hover:bg-gray-200 transition-colors"
+            title="Align Right"
+          >
+            →
+          </button>
+        </div>
+
+        {/* Rich Text Editor Content */}
+        <div
+          ref={(el) => {
+            if (el && data.summary && el.innerHTML !== data.summary) {
+              el.innerHTML = cleanHtmlContent(data.summary);
+            }
+          }}
+          contentEditable
+          suppressContentEditableWarning={true}
+          className="w-full min-h-[120px] px-3 py-2 border border-t-0 border-gray-300 rounded-b-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none prose prose-sm max-w-none"
+          style={{
+            fontSize: '14px',
+            lineHeight: '1.5',
+            fontFamily: 'inherit'
+          }}
+          onInput={(e) => {
+            const target = e.target as HTMLDivElement;
+            const content = target.innerHTML;
+
+            // Immediately clean and save content
+            const cleanedContent = cleanHtmlContent(content);
+            handleChange('summary', cleanedContent);
+          }}
+          onBlur={(e) => {
+            const target = e.target as HTMLDivElement;
+            const content = target.innerHTML;
+
+            // Final cleanup on blur
+            const cleanedContent = cleanHtmlContent(content);
+            handleChange('summary', cleanedContent);
+          }}
+          onPaste={(e) => {
+            e.preventDefault();
+            const text = e.clipboardData.getData('text/plain');
+            document.execCommand('insertText', false, text);
+          }}
+          onKeyDown={(e) => {
+            // Handle Enter key properly - single line break
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              document.execCommand('insertHTML', false, '<br>');
+            }
+          }}
+          data-placeholder={canUseAI
+            ? "Professional təcrübənizi yazın və ya yuxarıdakı AI butonundan avtomatik yaradın..."
             : "Professional təcrübənizi və məqsədlərinizi qısaca təsvir edin..."
           }
         />
+
+        <style jsx>{`
+          [contenteditable]:empty:before {
+            content: attr(data-placeholder);
+            color: #9CA3AF;
+            pointer-events: none;
+          }
+          [contenteditable] {
+            background: white;
+          }
+          [contenteditable]:focus {
+            background: white;
+          }
+          [contenteditable] p {
+            margin: 0.5rem 0;
+            line-height: 1.5;
+          }
+          [contenteditable] p:first-child {
+            margin-top: 0;
+          }
+          [contenteditable] p:last-child {
+            margin-bottom: 0;
+          }
+          [contenteditable] ul, [contenteditable] ol {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+          }
+          [contenteditable] li {
+            margin: 0.25rem 0;
+            line-height: 1.4;
+          }
+          [contenteditable] strong {
+            font-weight: 600;
+          }
+          [contenteditable] em {
+            font-style: italic;
+          }
+          [contenteditable] u {
+            text-decoration: underline;
+          }
+          [contenteditable] div {
+            margin: 0.5rem 0;
+          }
+          [contenteditable] br {
+            line-height: 1.5;
+          }
+        `}</style>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { CVLanguage, getLabel } from '@/lib/cvLanguage';
 
 interface CVData {
@@ -31,1776 +31,771 @@ interface CVData {
       languages?: string;
       awards?: string;
     };
-    experience?: Array<{
-      id?: string;
-      company?: string;
-      position?: string;
-      startDate?: string;
-      endDate?: string;
-      current?: boolean;
-      description?: string;
+    sectionOrder?: Array<{
+      id: string;
+      name: string;
+      displayName: string;
+      isVisible: boolean;
+      order: number;
+      hasData: boolean;
+      icon: string;
     }>;
-    education?: Array<{
-      id?: string;
-      institution?: string;
-      degree?: string;
-      field?: string;
-      startDate?: string;
-      endDate?: string;
-      current?: boolean;
-      gpa?: string;
-      description?: string;
-    }>;
-    skills?: Array<{
-      id?: string;
-      name?: string;
-      category?: string;
-    }>;
-    languages?: Array<{
-      id?: string;
-      name?: string;
-      level?: string;
-    }>;
-    projects?: Array<{
-      id?: string;
-      name?: string;
-      description?: string;
-      technologies?: string[];
-      url?: string;
-      startDate?: string;
-      endDate?: string;
-      current?: boolean;
-    }>;
-    certifications?: Array<{
-      id?: string;
-      name?: string;
-      issuer?: string;
-      date?: string;
-      issueDate?: string;
-      expiryDate?: string;
-      credentialId?: string;
-      url?: string;
-    }>;
-    volunteerExperience?: Array<{
-      id?: string;
-      organization?: string;
-      role?: string;
-      startDate?: string;
-      endDate?: string;
-      current?: boolean;
-      description?: string;
-      cause?: string;
-    }>;
-    publications?: Array<{
-      id?: string;
-      title?: string;
-      description?: string;
-      url?: string;
-      date?: string;
-      publisher?: string;
-      authors?: string[];
-    }>;
-    honorsAwards?: Array<{
-      id?: string;
-      title?: string;
-      description?: string;
-      date?: string;
-      issuer?: string;
-      url?: string;
-    }>;
-    testScores?: Array<{
-      id?: string;
-      testName?: string;
-      score?: string;
-      date?: string;
-      description?: string;
-    }>;
-    recommendations?: Array<{
-      id?: string;
-      recommenderName?: string;
-      recommenderTitle?: string;
-      recommenderCompany?: string;
-      text?: string;
-      date?: string;
-    }>;
-    courses?: Array<{
-      id?: string;
-      name?: string;
-      institution?: string;
-      description?: string;
-      completionDate?: string;
-      certificate?: boolean;
-      url?: string;
-    }>;
+    experience?: Array<any>;
+    education?: Array<any>;
+    skills?: Array<any>;
+    languages?: Array<any>;
+    projects?: Array<any>;
+    certifications?: Array<any>;
+    volunteerExperience?: Array<any>;
+    publications?: Array<any>;
+    honorsAwards?: Array<any>;
+    testScores?: Array<any>;
+    recommendations?: Array<any>;
+    courses?: Array<any>;
+    customSections?: Array<any>;
   };
 }
 
 interface CVPreviewProps {
   cv: CVData;
+  enableSectionSelection?: boolean;
+  onSectionOrderChange?: (sections: any[]) => void;
 }
 
-const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
-  const { personalInfo, experience, education, skills, languages, projects, certifications, volunteerExperience, publications, honorsAwards, testScores, recommendations, courses, sectionNames } = cv.data;
+interface SectionConfig {
+  id: string;
+  name: string;
+  displayName: string;
+  isVisible: boolean;
+  order: number;
+  hasData: boolean;
+  icon: string;
+}
 
-  // Helper function to get section name - use translated if available, fallback to default
+const DEFAULT_SECTIONS = [
+  { id: 'personalInfo', name: 'personalInfo', displayName: 'Şəxsi Məlumatlar', icon: '👤', alwaysVisible: true },
+  { id: 'summary', name: 'summary', displayName: 'Özət', icon: '📝', alwaysVisible: false },
+  { id: 'experience', name: 'experience', displayName: 'İş Təcrübəsi', icon: '💼', alwaysVisible: false },
+  { id: 'education', name: 'education', displayName: 'Təhsil', icon: '🎓', alwaysVisible: false },
+  { id: 'skills', name: 'skills', displayName: 'Bacarıqlar', icon: '⚡', alwaysVisible: false },
+  { id: 'projects', name: 'projects', displayName: 'Layihələr', icon: '🚀', alwaysVisible: false },
+  { id: 'certifications', name: 'certifications', displayName: 'Sertifikatlar', icon: '🏆', alwaysVisible: false },
+  { id: 'languages', name: 'languages', displayName: 'Dillər', icon: '🌍', alwaysVisible: false },
+  { id: 'volunteerExperience', name: 'volunteerExperience', displayName: 'Könüllü İş', icon: '❤️', alwaysVisible: false },
+  { id: 'customSections', name: 'customSections', displayName: 'Əlavə Bölmələr', icon: '📋', alwaysVisible: false }
+];
+
+const CVPreviewA4: React.FC<CVPreviewProps> = ({
+  cv,
+  enableSectionSelection = false,
+  onSectionOrderChange
+}) => {
+  const [selectedSection, setSelectedSection] = useState<string | null>(null);
+  const [draggedSection, setDraggedSection] = useState<string | null>(null);
+  const [dragOverSection, setDragOverSection] = useState<string | null>(null);
+  const [sections, setSections] = useState<SectionConfig[]>([]);
+  const [mounted, setMounted] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Check if section has data
+  const hasData = (sectionId: string): boolean => {
+    if (sectionId === 'personalInfo') return true;
+    if (sectionId === 'summary') return !!cv.data.personalInfo?.summary;
+
+    const sectionData = cv.data?.[sectionId as keyof typeof cv.data];
+    if (Array.isArray(sectionData)) {
+      return sectionData.length > 0;
+    }
+    return !!sectionData;
+  };
+
+  // Initialize sections from CV data - COMPLETELY FIXED VERSION
+  useEffect(() => {
+    if (!mounted) return;
+
+    const currentSectionOrder = cv.data?.sectionOrder || [];
+
+    // Create sections in the correct order
+    let initializedSections = DEFAULT_SECTIONS.map((defaultSection, index) => {
+      const existingConfig = currentSectionOrder.find((s: any) => s.id === defaultSection.id);
+
+      return {
+        id: defaultSection.id,
+        name: defaultSection.name,
+        displayName: defaultSection.displayName,
+        isVisible: existingConfig?.isVisible ?? (hasData(defaultSection.id) || defaultSection.alwaysVisible),
+        order: existingConfig?.order ?? index,
+        hasData: hasData(defaultSection.id),
+        icon: defaultSection.icon
+      };
+    });
+
+    // Filter and sort sections
+    const sectionsToShow = initializedSections
+      .filter(section => hasData(section.id))
+      .sort((a, b) => a.order - b.order);
+
+    console.log('🏁 INITIAL SECTIONS:', sectionsToShow.map(s => ({ id: s.id, order: s.order })));
+    setSections(sectionsToShow);
+  }, [cv.data, mounted]);
+
+  // ULTRA SIMPLE drag handlers - GUARANTEED TO WORK
+  const handleDragStart = (e: React.DragEvent, sectionId: string) => {
+    if (!enableSectionSelection) return;
+
+    console.log('🚀 STARTING DRAG:', sectionId);
+    setDraggedSection(sectionId);
+    setIsDragging(true);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', sectionId);
+  };
+
+  const handleDragOver = (e: React.DragEvent, sectionId: string) => {
+    if (!enableSectionSelection || !draggedSection) return;
+
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+
+    if (draggedSection !== sectionId) {
+      setDragOverSection(sectionId);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, sectionId: string) => {
+    if (!enableSectionSelection || !draggedSection) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('💥 DROP:', draggedSection, 'onto', sectionId);
+
+    if (draggedSection !== sectionId) {
+      // IMMEDIATE REORDER - NO WAITING
+      const newSections = [...sections];
+      const fromIndex = newSections.findIndex(s => s.id === draggedSection);
+      const toIndex = newSections.findIndex(s => s.id === sectionId);
+
+      console.log('📍 MOVING FROM', fromIndex, 'TO', toIndex);
+
+      if (fromIndex !== -1 && toIndex !== -1) {
+        // Remove and insert
+        const [movedSection] = newSections.splice(fromIndex, 1);
+        newSections.splice(toIndex, 0, movedSection);
+
+        // Update orders
+        const updatedSections = newSections.map((section, index) => ({
+          ...section,
+          order: index
+        }));
+
+        console.log('✨ NEW ORDER:', updatedSections.map(s => s.id));
+
+        // FORCE UPDATE WITH NEW REFERENCE
+        setSections([...updatedSections]);
+
+        // Notify parent
+        if (onSectionOrderChange) {
+          onSectionOrderChange(updatedSections);
+        }
+      }
+    }
+
+    // FORCE END THE DRAG OPERATION
+    setDraggedSection(null);
+    setDragOverSection(null);
+    setIsDragging(false);
+  };
+
+  const handleDragEnd = () => {
+    console.log('🏁 DRAG ENDED - CLEANUP');
+    setDraggedSection(null);
+    setDragOverSection(null);
+    setIsDragging(false);
+  };
+
+  // ENHANCED drag overlay with better event handling
+  const SimpleDragOverlay: React.FC<{
+    sectionId: string;
+    children: React.ReactNode;
+    className?: string;
+  }> = ({ sectionId, children, className = '' }) => {
+    if (!enableSectionSelection) {
+      return <div className={className}>{children}</div>;
+    }
+
+    const isSelected = selectedSection === sectionId;
+    const isDragged = draggedSection === sectionId;
+    const isDraggedOver = dragOverSection === sectionId;
+
+    return (
+      <div
+        key={sectionId}
+        draggable={enableSectionSelection}
+        onDragStart={(e) => handleDragStart(e, sectionId)}
+        onDragOver={(e) => handleDragOver(e, sectionId)}
+        onDrop={(e) => handleDrop(e, sectionId)}
+        onDragEnd={handleDragEnd}
+        onDragLeave={(e) => {
+          // Clear drag over when leaving this section
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            setDragOverSection(null);
+          }
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          setSelectedSection(isSelected ? null : sectionId);
+        }}
+        className={`
+          ${className}
+          transition-all duration-200
+          ${enableSectionSelection ? 'cursor-grab active:cursor-grabbing select-none' : ''}
+          ${isSelected ? 'ring-4 ring-blue-400 bg-blue-50' : ''}
+          ${isDragged ? 'opacity-60 scale-105 z-50' : ''}
+          ${isDraggedOver ? 'ring-4 ring-green-400 bg-green-50 scale-102' : ''}
+          ${enableSectionSelection ? 'hover:ring-2 hover:ring-gray-300' : ''}
+          rounded-lg p-2 m-1 relative
+        `}
+        style={{
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          MozUserSelect: 'none'
+        }}
+      >
+        {/* Enhanced drag indicator */}
+        {enableSectionSelection && (
+          <div className="absolute -left-10 top-2 opacity-0 group-hover:opacity-100 transition-opacity group">
+            <div className="w-8 h-8 bg-gradient-to-b from-gray-600 to-gray-800 text-white rounded flex items-center justify-center text-sm cursor-grab active:cursor-grabbing shadow-lg hover:scale-110 transition-transform">
+              ⋮⋮
+            </div>
+          </div>
+        )}
+
+        {/* Enhanced drop indicator */}
+        {isDraggedOver && draggedSection !== sectionId && (
+          <div className="absolute inset-0 border-4 border-dashed border-green-400 rounded-lg bg-green-100 bg-opacity-50 flex items-center justify-center pointer-events-none z-20">
+            <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg animate-pulse">
+              🎯 Buraya burax
+            </div>
+          </div>
+        )}
+
+        {/* Selection badge */}
+        {isSelected && (
+          <div className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-lg z-30 animate-bounce">
+            ✓
+          </div>
+        )}
+
+        {children}
+      </div>
+    );
+  };
+
+  // Helper function to get section name
   const getSectionName = (sectionKey: string, defaultName: string): string => {
-    return (sectionNames as Record<string, string | undefined>)?.[sectionKey] || getLabel(sectionKey as any, cv.data.cvLanguage || 'azerbaijani') || defaultName;
+    return (cv.data.sectionNames as Record<string, string | undefined>)?.[sectionKey] ||
+           getLabel(sectionKey as any, cv.data.cvLanguage || 'azerbaijani') ||
+           defaultName;
   };
 
-  // Helper function to get any translated text
-  const getTranslatedText = (text: string): string => {
-    return getLabel(text, cv.data.cvLanguage || 'azerbaijani');
-  };
+  const fullName = cv.data.personalInfo?.fullName || cv.data.personalInfo?.name || '';
 
-  const fullName = personalInfo?.fullName || personalInfo?.name || '';
-
-  // Map of template IDs to template types - ALL NOW FREE
+  // Template type mapping
   const templateIdMap = {
-    // All templates are now FREE
-    'b57fdbf2-9401-41d3-8d7b-efe6340781a2': 'basic',     // Basic Template - FREE
-    '89243f3c-97f0-4cac-9818-9457393bc328': 'resumonk',   // Resumonk Bold - FREE
-    '12c867e5-82a4-45ce-a3f0-0d237d0f1ed4': 'modern',     // Modern Creative - FREE
-    'fca43d33-c88a-413b-860d-0341cd47fa44': 'executive'   // Executive Premium - FREE
+    'b57fdbf2-9401-41d3-8d7b-efe6340781a2': 'basic',
+    '89243f3c-97f0-4cac-9818-9457393bc328': 'resumonk',
+    '12c867e5-82a4-45ce-a3f0-0d237d0f1ed4': 'modern',
+    'fca43d33-c88a-413b-860d-0341cd47fa44': 'executive'
   };
 
-  // Get template type from ID, with fallbacks for legacy template IDs
   const getTemplateType = (templateId: string): string => {
-    // Check UUID mapping first
     if (templateIdMap[templateId as keyof typeof templateIdMap]) {
       return templateIdMap[templateId as keyof typeof templateIdMap];
     }
-
-    // Fallback for name-based detection (legacy)
     if (templateId?.includes('Basic Template') || templateId === 'basic') return 'basic';
     if (templateId?.includes('Resumonk Bold') || templateId === 'resumonk-bold') return 'resumonk';
     if (templateId?.includes('Modern Creative') || templateId === 'modern') return 'modern';
     if (templateId?.includes('Executive Premium') || templateId === 'executive') return 'executive';
-
-    // Default to basic template
     return 'basic';
   };
 
   const templateType = getTemplateType(cv.templateId);
-  console.log('🎨 Template Preview Debug:', { templateId: cv.templateId, templateType, fullName });
 
-  // Basic Template - Classic simple design
+  // RESTORE ORIGINAL TEMPLATE RENDERING WITH ENHANCED SCROLL
   if (templateType === 'basic') {
     return (
-      <div style={{
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '11pt',
-        lineHeight: '1.3',
-        color: '#333',
-        background: 'white',
-        width: '100%',
-        height: '100%',
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          height: '100%',
-          overflowY: 'auto',
-          padding: '20px',
-          width: '794px'
-        }}>
-          {/* Basic Header - Simple and clean */}
-          <div style={{ textAlign: 'center', marginBottom: '25px', borderBottom: '1px solid #ccc', paddingBottom: '15px' }}>
-            <h1 style={{
-              fontSize: '24pt',
-              fontWeight: 'normal',
-              color: '#000',
-              margin: '0 0 5px 0'
-            }}>
-              {fullName}
-            </h1>
-            {personalInfo?.title && (
-              <div style={{ fontSize: '12pt', color: '#666', marginBottom: '10px' }}>
-                {personalInfo.title}
+      <div
+        className="w-full h-full bg-white overflow-y-auto"
+        style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#CBD5E1 #F1F5F9',
+          maxHeight: '100vh'
+        }}
+      >
+        {/* Enhanced selection mode indicator */}
+        {enableSectionSelection && (
+          <div
+            className="sticky top-0 z-50 bg-gradient-to-r from-blue-50 via-white to-purple-50 border-b-2 border-blue-200 p-4 shadow-lg"
+            style={{
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)'
+            }}
+          >
+            <div className="flex items-center gap-3 text-sm text-blue-800">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg">
+                ⚡
               </div>
-            )}
-            <div style={{ fontSize: '10pt', color: '#555' }}>
-              {personalInfo?.email} | {personalInfo?.phone}
-              {personalInfo?.website && ` | ${personalInfo.website}`}
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M4 4h2v2H4V4zm0 5h2v2H4V9zm0 5h2v2H4v-2zm5-10h2v2H9V4zm0 5h2v2H9V9zm0 5h2v2H9v-2zm5-10h2v2h-2V4zm0 5h2v2h-2V9zm0 5h2v2h-2v-2z"/>
+                  </svg>
+                  <span className="font-bold">Seçim Modu Aktiv:</span>
+                  <span>Bölmələri seçib sürükləyərək sıralayın</span>
+                </div>
+                {selectedSection && (
+                  <div className="mt-2 text-xs text-blue-700 bg-blue-100 px-3 py-1 rounded-full inline-block">
+                    <span className="font-semibold">Seçilmiş:</span>
+                    <span className="ml-1">
+                      {DEFAULT_SECTIONS.find(s => s.id === selectedSection)?.icon} {DEFAULT_SECTIONS.find(s => s.id === selectedSection)?.displayName}
+                    </span>
+                  </div>
+                )}
+              </div>
+              {isDragging && (
+                <div className="flex items-center gap-2 text-purple-600 animate-pulse">
+                  <svg className="w-5 h-5 animate-spin" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M4 4h2v2H4V4zm0 5h2v2H4V9zm0 5h2v2H4v-2zm5-10h2v2H9V4zm0 5h2v2H9V9zm0 5h2v2H9v-2zm5-10h2v2h-2V4zm0 5h2v2h-2V9zm0 5h2v2h-2v-2z"/>
+                  </svg>
+                  <span className="text-sm font-bold">Sürüklənir...</span>
+                </div>
+              )}
             </div>
           </div>
+        )}
 
-          {/* Summary */}
-          {personalInfo?.summary && (
-            <div style={{ marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 8px 0', color: '#000' }}>
-                SUMMARY
-              </h2>
-              <p style={{ margin: '0', fontSize: '11pt', lineHeight: '1.4' }}>
-                {personalInfo.summary}
-              </p>
-            </div>
-          )}
-
-          {/* Experience */}
-          {experience && experience.length > 0 && (
-            <div style={{ marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 10px 0', color: '#000' }}>
-                WORK EXPERIENCE
-              </h2>
-              {experience.map((exp, index) => (
-                <div key={index} style={{ marginBottom: '15px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <strong style={{ fontSize: '12pt' }}>{exp.position}</strong>
-                      <div style={{ fontSize: '11pt', fontStyle: 'italic' }}>{exp.company}</div>
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666' }}>
-                      {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
-                    </div>
-                  </div>
-                  {exp.description && (
-                    <p style={{ margin: '5px 0 0 0', fontSize: '10pt', lineHeight: '1.3' }}>
-                      {exp.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Education */}
-          {education && education.length > 0 && (
-            <div style={{ marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 10px 0', color: '#000' }}>
-                EDUCATION
-              </h2>
-              {education.map((edu, index) => (
-                <div key={index} style={{ marginBottom: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div>
-                      <strong>{edu.degree}</strong> - {edu.field}
-                      <div style={{ fontStyle: 'italic' }}>{edu.institution}</div>
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666' }}>
-                      {edu.startDate} - {edu.current ? 'Present' : edu.endDate}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Skills */}
-          {skills && skills.length > 0 && (
-            <div style={{ marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 10px 0', color: '#000' }}>
-                SKILLS
-              </h2>
-              <div style={{ fontSize: '11pt' }}>
-                {skills.map(skill => skill.name).join(' • ')}
-              </div>
-            </div>
-          )}
-
-          {/* Languages */}
-          {languages && languages.length > 0 && (
-            <div style={{ marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 10px 0', color: '#000' }}>
-                LANGUAGES
-              </h2>
-              {languages.map((lang, index) => (
-                <div key={index} style={{ marginBottom: '8px', fontSize: '11pt' }}>
-                  <strong>{lang.name}</strong> - {lang.level}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Projects */}
-          {projects && projects.length > 0 && (
-            <div style={{ marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 10px 0', color: '#000' }}>
-                PROJECTS
-              </h2>
-              {projects.map((project, index) => (
-                <div key={index} style={{ marginBottom: '15px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <strong style={{ fontSize: '12pt' }}>{project.name}</strong>
-                      {project.url && (
-                        <div style={{ fontSize: '10pt', color: '#0066cc' }}>{project.url}</div>
+        {/* Main content with proper spacing and scroll */}
+        <div className="p-8 space-y-8 min-h-full">
+          {/* Render sections in their current order with SIMPLE drag overlay */}
+          {sections.map((section) => {
+            switch (section.id) {
+              case 'personalInfo':
+                return (
+                  <SimpleDragOverlay key="personalInfo" sectionId="personalInfo" className="mb-8">
+                    <div className="text-center">
+                      <h1 className="text-3xl font-bold text-gray-900 mb-2">{fullName}</h1>
+                      {cv.data.personalInfo?.title && (
+                        <h2 className="text-xl text-gray-600 mb-4">{cv.data.personalInfo.title}</h2>
                       )}
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666' }}>
-                      {project.startDate} - {project.current ? 'Present' : project.endDate}
-                    </div>
-                  </div>
-                  {project.description && (
-                    <p style={{ margin: '5px 0 0 0', fontSize: '10pt', lineHeight: '1.3' }}>
-                      {project.description}
-                    </p>
-                  )}
-                  {project.technologies && project.technologies.length > 0 && (
-                    <div style={{ margin: '5px 0 0 0', fontSize: '10pt', color: '#555' }}>
-                      <strong>Technologies:</strong> {project.technologies.join(', ')}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Certifications */}
-          {certifications && certifications.length > 0 && (
-            <div style={{ marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 10px 0', color: '#000' }}>
-                CERTIFICATIONS
-              </h2>
-              {certifications.map((cert, index) => (
-                <div key={index} style={{ marginBottom: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div>
-                      <strong>{cert.name}</strong>
-                      <div style={{ fontSize: '10pt', fontStyle: 'italic' }}>{cert.issuer}</div>
-                      {cert.credentialId && (
-                        <div style={{ fontSize: '10pt', color: '#666' }}>ID: {cert.credentialId}</div>
-                      )}
-                      {cert.url && (
-                        <div style={{ fontSize: '10pt', color: '#0066cc' }}>{cert.url}</div>
-                      )}
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666' }}>
-                      {cert.issueDate || cert.date}
-                      {cert.expiryDate && ` - ${cert.expiryDate}`}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Volunteer Experience */}
-          {volunteerExperience && volunteerExperience.length > 0 && (
-            <div style={{ marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 10px 0', color: '#000' }}>
-                VOLUNTEER EXPERIENCE
-              </h2>
-              {volunteerExperience.map((vol, index) => (
-                <div key={index} style={{ marginBottom: '15px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <strong style={{ fontSize: '12pt' }}>{vol.role}</strong>
-                      <div style={{ fontSize: '11pt', fontStyle: 'italic' }}>{vol.organization}</div>
-                      {vol.cause && (
-                        <div style={{ fontSize: '10pt', color: '#666' }}>Cause: {vol.cause}</div>
-                      )}
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666' }}>
-                      {vol.startDate} - {vol.current ? 'Present' : vol.endDate}
-                    </div>
-                  </div>
-                  {vol.description && (
-                    <p style={{ margin: '5px 0 0 0', fontSize: '10pt', lineHeight: '1.3' }}>
-                      {vol.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Publications */}
-          {publications && publications.length > 0 && (
-            <div style={{ marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 10px 0', color: '#000' }}>
-                PUBLICATIONS
-              </h2>
-              {publications.map((pub, index) => (
-                <div key={index} style={{ marginBottom: '15px' }}>
-                  <strong style={{ fontSize: '12pt' }}>{pub.title}</strong>
-                  {pub.publisher && (
-                    <div style={{ fontSize: '11pt', fontStyle: 'italic' }}>{pub.publisher}</div>
-                  )}
-                  {pub.date && (
-                    <div style={{ fontSize: '10pt', color: '#666' }}>{pub.date}</div>
-                  )}
-                  {pub.authors && pub.authors.length > 0 && (
-                    <div style={{ fontSize: '10pt', color: '#666' }}>
-                      Authors: {pub.authors.join(', ')}
-                    </div>
-                  )}
-                  {pub.url && (
-                    <div style={{ fontSize: '10pt', color: '#0066cc' }}>{pub.url}</div>
-                  )}
-                  {pub.description && (
-                    <p style={{ margin: '5px 0 0 0', fontSize: '10pt', lineHeight: '1.3' }}>
-                      {pub.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Honors and Awards */}
-          {cv.data.honorsAwards && cv.data.honorsAwards.length > 0 && (
-            <div style={{ marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 10px 0', color: '#000' }}>
-                HONORS & AWARDS
-              </h2>
-              {cv.data.honorsAwards.map((award, index) => (
-                <div key={index} style={{ marginBottom: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div>
-                      <strong>{award.title}</strong>
-                      <div style={{ fontSize: '10pt', fontStyle: 'italic' }}>{award.issuer}</div>
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666' }}>
-                      {award.date}
-                    </div>
-                  </div>
-                  {award.description && (
-                    <p style={{ margin: '5px 0 0 0', fontSize: '10pt', lineHeight: '1.3' }}>
-                      {award.description}
-                    </p>
-                  )}
-                  {award.url && (
-                    <div style={{ fontSize: '10pt', color: '#0066cc' }}>{award.url}</div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Test Scores */}
-          {cv.data.testScores && cv.data.testScores.length > 0 && (
-            <div style={{ marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 10px 0', color: '#000' }}>
-                TEST SCORES
-              </h2>
-              {cv.data.testScores.map((score, index) => (
-                <div key={index} style={{ marginBottom: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div>
-                      <strong>{score.testName}</strong>
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666' }}>
-                      {score.date}
-                    </div>
-                  </div>
-                  <div style={{ fontSize: '10pt', color: '#333' }}>
-                    Score: {score.score}
-                  </div>
-                  {score.description && (
-                    <p style={{ margin: '5px 0 0 0', fontSize: '10pt', lineHeight: '1.3' }}>
-                      {score.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Recommendations */}
-          {cv.data.recommendations && cv.data.recommendations.length > 0 && (
-            <div style={{ marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 10px 0', color: '#000' }}>
-                RECOMMENDATIONS
-              </h2>
-              {cv.data.recommendations.map((rec, index) => (
-                <div key={index} style={{ marginBottom: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div>
-                      <strong>{rec.recommenderName}</strong>
-                      <div style={{ fontSize: '10pt', fontStyle: 'italic' }}>{rec.recommenderTitle} at {rec.recommenderCompany}</div>
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666' }}>
-                      {rec.date}
-                    </div>
-                  </div>
-                  {rec.text && (
-                    <p style={{ margin: '5px 0 0 0', fontSize: '10pt', lineHeight: '1.3' }}>
-                      "{rec.text}"
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Courses */}
-          {cv.data.courses && cv.data.courses.length > 0 && (
-            <div style={{ marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 10px 0', color: '#000' }}>
-                COURSES
-              </h2>
-              {cv.data.courses.map((course, index) => (
-                <div key={index} style={{ marginBottom: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div>
-                      <strong>{course.name}</strong>
-                      <div style={{ fontSize: '10pt', fontStyle: 'italic' }}>{course.institution}</div>
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666' }}>
-                      {course.completionDate}
-                    </div>
-                  </div>
-                  {course.description && (
-                    <p style={{ margin: '5px 0 0 0', fontSize: '10pt', lineHeight: '1.3' }}>
-                      {course.description}
-                    </p>
-                  )}
-                  {course.certificate && (
-                    <div style={{ fontSize: '10pt', color: '#333' }}>
-                      Certificate awarded
-                    </div>
-                  )}
-                  {course.url && (
-                    <div style={{ fontSize: '10pt', color: '#0066cc' }}>{course.url}</div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Resumonk Bold Template - Bold headers and modern styling
-  if (templateType === 'resumonk') {
-    return (
-      <div style={{
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '11pt',
-        lineHeight: '1.4',
-        color: '#333',
-        background: 'white',
-        width: '100%',
-        height: '100%',
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          height: '100%',
-          overflowY: 'auto',
-          padding: '15px',
-          width: '794px'
-        }}>
-          {/* Bold Header with accent color */}
-          <div style={{
-            background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-            color: 'white',
-            padding: '20px',
-            marginBottom: '25px',
-            borderRadius: '8px'
-          }}>
-            <h1 style={{
-              fontSize: '28pt',
-              fontWeight: 'bold',
-              margin: '0 0 8px 0',
-              textTransform: 'uppercase',
-              letterSpacing: '1px'
-            }}>
-              {fullName}
-            </h1>
-            {personalInfo?.title && (
-              <div style={{ fontSize: '14pt', marginBottom: '12px', opacity: '0.9' }}>
-                {personalInfo.title}
-              </div>
-            )}
-            <div style={{ fontSize: '11pt', opacity: '0.8' }}>
-              {personalInfo?.email} | {personalInfo?.phone}
-              {personalInfo?.website && ` | ${personalInfo.website}`}
-            </div>
-          </div>
-
-          {/* Summary with bold styling */}
-          {personalInfo?.summary && (
-            <div style={{ marginBottom: '25px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#2563eb',
-                textTransform: 'uppercase',
-                borderBottom: '2px solid #2563eb',
-                paddingBottom: '5px'
-              }}>
-                PROFESSIONAL SUMMARY
-              </h2>
-              <p style={{ margin: '0', fontSize: '11pt', lineHeight: '1.5' }}>
-                {personalInfo.summary}
-              </p>
-            </div>
-          )}
-
-          {/* Experience with bold styling */}
-          {experience && experience.length > 0 && (
-            <div style={{ marginBottom: '25px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 15px 0',
-                color: '#2563eb',
-                textTransform: 'uppercase',
-                borderBottom: '2px solid #2563eb',
-                paddingBottom: '5px'
-              }}>
-                WORK EXPERIENCE
-              </h2>
-              {experience.map((exp, index) => (
-                <div key={index} style={{
-                  marginBottom: '20px',
-                  padding: '15px',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '6px',
-                  backgroundColor: '#f9fafb'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <h3 style={{ fontSize: '13pt', fontWeight: 'bold', margin: '0 0 3px 0', color: '#1f2937' }}>
-                        {exp.position}
-                      </h3>
-                      <div style={{ fontSize: '12pt', fontWeight: '600', color: '#2563eb' }}>
-                        {exp.company}
+                      <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600 mb-4">
+                        {cv.data.personalInfo?.email && (
+                          <span className="flex items-center gap-1">
+                            <span>📧</span> {cv.data.personalInfo.email}
+                          </span>
+                        )}
+                        {cv.data.personalInfo?.phone && (
+                          <span className="flex items-center gap-1">
+                            <span>📱</span> {cv.data.personalInfo.phone}
+                          </span>
+                        )}
+                        {cv.data.personalInfo?.linkedin && (
+                          <span className="flex items-center gap-1">
+                            <span>🔗</span> LinkedIn
+                          </span>
+                        )}
                       </div>
-                    </div>
-                    <div style={{
-                      fontSize: '10pt',
-                      color: 'white',
-                      backgroundColor: '#2563eb',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontWeight: '500'
-                    }}>
-                      {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
-                    </div>
-                  </div>
-                  {exp.description && (
-                    <p style={{ margin: '8px 0 0 0', fontSize: '10pt', lineHeight: '1.4' }}>
-                      {exp.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Education with bold styling */}
-          {education && education.length > 0 && (
-            <div style={{ marginBottom: '25px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 15px 0',
-                color: '#2563eb',
-                textTransform: 'uppercase',
-                borderBottom: '2px solid #2563eb',
-                paddingBottom: '5px'
-              }}>
-                EDUCATION
-              </h2>
-              {education.map((edu, index) => (
-                <div key={index} style={{
-                  marginBottom: '15px',
-                  padding: '12px',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '6px'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div>
-                      <h3 style={{ fontSize: '12pt', fontWeight: 'bold', margin: '0 0 3px 0' }}>
-                        {edu.degree} - {edu.field}
-                      </h3>
-                      <div style={{ fontSize: '11pt', color: '#2563eb', fontWeight: '600' }}>
-                        {edu.institution}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666', fontWeight: '500' }}>
-                      {edu.startDate} - {edu.current ? 'Present' : edu.endDate}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Skills with bold styling */}
-          {skills && skills.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#2563eb',
-                textTransform: 'uppercase',
-                borderBottom: '2px solid #2563eb',
-                paddingBottom: '5px'
-              }}>
-                SKILLS
-              </h2>
-              <div style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '8px'
-              }}>
-                {skills.map((skill, index) => (
-                  <span key={index} style={{
-                    backgroundColor: '#2563eb',
-                    color: 'white',
-                    padding: '6px 12px',
-                    borderRadius: '20px',
-                    fontSize: '10pt',
-                    fontWeight: '500'
-                  }}>
-                    {skill.name}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Languages */}
-          {languages && languages.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#2563eb',
-                textTransform: 'uppercase',
-                borderBottom: '2px solid #2563eb',
-                paddingBottom: '5px'
-              }}>
-                LANGUAGES
-              </h2>
-              {languages.map((lang, index) => (
-                <div key={index} style={{
-                  marginBottom: '15px',
-                  padding: '12px',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '6px',
-                  backgroundColor: '#f9fafb'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontSize: '12pt', fontWeight: 'bold' }}>
-                      {lang.name}
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666', fontWeight: '500' }}>
-                      {lang.level}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Projects */}
-          {projects && projects.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#2563eb',
-                textTransform: 'uppercase',
-                borderBottom: '2px solid #2563eb',
-                paddingBottom: '5px'
-              }}>
-                PROJECTS
-              </h2>
-              {projects.map((project, index) => (
-                <div key={index} style={{
-                  marginBottom: '25px',
-                  padding: '15px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9f9f9'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <h3 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 5px 0', color: '#1f2937' }}>
-                        {project.name}
-                      </h3>
-                      {project.url && (
-                        <div style={{ fontSize: '10pt', color: '#000' }}>
-                          {project.url}
+                      {cv.data.personalInfo?.summary && (
+                        <div className="text-left max-w-4xl mx-auto">
+                          <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">
+                            {getSectionName('summary', 'Özət')}
+                          </h3>
+                          <div
+                            className="text-gray-700 leading-relaxed prose prose-sm max-w-none"
+                            dangerouslySetInnerHTML={{ __html: cv.data.personalInfo.summary || '' }}
+                          />
                         </div>
                       )}
                     </div>
-                    <div style={{
-                      fontSize: '10pt',
-                      color: '#666',
-                      backgroundColor: '#000',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontWeight: '500'
-                    }}>
-                      {project.startDate} - {project.current ? 'Present' : project.endDate}
-                    </div>
-                  </div>
-                  {project.description && (
-                    <p style={{ margin: '8px 0 0 0', fontSize: '10pt', lineHeight: '1.4' }}>
-                      {project.description}
-                    </p>
-                  )}
-                  {project.technologies && project.technologies.length > 0 && (
-                    <div style={{ margin: '8px 0 0 0', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                      {project.technologies.map((tech, i) => (
-                        <span key={i} style={{
-                          backgroundColor: '#f3f4f6',
-                          color: '#374151',
-                          padding: '2px 6px',
-                          borderRadius: '12px',
-                          fontSize: '9pt',
-                          fontWeight: '500'
-                        }}>
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                  </SimpleDragOverlay>
+                );
 
-          {/* Certifications */}
-          {certifications && certifications.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#000',
-                borderBottom: '2px solid #000',
-                paddingBottom: '5px'
-              }}>
-                CERTIFICATIONS
-              </h2>
-              {certifications.map((cert, index) => (
-                <div key={index} style={{
-                  marginBottom: '15px',
-                  padding: '12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9f9f9'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              case 'experience':
+                if (!cv.data.experience || cv.data.experience.length === 0) return null;
+                return (
+                  <SimpleDragOverlay key="experience" sectionId="experience" className="mb-8">
                     <div>
-                      <h3 style={{ fontSize: '13pt', fontWeight: 'bold', margin: '0 0 3px 0' }}>
-                        {cert.name}
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-300 pb-1">
+                        {getSectionName('experience', 'İş Təcrübəsi')}
                       </h3>
-                      <div style={{ fontSize: '12pt', color: '#333', fontWeight: '600' }}>
-                        {cert.issuer}
-                      </div>
-                      {cert.credentialId && (
-                        <div style={{ fontSize: '10pt', color: '#666' }}>ID: {cert.credentialId}</div>
-                      )}
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666', fontWeight: '500' }}>
-                      {cert.issueDate || cert.date}
-                      {cert.expiryDate && ` - ${cert.expiryDate}`}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Volunteer Experience */}
-          {volunteerExperience && volunteerExperience.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#000',
-                borderBottom: '2px solid #000',
-                paddingBottom: '5px'
-              }}>
-                VOLUNTEER EXPERIENCE
-              </h2>
-              {volunteerExperience.map((vol, index) => (
-                <div key={index} style={{
-                  marginBottom: '25px',
-                  padding: '15px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9f9f9'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <h3 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 5px 0', color: '#1f2937' }}>
-                        {vol.role}
-                      </h3>
-                      <div style={{ fontSize: '12pt', fontWeight: '600', color: '#2563eb' }}>
-                        {vol.organization}
-                      </div>
-                      {vol.cause && (
-                        <div style={{ fontSize: '10pt', color: '#666' }}>Cause: {vol.cause}</div>
-                      )}
-                    </div>
-                    <div style={{
-                      fontSize: '10pt',
-                      color: 'white',
-                      backgroundColor: '#2563eb',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontWeight: '500'
-                    }}>
-                      {vol.startDate} - {vol.current ? 'Present' : vol.endDate}
-                    </div>
-                  </div>
-                  {vol.description && (
-                    <p style={{ margin: '8px 0 0 0', fontSize: '10pt', lineHeight: '1.4' }}>
-                      {vol.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Publications */}
-          {publications && publications.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#000',
-                borderBottom: '2px solid #000',
-                paddingBottom: '5px'
-              }}>
-                PUBLICATIONS
-              </h2>
-              {publications.map((pub, index) => (
-                <div key={index} style={{
-                  marginBottom: '25px',
-                  padding: '15px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9f9f9'
-                }}>
-                  <h3 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 5px 0', color: '#1f2937' }}>
-                    {pub.title}
-                  </h3>
-                  {pub.publisher && (
-                    <div style={{ fontSize: '12pt', fontWeight: '600', color: '#333' }}>
-                      {pub.publisher}
-                    </div>
-                  )}
-                  {pub.date && (
-                    <div style={{ fontSize: '10pt', color: '#666' }}>{pub.date}</div>
-                  )}
-                  {pub.authors && pub.authors.length > 0 && (
-                    <div style={{ fontSize: '10pt', color: '#666' }}>
-                      Authors: {pub.authors.join(', ')}
-                    </div>
-                  )}
-                  {pub.description && (
-                    <p style={{ margin: '8px 0 0 0', fontSize: '10pt', lineHeight: '1.4' }}>
-                      {pub.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Honors and Awards */}
-          {honorsAwards && honorsAwards.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#000',
-                borderBottom: '2px solid #000',
-                paddingBottom: '5px'
-              }}>
-                HONORS & AWARDS
-              </h2>
-              {honorsAwards.map((award, index) => (
-                <div key={index} style={{
-                  marginBottom: '15px',
-                  padding: '12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9f9f9'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div>
-                      <h3 style={{ fontSize: '13pt', fontWeight: 'bold', margin: '0 0 3px 0' }}>
-                        {award.title}
-                      </h3>
-                      <div style={{ fontSize: '12pt', color: '#333', fontWeight: '600' }}>
-                        {award.issuer}
+                      <div className="space-y-4">
+                        {cv.data.experience.map((exp: any, index: number) => (
+                          <div key={index} className="border-l-2 border-blue-500 pl-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <h4 className="font-semibold text-gray-900">{exp.position}</h4>
+                                <p className="text-gray-700">{exp.company}</p>
+                              </div>
+                              <span className="text-sm text-gray-500 whitespace-nowrap ml-4">
+                                {exp.startDate} - {exp.current ? 'Hazırda' : exp.endDate}
+                              </span>
+                            </div>
+                            {exp.description && (
+                              <p className="text-sm text-gray-600 leading-relaxed">{exp.description}</p>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    <div style={{ fontSize: '10pt', color: '#666', fontWeight: '500' }}>
-                      {award.date}
-                    </div>
-                  </div>
-                  {award.description && (
-                    <p style={{ margin: '8px 0 0 0', fontSize: '10pt', lineHeight: '1.4' }}>
-                      {award.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                  </SimpleDragOverlay>
+                );
 
-          {/* Test Scores */}
-          {testScores && testScores.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#000',
-                borderBottom: '2px solid #000',
-                paddingBottom: '5px'
-              }}>
-                TEST SCORES
-              </h2>
-              {testScores.map((score, index) => (
-                <div key={index} style={{
-                  marginBottom: '15px',
-                  padding: '12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9f9f9'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              case 'education':
+                if (!cv.data.education || cv.data.education.length === 0) return null;
+                return (
+                  <SimpleDragOverlay key="education" sectionId="education" className="mb-8">
                     <div>
-                      <h3 style={{ fontSize: '13pt', fontWeight: 'bold', margin: '0 0 3px 0' }}>
-                        {score.testName}
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-300 pb-1">
+                        {getSectionName('education', 'Təhsil')}
                       </h3>
-                      <div style={{ fontSize: '12pt', color: '#333', fontWeight: '600' }}>
-                        Score: {score.score}
+                      <div className="space-y-4">
+                        {cv.data.education.map((edu: any, index: number) => (
+                          <div key={index} className="border-l-2 border-green-500 pl-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <h4 className="font-semibold text-gray-900">{edu.degree}</h4>
+                                <p className="text-gray-700">{edu.institution}</p>
+                                {edu.field && <p className="text-sm text-gray-600">{edu.field}</p>}
+                              </div>
+                              <span className="text-sm text-gray-500 whitespace-nowrap ml-4">
+                                {edu.startDate} - {edu.current ? 'Hazırda' : edu.endDate}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    <div style={{ fontSize: '10pt', color: '#666', fontWeight: '500' }}>
-                      {score.date}
-                    </div>
-                  </div>
-                  {score.description && (
-                    <p style={{ margin: '8px 0 0 0', fontSize: '10pt', lineHeight: '1.4' }}>
-                      {score.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                  </SimpleDragOverlay>
+                );
 
-          {/* Recommendations */}
-          {recommendations && recommendations.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#000',
-                borderBottom: '2px solid #000',
-                paddingBottom: '5px'
-              }}>
-                RECOMMENDATIONS
-              </h2>
-              {recommendations.map((rec, index) => (
-                <div key={index} style={{
-                  marginBottom: '25px',
-                  padding: '15px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9fafb'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              case 'skills':
+                if (!cv.data.skills || cv.data.skills.length === 0) return null;
+                return (
+                  <SimpleDragOverlay key="skills" sectionId="skills" className="mb-8">
                     <div>
-                      <h3 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 5px 0', color: '#1f2937' }}>
-                        {rec.recommenderName}
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-300 pb-1">
+                        {getSectionName('skills', 'Bacarıqlar')}
                       </h3>
-                      <div style={{ fontSize: '12pt', fontWeight: '600', color: '#333' }}>
-                        {rec.recommenderTitle} at {rec.recommenderCompany}
+                      <div className="flex flex-wrap gap-2">
+                        {cv.data.skills.map((skill: any, index: number) => (
+                          <span
+                            key={index}
+                            className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium"
+                          >
+                            {typeof skill === 'string' ? skill : skill.name}
+                          </span>
+                        ))}
                       </div>
                     </div>
-                    <div style={{ fontSize: '10pt', color: '#666', fontWeight: '500' }}>
-                      {rec.date}
-                    </div>
-                  </div>
-                  {rec.text && (
-                    <p style={{ margin: '8px 0 0 0', fontSize: '10pt', lineHeight: '1.4' }}>
-                      "{rec.text}"
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                  </SimpleDragOverlay>
+                );
 
-          {/* Courses */}
-          {courses && courses.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#000',
-                borderBottom: '2px solid #000',
-                paddingBottom: '5px'
-              }}>
-                COURSES
-              </h2>
-              {courses.map((course, index) => (
-                <div key={index} style={{
-                  marginBottom: '15px',
-                  padding: '12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9f9f9'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              case 'projects':
+                if (!cv.data.projects || cv.data.projects.length === 0) return null;
+                return (
+                  <SimpleDragOverlay key="projects" sectionId="projects" className="mb-8">
                     <div>
-                      <h3 style={{ fontSize: '13pt', fontWeight: 'bold', margin: '0 0 3px 0' }}>
-                        {course.name}
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-300 pb-1">
+                        {getSectionName('projects', 'Layihələr')}
                       </h3>
-                      <div style={{ fontSize: '12pt', color: '#333', fontWeight: '600' }}>
-                        {course.institution}
+                      <div className="space-y-4">
+                        {cv.data.projects.map((project: any, index: number) => (
+                          <div key={index} className="border-l-2 border-purple-500 pl-4">
+                            <h4 className="font-semibold text-gray-900 mb-1">{project.name}</h4>
+                            {project.description && (
+                              <p className="text-sm text-gray-600 leading-relaxed">{project.description}</p>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                      {course.certificate && (
-                        <div style={{ fontSize: '10pt', color: '#16a34a' }}>Certificate awarded</div>
-                      )}
                     </div>
-                    <div style={{ fontSize: '10pt', color: '#666', fontWeight: '500' }}>
-                      {course.completionDate}
+                  </SimpleDragOverlay>
+                );
+
+              case 'certifications':
+                if (!cv.data.certifications || cv.data.certifications.length === 0) return null;
+                return (
+                  <SimpleDragOverlay key="certifications" sectionId="certifications" className="mb-8">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-300 pb-1">
+                        {getSectionName('certifications', 'Sertifikatlar')}
+                      </h3>
+                      <div className="space-y-3">
+                        {cv.data.certifications.map((cert: any, index: number) => (
+                          <div key={index} className="border-l-2 border-yellow-500 pl-4">
+                            <h4 className="font-semibold text-gray-900">{cert.name}</h4>
+                            <p className="text-sm text-gray-700">{cert.issuer}</p>
+                            {cert.date && <p className="text-xs text-gray-500">{cert.date}</p>}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  {course.description && (
-                    <p style={{ margin: '8px 0 0 0', fontSize: '10pt', lineHeight: '1.4' }}>
-                      {course.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                  </SimpleDragOverlay>
+                );
+
+              case 'languages':
+                if (!cv.data.languages || cv.data.languages.length === 0) return null;
+                return (
+                  <SimpleDragOverlay key="languages" sectionId="languages" className="mb-8">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-300 pb-1">
+                        {getSectionName('languages', 'Dillər')}
+                      </h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        {cv.data.languages.map((lang: any, index: number) => {
+                          // Handle both old and new field names for compatibility
+                          const languageName = typeof lang === 'string'
+                            ? lang
+                            : (lang.language || lang.name || '');
+                          const languageLevel = typeof lang === 'object'
+                            ? (lang.level || lang.proficiency || '')
+                            : '';
+
+                          // Translate levels to Azerbaijani for display
+                          const levelTranslations = {
+                            'Basic': 'Əsas',
+                            'Conversational': 'Danışıq',
+                            'Professional': 'Professional',
+                            'Native': 'Ana dili'
+                          };
+
+                          const displayLevel = levelTranslations[languageLevel as keyof typeof levelTranslations] || languageLevel;
+
+                          return (
+                            <div key={index} className="flex justify-between items-center">
+                              <span className="font-medium text-gray-900">
+                                {languageName}
+                              </span>
+                              {displayLevel && (
+                                <span className="text-sm text-gray-600">({displayLevel})</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </SimpleDragOverlay>
+                );
+
+              case 'volunteerExperience':
+                if (!cv.data.volunteerExperience || cv.data.volunteerExperience.length === 0) return null;
+                return (
+                  <SimpleDragOverlay key="volunteerExperience" sectionId="volunteerExperience" className="mb-8">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-300 pb-1">
+                        {getSectionName('volunteerExperience', 'Könüllü Təcrübə')}
+                      </h3>
+                      <div className="space-y-4">
+                        {cv.data.volunteerExperience.map((vol: any, index: number) => (
+                          <div key={index} className="border-l-2 border-red-500 pl-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <h4 className="font-semibold text-gray-900">{vol.role}</h4>
+                                <p className="text-gray-700">{vol.organization}</p>
+                              </div>
+                              <span className="text-sm text-gray-500 whitespace-nowrap ml-4">
+                                {vol.startDate} - {vol.current ? 'Hazırda' : vol.endDate}
+                              </span>
+                            </div>
+                            {vol.description && (
+                              <p className="text-sm text-gray-600 leading-relaxed">{vol.description}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </SimpleDragOverlay>
+                );
+
+              case 'customSections':
+                if (!cv.data.customSections || cv.data.customSections.length === 0) return null;
+
+                // Debug: CVPreviewA4 custom sections
+                console.log('🔍 CVPreviewA4 Custom Sections Debug:', {
+                  componentName: 'CVPreviewA4.tsx',
+                  customSectionsLength: cv.data.customSections.length,
+                  sections: cv.data.customSections.map(s => ({
+                    title: s.title,
+                    itemsCount: s.items?.length || 0,
+                    isVisible: s.isVisible
+                  }))
+                });
+
+                return (
+                  <SimpleDragOverlay key="customSections" sectionId="customSections" className="mb-8">
+                    <div className="space-y-6">
+                      {cv.data.customSections.map((section: any, sectionIndex: number) => {
+                        // Only render visible sections
+                        if (section.isVisible === false) return null;
+
+                        // Debug: Individual section debug
+                        console.log('🔍 CVPreviewA4 Individual Section:', {
+                          title: section.title,
+                          itemsLength: section.items?.length || 0,
+                          items: section.items
+                        });
+
+                        return (
+                          <div key={sectionIndex}>
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-300 pb-1">
+                              {section.title || 'Əlavə Bölmə'}
+                            </h3>
+
+                            {section.description && (
+                              <p className="text-sm text-gray-600 mb-3 italic">{section.description}</p>
+                            )}
+
+                            {/* Debug warning for empty items */}
+                            {(!section.items || section.items.length === 0) && (
+                              <div className="p-3 bg-red-50 border border-red-200 rounded">
+                                <p className="text-sm text-red-800">⚠️ CVPreviewA4: Bu bölmədə element yoxdur!</p>
+                              </div>
+                            )}
+
+                            {section.items && section.items.length > 0 && (
+                              <div className="space-y-3">
+                                {section.items.map((item: any, itemIndex: number) => {
+                                  // Debug: Individual item
+                                  console.log('🔍 CVPreviewA4 Item:', {
+                                    itemIndex,
+                                    title: item.title,
+                                    description: item.description
+                                  });
+
+                                  return (
+                                    <div key={itemIndex} className="border-l-2 border-green-500 pl-4  p-3 rounded">
+                                      {/* Different rendering based on section type */}
+                                      {section.type === 'simple' && (
+                                        <div>
+                                          <h4 className="font-medium text-gray-900">{item.title}</h4>
+                                          {item.description && (
+                                            <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                          )}
+                                        </div>
+                                      )}
+
+                                      {section.type === 'detailed' && (
+                                        <div>
+                                          <div className="flex justify-between items-start">
+                                            <h4 className="font-medium text-gray-900">{item.title}</h4>
+                                            {item.location && (
+                                              <span className="text-sm text-gray-500 ml-4">{item.location}</span>
+                                            )}
+                                          </div>
+                                          {item.description && (
+                                            <p className="text-sm text-gray-600 mt-1 leading-relaxed">{item.description}</p>
+                                          )}
+                                          {item.url && (
+                                            <a
+                                              href={item.url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-xs text-blue-600 hover:text-blue-800 mt-1 inline-block"
+                                            >
+                                              {item.url}
+                                            </a>
+                                          )}
+                                        </div>
+                                      )}
+
+                                      {section.type === 'timeline' && (
+                                        <div>
+                                          <div className="flex justify-between items-start">
+                                            <h4 className="font-medium text-gray-900">{item.title}</h4>
+                                            {item.date && (
+                                              <span className="text-sm text-gray-500 ml-4">{item.date}</span>
+                                            )}
+                                          </div>
+                                          {item.description && (
+                                            <p className="text-sm text-gray-600 mt-1 leading-relaxed">{item.description}</p>
+                                          )}
+                                        </div>
+                                      )}
+
+                                      {/* Default rendering if no type is specified */}
+                                      {!section.type && (
+                                        <div>
+                                          <h4 className="font-medium text-gray-900">{item.title}</h4>
+                                          {item.description && (
+                                            <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                          )}
+                                        </div>
+                                      )}
+
+
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </SimpleDragOverlay>
+                );
+
+              default:
+                return null;
+            }
+          }).filter(Boolean)}
         </div>
-      </div>
-    );
-  }
 
-  // Executive Premium Template - Sophisticated and elegant design
-  if (templateType === 'executive') {
-    return (
-      <div style={{
-        fontFamily: 'Georgia, serif',
-        fontSize: '11pt',
-        lineHeight: '1.6',
-        color: '#333',
-        background: 'white',
-        width: '100%',
-        height: '100%',
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          height: '100%',
-          overflowY: 'auto',
-          padding: '25px',
-          width: '794px'
-        }}>
-          {/* Executive Header - Elegant and professional */}
-          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-            <h1 style={{
-              fontSize: '26pt',
-              fontWeight: 'bold',
-              color: '#000',
-              margin: '0 0 10px 0',
-              borderBottom: '3px solid #000',
-              paddingBottom: '5px'
-            }}>
-              {fullName}
-            </h1>
-            {personalInfo?.title && (
-              <div style={{ fontSize: '14pt', color: '#555', marginBottom: '15px' }}>
-                {personalInfo.title}
+        {/* Instructions for selection mode */}
+        {enableSectionSelection && sections.length > 1 && (
+          <div className="sticky bottom-0 p-3 bg-gray-50 border-t border-gray-200">
+            <div className="text-sm text-gray-600 space-y-1">
+              <div className="flex items-center gap-2 font-medium">
+                <span>💡</span>
+                <span>Təlimatlar:</span>
               </div>
-            )}
-            <div style={{ fontSize: '11pt', color: '#777' }}>
-              {personalInfo?.email} | {personalInfo?.phone}
-              {personalInfo?.website && ` | ${personalInfo.website}`}
+              <ul className="text-xs space-y-1 ml-6">
+                <li>• Bölməni seçmək üçün üzərinə klikləyin</li>
+                <li>• Sürükləyib buraxaraq yenidən sıralayın</li>
+                <li>• Sol tərəfdəki tutacaqdan istifadə edin</li>
+                <li>• Dəyişikliklər avtomatik saxlanılır</li>
+              </ul>
             </div>
           </div>
-
-          {/* Summary */}
-          {personalInfo?.summary && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#000',
-                borderBottom: '2px solid #000',
-                paddingBottom: '5px'
-              }}>
-                PROFESSIONAL SUMMARY
-              </h2>
-              <p style={{ margin: '0', fontSize: '11pt', lineHeight: '1.5', textAlign: 'justify' }}>
-                {personalInfo.summary}
-              </p>
-            </div>
-          )}
-
-          {/* Experience */}
-          {experience && experience.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#000',
-                borderBottom: '2px solid #000',
-                paddingBottom: '5px'
-              }}>
-                WORK EXPERIENCE
-              </h2>
-              {experience.map((exp, index) => (
-                <div key={index} style={{
-                  marginBottom: '25px',
-                  padding: '15px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9f9f9'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <h3 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 5px 0', color: '#1f2937' }}>
-                        {exp.position}
-                      </h3>
-                      <div style={{ fontSize: '12pt', fontWeight: '600', color: '#333' }}>
-                        {exp.company}
-                      </div>
-                    </div>
-                    <div style={{
-                      fontSize: '10pt',
-                      color: 'white',
-                      backgroundColor: '#111',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontWeight: '500'
-                    }}>
-                      {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
-                    </div>
-                  </div>
-                  {exp.description && (
-                    <p style={{ margin: '8px 0 0 0', fontSize: '10pt', lineHeight: '1.4' }}>
-                      {exp.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Education */}
-          {education && education.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#000',
-                borderBottom: '2px solid #000',
-                paddingBottom: '5px'
-              }}>
-                EDUCATION
-              </h2>
-              {education.map((edu, index) => (
-                <div key={index} style={{
-                  marginBottom: '15px',
-                  padding: '12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div>
-                      <h3 style={{ fontSize: '13pt', fontWeight: 'bold', margin: '0 0 3px 0' }}>
-                        {edu.degree} - {edu.field}
-                      </h3>
-                      <div style={{ fontSize: '12pt', color: '#333', fontWeight: '600' }}>
-                        {edu.institution}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666', fontWeight: '500' }}>
-                      {edu.startDate} - {edu.current ? 'Present' : edu.endDate}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Skills */}
-          {skills && skills.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#111',
-                borderBottom: '3px solid #111',
-                paddingBottom: '6px'
-              }}>
-                SKILLS
-              </h2>
-              <div style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '10px'
-              }}>
-                {skills.map((skill, index) => (
-                  <span key={index} style={{
-                    backgroundColor: '#111',
-                    color: 'white',
-                    padding: '8px 16px',
-                    borderRadius: '20px',
-                    fontSize: '10pt',
-                    fontWeight: '500'
-                  }}>
-                    {skill.name}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Languages */}
-          {languages && languages.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#111',
-                borderBottom: '3px solid #111',
-                paddingBottom: '6px'
-              }}>
-                LANGUAGES
-              </h2>
-              {languages.map((lang, index) => (
-                <div key={index} style={{
-                  marginBottom: '15px',
-                  padding: '12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9f9f9'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontSize: '12pt', fontWeight: 'bold' }}>
-                      {lang.name}
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666', fontWeight: '500' }}>
-                      {lang.level}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Projects */}
-          {projects && projects.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#111',
-                borderBottom: '3px solid #111',
-                paddingBottom: '6px'
-              }}>
-                PROJECTS
-              </h2>
-              {projects.map((project, index) => (
-                <div key={index} style={{
-                  marginBottom: '25px',
-                  padding: '15px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9f9f9'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <h3 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 5px 0', color: '#1f2937' }}>
-                        {project.name}
-                      </h3>
-                      {project.url && (
-                        <div style={{ fontSize: '10pt', color: '#111' }}>
-                          {project.url}
-                        </div>
-                      )}
-                    </div>
-                    <div style={{
-                      fontSize: '10pt',
-                      color: '#666',
-                      backgroundColor: '#111',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontWeight: '500'
-                    }}>
-                      {project.startDate} - {project.current ? 'Present' : project.endDate}
-                    </div>
-                  </div>
-                  {project.description && (
-                    <p style={{ margin: '8px 0 0 0', fontSize: '10pt', lineHeight: '1.4' }}>
-                      {project.description}
-                    </p>
-                  )}
-                  {project.technologies && project.technologies.length > 0 && (
-                    <div style={{ margin: '8px 0 0 0', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                      {project.technologies.map((tech, i) => (
-                        <span key={i} style={{
-                          backgroundColor: '#f3f4f6',
-                          color: '#374151',
-                          padding: '2px 6px',
-                          borderRadius: '12px',
-                          fontSize: '9pt',
-                          fontWeight: '500'
-                        }}>
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Certifications */}
-          {certifications && certifications.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#111',
-                borderBottom: '3px solid #111',
-                paddingBottom: '6px'
-              }}>
-                CERTIFICATIONS
-              </h2>
-              {certifications.map((cert, index) => (
-                <div key={index} style={{
-                  marginBottom: '15px',
-                  padding: '12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9f9f9'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div>
-                      <h3 style={{ fontSize: '13pt', fontWeight: 'bold', margin: '0 0 3px 0' }}>
-                        {cert.name}
-                      </h3>
-                      <div style={{ fontSize: '12pt', color: '#333', fontWeight: '600' }}>
-                        {cert.issuer}
-                      </div>
-                      {cert.credentialId && (
-                        <div style={{ fontSize: '10pt', color: '#666' }}>ID: {cert.credentialId}</div>
-                      )}
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666', fontWeight: '500' }}>
-                      {cert.issueDate || cert.date}
-                      {cert.expiryDate && ` - ${cert.expiryDate}`}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Volunteer Experience */}
-          {volunteerExperience && volunteerExperience.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#111',
-                borderBottom: '3px solid #111',
-                paddingBottom: '6px'
-              }}>
-                VOLUNTEER EXPERIENCE
-              </h2>
-              {volunteerExperience.map((vol, index) => (
-                <div key={index} style={{
-                  marginBottom: '25px',
-                  padding: '15px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9f9f9'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <h3 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 5px 0', color: '#1f2937' }}>
-                        {vol.role}
-                      </h3>
-                      <div style={{ fontSize: '12pt', fontWeight: '600', color: '#2563eb' }}>
-                        {vol.organization}
-                      </div>
-                      {vol.cause && (
-                        <div style={{ fontSize: '10pt', color: '#666' }}>Cause: {vol.cause}</div>
-                      )}
-                    </div>
-                    <div style={{
-                      fontSize: '10pt',
-                      color: 'white',
-                      backgroundColor: '#2563eb',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontWeight: '500'
-                    }}>
-                      {vol.startDate} - {vol.current ? 'Present' : vol.endDate}
-                    </div>
-                  </div>
-                  {vol.description && (
-                    <p style={{ margin: '8px 0 0 0', fontSize: '10pt', lineHeight: '1.4' }}>
-                      {vol.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Publications */}
-          {publications && publications.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#111',
-                borderBottom: '3px solid #111',
-                paddingBottom: '6px'
-              }}>
-                PUBLICATIONS
-              </h2>
-              {publications.map((pub, index) => (
-                <div key={index} style={{
-                  marginBottom: '25px',
-                  padding: '15px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9f9f9'
-                }}>
-                  <h3 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 5px 0', color: '#1f2937' }}>
-                    {pub.title}
-                  </h3>
-                  {pub.publisher && (
-                    <div style={{ fontSize: '12pt', fontWeight: '600', color: '#333' }}>
-                      {pub.publisher}
-                    </div>
-                  )}
-                  {pub.date && (
-                    <div style={{ fontSize: '10pt', color: '#666' }}>{pub.date}</div>
-                  )}
-                  {pub.authors && pub.authors.length > 0 && (
-                    <div style={{ fontSize: '10pt', color: '#666' }}>
-                      Authors: {pub.authors.join(', ')}
-                    </div>
-                  )}
-                  {pub.description && (
-                    <p style={{ margin: '8px 0 0 0', fontSize: '10pt', lineHeight: '1.4' }}>
-                      {pub.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Honors and Awards */}
-          {honorsAwards && honorsAwards.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#111',
-                borderBottom: '3px solid #111',
-                paddingBottom: '6px'
-              }}>
-                HONORS & AWARDS
-              </h2>
-              {honorsAwards.map((award, index) => (
-                <div key={index} style={{
-                  marginBottom: '15px',
-                  padding: '12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9f9f9'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div>
-                      <h3 style={{ fontSize: '13pt', fontWeight: 'bold', margin: '0 0 3px 0' }}>
-                        {award.title}
-                      </h3>
-                      <div style={{ fontSize: '12pt', color: '#333', fontWeight: '600' }}>
-                        {award.issuer}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666', fontWeight: '500' }}>
-                      {award.date}
-                    </div>
-                  </div>
-                  {award.description && (
-                    <p style={{ margin: '8px 0 0 0', fontSize: '10pt', lineHeight: '1.4' }}>
-                      {award.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Test Scores */}
-          {testScores && testScores.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#111',
-                borderBottom: '3px solid #111',
-                paddingBottom: '6px'
-              }}>
-                TEST SCORES
-              </h2>
-              {testScores.map((score, index) => (
-                <div key={index} style={{
-                  marginBottom: '15px',
-                  padding: '12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9f9f9'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div>
-                      <h3 style={{ fontSize: '13pt', fontWeight: 'bold', margin: '0 0 3px 0' }}>
-                        {score.testName}
-                      </h3>
-                      <div style={{ fontSize: '12pt', color: '#333', fontWeight: '600' }}>
-                        Score: {score.score}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666', fontWeight: '500' }}>
-                      {score.date}
-                    </div>
-                  </div>
-                  {score.description && (
-                    <p style={{ margin: '8px 0 0 0', fontSize: '10pt', lineHeight: '1.4' }}>
-                      {score.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Recommendations */}
-          {recommendations && recommendations.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#111',
-                borderBottom: '3px solid #111',
-                paddingBottom: '6px'
-              }}>
-                RECOMMENDATIONS
-              </h2>
-              {recommendations.map((rec, index) => (
-                <div key={index} style={{
-                  marginBottom: '25px',
-                  padding: '15px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9fafb'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <h3 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0 0 5px 0', color: '#1f2937' }}>
-                        {rec.recommenderName}
-                      </h3>
-                      <div style={{ fontSize: '12pt', fontWeight: '600', color: '#333' }}>
-                        {rec.recommenderTitle} at {rec.recommenderCompany}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666', fontWeight: '500' }}>
-                      {rec.date}
-                    </div>
-                  </div>
-                  {rec.text && (
-                    <p style={{ margin: '8px 0 0 0', fontSize: '10pt', lineHeight: '1.4' }}>
-                      "{rec.text}"
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Courses */}
-          {courses && courses.length > 0 && (
-            <div style={{ marginBottom: '30px' }}>
-              <h2 style={{
-                fontSize: '16pt',
-                fontWeight: 'bold',
-                margin: '0 0 10px 0',
-                color: '#111',
-                borderBottom: '3px solid #111',
-                paddingBottom: '6px'
-              }}>
-                COURSES
-              </h2>
-              {courses.map((course, index) => (
-                <div key={index} style={{
-                  marginBottom: '15px',
-                  padding: '12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9f9f9'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div>
-                      <h3 style={{ fontSize: '13pt', fontWeight: 'bold', margin: '0 0 3px 0' }}>
-                        {course.name}
-                      </h3>
-                      <div style={{ fontSize: '12pt', color: '#333', fontWeight: '600' }}>
-                        {course.institution}
-                      </div>
-                      {course.certificate && (
-                        <div style={{ fontSize: '10pt', color: '#16a34a' }}>Certificate awarded</div>
-                      )}
-                    </div>
-                    <div style={{ fontSize: '10pt', color: '#666', fontWeight: '500' }}>
-                      {course.completionDate}
-                    </div>
-                  </div>
-                  {course.description && (
-                    <p style={{ margin: '8px 0 0 0', fontSize: '10pt', lineHeight: '1.4' }}>
-                      {course.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        )}
       </div>
     );
   }
 
-  return null;
+  // For other templates, return a simple structure with scroll
+  return (
+    <div className="w-full h-full bg-white overflow-y-auto" style={{
+      scrollbarWidth: 'thin',
+      scrollbarColor: '#cbd5e1 #f1f5f9'
+    }}>
+      <div className="p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">{fullName}</h1>
+          <p className="text-gray-600 mt-2">Template: {templateType}</p>
+        </div>
+
+        {enableSectionSelection && (
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              Section selection is available for this template. Use the section manager for full control.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default CVPreviewA4;

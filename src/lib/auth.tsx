@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useContext, createContext, useCallback } from 'react';
 import jwt from 'jsonwebtoken';
 import { performanceTracker, getConnectionSpeed } from './performance';
+import { apiClient } from './api';
+import { useNotification } from '@/components/ui/Toast';
 
 export interface User {
   id: string;
@@ -47,6 +49,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [linkedInLogoutModal, setLinkedInLogoutModal] = useState(false);
+  const { showSuccess, showInfo, showWarning } = useNotification();
 
   const isValidToken = (token: string) => {
     try {
@@ -326,41 +330,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 5. Handle LinkedIn logout if user logged in via LinkedIn
     if (isLinkedInUser) {
       console.log('🔗 LinkedIn ilə giriş edən istifadəçi - LinkedIn logout edilir...');
+      setLinkedInLogoutModal(true);
+      showInfo('LinkedIn-dən də çıxış etmək istəyirsinizmi?');
+    } else {
+      showSuccess('Uğurla çıxış etdiniz');
+      window.location.href = '/';
+    }
+  }, [user, showSuccess, showInfo]);
 
-      // Show user confirmation before LinkedIn logout
-      const confirmLinkedInLogout = confirm(
-        'Siz LinkedIn ilə giriş etmişsiniz. LinkedIn-dən də çıxış etmək istəyirsiniz?'
+  const handleLinkedInLogout = (shouldLogoutFromLinkedIn: boolean) => {
+    setLinkedInLogoutModal(false);
+
+    if (shouldLogoutFromLinkedIn) {
+      // LinkedIn mobile logout URL
+      const linkedinLogoutUrl = 'https://linkedin.com/m/logout';
+
+      // Open LinkedIn logout in a popup
+      const logoutWindow = window.open(
+        linkedinLogoutUrl,
+        'linkedin_logout',
+        'width=600,height=400,left=' + (screen.width/2-300) + ',top=' + (screen.height/2-200)
       );
 
-      if (confirmLinkedInLogout) {
-        // LinkedIn mobile logout URL
-        const linkedinLogoutUrl = 'https://linkedin.com/m/logout';
-
-        // Open LinkedIn logout in a popup
-        const logoutWindow = window.open(
-          linkedinLogoutUrl,
-          'linkedin_logout',
-          'width=600,height=400,left=' + (screen.width/2-300) + ',top=' + (screen.height/2-200)
-        );
-
-        if (logoutWindow) {
-          // Simple monitoring without complex state changes
-          setTimeout(() => {
-            try {
-              logoutWindow.close();
-            } catch (e) {}
-            window.location.href = 'https://cvera.net';
-          }, 5000); // Close popup and redirect after 5 seconds
-        }
+      if (logoutWindow) {
+        // Simple monitoring without complex state changes
+        setTimeout(() => {
+          try {
+            logoutWindow.close();
+          } catch (e) {}
+          showSuccess('LinkedIn-dən də çıxış etdiniz');
+          window.location.href = '/';
+        }, 3000);
       } else {
-        // User declined LinkedIn logout, just redirect
-        window.location.href = 'https://cvera.net';
+        showWarning('LinkedIn çıxış pəncərəsi açıla bilmədi');
+        window.location.href = '/';
       }
     } else {
-      // Regular user (not LinkedIn), redirect immediately
-      window.location.href = 'https://cvera.net';
+      showSuccess('Uğurla çıxış etdiniz');
+      window.location.href = '/';
     }
-  }, [user]);
+  };
 
   const canAutoImportLinkedIn = useCallback((): boolean => {
     return user?.loginMethod === 'linkedin' && !!(user?.linkedinUsername || user?.linkedinId);
@@ -424,6 +433,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider value={value}>
       {children}
+      
+      {/* LinkedIn Logout Modal */}
+      {linkedInLogoutModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              LinkedIn Çıxışı
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Siz LinkedIn ilə giriş etmişsiniz. LinkedIn-dən də çıxış etmək istəyirsiniz?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => handleLinkedInLogout(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Xeyr
+              </button>
+              <button
+                onClick={() => handleLinkedInLogout(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Bəli, LinkedIn-dən də çıxış et
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AuthContext.Provider>
   );
 }

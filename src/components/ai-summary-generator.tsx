@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useNotification } from '@/components/ui/Toast';
 
 interface AISummaryGeneratorProps {
   cvId: string;
@@ -17,38 +18,39 @@ export function AISummaryGenerator({
 }: AISummaryGeneratorProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedSummary, setGeneratedSummary] = useState<string>('');
+  const { showSuccess, showError, showWarning } = useNotification();
 
   const canUseAI = userTier === 'Medium' || userTier === 'Premium';
 
   const handleGenerateAISummary = async () => {
     if (!canUseAI) {
-      alert('AI summary generation is only available for Medium and Premium subscribers');
+      showWarning('AI summary generation is only available for Medium and Premium subscribers');
       return;
     }
 
     setIsGenerating(true);
 
     try {
-      const response = await fetch('/api/generate-ai-summary', {
+      const response = await fetch('/api/ai/generate-summary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         },
-        body: JSON.stringify({ cvId }),
+        body: JSON.stringify({ cvId })
       });
 
       const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (data.success) {
         setGeneratedSummary(data.summary);
         onSummaryGenerated?.(data.summary);
-        alert('AI summary generated successfully!');
+        showSuccess('AI summary generated successfully!');
       } else {
-        alert(data.error || 'Failed to generate AI summary');
+        showError(data.error || 'Failed to generate AI summary');
       }
     } catch (error) {
-      console.error('Error generating AI summary:', error);
-      alert('An error occurred while generating the AI summary');
+      console.error('AI summary generation error:', error);
+      showError('An error occurred while generating the AI summary');
     } finally {
       setIsGenerating(false);
     }

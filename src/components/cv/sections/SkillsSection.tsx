@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { getLabel } from '@/lib/cvLanguage';
+import { useNotification } from '@/components/ui/Toast';
 
 interface Skill {
   id: string;
@@ -33,7 +34,10 @@ export default function SkillsSection({ data, onChange, userTier = 'Free', cvDat
   const [aiSuggesting, setAiSuggesting] = useState(false);
   const [suggestions, setSuggestions] = useState<SkillSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const { showSuccess, showError, showWarning, showInfo } = useNotification();
 
+  // AI is available for all users to see, but only works for premium users
   const canUseAI = userTier === 'Premium' || userTier === 'Medium';
 
   const addSkill = () => {
@@ -70,13 +74,14 @@ export default function SkillsSection({ data, onChange, userTier = 'Free', cvDat
   };
 
   const getSuggestionsFromAI = async () => {
+    // Check if user is on free plan - show upgrade modal instead of alert
     if (!canUseAI) {
-      alert(`AI bacarıq tövsiyələri Premium və Medium istifadəçilər üçün mövcuddur! Sizin tier: ${userTier}`);
+      setShowUpgradeModal(true);
       return;
     }
 
     if (!cvId) {
-      alert('AI tövsiyələri almaq üçün CV ID lazımdır');
+      showWarning('AI tövsiyələri almaq üçün CV ID lazımdır');
       return;
     }
 
@@ -86,7 +91,7 @@ export default function SkillsSection({ data, onChange, userTier = 'Free', cvDat
     const hasPersonalInfo = cvData?.personalInfo && cvData.personalInfo.fullName;
 
     if (!hasPersonalInfo || (!hasExperience && !hasEducation)) {
-      alert('AI tövsiyələri üçün əvvəlcə təcrübə və ya təhsil məlumatlarını doldurun');
+      showWarning('AI tövsiyələri üçün əvvəlcə təcrübə və ya təhsil məlumatlarını doldurun');
       return;
     }
 
@@ -99,18 +104,18 @@ export default function SkillsSection({ data, onChange, userTier = 'Free', cvDat
       const token = localStorage.getItem('accessToken') || localStorage.getItem('token') || localStorage.getItem('auth-token');
 
       if (!token) {
-        alert('Giriş icazəsi yoxdur. Yenidən giriş edin.');
+        showError('Giriş icazəsi yoxdur. Yenidən giriş edin.');
         setAiSuggesting(false);
         return;
       }
 
-      const response = await fetch('/api/ai/suggest-skills', {
+      const response = await fetch('/api/ai/generate-skills', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ cvId }),
+        body: JSON.stringify({ cvData }),
       });
 
       console.log('📡 AI Skills API Response:', {
@@ -124,27 +129,52 @@ export default function SkillsSection({ data, onChange, userTier = 'Free', cvDat
 
       if (!response.ok) {
         if (response.status === 401) {
-          alert('Giriş icazəsi yoxdur. Yenidən giriş edin.');
+          showError('Giriş icazəsi yoxdur. Yenidən giriş edin.');
         } else if (response.status === 403) {
-          alert(result.error || 'AI funksiyalar üçün Premium/Medium planı lazımdır');
+          setShowUpgradeModal(true);
         } else {
           throw new Error(result.error || 'API xətası');
         }
         return;
       }
 
-      if (result.success && result.suggestions && result.suggestions.length > 0) {
-        console.log('✅ AI Skills suggestions received:', result.suggestions.length, 'suggestions');
-        setSuggestions(result.suggestions);
+      if (result.success && result.skills && result.skills.length > 0) {
+        console.log('✅ AI Skills received:', result.skills.length, 'skills');
+
+        // Convert skills to suggestions format
+        const skillSuggestions = result.skills.map((skillName: string) => ({
+          name: skillName,
+          reason: 'AI tərəfindən təklif edilib',
+          category: 'AI Generated'
+        }));
+
+        setSuggestions(skillSuggestions);
         setShowSuggestions(true);
+
+        // Also add skills directly to CV
+        const existingSkillNames = data.map(s => s.name.toLowerCase());
+        const newSkills = result.skills
+          .filter((skillName: string) =>
+            !existingSkillNames.includes(skillName.toLowerCase())
+          )
+          .map((skillName: string) => ({
+            id: `skill-ai-${Date.now()}-${Math.random()}`,
+            name: skillName,
+            level: 'Intermediate' as const
+          }));
+
+        if (newSkills.length > 0) {
+          onChange([...data, ...newSkills]);
+          showSuccess(`AI tərəfindən ${newSkills.length} yeni skill əlavə edildi!`);
+        }
       } else {
-        console.log('❌ No suggestions received from API');
-        throw new Error('AI tövsiyələr alına bilmədi');
+        console.log('❌ No skills received from API');
+        throw new Error('AI skills alına bilmədi');
       }
 
     } catch (error) {
-      console.error('💥 AI Skills suggestion error:', error);
-      alert('AI tövsiyələr alarkən xəta baş verdi. Yenidən cəhd edin.');
+      console.error('💥 AI Skills error:', error);
+      showError('AI skills alarkən xəta baş verdi. Yenidən cəhd edin.');
     } finally {
       setAiSuggesting(false);
     }
@@ -157,7 +187,7 @@ export default function SkillsSection({ data, onChange, userTier = 'Free', cvDat
     );
 
     if (existingSkill) {
-      alert('Bu bacarıq artıq mövcuddur!');
+      showWarning('Bu bacarıq artıq mövcuddur!');
       return;
     }
 
@@ -173,69 +203,100 @@ export default function SkillsSection({ data, onChange, userTier = 'Free', cvDat
     setSuggestions(prev => prev.filter(s => s.name !== suggestion.name));
 
     // Show success message
-    alert(`"${suggestion.name}" bacarığı CV-nizə əlavə edildi! 🎉`);
+    showSuccess(`"${suggestion.name}" bacarığı CV-nizə əlavə edildi! 🎉`);
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl font-semibold text-gray-900">Bacarıqlar</h2>
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">Bacarıqlar</h3>
         </div>
-        <button
-          onClick={addSkill}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          + Bacarıq əlavə et
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={getSuggestionsFromAI}
+            disabled={aiSuggesting}
+            className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors ${
+              canUseAI
+                ? aiSuggesting
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600'
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            {aiSuggesting ? (
+              <div className="flex items-center space-x-1">
+                <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                <span>AI təklif edir...</span>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-1">
+                <span>🤖</span>
+                <span>AI Təklifi</span>
+                {!canUseAI && <span className="ml-1">🔒</span>}
+              </div>
+            )}
+          </button>
+          <button
+            onClick={addSkill}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            + Əlavə edin
+          </button>
+        </div>
       </div>
 
       {data.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          <p>Hələ heç bir bacarıq əlavə edilməyib.</p>
-          <p className="text-sm mt-2">Başlamaq üçün "Bacarıq əlavə et" düyməsini basın.</p>
+        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+          <div className="text-gray-400 mb-4">
+            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </div>
+          <p className="text-gray-500 mb-4">Hələ heç bir bacarıq əlavə etməmisiniz</p>
+          <button
+            onClick={addSkill}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            İlk bacarığınızı əlavə edin
+          </button>
         </div>
       ) : (
         <div className="space-y-4">
           {data.map((skill, index) => (
-            <div key={skill.id} className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-600">#{index + 1}</span>
-                  <span className="text-sm text-gray-900 font-medium">{skill.name}</span>
+            <div key={skill.id} className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-blue-500">💡</span>
+                    <h4 className="font-medium text-gray-900">
+                      {skill.name || 'Yeni bacarıq'}
+                    </h4>
+                  </div>
+                  {skill.level && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Səviyyə: {skill.level}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => moveSkill(skill.id, 'up')}
-                    disabled={index === 0}
-                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    onClick={() => moveSkill(skill.id, 'down')}
-                    disabled={index === data.length - 1}
-                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    ↓
-                  </button>
-                  <button
                     onClick={() => setExpandedId(expandedId === skill.id ? null : skill.id)}
-                    className="p-1 text-blue-600 hover:text-blue-800"
+                    className="text-blue-600 hover:text-blue-800 transition-colors"
                   >
-                    {expandedId === skill.id ? '▼' : '▶'}
+                    {expandedId === skill.id ? 'Bağlayın' : 'Redaktə edin'}
                   </button>
                   <button
                     onClick={() => removeSkill(skill.id)}
-                    className="p-1 text-red-600 hover:text-red-800"
+                    className="text-red-600 hover:text-red-800 transition-colors"
                   >
-                    ✕
+                    Sil
                   </button>
                 </div>
               </div>
 
               {expandedId === skill.id && (
-                <div className="space-y-4">
+                <div className="space-y-4 border-t border-gray-200 pt-4">
                   <div className="grid grid-cols-1 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -480,6 +541,78 @@ export default function SkillsSection({ data, onChange, userTier = 'Free', cvDat
           )}
         </div>
       </div>
+
+      {/* Upgrade Modal - New */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Premium Üzvlük Təklifi</h3>
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-sm">🤖</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-purple-800 mb-1">
+                    AI Professional Skills Analyzer
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-sm text-gray-700 mb-4">
+                AI Professional Skills Analyzer funksiyasından istifadə etmək üçün
+                Premium və ya Medium planına yüksəltməyi düşünün. Bu, CV məlumatlarınıza
+                əsaslanaraq sizə ən uyğun professional skills tövsiyələrini almanıza kömək edəcək.
+              </p>
+
+              <div className="bg-purple-50 p-3 rounded-lg mb-4">
+                <h4 className="text-sm font-medium text-purple-800 mb-2">Əldə edəcəyiniz:</h4>
+                <ul className="text-xs text-purple-700 space-y-1">
+                  <li>• AI-powered skills analizi</li>
+                  <li>• Karyera üçün strateji tövsiyələr</li>
+                  <li>• İndustiya trend analizi</li>
+                  <li>• Personalized skill roadmap</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="flex-1 px-4 py-2 text-center text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Sonra
+              </button>
+              <a
+                href="/pricing"
+                className="flex-1 px-4 py-2 text-center text-white bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200"
+              >
+                Planları Görüntülə
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+      {data.length > 0 && (
+          <div className="text-center">
+            <button
+                onClick={addSkill}
+                className="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+            >
+              + Başqa bacarıq əlavə edin
+            </button>
+          </div>
+      )}
+
     </div>
   );
 }

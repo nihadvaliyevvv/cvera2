@@ -71,69 +71,78 @@ export default function ProjectsSection({ data, onChange }: ProjectsSectionProps
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">🚀</span>
-          <h2 className="text-xl font-semibold text-gray-900">Layihələr</h2>
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">Layihələr</h3>
         </div>
         <button
           onClick={addProject}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          + Layihə əlavə et
+          + Əlavə edin
         </button>
       </div>
 
       {data.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          <p>Hələ heç bir layihə əlavə edilməyib.</p>
-          <p className="text-sm mt-2">Başlamaq üçün "Layihə əlavə et" düyməsini basın.</p>
+        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+          <div className="text-gray-400 mb-4">
+            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+            </svg>
+          </div>
+          <p className="text-gray-500 mb-4">Hələ heç bir layihə əlavə etməmisiniz</p>
+          <button
+            onClick={addProject}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            İlk layihənizi əlavə edin
+          </button>
         </div>
       ) : (
         <div className="space-y-4">
           {data.map((project, index) => (
-            <div key={project.id} className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-600">#{index + 1}</span>
-                  <span className="text-sm text-gray-900 font-medium">{project.name}</span>
-                  {project.current && (
-                    <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                      Aktiv
-                    </span>
+            <div key={project.id} className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-blue-500">🚀</span>
+                    <h4 className="font-medium text-gray-900">
+                      {project.name || 'Yeni layihə'}
+                    </h4>
+                  </div>
+                  <p className="text-sm text-gray-600 line-clamp-2">
+                    {project.description || 'Layihə təsviri'}
+                  </p>
+                  {project.technologies && project.technologies.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {project.technologies.slice(0, 3).map((tech, idx) => (
+                        <span key={idx} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                          {tech}
+                        </span>
+                      ))}
+                      {project.technologies.length > 3 && (
+                        <span className="text-xs text-gray-500">+{project.technologies.length - 3}</span>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => moveProject(project.id, 'up')}
-                    disabled={index === 0}
-                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    onClick={() => moveProject(project.id, 'down')}
-                    disabled={index === data.length - 1}
-                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    ↓
-                  </button>
-                  <button
                     onClick={() => setExpandedId(expandedId === project.id ? null : project.id)}
-                    className="p-1 text-blue-600 hover:text-blue-800"
+                    className="text-blue-600 hover:text-blue-800 transition-colors"
                   >
-                    {expandedId === project.id ? '▼' : '▶'}
+                    {expandedId === project.id ? 'Bağlayın' : 'Redaktə edin'}
                   </button>
                   <button
                     onClick={() => removeProject(project.id)}
-                    className="p-1 text-red-600 hover:text-red-800"
+                    className="text-red-600 hover:text-red-800 transition-colors"
                   >
-                    ✕
+                    Silin
                   </button>
                 </div>
               </div>
 
               {expandedId === project.id && (
-                <div className="space-y-4">
+                <div className="space-y-4 border-t border-gray-200 pt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -259,6 +268,17 @@ export default function ProjectsSection({ data, onChange }: ProjectsSectionProps
             "İstifadəçi engagement 40% yüksəldi". GitHub linkləri və ya demo linkləri əlavə etməyi unutmayın.
           </p>
         </div>
+      )}
+
+      {data.length > 0 && (
+          <div className="text-center">
+            <button
+                onClick={addProject}
+                className="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+            >
+              + Başqa layihə əlavə edin
+            </button>
+          </div>
       )}
     </div>
   );

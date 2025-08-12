@@ -76,7 +76,7 @@ export default function LinkedInImportPage() {
 
       console.log('🔍 LinkedIn import: Username:', username);
 
-      const response = await fetch('/api/import/linkedin-profile', {
+      const response = await fetch('/api/import/linkedin', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

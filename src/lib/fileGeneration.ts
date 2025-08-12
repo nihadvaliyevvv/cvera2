@@ -30,16 +30,83 @@ export class FileGenerationService {
         // Local development üçün standart konfiqurasiya
         browser = await puppeteer.launch({
           headless: true,
-          executablePath: '/usr/bin/google-chrome',
+          executablePath: process.env.CHROME_EXECUTABLE_PATH || '/usr/bin/google-chrome',
+          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-web-security'],
+        });
+      }
+
+      const page = await browser.newPage();
+
+      // ƏSAS DƏYIŞIKLIK: Preview komponentinin dəqiq render nəticəsini istifadə et
+      const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+
+      // CV preview səhifəsinə get ki, dəqiq eyni nəticəni alaq
+      const previewUrl = `${baseUrl}/api/cv/preview?cvData=${encodeURIComponent(JSON.stringify(cvData))}&templateId=${templateId || 'professional'}`;
+
+      await page.goto(previewUrl, {
+        waitUntil: 'networkidle0',
+        timeout: 30000
+      });
+
+      // Viewport və scale tənzimləmələri
+      await page.setViewport({
+        width: 794, // A4 width at 96 DPI
+        height: 1123, // A4 height at 96 DPI
+        deviceScaleFactor: 1
+      });
+
+      // PDF yaradılması - Preview ilə 1:1 uyğunluq
+      const pdf = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        preferCSSPageSize: true,
+        displayHeaderFooter: false,
+        margin: {
+          top: '0',
+          bottom: '0',
+          left: '0',
+          right: '0',
+        },
+        scale: 1.0
+      });
+
+      return Buffer.from(pdf);
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      // Fallback: Əgər preview URL işləməzsə, köhnə metodu istifadə et
+      return this.generatePDFFallback(cvData, templateId);
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
+    }
+  }
+
+  // Fallback method - köhnə HTML generation metodu
+  private static async generatePDFFallback(cvData: any, templateId?: string): Promise<Buffer> {
+    const isVercel = process.env.VERCEL || process.env.VERCEL_ENV;
+
+    let browser;
+    try {
+      if (isVercel) {
+        browser = await puppeteerCore.launch({
+          args: chromium.args,
+          executablePath: await chromium.executablePath(),
+          headless: true,
+        });
+      } else {
+        browser = await puppeteer.launch({
+          headless: true,
+          executablePath: process.env.CHROME_EXECUTABLE_PATH || '/usr/bin/google-chrome',
           args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
         });
       }
 
       const page = await browser.newPage();
-      
+
       // Generate HTML content for CV
       const htmlContent = this.generateHTMLContent(cvData, templateId);
-      
+
       await page.setContent(htmlContent, {
         waitUntil: 'networkidle0',
       });
@@ -58,7 +125,7 @@ export class FileGenerationService {
 
       return Buffer.from(pdf);
     } catch (error) {
-      console.error('PDF generation error:', error);
+      console.error('PDF fallback generation error:', error);
       throw new Error('PDF yaradılarkən xəta baş verdi');
     } finally {
       if (browser) {
@@ -69,20 +136,20 @@ export class FileGenerationService {
 
   private static generateHTMLContent(cvData: any, templateId?: string): string {
     const { personalInfo, experience, education, skills, languages, projects, certifications, volunteerExperience, publications } = cvData;
-    
+
     // Check if it's Bold template
     const isBoldTemplate = templateId === 'resumonk-bold' || templateId === 'Bold';
-    
+
     if (isBoldTemplate) {
       return this.generateBoldTemplate(cvData);
     }
-    
+
     return this.generateBasicTemplate(cvData);
   }
 
   private static generateBoldTemplate(cvData: any): string {
     const { personalInfo, experience, education, skills, languages, projects, certifications, volunteerExperience, publications } = cvData;
-    
+
     return `
 <!DOCTYPE html>
 <html>

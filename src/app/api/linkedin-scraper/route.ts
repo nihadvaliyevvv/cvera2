@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
-// ScrapingDog API configuration (matching your instructions)
-const SCRAPINGDOG_CONFIG = {
-  api_key: '6882894b855f5678d36484c8',
-  url: 'https://api.scrapingdog.com/linkedin',
-  premium: 'false'
+// BrightData API configuration (replacing ScrapingDog)
+const BRIGHTDATA_CONFIG = {
+  api_key: 'da77d05e80aa038856c04cb0e96d34a267be39e89a46c03ed15e68b38353eaae',
+  url: 'https://api.brightdata.com/dca/dataset/get_snapshot',
+  zone: 'linkedin_public_data'
 };
 
 // Extract LinkedIn ID from various URL formats
@@ -60,23 +60,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`🔍 LinkedIn profil scraping: ${linkId}`);
+    console.log(`🔍 LinkedIn profil scraping with BrightData: ${linkId}`);
 
-    // ScrapingDog API call using your exact configuration
-    const params = {
-      api_key: SCRAPINGDOG_CONFIG.api_key,
-      type: 'profile',
-      linkId: linkId,
-      premium: SCRAPINGDOG_CONFIG.premium,
+    // BrightData API call
+    const headers = {
+      'Authorization': `Bearer ${BRIGHTDATA_CONFIG.api_key}`,
+      'Content-Type': 'application/json'
     };
 
-    const response = await axios.get(SCRAPINGDOG_CONFIG.url, {
-      params: params,
+    const requestBody = {
+      dataset_id: BRIGHTDATA_CONFIG.zone,
+      format: 'json',
+      filters: {
+        profile_url: `https://linkedin.com/in/${linkId}`
+      },
+      exclude_fields: ['skills', 'endorsements', 'skill_assessments'] // Exclude skills as requested
+    };
+
+    const response = await axios.post(BRIGHTDATA_CONFIG.url, requestBody, {
+      headers: headers,
       timeout: 30000
     });
 
     if (response.status !== 200) {
-      console.log('Request failed with status code: ' + response.status);
+      console.log('BrightData request failed with status code: ' + response.status);
       return NextResponse.json(
         { error: `API xətası: Status ${response.status}` },
         { status: response.status }
@@ -84,18 +91,19 @@ export async function POST(request: NextRequest) {
     }
 
     const data = response.data;
-    console.log('✅ LinkedIn profil uğurla əldə edildi:', data.name || 'Unknown');
+    console.log('✅ LinkedIn profil uğurla əldə edildi (BrightData):', data.name || 'Unknown');
 
     return NextResponse.json({
       success: true,
       data: data,
-      message: 'LinkedIn profil uğurla scrape edildi'
+      message: 'LinkedIn profil uğurla scrape edildi (BrightData)',
+      provider: 'BrightData'
     });
 
   } catch (error) {
-    console.error('❌ LinkedIn scraper xətası:', error);
+    console.error('❌ BrightData LinkedIn scraper xətası:', error);
 
-    let errorMessage = 'LinkedIn scraping zamanı xəta baş verdi';
+    let errorMessage = 'LinkedIn scraping zamanı xəta baş verdi (BrightData)';
     if (error instanceof Error) {
       errorMessage = error.message;
     }
@@ -109,16 +117,24 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Test ScrapingDog API connection
-    const params = {
-      api_key: SCRAPINGDOG_CONFIG.api_key,
-      type: 'profile',
-      linkId: 'musayevcreate', // Test profile as per your instructions
-      premium: SCRAPINGDOG_CONFIG.premium,
+    // Test BrightData API connection
+    const headers = {
+      'Authorization': `Bearer ${BRIGHTDATA_CONFIG.api_key}`,
+      'Content-Type': 'application/json'
     };
 
-    const response = await axios.get(SCRAPINGDOG_CONFIG.url, {
-      params: params,
+    const requestBody = {
+      dataset_id: BRIGHTDATA_CONFIG.zone,
+      format: 'json',
+      filters: {
+        profile_url: 'https://linkedin.com/in/musayevcreate'
+      },
+      exclude_fields: ['skills', 'endorsements', 'skill_assessments'],
+      limit: 1
+    };
+
+    const response = await axios.post(BRIGHTDATA_CONFIG.url, requestBody, {
+      headers: headers,
       timeout: 10000
     });
 
@@ -128,13 +144,13 @@ export async function GET(request: NextRequest) {
       status: 'online',
       linkedin_api: isWorking ? 'working' : 'error',
       timestamp: new Date().toISOString(),
-      message: 'LinkedIn scraper API hazırdır',
-      api_provider: 'ScrapingDog'
+      message: 'LinkedIn scraper API hazırdır (BrightData)',
+      api_provider: 'BrightData'
     });
   } catch (error) {
     return NextResponse.json({
       status: 'error',
-      message: 'LinkedIn scraper API xətası',
+      message: 'LinkedIn scraper API xətası (BrightData)',
       error: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }

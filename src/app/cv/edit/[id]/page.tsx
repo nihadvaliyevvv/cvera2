@@ -232,23 +232,6 @@ export default function EditCVPage() {
           <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-gradient-to-bl from-emerald-200/20 to-teal-200/20 rounded-full blur-3xl"></div>
         </div>
 
-        {/* Navigation Header */}
-        <nav className="relative z-10 bg-white/80 backdrop-blur-md border-b border-gray-200/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Dashboard'a Qayıt
-              </Link>
-              <h1 className="text-lg font-semibold text-gray-900">
-                {isNewCV ? 'Yeni CV Yarat' : 'CV Redaktə Et'}
-              </h1>
-              <div className="w-24"></div> {/* Spacer for centering */}
-            </div>
-          </div>
-        </nav>
 
         {/* Main Content */}
         <div className="relative z-10">

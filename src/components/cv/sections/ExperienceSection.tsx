@@ -62,66 +62,71 @@ export default function ExperienceSection({ data, onChange }: ExperienceSectionP
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">💼</span>
-          <h2 className="text-xl font-semibold text-gray-900">{getLabel('experience', 'azerbaijani')}</h2>
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">İş təcrübəsi</h3>
         </div>
         <button
           onClick={addExperience}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          + {getLabel('addSection', 'azerbaijani')}
+          + Əlavə edin
         </button>
       </div>
 
       {data.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          <p>{'Hələ heç bir iş təcrübəsi əlavə edilməyib.'}</p>
-          <p className="text-sm mt-2">{'Başlamaq üçün "Əlavə et" düyməsini basın.'}</p>
+        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+          <div className="text-gray-400 mb-4">
+            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2v0" />
+            </svg>
+          </div>
+          <p className="text-gray-500 mb-4">Hələ heç bir iş təcrübəsi əlavə etməmisiniz</p>
+          <button
+            onClick={addExperience}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            İlk iş təcrübənizi əlavə edin
+          </button>
         </div>
       ) : (
         <div className="space-y-4">
           {data.map((experience, index) => (
-            <div key={experience.id} className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-600">#{index + 1}</span>
-                  <span className="text-sm text-gray-500">
-                    {experience.position} - {experience.company}
-                  </span>
+            <div key={experience.id} className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-blue-500">💼</span>
+                    <h4 className="font-medium text-gray-900">
+                      {experience.position || 'Yeni iş təcrübəsi'}
+                    </h4>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    {experience.company || 'Şirkət adı'}
+                  </p>
+                  {experience.startDate && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {experience.startDate} - {experience.current ? 'Davam edir' : experience.endDate}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => moveExperience(experience.id, 'up')}
-                    disabled={index === 0}
-                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    onClick={() => moveExperience(experience.id, 'down')}
-                    disabled={index === data.length - 1}
-                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    ↓
-                  </button>
-                  <button
                     onClick={() => setExpandedId(expandedId === experience.id ? null : experience.id)}
-                    className="p-1 text-blue-600 hover:text-blue-800"
+                    className="text-blue-600 hover:text-blue-800 transition-colors"
                   >
-                    {expandedId === experience.id ? '▼' : '▶'}
+                    {expandedId === experience.id ? 'Bağlayın' : 'Redaktə edin'}
                   </button>
                   <button
                     onClick={() => removeExperience(experience.id)}
-                    className="p-1 text-red-600 hover:text-red-800"
+                    className="text-red-600 hover:text-red-800 transition-colors"
                   >
-                    ✕
+                    Silin
                   </button>
                 </div>
               </div>
 
               {expandedId === experience.id && (
-                <div className="space-y-4">
+                <div className="space-y-4 border-t border-gray-200 pt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -209,6 +214,17 @@ export default function ExperienceSection({ data, onChange }: ExperienceSectionP
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {data.length > 0 && (
+        <div className="text-center">
+          <button
+            onClick={addExperience}
+            className="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+          >
+            + Başqa iş təcrübəsi əlavə edin
+          </button>
         </div>
       )}
     </div>

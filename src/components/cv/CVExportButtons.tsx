@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useNotification } from '@/components/ui/Toast';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -12,6 +13,7 @@ interface CVExportButtonsProps {
 
 export default function CVExportButtons({ cvData, cvElementId, fileName }: CVExportButtonsProps) {
   const [isExporting, setIsExporting] = useState(false);
+  const { showSuccess, showError } = useNotification();
 
   const exportToPDF = async () => {
     setIsExporting(true);
@@ -20,7 +22,8 @@ export default function CVExportButtons({ cvData, cvElementId, fileName }: CVExp
       // Get the CV preview element
       const element = document.getElementById(cvElementId);
       if (!element) {
-        console.error('CV element not found');
+        showError('CV elementi tapılmadı');
+        setIsExporting(false);
         return;
       }
 
@@ -77,9 +80,11 @@ export default function CVExportButtons({ cvData, cvElementId, fileName }: CVExp
       const cleanFileName = fileName.replace(/[^a-zA-Z0-9\s]/g, '').trim() || 'CV';
       pdf.save(`${cleanFileName}.pdf`);
 
+      showSuccess('PDF uğurla ixrac edildi.');
+
     } catch (error) {
       console.error('PDF export error:', error);
-      alert('PDF ixrac zamanı xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.');
+      showError('PDF ixrac zamanı xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.');
     } finally {
       setIsExporting(false);
     }

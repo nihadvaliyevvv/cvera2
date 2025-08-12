@@ -89,6 +89,7 @@ export default function Footer() {
                 <div className="text-left">
                   <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-6">Ümumi</h3>
                   <ul className="space-y-2 lg:space-y-4">
+                    <li><Link href="/faq" className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-xs sm:text-sm lg:text-base">Tez-tez Verilən Suallar</Link></li>
                     <li><Link href="/terms" className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-xs sm:text-sm lg:text-base">İstifadə Şərtləri</Link></li>
                     <li><Link href="/privacy" className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-xs sm:text-sm lg:text-base">Məxfilik Siyasəti</Link></li>
                     <li><Link href="/contact" className="text-gray-600 hover:text-blue-600 transition-colors duration-200 text-xs sm:text-sm lg:text-base">Əlaqə</Link></li>

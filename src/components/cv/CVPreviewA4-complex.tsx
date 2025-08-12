@@ -285,7 +285,7 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
             <div style={pdfStyles.sectionHeader}>
             <h2 style={pdfStyles.sectionTitle}>Özet</h2>
           </div>
-          <p style={pdfStyles.summary}>{cv.data.personalInfo.summary}</p>
+          <div style={pdfStyles.summary} dangerouslySetInnerHTML={{ __html: cv.data.personalInfo.summary }}></div>
         </div>
       )}
 

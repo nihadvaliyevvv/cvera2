@@ -105,17 +105,21 @@ export async function callApiWithFallback(
   };
 }
 
-/**
- * ScrapingDog specific API caller with fallback
+/*** BrightData specific API caller with fallback (replacing ScrapingDog)
  */
 export async function callScrapingDogAPI(linkedinUsername: string): Promise<ApiCallResult> {
-  return callApiWithFallback('scrapingdog', async (apiKey: string) => {
-    const response = await axios.get('https://api.scrapingdog.com/linkedin', {
-      params: {
-        api_key: apiKey,
-        type: 'profile',
-        linkId: linkedinUsername,
-        premium: 'false',
+  return callApiWithFallback('brightdata', async (apiKey: string) => {
+    const response = await axios.post('https://api.brightdata.com/dca/dataset/get_snapshot', {
+      dataset_id: 'linkedin_public_data',
+      format: 'json',
+      filters: {
+        profile_url: `https://linkedin.com/in/${linkedinUsername}`
+      },
+      exclude_fields: ['skills', 'endorsements', 'skill_assessments'] // Skills xaric edilir
+    }, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
       },
       timeout: 30000
     });
@@ -123,9 +127,9 @@ export async function callScrapingDogAPI(linkedinUsername: string): Promise<ApiC
     if (response.status === 200 && response.data) {
       return response.data;
     } else {
-      throw new Error(`ScrapingDog cavab vermedi: ${response.status}`);
+      throw new Error(`BrightData cavab vermedi: ${response.status}`);
     }
-  }, 5); // Maximum 5 different ScrapingDog keys to try
+  }, 3); // Maximum 3 different BrightData keys to try
 }
 
 /**

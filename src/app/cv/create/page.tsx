@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import { useNotification } from '@/components/ui/Toast';
 import LinkedInAutoImport from '@/components/LinkedInAutoImport';
 import Link from 'next/link';
 import StandardHeader from '@/components/ui/StandardHeader';
@@ -14,6 +15,7 @@ function CreateCVContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading } = useAuth();
+  const { showError, showSuccess } = useNotification();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -53,46 +55,18 @@ function CreateCVContent() {
     return null;
   }
 
-  const handleLinkedInImport = async () => {
-    setSelectedMethod('linkedin');
-    
+  const handleLinkedInImport = async (data: any) => {
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        throw new Error('Giriş tələb olunur');
-      }
+      console.log('LinkedIn data received:', data);
+      setImportedData(data);
 
-      // Yeni LinkedIn profil import API-ni çağır
-      const response = await fetch('/api/import/linkedin-profile', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          linkedinUsername: 'musayevcreate' // Sizin LinkedIn hesabınız
-        })
-      });
+      // Store data temporarily and redirect to CV editor
+      sessionStorage.setItem('linkedinImportData', JSON.stringify(data));
+      router.push('/cv/edit/new?source=linkedin');
 
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'LinkedIn import xətası');
-      }
-
-      if (result.success && result.data) {
-        console.log('✅ LinkedIn data uğurla import edildi:', result.data);
-        
-        // CV editora göndər
-        const dataString = encodeURIComponent(JSON.stringify(result.data));
-        router.push(`/cv/edit/new?import=linkedin&data=${dataString}`);
-      } else {
-        throw new Error(result.error || 'LinkedIn məlumatları alınmadı');
-      }
-      
     } catch (error) {
       console.error('LinkedIn import xətası:', error);
-      alert(`LinkedIn import xətası: ${error instanceof Error ? error.message : 'Naməlum xəta'}`);
+      showError(`LinkedIn import xətası: ${error instanceof Error ? error.message : 'Naməlum xəta'}`);
       setSelectedMethod(null);
     }
   };
@@ -178,7 +152,7 @@ function CreateCVContent() {
                   onImportSuccess={handleLinkedInImport}
                   onImportError={(error) => {
                     console.error('LinkedIn import xətası:', error);
-                    alert(`LinkedIn import xətası: ${error}`);
+                    showError(`LinkedIn import xətası: ${error}`);
                   }}
                   className="w-full"
                 >

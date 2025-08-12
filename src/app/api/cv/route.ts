@@ -218,3 +218,125 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// PUT /api/cv - Mövcud CV-ni yenilə (əlavə bölmələr daxil olmaqla)
+export async function PUT(request: NextRequest) {
+  try {
+    console.log('🔄 CV Update API: Yeniləmə sorğusu başladı');
+
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('❌ CV Update API: Authorization header yoxdur');
+      return NextResponse.json(
+        { error: 'Giriş tələb olunur' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.substring(7);
+    const decoded = await verifyJWT(token);
+    if (!decoded) {
+      console.log('❌ CV Update API: JWT token etibarsız');
+      return NextResponse.json(
+        { error: 'Etibarsız token' },
+        { status: 401 }
+      );
+    }
+
+    const { cvId, title, cv_data, templateId } = await request.json();
+
+    if (!cvId) {
+      return NextResponse.json(
+        { error: 'CV ID tələb olunur' },
+        { status: 400 }
+      );
+    }
+
+    console.log(`🔍 CV Update API: CV ${cvId} yenilənir, user: ${decoded.userId}`);
+
+    // Use retry logic for database operations
+    const existingCV = await withRetry(async () => {
+      return await prisma.cV.findFirst({
+        where: {
+          id: cvId,
+          userId: decoded.userId
+        }
+      });
+    });
+
+    if (!existingCV) {
+      console.log('❌ CV Update API: CV tapılmadı və ya sahiblik xətası');
+      return NextResponse.json(
+        { error: 'CV tapılmadı və ya sizə məxsus deyil' },
+        { status: 404 }
+      );
+    }
+
+    // Mövcud CV data-nı əldə et və yeni data ilə birləşdir
+    let currentCvData = existingCV.cv_data as any || {};
+
+    // Əgər yeni cv_data varsa, mövcud data ilə birləşdir
+    let updatedCvData = currentCvData;
+    if (cv_data) {
+      // Deep merge to preserve existing sections while adding new ones
+      updatedCvData = {
+        ...currentCvData,
+        ...cv_data,
+        // Əlavə bölmələri birləşdir (additionalSections)
+        additionalSections: {
+          ...currentCvData.additionalSections,
+          ...cv_data.additionalSections
+        }
+      };
+      console.log('📋 CV Update API: CV data birləşdirildi, əlavə bölmələr saxlanıldı');
+    }
+
+    // CV-ni yenilə
+    const updatedCV = await withRetry(async () => {
+      return await prisma.cV.update({
+        where: { id: cvId },
+        data: {
+          ...(title && { title }),
+          ...(cv_data && { cv_data: updatedCvData }),
+          ...(templateId && { templateId }),
+          updatedAt: new Date()
+        }
+      });
+    });
+
+    console.log('✅ CV Update API: CV uğurla yeniləndi:', {
+      cvId,
+      title: updatedCV.title,
+      hasAdditionalSections: !!(updatedCvData.additionalSections && Object.keys(updatedCvData.additionalSections).length > 0)
+    });
+
+    return NextResponse.json({
+      success: true,
+      cv: updatedCV,
+      message: 'CV uğurla yeniləndi',
+      additionalSections: updatedCvData.additionalSections || {}
+    });
+
+  } catch (error) {
+    console.error('❌ CV Update API xətası:', error);
+
+    // Handle specific Prisma errors
+    if (error instanceof Error && error.message.includes('P1001')) {
+      return NextResponse.json(
+        {
+          error: 'Verilənlər bazasına qoşulma problemi. Zəhmət olmasa bir az sonra yenidən cəhd edin.',
+          code: 'DB_CONNECTION_ERROR'
+        },
+        { status: 503 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        error: 'CV yenilənərkən xəta baş verdi',
+        details: error instanceof Error ? error.message : 'Naməlum xəta'
+      },
+      { status: 500 }
+    );
+  }
+}

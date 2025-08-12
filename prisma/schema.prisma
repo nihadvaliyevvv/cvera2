@@ -29,8 +29,8 @@ model User {
   dailyUsage       DailyUsage[]     @relation("UserDailyUsage")
   importSessions   ImportSession[]  @relation("UserImportSessions")
   payments         Payment[]        @relation("UserPayments")
-  subscriptions    Subscription[]   @relation("UserSubscriptions")
   promoCodeUsages  PromoCodeUsage[] @relation("UserPromoCodeUsages")
+  subscriptions    Subscription[]   @relation("UserSubscriptions")
 }
 
 model CV {
@@ -175,29 +175,26 @@ model TokenBlacklist {
 }
 
 model PromoCode {
-  id          String    @id @default(uuid())
-  code        String    @unique
-  tier        String // "Premium", "Pro", "Business" etc.
+  id          String           @id @default(uuid())
+  code        String           @unique
+  tier        String
   description String?
-  isActive    Boolean   @default(true)
-  usageLimit  Int? // null means unlimited
-  usedCount   Int       @default(0)
+  isActive    Boolean          @default(true)
+  usageLimit  Int?
+  usedCount   Int              @default(0)
   expiresAt   DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Track which users used this promo code
-  usedBy PromoCodeUsage[] @relation("PromoCodeUsages")
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  usedBy      PromoCodeUsage[] @relation("PromoCodeUsages")
 }
 
 model PromoCodeUsage {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   userId      String
   promoCodeId String
-  usedAt      DateTime @default(now())
-
-  user      User      @relation("UserPromoCodeUsages", fields: [userId], references: [id])
-  promoCode PromoCode @relation("PromoCodeUsages", fields: [promoCodeId], references: [id])
+  usedAt      DateTime  @default(now())
+  promoCode   PromoCode @relation("PromoCodeUsages", fields: [promoCodeId], references: [id])
+  user        User      @relation("UserPromoCodeUsages", fields: [userId], references: [id])
 
   @@unique([userId, promoCodeId])
   @@index([userId])

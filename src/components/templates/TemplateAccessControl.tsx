@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { canAccessTemplate, canPreviewTemplates, getUpgradeSuggestions, getTierDisplayName } from '@/lib/tier-permissions';
+import { useNotification } from '@/components/ui/Toast';
 
 interface Template {
   id: string;
@@ -24,6 +25,9 @@ export default function TemplateAccessControl({
   onSelectTemplate,
   onUpgrade
 }: TemplateAccessControlProps) {
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const { showWarning, showInfo } = useNotification();
 
   const getTierColor = (tier: string) => {
     switch (tier) {
@@ -49,13 +53,19 @@ export default function TemplateAccessControl({
     if (canAccess) {
       onSelectTemplate(template.id);
     } else {
-      // Show upgrade modal or redirect to pricing
+      // Show upgrade suggestion via toast and modal
       const suggestion = getUpgradeSuggestions(userTier, template.tier === 'premium' ? 'premium-templates' : 'medium-templates');
 
-      if (confirm(`${suggestion.message}\n\nQiymətlər səhifəsinə keçmək istəyirsiniz?`)) {
-        onUpgrade();
-      }
+      setSelectedTemplate(template);
+      setShowUpgradeModal(true);
+      showWarning(suggestion.message);
     }
+  };
+
+  const handleUpgradeConfirm = () => {
+    setShowUpgradeModal(false);
+    onUpgrade();
+    showInfo('Qiymətlər səhifəsinə yönləndirilirsiniz...');
   };
 
   return (
@@ -184,6 +194,34 @@ export default function TemplateAccessControl({
           </div>
         </div>
       </div>
+
+      {/* Upgrade Modal */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Paket Yeniləməsi Tələb Olunur
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Bu şablonu istifadə etmək üçün paketinizi yeniləmək lazımdır. Qiymətlər səhifəsinə keçmək istəyirsiniz?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Ləğv et
+              </button>
+              <button
+                onClick={handleUpgradeConfirm}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Qiymətlərə bax
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

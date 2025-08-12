@@ -100,10 +100,25 @@ export async function PUT(
       where: { id: id },
       data: {
         title: title || existingCV.title,
-        cv_data: cv_data || existingCV.cv_data,
+        cv_data: cv_data ? {
+          // Merge existing CV data with new data to preserve additional sections
+          ...existingCV.cv_data as any,
+          ...cv_data,
+          // Specially handle additional sections to ensure they're preserved
+          additionalSections: {
+            ...(existingCV.cv_data as any)?.additionalSections,
+            ...cv_data.additionalSections
+          }
+        } : existingCV.cv_data,
         templateId: templateId || existingCV.templateId,
         updatedAt: new Date()
       }
+    });
+
+    console.log('✅ CV updated successfully:', {
+      cvId: id,
+      title: updatedCV.title,
+      hasAdditionalSections: !!(updatedCV.cv_data as any)?.additionalSections && Object.keys((updatedCV.cv_data as any).additionalSections).length > 0
     });
 
     return NextResponse.json({
