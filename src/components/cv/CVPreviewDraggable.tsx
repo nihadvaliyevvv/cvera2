@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { CVLanguage, getLabel } from '@/lib/cvLanguage';
 
 interface CVData {
@@ -55,6 +55,8 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
   const [draggedSection, setDraggedSection] = useState<string | null>(null);
   const [dragOverSection, setDragOverSection] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -100,10 +102,25 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
     setSections(visibleSections);
   }, [cv.data, mounted]);
 
-  // Auto-save section order changes
-  const saveSectionOrder = async (newSections: SectionConfig[]) => {
+  // Debounced auto-save section order changes
+  const saveSectionOrder = useCallback(async (newSections: SectionConfig[]) => {
     try {
-      if (!cv.id) return;
+      if (!cv.id) {
+        console.warn('⚠️ CV ID yoxdur, yaddaşda lokal olaraq saxlanılır');
+        // Store in localStorage as fallback
+        const sectionOrderData = newSections.map((section, index) => ({
+          id: section.id,
+          type: section.name,
+          isVisible: section.isVisible,
+          order: index,
+          enabled: section.isVisible
+        }));
+        localStorage.setItem(`cv_section_order_${cv.title}`, JSON.stringify(sectionOrderData));
+        if (onSectionOrderChange) {
+          onSectionOrderChange(sectionOrderData);
+        }
+        return;
+      }
 
       const sectionOrderData = newSections.map((section, index) => ({
         id: section.id,
@@ -115,9 +132,13 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
 
       console.log('💾 Section order saxlanılır:', sectionOrderData);
 
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
       if (!token) {
-        console.error('❌ Token tapılmadı');
+        console.error('❌ Token tapılmadı, lokal yaddaşa saxlanılır');
+        localStorage.setItem(`cv_section_order_${cv.id}`, JSON.stringify(sectionOrderData));
+        if (onSectionOrderChange) {
+          onSectionOrderChange(sectionOrderData);
+        }
         return;
       }
 
@@ -140,39 +161,83 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
       if (response.ok) {
         const result = await response.json();
         console.log('✅ Section order saxlanıldı:', result.message);
-
-        // Notify parent component
-        if (onSectionOrderChange) {
-          onSectionOrderChange(sectionOrderData);
-        }
+        // Also save to localStorage as backup
+        localStorage.setItem(`cv_section_order_${cv.id}`, JSON.stringify(sectionOrderData));
       } else {
-        console.error('❌ Section order saxlanılmadı:', response.statusText);
+        console.error('❌ Server saxlaya bilmədi, lokal yaddaşa saxlanılır');
+        localStorage.setItem(`cv_section_order_${cv.id}`, JSON.stringify(sectionOrderData));
+      }
+
+      // Notify parent component regardless of server response
+      if (onSectionOrderChange) {
+        onSectionOrderChange(sectionOrderData);
       }
     } catch (error) {
       console.error('❌ Section order save error:', error);
+      // Fallback to localStorage
+      const sectionOrderData = newSections.map((section, index) => ({
+        id: section.id,
+        type: section.name,
+        isVisible: section.isVisible,
+        order: index,
+        enabled: section.isVisible
+      }));
+      localStorage.setItem(`cv_section_order_${cv.id || cv.title}`, JSON.stringify(sectionOrderData));
+      if (onSectionOrderChange) {
+        onSectionOrderChange(sectionOrderData);
+      }
     }
-  };
+  }, [cv.id, cv.title, cv.data, onSectionOrderChange]);
+
+  // Debounced save function
+  const debouncedSave = useCallback((newSections: SectionConfig[]) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      saveSectionOrder(newSections);
+      setIsReordering(false);
+    }, 300);
+  }, [saveSectionOrder]);
 
   // Handle drag start
-  const handleDragStart = (e: React.DragEvent, sectionId: string) => {
+  const handleDragStart = useCallback((e: React.DragEvent, sectionId: string) => {
     if (!enableDragDrop) return;
 
     setDraggedSection(sectionId);
+    setIsReordering(true);
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', sectionId);
-  };
+    e.dataTransfer.setData('text/plain', sectionId);
+
+    // Add ghost image styling
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '0.5';
+    }
+  }, [enableDragDrop]);
 
   // Handle drag over
-  const handleDragOver = (e: React.DragEvent, sectionId: string) => {
+  const handleDragOver = useCallback((e: React.DragEvent, sectionId: string) => {
     if (!enableDragDrop || !draggedSection) return;
 
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    setDragOverSection(sectionId);
-  };
+
+    if (sectionId !== draggedSection) {
+      setDragOverSection(sectionId);
+    }
+  }, [enableDragDrop, draggedSection]);
+
+  // Handle drag enter
+  const handleDragEnter = useCallback((e: React.DragEvent, sectionId: string) => {
+    if (!enableDragDrop || !draggedSection) return;
+    e.preventDefault();
+    if (sectionId !== draggedSection) {
+      setDragOverSection(sectionId);
+    }
+  }, [enableDragDrop, draggedSection]);
 
   // Handle drop
-  const handleDrop = async (e: React.DragEvent, targetSectionId: string) => {
+  const handleDrop = useCallback(async (e: React.DragEvent, targetSectionId: string) => {
     if (!enableDragDrop || !draggedSection) return;
 
     e.preventDefault();
@@ -187,7 +252,11 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
     const draggedIndex = newSections.findIndex(s => s.id === draggedSection);
     const targetIndex = newSections.findIndex(s => s.id === targetSectionId);
 
-    if (draggedIndex === -1 || targetIndex === -1) return;
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedSection(null);
+      setDragOverSection(null);
+      return;
+    }
 
     // Move the dragged section
     const [movedSection] = newSections.splice(draggedIndex, 1);
@@ -203,20 +272,26 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
     setDraggedSection(null);
     setDragOverSection(null);
 
-    // Auto-save the new order
-    await saveSectionOrder(updatedSections);
-  };
+    // Debounced save
+    debouncedSave(updatedSections);
+  }, [enableDragDrop, draggedSection, sections, debouncedSave]);
 
   // Handle drag end
-  const handleDragEnd = () => {
+  const handleDragEnd = useCallback((e: React.DragEvent) => {
+    // Reset opacity
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '1';
+    }
     setDraggedSection(null);
     setDragOverSection(null);
-  };
+  }, []);
 
   // Handle drag leave
-  const handleDragLeave = () => {
-    setDragOverSection(null);
-  };
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDragOverSection(null);
+    }
+  }, []);
 
   // Render section content based on section type
   const renderSectionContent = (section: SectionConfig) => {
@@ -441,73 +516,88 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
   }
 
   return (
-    <div className="w-full h-full bg-white">
+    <div className="w-full h-full bg-white relative">
+      {/* Reordering indicator */}
+      {isReordering && (
+        <div className="absolute top-2 right-2 z-10 bg-blue-500 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
+          <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Yeniden təşkil edilir...
+        </div>
+      )}
+
       <div className="p-8 space-y-6">
         {sections.map((section) => {
           const content = renderSectionContent(section);
           if (!content) return null;
+
+          const isDragged = draggedSection === section.id;
+          const isDragOver = dragOverSection === section.id;
 
           return (
             <div
               key={section.id}
               draggable={enableDragDrop}
               onDragStart={(e) => handleDragStart(e, section.id)}
-              onDragEnd={handleDragEnd}
               onDragOver={(e) => handleDragOver(e, section.id)}
-              onDragLeave={handleDragLeave}
+              onDragEnter={(e) => handleDragEnter(e, section.id)}
               onDrop={(e) => handleDrop(e, section.id)}
-              className={`relative group transition-all duration-200 ${
-                enableDragDrop ? 'cursor-move' : ''
-              } ${
-                draggedSection === section.id
-                  ? 'opacity-50 transform scale-105'
-                  : ''
-              } ${
-                dragOverSection === section.id && draggedSection !== section.id
-                  ? 'ring-2 ring-blue-400 ring-opacity-50 bg-blue-50'
-                  : ''
-              }`}
+              onDragEnd={handleDragEnd}
+              onDragLeave={handleDragLeave}
+              className={`
+                relative transition-all duration-200 ease-in-out
+                ${enableDragDrop ? 'cursor-move' : 'cursor-default'}
+                ${isDragged ? 'opacity-50 scale-95 rotate-1 z-10' : 'opacity-100 scale-100'}
+                ${isDragOver ? 'transform translate-y-1 bg-blue-50 border-2 border-blue-300 border-dashed rounded-lg' : ''}
+                ${enableDragDrop ? 'hover:shadow-md hover:bg-gray-50' : ''}
+                group
+              `}
               style={{
-                userSelect: enableDragDrop ? 'none' : 'text',
-                WebkitUserSelect: enableDragDrop ? 'none' : 'text'
+                transform: isDragged ? 'rotate(2deg) scale(0.95)' : undefined,
+                transition: 'all 0.2s ease-in-out'
               }}
             >
-              {/* Drag indicator - only show when drag is enabled */}
+              {/* Drag handle indicator */}
               {enableDragDrop && (
-                <div className="absolute -left-6 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="flex items-center justify-center w-4 h-full">
-                    <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M4 4h2v2H4V4zm0 5h2v2H4V9zm0 5h2v2H4v-2zm5-10h2v2H9V4zm0 5h2v2H9V9zm0 5h2v2H9v-2zm5-10h2v2h-2V4zm0 5h2v2h-2V9zm0 5h2v2h-2v-2z"/>
+                <div className="absolute -left-6 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div className="bg-gray-400 text-white p-1 rounded cursor-move">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
                     </svg>
                   </div>
                 </div>
               )}
 
               {/* Section content */}
-              <div className="relative z-10">
+              <div className="relative">
                 {content}
               </div>
 
-              {/* Drop indicator */}
-              {dragOverSection === section.id && draggedSection !== section.id && (
-                <div className="absolute inset-0 border-2 border-dashed border-blue-400 rounded-lg pointer-events-none"></div>
+              {/* Drop zone indicator */}
+              {isDragOver && draggedSection && draggedSection !== section.id && (
+                <div className="absolute inset-0 bg-blue-100 bg-opacity-50 border-2 border-blue-400 border-dashed rounded-lg flex items-center justify-center">
+                  <div className="bg-blue-500 text-white px-3 py-1 rounded text-sm font-medium">
+                    Buraya burax
+                  </div>
+                </div>
               )}
             </div>
           );
         })}
-
-        {/* Drag and drop instructions */}
-        {enableDragDrop && sections.length > 1 && (
-          <div className="mt-8 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M4 4h2v2H4V4zm0 5h2v2H4V9zm0 5h2v2H4v-2zm5-10h2v2H9V4zm0 5h2v2H9V9zm0 5h2v2H9v-2zm5-10h2v2h-2V4zm0 5h2v2h-2V9zm0 5h2v2h-2v-2z"/>
-              </svg>
-              <span>Bölmələri sürükləyərək yenidən sıralayın</span>
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Instructions for drag and drop */}
+      {enableDragDrop && (
+        <div className="absolute bottom-4 left-4 bg-gray-800 text-white px-3 py-2 rounded-lg text-xs opacity-0 hover:opacity-100 transition-opacity duration-200">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+            </svg>
+            Bölmələri sürüyərək yeniden təşkil edin
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -972,46 +972,25 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
       const updatedCV = {
         ...cv,
         cvLanguage: pendingLanguage,
-        ...translatedData
+        ...translatedData,
+        // CRITICAL: Add extra protection with deep clone to prevent any reference issues
+        personalInfo: { ...translatedData.personalInfo },
+        experience: translatedData.experience ? [...translatedData.experience] : [],
+        education: translatedData.education ? [...translatedData.education] : [],
+        skills: translatedData.skills ? [...translatedData.skills] : [],
+        languages: translatedData.languages ? [...translatedData.languages] : [],
+        projects: translatedData.projects ? [...translatedData.projects] : [],
+        certifications: translatedData.certifications ? [...translatedData.certifications] : []
       };
 
       setCv(updatedCV);
 
-      // Immediately save the translated content to database
-      console.log('Saving translated content to database...');
-
-      const sanitizedData = {
-        personalInfo: translatedData.personalInfo,
-        experience: Array.isArray(translatedData.experience) ? translatedData.experience : [],
-        education: Array.isArray(translatedData.education) ? translatedData.education : [],
-        skills: Array.isArray(translatedData.skills) ? translatedData.skills : [],
-        languages: Array.isArray(translatedData.languages) ? translatedData.languages : [],
-        projects: Array.isArray(translatedData.projects) ? translatedData.projects : [],
-        certifications: Array.isArray(translatedData.certifications) ? translatedData.certifications : [],
-        volunteerExperience: Array.isArray(translatedData.volunteerExperience) ? translatedData.volunteerExperience : [],
-        publications: Array.isArray(translatedData.publications) ? translatedData.publications : [],
-        honorsAwards: Array.isArray(translatedData.honorsAwards) ? translatedData.honorsAwards : [],
-        testScores: Array.isArray(translatedData.testScores) ? translatedData.testScores : [],
-        recommendations: Array.isArray(translatedData.recommendations) ? translatedData.recommendations : [],
-        courses: Array.isArray(translatedData.courses) ? translatedData.courses : [],
-        sectionOrder: translatedData.sectionOrder || [],
-        cvLanguage: pendingLanguage,
-        translationMetadata: translatedData.translationMetadata
-      };
-
-      const apiData = {
-        title: cv.title,
-        cv_data: sanitizedData
-      };
-
-      if (cvId) {
-        await apiClient.put(`/api/cv/${cvId}`, apiData);
-        console.log('✅ Translated content saved to database');
-      }
+      console.log('✅ Manual translation completed - CV state updated with translations');
+      console.log('Translation metadata:', updatedCV.translationMetadata);
 
       setSuccess(pendingLanguage === 'english' ?
-          'CV content successfully translated to English and saved!' :
-          'CV məzmunu uğurla Azərbaycan dilinə tərcümə edildi və saxlanıldı!'
+          'CV content successfully translated to English! Please save manually.' :
+          'CV məzmunu uğurla Azərbaycan dilinə tərcümə edildi! Manuel olaraq saxlayın.'
       );
     } catch (error) {
       console.error('Translation error:', error);
@@ -1084,6 +1063,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
 
     try {
       console.log('🔄 CVEditor: Loading CV with ID:', cvId);
+
       const result = await apiClient.get(`/api/cvs/${cvId}`);
       console.log('📥 CVEditor: API response:', result);
 
@@ -1327,152 +1307,162 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
 
       console.log('💾 Save API response:', result);
 
-      setTimeout(() => {
-        // COMPLETELY PREVENT CV DATA OVERRIDE WHEN TRANSLATION LOCKS EXIST
-        const hasAnyTranslationLock = cv.translationMetadata?.translationLock;
+      // IMMEDIATE TRANSLATION LOCK CHECK - No setTimeout to prevent override
+      const hasTranslationLock = cv.translationMetadata?.translationLock === true;
+      const isTranslatedContent = cv.translationMetadata?.translatedAt;
 
-        if (hasAnyTranslationLock) {
-          console.log('🔒 TRANSLATION LOCK DETECTED - COMPLETELY PREVENTING CV DATA OVERRIDE');
+      if (hasTranslationLock && isTranslatedContent) {
+        console.log('🔒 TRANSLATION LOCK DETECTED - PRESERVING TRANSLATED CONTENT IMMEDIATELY');
+        console.log('Translation metadata:', cv.translationMetadata);
 
-          // Only update the CV ID if it's a new CV, absolutely preserve everything else
-          if (!cvId && result?.data?.cv?.id) {
-            setCv(prev => ({
-              ...prev,
-              id: result.data.cv.id
-            }));
-
-            // Update URL for new CV
-            if (typeof window !== 'undefined') {
-              const newUrl = `/cv/edit/${result.data.cv.id}`;
-              window.history.replaceState({}, '', newUrl);
-              console.log('📝 Updated URL for new CV:', newUrl);
-            }
-          }
-
-          // ABSOLUTELY DO NOT UPDATE CV DATA - PRESERVE TRANSLATION COMPLETELY
-          console.log('🛡️ Translation preserved - no CV data update from server');
-
-        } else {
-          // No translation lock - safe to update with server data as before
-          console.log('✅ No translation lock - safe to update CV data');
-
-          // Handle different API response structures safely
-          let cvForSave: CVEditorState;
-          if (result?.data?.cv) {
-            const serverCvData = result.data.cv.cv_data || {};
-            cvForSave = {
-              id: result.data.cv.id,
-              title: result.data.cv.title,
-              templateId: cv.templateId, // Preserve current template selection
-              personalInfo: serverCvData.personalInfo || cv.personalInfo,
-              experience: serverCvData.experience || cv.experience,
-              education: serverCvData.education || cv.education,
-              skills: serverCvData.skills || cv.skills,
-              languages: serverCvData.languages || cv.languages,
-              projects: serverCvData.projects || cv.projects,
-              certifications: serverCvData.certifications || cv.certifications,
-              volunteerExperience: serverCvData.volunteerExperience || cv.volunteerExperience,
-              publications: serverCvData.publications || cv.publications,
-              honorsAwards: serverCvData.honorsAwards || cv.honorsAwards,
-              testScores: serverCvData.testScores || cv.testScores,
-              recommendations: serverCvData.recommendations || cv.recommendations,
-              courses: serverCvData.courses || cv.courses,
-              customSections: serverCvData.customSections || cv.customSections,
-              sectionOrder: serverCvData.sectionOrder || cv.sectionOrder,
-              cvLanguage: serverCvData.cvLanguage || cv.cvLanguage,
-              translationMetadata: serverCvData.translationMetadata || cv.translationMetadata
-            };
-          } else if (result?.data?.id) {
-            const serverCvData = result.data.cv_data || {};
-            cvForSave = {
-              id: result.data.id,
-              title: result.data.title || cv.title,
-              templateId: cv.templateId, // Preserve current template selection
-              personalInfo: serverCvData.personalInfo || cv.personalInfo,
-              experience: serverCvData.experience || cv.experience,
-              education: serverCvData.education || cv.education,
-              skills: serverCvData.skills || cv.skills,
-              languages: serverCvData.languages || cv.languages,
-              projects: serverCvData.projects || cv.projects,
-              certifications: serverCvData.certifications || cv.certifications,
-              volunteerExperience: serverCvData.volunteerExperience || cv.volunteerExperience,
-              publications: serverCvData.publications || cv.publications,
-              honorsAwards: serverCvData.honorsAwards || cv.honorsAwards,
-              testScores: serverCvData.testScores || cv.testScores,
-              recommendations: serverCvData.recommendations || cv.recommendations,
-              courses: serverCvData.courses || cv.courses,
-              customSections: serverCvData.customSections || cv.customSections,
-              sectionOrder: serverCvData.sectionOrder || cv.sectionOrder,
-              cvLanguage: serverCvData.cvLanguage || cv.cvLanguage,
-              translationMetadata: serverCvData.translationMetadata || cv.translationMetadata
-            };
-          } else if (result?.id) {
-            const serverCvData = result.cv_data || {};
-            cvForSave = {
-              id: result.id,
-              title: result.title || cv.title,
-              templateId: cv.templateId, // Preserve current template selection
-              personalInfo: serverCvData.personalInfo || cv.personalInfo,
-              experience: serverCvData.experience || cv.experience,
-              education: serverCvData.education || cv.education,
-              skills: serverCvData.skills || cv.skills,
-              languages: serverCvData.languages || cv.languages,
-              projects: serverCvData.projects || cv.projects,
-              certifications: serverCvData.certifications || cv.certifications,
-              volunteerExperience: serverCvData.volunteerExperience || cv.volunteerExperience,
-              publications: serverCvData.publications || cv.publications,
-              honorsAwards: serverCvData.honorsAwards || cv.honorsAwards,
-              testScores: serverCvData.testScores || cv.testScores,
-              recommendations: serverCvData.recommendations || cv.recommendations,
-              courses: serverCvData.courses || cv.courses,
-              customSections: serverCvData.customSections || cv.customSections,
-              sectionOrder: serverCvData.sectionOrder || cv.sectionOrder,
-              cvLanguage: serverCvData.cvLanguage || cv.cvLanguage,
-              translationMetadata: serverCvData.translationMetadata || cv.translationMetadata
-            };
-          } else {
-            cvForSave = {
-              id: cvId || cv.id || `cv-${Date.now()}`,
-              title: cv.title,
-              templateId: cv.templateId, // Keep current template selection
-              personalInfo: cv.personalInfo,
-              experience: cv.experience,
-              education: cv.education,
-              skills: cv.skills,
-              languages: cv.languages,
-              projects: cv.projects,
-              certifications: cv.certifications,
-              volunteerExperience: cv.volunteerExperience,
-              publications: cv.publications,
-              honorsAwards: cv.honorsAwards,
-              testScores: cv.testScores,
-              recommendations: cv.recommendations,
-              courses: cv.courses,
-              customSections: cv.customSections,
-              sectionOrder: cv.sectionOrder,
-              cvLanguage: cv.cvLanguage,
-              translationMetadata: cv.translationMetadata
-            };
-          }
-
-          console.log('✅ Template preserved after save:', cvForSave.templateId);
-          setCv(cvForSave);
+        // Only update the CV ID if it's a new CV, preserve everything else
+        if (!cvId && result?.data?.cv?.id) {
+          setCv(prev => ({
+            ...prev,
+            id: result.data.cv.id
+          }));
 
           // Update URL for new CV
-          if (!cvId && cvForSave.id && typeof window !== 'undefined') {
-            const newUrl = `/cv/edit/${cvForSave.id}`;
+          if (typeof window !== 'undefined') {
+            const newUrl = `/cv/edit/${result.data.cv.id}`;
+            window.history.replaceState({}, '', newUrl);
+            console.log('📝 Updated URL for new CV:', newUrl);
+          }
+        } else if (!cvId && result?.data?.id) {
+          setCv(prev => ({
+            ...prev,
+            id: result.data.id
+          }));
+
+          if (typeof window !== 'undefined') {
+            const newUrl = `/cv/edit/${result.data.id}`;
             window.history.replaceState({}, '', newUrl);
             console.log('📝 Updated URL for new CV:', newUrl);
           }
         }
 
-        // Show extended success message
-        setSuccess('CV və şablon seçimi uğurla saxlanıldı!');
-        showSuccess('CV və şablon seçimi uğurla saxlanıldı!');
+        // CRITICAL: Do not reload or update CV data - keep translated content
+        console.log('🛡️ Translation preserved - CV data unchanged in memory');
 
-        // Don't call onSave to prevent redirect to dashboard
-        // onSave(cvForSave); // REMOVED: This was causing redirect to dashboard
-      }, 1500);
+        // Show success message and exit early
+        setSuccess(cv.cvLanguage === 'english' ?
+          'CV successfully saved with English translation!' :
+          'CV tərcümə ilə birlikdə uğurla saxlanıldı!'
+        );
+        return; // Exit early to prevent any CV data updates
+      }
+
+      // No translation lock - safe to update with server data as before
+      console.log('✅ No translation lock - updating CV data from server');
+
+      // Handle different API response structures safely
+      let cvForSave: CVEditorState;
+      if (result?.data?.cv) {
+        const serverCvData = result.data.cv.cv_data || {};
+        cvForSave = {
+          id: result.data.cv.id,
+          title: result.data.cv.title,
+          templateId: cv.templateId, // Preserve current template selection
+          personalInfo: serverCvData.personalInfo || cv.personalInfo,
+          experience: serverCvData.experience || cv.experience,
+          education: serverCvData.education || cv.education,
+          skills: serverCvData.skills || cv.skills,
+          languages: serverCvData.languages || cv.languages,
+          projects: serverCvData.projects || cv.projects,
+          certifications: serverCvData.certifications || cv.certifications,
+          volunteerExperience: serverCvData.volunteerExperience || cv.volunteerExperience,
+          publications: serverCvData.publications || cv.publications,
+          honorsAwards: serverCvData.honorsAwards || cv.honorsAwards,
+          testScores: serverCvData.testScores || cv.testScores,
+          recommendations: serverCvData.recommendations || cv.recommendations,
+          courses: serverCvData.courses || cv.courses,
+          customSections: serverCvData.customSections || cv.customSections,
+          sectionOrder: serverCvData.sectionOrder || cv.sectionOrder,
+          cvLanguage: serverCvData.cvLanguage || cv.cvLanguage,
+          translationMetadata: serverCvData.translationMetadata || cv.translationMetadata
+        };
+      } else if (result?.data?.id) {
+        const serverCvData = result.data.cv_data || {};
+        cvForSave = {
+          id: result.data.id,
+          title: result.data.title || cv.title,
+          templateId: cv.templateId, // Preserve current template selection
+          personalInfo: serverCvData.personalInfo || cv.personalInfo,
+          experience: serverCvData.experience || cv.experience,
+          education: serverCvData.education || cv.education,
+          skills: serverCvData.skills || cv.skills,
+          languages: serverCvData.languages || cv.languages,
+          projects: serverCvData.projects || cv.projects,
+          certifications: serverCvData.certifications || cv.certifications,
+          volunteerExperience: serverCvData.volunteerExperience || cv.volunteerExperience,
+          publications: serverCvData.publications || cv.publications,
+          honorsAwards: serverCvData.honorsAwards || cv.honorsAwards,
+          testScores: serverCvData.testScores || cv.testScores,
+          recommendations: serverCvData.recommendations || cv.recommendations,
+          courses: serverCvData.courses || cv.courses,
+          customSections: serverCvData.customSections || cv.customSections,
+          sectionOrder: serverCvData.sectionOrder || cv.sectionOrder,
+          cvLanguage: serverCvData.cvLanguage || cv.cvLanguage,
+          translationMetadata: serverCvData.translationMetadata || cv.translationMetadata
+        };
+      } else if (result?.id) {
+        const serverCvData = result.cv_data || {};
+        cvForSave = {
+          id: result.id,
+          title: result.title || cv.title,
+          templateId: cv.templateId, // Preserve current template selection
+          personalInfo: serverCvData.personalInfo || cv.personalInfo,
+          experience: serverCvData.experience || cv.experience,
+          education: serverCvData.education || cv.education,
+          skills: serverCvData.skills || cv.skills,
+          languages: serverCvData.languages || cv.languages,
+          projects: serverCvData.projects || cv.projects,
+          certifications: serverCvData.certifications || cv.certifications,
+          volunteerExperience: serverCvData.volunteerExperience || cv.volunteerExperience,
+          publications: serverCvData.publications || cv.publications,
+          honorsAwards: serverCvData.honorsAwards || cv.honorsAwards,
+          testScores: serverCvData.testScores || cv.testScores,
+          recommendations: serverCvData.recommendations || cv.recommendations,
+          courses: serverCvData.courses || cv.courses,
+          customSections: serverCvData.customSections || cv.customSections,
+          sectionOrder: serverCvData.sectionOrder || cv.sectionOrder,
+          cvLanguage: serverCvData.cvLanguage || cv.cvLanguage,
+          translationMetadata: serverCvData.translationMetadata || cv.translationMetadata
+        };
+      } else {
+        cvForSave = {
+          id: cvId || cv.id || `cv-${Date.now()}`,
+          title: cv.title,
+          templateId: cv.templateId, // Keep current template selection
+          personalInfo: cv.personalInfo,
+          experience: cv.experience,
+          education: cv.education,
+          skills: cv.skills,
+          languages: cv.languages,
+          projects: cv.projects,
+          certifications: cv.certifications,
+          volunteerExperience: cv.volunteerExperience,
+          publications: cv.publications,
+          honorsAwards: cv.honorsAwards,
+          testScores: cv.testScores,
+          recommendations: cv.recommendations,
+          courses: cv.courses,
+          customSections: cv.customSections,
+          sectionOrder: cv.sectionOrder,
+          cvLanguage: cv.cvLanguage,
+          translationMetadata: cv.translationMetadata
+        };
+      }
+
+      console.log('✅ Template preserved after save:', cvForSave.templateId);
+      setCv(cvForSave);
+
+      // Update URL for new CV
+      if (!cvId && cvForSave.id && typeof window !== 'undefined') {
+        const newUrl = `/cv/edit/${cvForSave.id}`;
+        window.history.replaceState({}, '', newUrl);
+        console.log('📝 Updated URL for new CV:', newUrl);
+      }
     } catch (err) {
       console.error('CV save error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -1517,34 +1507,46 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
         // Use the same API client and endpoint as the regular save function
         const result = await apiClient.put(`/api/cv/${cv.id}`, apiData);
 
-        if (result && result.data) {
-          console.log('✅ Section order auto-saved successfully');
+        // Improved error handling - check response properly
+        if (result) {
+          console.log('✅ Section order auto-saved successfully', result);
 
-          // FIXED: Do not override CV data from server response to preserve translation locks
+          // Always update section order locally regardless of server response structure
+          setCv(prev => ({
+            ...prev,
+            sectionOrder: sections // Update section order immediately
+          }));
+
           // Check if CV has translation locks and preserve them
           const hasTranslationLock = cv.translationMetadata?.translationLock;
 
           if (hasTranslationLock) {
             console.log('🔒 Translation lock detected - preserving current CV data');
-            // Only update the sectionOrder, preserve all other data including translation locks
+            // Translation lock is active, keep current data structure
+          } else if (result.data?.cv?.cv_data) {
+            // No translation lock and server returned data - update with server data
             setCv(prev => ({
               ...prev,
-              sectionOrder: sections // Only update section order
+              ...result.data.cv.cv_data,
+              sectionOrder: sections // Ensure section order is preserved
             }));
-          } else {
-            // No translation lock - safe to update with server data
-            if (result.data.cv && result.data.cv.cv_data) {
-              setCv(prev => ({
-                ...prev,
-                ...result.data.cv.cv_data
-              }));
-            }
           }
 
           setSuccess('Bölmə sırası avtomatik saxlanıldı');
           setTimeout(() => setSuccess(''), 2000);
         } else {
-          throw new Error('Auto-save failed - no response data');
+          // Fallback - still update locally even if server didn't respond properly
+          console.warn('⚠️ Server response was empty, but updating locally');
+          setCv(prev => ({
+            ...prev,
+            sectionOrder: sections
+          }));
+
+          // Save to localStorage as backup
+          localStorage.setItem(`cv_section_order_${cv.id}`, JSON.stringify(sections));
+
+          setSuccess('Bölmə sırası lokal saxlanıldı');
+          setTimeout(() => setSuccess(''), 2000);
         }
       } catch (error) {
         console.error('❌ Auto-save failed:', error);
@@ -1677,7 +1679,14 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
           ...result.translatedData,
           // Preserve important fields that shouldn't be translated
           cvLanguage: targetLanguage,
-          sectionOrder: prev.sectionOrder || []
+          sectionOrder: prev.sectionOrder || [],
+          // CRITICAL: Add translation metadata to prevent save override
+          translationMetadata: {
+            translatedAt: new Date().toISOString(),
+            fromLanguage: cv.cvLanguage,
+            toLanguage: targetLanguage,
+            translationLock: true // This prevents handleSave from overriding translated content
+          }
         }));
 
         showSuccess(`CV uğurla ${targetLanguage === 'azerbaijani' ? 'Azərbaycan' : 'İngilis'} dilinə tərcümə edildi!`);
@@ -1728,8 +1737,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
         { id: 'certifications', label: 'Certifications', icon: '🏆' },
         { id: 'volunteer', label: 'Volunteer Experience', icon: '❤️' },
         { id: 'customSections', label: 'Custom Sections', icon: '📝' },
-        { id: 'template', label: 'Template Selection', icon: '🎨' },
-        { id: 'interactiveEditor', label: 'Interactive Editor', icon: '✨' }
+        { id: 'template', label: 'Template Selection', icon: '🎨' }
       ];
     } else {
       return [
@@ -1742,8 +1750,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
         { id: 'certifications', label: 'Sertifikatlar', icon: '🏆' },
         { id: 'volunteer', label: 'Könüllü Təcrübə', icon: '❤️' },
         { id: 'customSections', label: 'Əlavə Bölmələr', icon: '📝' },
-        { id: 'template', label: 'Şablon Seçimi', icon: '🎨' },
-        { id: 'interactiveEditor', label: 'İnteraktiv Redaktor', icon: '✨' }
+        { id: 'template', label: 'Şablon Seçimi', icon: '🎨' }
       ];
     }
   };
@@ -1804,7 +1811,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                     >
                       {translating ? (
                           <div className="flex items-center gap-2">
-                            <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
                             <span>Tərcümə...</span>
                           </div>
                       ) : (
@@ -2118,168 +2125,6 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                           />
                         </div>
                     )}
-                    {activeSection === 'interactiveEditor' && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4 text-gray-800">
-                            {cv.cvLanguage === 'english' ? 'Interactive Section Editor' : 'İnteraktiv Bölmə Redaktoru'}
-                          </h3>
-                          <div className="mb-4 p-4 bg-gradient-to-r from-blue-500 to-purple-500 border border-blue-200 rounded-lg">
-                            <div className="flex items-start gap-3">
-                              <span className="text-2xl">✨</span>
-                              <div>
-                                <h4 className="font-semibold text-gray-900 mb-2">
-                                  {cv.cvLanguage === 'english'
-                                      ? 'Advanced Visual Editor'
-                                      : 'Qabaqcıl Vizual Redaktor'
-                                  }
-                                </h4>
-                                <p className="text-sm text-gray-700 mb-3">
-                                  {cv.cvLanguage === 'english'
-                                      ? 'Use the interactive editor to visually customize your CV sections with drag-and-drop, resizing, and real-time style adjustments.'
-                                      : 'İnteraktiv redaktordan istifadə edərək CV bölmələrinizi vizual olaraq fərdiləşdirin - sürükləyib buraxın, ölçü dəyişdirin və canlı stil tənzimləmələri edin.'
-                                  }
-                                </p>
-                                <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                                  <div className="flex items-center gap-1">
-                                    <span>🖱️</span>
-                                    <span>{cv.cvLanguage === 'english' ? 'Drag & Drop' : 'Sürükləyib burax'}</span>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <span>📐</span>
-                                    <span>{cv.cvLanguage === 'english' ? 'Resize Sections' : 'Bölmə ölçüsü'}</span>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <span>🎨</span>
-                                    <span>{cv.cvLanguage === 'english' ? 'Live Styling' : 'Canlı stil'}</span>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <span>📱</span>
-                                    <span>{cv.cvLanguage === 'english' ? 'Touch Friendly' : 'Toxunma dəstəyi'}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Convert CV data to interactive sections format */}
-                          {(() => {
-                            const cvSections = [
-                              {
-                                id: 'personal',
-                                type: 'personalInfo',
-                                title: cv.cvLanguage === 'english' ? 'Personal Information' : 'Şəxsi Məlumatlar',
-                                content: cv.personalInfo,
-                                isVisible: true
-                              },
-                              {
-                                id: 'experience',
-                                type: 'experience',
-                                title: cv.cvLanguage === 'english' ? 'Work Experience' : 'İş Təcrübəsi',
-                                content: cv.experience,
-                                isVisible: !!(cv.experience && cv.experience.length > 0)
-                              },
-                              {
-                                id: 'education',
-                                type: 'education',
-                                title: cv.cvLanguage === 'english' ? 'Education' : 'Təhsil',
-                                content: cv.education,
-                                isVisible: !!(cv.education && cv.education.length > 0)
-                              },
-                              {
-                                id: 'skills',
-                                type: 'skills',
-                                title: cv.cvLanguage === 'english' ? 'Skills' : 'Bacarıqlar',
-                                content: cv.skills,
-                                isVisible: !!(cv.skills && cv.skills.length > 0)
-                              },
-                              {
-                                id: 'languages',
-                                type: 'languages',
-                                title: cv.cvLanguage === 'english' ? 'Languages' : 'Dillər',
-                                content: cv.languages,
-                                isVisible: !!(cv.languages && cv.languages.length > 0)
-                              },
-                              {
-                                id: 'projects',
-                                type: 'projects',
-                                title: cv.cvLanguage === 'english' ? 'Projects' : 'Layihələr',
-                                content: cv.projects,
-                                isVisible: !!(cv.projects && cv.projects.length > 0)
-                              },
-                              {
-                                id: 'certifications',
-                                type: 'certifications',
-                                title: cv.cvLanguage === 'english' ? 'Certifications' : 'Sertifikatlar',
-                                content: cv.certifications,
-                                isVisible: !!(cv.certifications && cv.certifications.length > 0)
-                              },
-                              {
-                                id: 'volunteerExperience',
-                                type: 'volunteerExperience',
-                                title: cv.cvLanguage === 'english' ? 'Volunteer Experience' : 'Könüllü Təcrübə',
-                                content: cv.volunteerExperience,
-                                isVisible: !!(cv.volunteerExperience && cv.volunteerExperience.length > 0)
-                              },
-                              {
-                                id: 'customSections',
-                                type: 'customSections',
-                                title: cv.cvLanguage === 'english' ? 'Additional Sections' : 'Əlavə Bölmələr',
-                                content: cv.customSections,
-                                isVisible: !!(cv.customSections && cv.customSections.length > 0)
-                              }
-                            ].filter(section => section.isVisible);
-
-                            return (
-                                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                                  <div className="text-center text-gray-600">
-                                    <div className="mb-4">
-                                      <svg className="w-16 h-16 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                                      </svg>
-                                      <h4 className="text-lg font-medium text-gray-700 mb-2">
-                                        {cv.cvLanguage === 'english' ? 'CV Sections Overview' : 'CV Bölmələrinə Baxış'}
-                                      </h4>
-                                      <p className="text-sm text-gray-600 mb-4">
-                                        {cv.cvLanguage === 'english'
-                                          ? 'Your CV contains the following sections:'
-                                          : 'CV-nizdə aşağıdakı bölmələr var:'
-                                        }
-                                      </p>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                      {cvSections.map((section, index) => (
-                                        <div key={section.id} className="bg-white rounded-lg p-3 border border-gray-200 text-left">
-                                          <div className="flex items-center justify-between">
-                                            <h5 className="font-medium text-gray-800">{section.title}</h5>
-                                            <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">
-                                              {cv.cvLanguage === 'english' ? 'Active' : 'Aktiv'}
-                                            </span>
-                                          </div>
-                                          <p className="text-xs text-gray-500 mt-1">
-                                            {Array.isArray(section.content)
-                                              ? `${section.content.length} ${cv.cvLanguage === 'english' ? 'items' : 'element'}`
-                                              : cv.cvLanguage === 'english' ? 'Configured' : 'Konfiqurasiya edilib'
-                                            }
-                                          </p>
-                                        </div>
-                                      ))}
-                                    </div>
-
-                                    <div className="mt-4 text-sm text-gray-600">
-                                      <p>
-                                        {cv.cvLanguage === 'english'
-                                          ? 'Use the preview panel on the right to see how your CV looks.'
-                                          : 'CV-nizin necə göründüyünü sağdakı önizləmə panelində görün.'
-                                        }
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                            );
-                          })()}
-                        </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -2341,25 +2186,6 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                     </div>
                     <div className="flex items-center gap-3">
                       {/* Section Selection Mode Toggle */}
-                      <button
-                          onClick={() => setEnablePreviewSelection(!enablePreviewSelection)}
-                          className={`px-3 py-2 text-xs font-medium rounded-lg transition-all ${
-                              enablePreviewSelection
-                                  ? 'bg-blue-600 text-white shadow-md'
-                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                          title={enablePreviewSelection ? 'Seçim modunu söndür' : 'Seçim modunu aç'}
-                      >
-                        <div className="flex items-center gap-2">
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M4 4h2v2H4V4zm0 5h2v2H4V9zm0 5h2v2H4v-2zm5-10h2v2H9V4zm0 5h2v2H9V9zm0 5h2v2H9v-2zm5-10h2v2h-2V4zm0 5h2v2h-2V9zm0 5h2v2h-2v-2z"/>
-                          </svg>
-                          <span className="hidden sm:inline">
-                          {enablePreviewSelection ? 'Seçim ON' : 'Seçim OFF'}
-                        </span>
-                        </div>
-                      </button>
-
                       <div className="text-sm text-gray-600 flex items-center gap-2">
                         <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                         <span className="hidden sm:inline text-xs">Canlı güncəllənir</span>
@@ -2420,7 +2246,8 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                     recommendations: cv.recommendations || [],
                                     courses: cv.courses || [],
                                     customSections: cv.customSections || [],
-                                    cvLanguage: cv.cvLanguage || 'azerbaijani'
+                                    cvLanguage: cv.cvLanguage || 'azerbaijani',
+                                    sectionOrder: cv.sectionOrder || []
                                   } as any
                                 }}
                                 enableSectionSelection={enablePreviewSelection}
