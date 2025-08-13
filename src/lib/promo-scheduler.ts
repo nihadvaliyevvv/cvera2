@@ -1,14 +1,14 @@
 // Next.js integration for automatic promo code expiration checking
 // Import this file in your main app layout or server component
 
-import { PromoCodeExpirationScheduler } from './promo-cleanup-scheduler';
+import PromoCodeExpirationScheduler from '../../promo-cleanup-scheduler.js';
 
 let scheduler: any = null;
 
 export function initPromoCodeScheduler() {
   if (typeof window === 'undefined') { // Only run on server-side
     if (!scheduler) {
-      const PromoScheduler = require('./promo-cleanup-scheduler');
+      const PromoScheduler = require('../../promo-cleanup-scheduler.js');
       scheduler = new PromoScheduler();
       scheduler.start();
 
@@ -21,7 +21,7 @@ export function initPromoCodeScheduler() {
 export async function triggerPromoCodeCheck() {
   if (typeof window === 'undefined') {
     if (!scheduler) {
-      const PromoScheduler = require('./promo-cleanup-scheduler');
+      const PromoScheduler = require('../../promo-cleanup-scheduler.js');
       scheduler = new PromoScheduler();
     }
 

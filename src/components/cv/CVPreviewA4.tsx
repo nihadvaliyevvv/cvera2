@@ -529,4 +529,40 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                 <DraggableSection key="customSections" sectionId="customSections">
                   <div className="space-y-6">
                     {cv.data.customSections.map((section: any, sectionIndex: number) => {
-                      if
+                      if (!section.items || section.items.length === 0) return null;
+
+                      return (
+                        <div key={sectionIndex}>
+                          <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-300 pb-1">
+                            {section.title || 'Əlavə Bölmə'}
+                          </h3>
+                          <div className="space-y-3">
+                            {section.items.map((item: any, itemIndex: number) => (
+                              <div key={itemIndex} className="border-l-2 border-gray-400 pl-4">
+                                <h4 className="font-semibold text-gray-900">{item.title}</h4>
+                                {item.subtitle && (
+                                  <p className="text-sm text-gray-700">{item.subtitle}</p>
+                                )}
+                                {item.description && (
+                                  <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </DraggableSection>
+              );
+
+            default:
+              return null;
+          }
+        })}
+      </div>
+    </div>
+  );
+};
+
+export default CVPreviewA4;
