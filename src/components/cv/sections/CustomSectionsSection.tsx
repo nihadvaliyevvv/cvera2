@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { getLabel } from '@/lib/cvLanguage';
+import RichTextEditor from '@/components/ui/RichTextEditor';
 
 interface CustomSection {
   id: string;
@@ -260,12 +262,11 @@ export default function CustomSectionsSection({ data, onChange, userTier = 'Free
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Qısa Açıqlama
                       </label>
-                      <input
-                        type="text"
+                      <RichTextEditor
                         value={section.description}
-                        onChange={(e) => updateSection(section.id, 'description', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                        placeholder="Bölmə haqqında qısa açıqlama..."
+                        onChange={(value) => updateSection(section.id, 'description', value)}
+                        placeholder="Bu bölmə haqqında qısa təsvir..."
+                        minHeight="80px"
                       />
                     </div>
                   </div>
@@ -355,12 +356,11 @@ export default function CustomSectionsSection({ data, onChange, userTier = 'Free
                                   <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Açıqlama
                                   </label>
-                                  <textarea
+                                  <RichTextEditor
                                     value={item.description}
-                                    onChange={(e) => updateItem(section.id, item.id, 'description', e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none text-sm"
-                                    rows={3}
-                                    placeholder="Bu element haqqında ətraflı məlumat..."
+                                    onChange={(value) => updateItem(section.id, item.id, 'description', value)}
+                                    placeholder="Bu element haqqında təfərrüatlı məlumat..."
+                                    minHeight="100px"
                                   />
                                 </div>
                               </div>

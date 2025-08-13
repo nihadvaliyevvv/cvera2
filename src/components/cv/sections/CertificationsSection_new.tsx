@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { CVLanguage, getLabel } from '@/lib/cvLanguage';
+import { getLabel } from '@/lib/cvLanguage';
+import RichTextEditor from '@/components/ui/RichTextEditor';
 
 interface Certification {
   id: string;
@@ -221,15 +222,11 @@ export default function CertificationsSection({ data, onChange, language = 'azer
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {getLabel('description', language)}
                     </label>
-                    <textarea
+                    <RichTextEditor
                       value={certification.description || ''}
-                      onChange={(e) => updateCertification(certification.id, 'description', e.target.value)}
-                      placeholder={language === 'azerbaijani' ? 
-                        'Sertifikatın təsviri və əldə edilən bacarıqlar...' : 
-                        'Description of the certification and skills gained...'
-                      }
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      onChange={(value) => updateCertification(certification.id, 'description', value)}
+                      placeholder="Sertifikatın əhatə etdiyi mövzular və əhəmiyyəti haqqında qısa məlumat..."
+                      minHeight="100px"
                     />
                   </div>
 

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { getLabel } from '@/lib/cvLanguage';
+import RichTextEditor from '@/components/ui/RichTextEditor';
 
 interface Project {
   id: string;
@@ -245,12 +246,11 @@ export default function ProjectsSection({ data, onChange }: ProjectsSectionProps
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Təsvir <span className="text-red-500">*</span>
                     </label>
-                    <textarea
+                    <RichTextEditor
                       value={project.description}
-                      onChange={(e) => updateProject(project.id, 'description', e.target.value)}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
-                      placeholder="Layihənin məqsədi, həll etdiyi problem, əsas xüsusiyyətlər və nailiyyətlər..."
+                      onChange={(value) => updateProject(project.id, 'description', value)}
+                      placeholder="Layihənin məqsədini, istifadə olunan texnologiyaları və əldə olunan nəticələri təsvir edin..."
+                      minHeight="120px"
                     />
                   </div>
                 </div>

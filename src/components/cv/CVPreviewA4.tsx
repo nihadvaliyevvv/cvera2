@@ -364,7 +364,10 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                             </span>
                           </div>
                           {exp.description && (
-                            <p className="text-sm text-gray-600 leading-relaxed">{exp.description}</p>
+                            <div
+                              className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
+                              dangerouslySetInnerHTML={{ __html: exp.description }}
+                            />
                           )}
                         </div>
                       ))}
@@ -436,7 +439,10 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                         <div key={index} className="border-l-2 border-purple-500 pl-4">
                           <h4 className="font-semibold text-gray-900 mb-1">{project.name}</h4>
                           {project.description && (
-                            <p className="text-sm text-gray-600 leading-relaxed">{project.description}</p>
+                            <div
+                              className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
+                              dangerouslySetInnerHTML={{ __html: project.description }}
+                            />
                           )}
                         </div>
                       ))}
@@ -514,7 +520,10 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                             </span>
                           </div>
                           {vol.description && (
-                            <p className="text-sm text-gray-600 leading-relaxed">{vol.description}</p>
+                            <div
+                              className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
+                              dangerouslySetInnerHTML={{ __html: vol.description }}
+                            />
                           )}
                         </div>
                       ))}
@@ -544,7 +553,10 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                                   <p className="text-sm text-gray-700">{item.subtitle}</p>
                                 )}
                                 {item.description && (
-                                  <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
+                                  <div
+                                    className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
+                                    dangerouslySetInnerHTML={{ __html: item.description }}
+                                  />
                                 )}
                               </div>
                             ))}

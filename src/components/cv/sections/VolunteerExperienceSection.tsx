@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { getLabel } from '@/lib/cvLanguage';
+import RichTextEditor from '@/components/ui/RichTextEditor';
 
 interface VolunteerExperience {
   id: string;
@@ -207,12 +208,11 @@ export default function VolunteerExperienceSection({ data, onChange }: Volunteer
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Təsvir (ixtiyari)
                     </label>
-                    <textarea
-                      value={volunteer.description}
-                      onChange={(e) => updateVolunteerExperience(index, 'description', e.target.value)}
-                      rows={3}
+                    <RichTextEditor
+                      value={volunteer.description || ''}
+                      onChange={(value) => updateVolunteerExperience(index, 'description', value)}
                       placeholder="Könüllü fəaliyyətiniz haqqında qısa məlumat verin..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      minHeight="100px"
                     />
                   </div>
                 </div>

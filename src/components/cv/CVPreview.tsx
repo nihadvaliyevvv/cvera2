@@ -294,7 +294,10 @@ export default function CVPreview({ cv }: CVPreviewProps) {
               )}
             </div>
             {cv.data.personalInfo.summary && (
-              <p className="mt-3 text-sm text-gray-700">{cv.data.personalInfo.summary}</p>
+              <div
+                className="mt-3 text-sm text-gray-700 prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: cv.data.personalInfo.summary }}
+              />
             )}
           </div>
 
@@ -315,7 +318,10 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                       {formatDateRange(exp.startDate, exp.endDate, exp.current)}
                     </div>
                     {exp.description && (
-                      <p className="text-sm text-gray-700">{exp.description}</p>
+                      <div
+                        className="text-sm text-gray-700 prose prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{ __html: exp.description }}
+                      />
                     )}
                   </div>
                 ))}
@@ -418,7 +424,10 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                       {formatDateRange(project.startDate, project.endDate, project.current)}
                     </div>
                     {project.description && (
-                      <p className="text-sm text-gray-700 mb-2">{project.description}</p>
+                      <div
+                        className="text-sm text-gray-700 mb-2 prose prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{ __html: project.description }}
+                      />
                     )}
                     {project.technologies.length > 0 && (
                       <div className="flex flex-wrap gap-1">
@@ -486,7 +495,10 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                       {formatDateRange(vol.startDate, vol.endDate, vol.current)}
                     </div>
                     {vol.description && (
-                      <p className="text-sm text-gray-700">{vol.description}</p>
+                      <div
+                        className="text-sm text-gray-700 prose prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{ __html: vol.description }}
+                      />
                     )}
                   </div>
                 ))}
@@ -520,7 +532,10 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                     </h2>
 
                     {section.description && (
-                      <p className="text-sm text-gray-600 mb-3 italic">{section.description}</p>
+                      <div
+                        className="text-sm text-gray-600 mb-3 italic prose prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{ __html: section.description }}
+                      />
                     )}
 
                     {section.items && section.items.length > 0 && (
@@ -541,7 +556,10 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                                 <div>
                                   <h3 className="font-medium text-gray-900">{item.title}</h3>
                                   {item.description && (
-                                    <p className="text-sm text-gray-700 mt-1">{item.description}</p>
+                                    <div
+                                      className="text-sm text-gray-700 mt-1 prose prose-sm max-w-none"
+                                      dangerouslySetInnerHTML={{ __html: item.description }}
+                                    />
                                   )}
                                 </div>
                               )}
@@ -555,7 +573,10 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                                     )}
                                   </div>
                                   {item.description && (
-                                    <p className="text-sm text-gray-700 mt-1">{item.description}</p>
+                                    <div
+                                      className="text-sm text-gray-700 mt-1 prose prose-sm max-w-none"
+                                      dangerouslySetInnerHTML={{ __html: item.description }}
+                                    />
                                   )}
                                   {item.url && (
                                     <a
@@ -579,7 +600,10 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                                     )}
                                   </div>
                                   {item.description && (
-                                    <p className="text-sm text-gray-700 mt-1">{item.description}</p>
+                                    <div
+                                      className="text-sm text-gray-700 mt-1 prose prose-sm max-w-none"
+                                      dangerouslySetInnerHTML={{ __html: item.description }}
+                                    />
                                   )}
                                 </div>
                               )}
@@ -589,15 +613,13 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                                 <div>
                                   <h3 className="font-medium text-gray-900">{item.title}</h3>
                                   {item.description && (
-                                    <p className="text-sm text-gray-700 mt-1">{item.description}</p>
+                                    <div
+                                      className="text-sm text-gray-700 mt-1 prose prose-sm max-w-none"
+                                      dangerouslySetInnerHTML={{ __html: item.description }}
+                                    />
                                   )}
                                 </div>
                               )}
-
-                              {/* Əlavə debug məlumatı */}
-                              <div className="mt-2 text-xs text-gray-500 bg-gray-100 p-1 rounded">
-                                Debug: ID={item.id}, Type={section.type || 'undefined'}
-                              </div>
                             </div>
                           );
                         })}

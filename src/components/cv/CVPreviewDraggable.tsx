@@ -321,9 +321,10 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
             {cv.data.personalInfo?.summary && (
               <div className="mt-4">
                 <h3 className="font-semibold text-gray-800 mb-2">Özət</h3>
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  {cv.data.personalInfo.summary}
-                </p>
+                <div
+                  className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: cv.data.personalInfo.summary }}
+                />
               </div>
             )}
           </div>
@@ -348,9 +349,10 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
                   </span>
                 </div>
                 {exp.description && (
-                  <p className="text-xs text-gray-600 leading-relaxed">
-                    {exp.description}
-                  </p>
+                  <div
+                    className="text-xs text-gray-600 leading-relaxed prose prose-xs max-w-none"
+                    dangerouslySetInnerHTML={{ __html: exp.description }}
+                  />
                 )}
               </div>
             ))}
@@ -414,9 +416,10 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
               <div key={index} className="space-y-1">
                 <h4 className="font-medium text-gray-900">{project.name}</h4>
                 {project.description && (
-                  <p className="text-xs text-gray-600 leading-relaxed">
-                    {project.description}
-                  </p>
+                  <div
+                    className="text-xs text-gray-600 leading-relaxed prose prose-xs max-w-none"
+                    dangerouslySetInnerHTML={{ __html: project.description }}
+                  />
                 )}
               </div>
             ))}
@@ -483,9 +486,10 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
                   </span>
                 </div>
                 {vol.description && (
-                  <p className="text-xs text-gray-600 leading-relaxed">
-                    {vol.description}
-                  </p>
+                  <div
+                    className="text-xs text-gray-600 leading-relaxed prose prose-xs max-w-none"
+                    dangerouslySetInnerHTML={{ __html: vol.description }}
+                  />
                 )}
               </div>
             ))}

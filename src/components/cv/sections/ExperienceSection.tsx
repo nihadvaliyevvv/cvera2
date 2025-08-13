@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { getLabel } from '@/lib/cvLanguage';
+import RichTextEditor from '@/components/ui/RichTextEditor';
 
 interface Experience {
   id: string;
@@ -202,12 +203,11 @@ export default function ExperienceSection({ data, onChange }: ExperienceSectionP
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Təsvir
                     </label>
-                    <textarea
+                    <RichTextEditor
                       value={experience.description}
-                      onChange={(e) => updateExperience(experience.id, 'description', e.target.value)}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+                      onChange={(value) => updateExperience(experience.id, 'description', value)}
                       placeholder="Vəzifə öhdəliklərinizi və nailiyyətlərinizi təsvir edin..."
+                      minHeight="120px"
                     />
                   </div>
                 </div>

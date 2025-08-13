@@ -307,7 +307,7 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
                 </div>
               </div>
               {exp.description && (
-                <div style={pdfStyles.experienceDescription}>{exp.description}</div>
+                <div style={pdfStyles.experienceDescription} dangerouslySetInnerHTML={{ __html: exp.description }}></div>
               )}
             </div>
           ))}
@@ -379,7 +379,7 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
             <div key={index} style={pdfStyles.projectItem}>
               <div style={pdfStyles.projectName}>{project.name}</div>
               {project.description && (
-                <div style={pdfStyles.projectDescription}>{project.description}</div>
+                <div style={pdfStyles.projectDescription} dangerouslySetInnerHTML={{ __html: project.description }}></div>
               )}
               {project.technologies && project.technologies.length > 0 && (
                 <div style={pdfStyles.projectTech}>
