@@ -44,7 +44,7 @@ async function finalTemplateCheck() {
     
     console.log('\n📋 Template-lər:');
     console.log('  🔹 basic - Default template (hamı üçün)');
-    console.log('  🔹 modern - Əlavə template (hamı üçün)');
+    console.log('  🔹 medium - Professional template (Medium tier üçün)');
     console.log('  🗑️ Digər template-lər silindi');
     
   } catch (error) {

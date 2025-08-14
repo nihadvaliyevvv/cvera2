@@ -175,7 +175,7 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
 
     if (!canUseAI) {
       console.log('❌ Cannot use AI. User tier:', userTier);
-      showWarning(`AI professional summary Premium və Medium istifadəçilər üçün mövcuddur! Sizin tier: ${userTier}`, 'Giriş məhdudiyyəti');
+      showWarning(`AI Peşəkar Xülasə Premium və Medium istifadəçilər üçün mövcuddur! Sizin tier: ${userTier}`, 'Giriş məhdudiyyəti');
       return;
     }
 
@@ -242,7 +242,7 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
         handleChange('summary', result.summary);
         showSuccess(
           `${userTier === 'Premium' ? 'Executive-level' : 'Professional'} səviyyədə hazırlandı və ATS üçün optimallaşdırıldı.`,
-          'AI Professional Summary Yaradıldı! 🎉'
+          'AI Peşəkar Xülasə Yaradıldı! 🎉'
         );
       } else {
         console.log('❌ API returned success=false or no summary');
@@ -453,9 +453,9 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
             <div className="flex items-center space-x-2">
               <span className="text-purple-600">🤖</span>
               <div>
-                <p className="text-sm font-medium text-purple-800">AI Professional Summary</p>
+                <p className="text-sm font-medium text-purple-800">AI Peşəkar Xülasə</p>
                 <p className="text-xs text-purple-600">
-                  LinkedIn məlumatlarınızdan avtomatik professional özət yaradın! 
+                  LinkedIn məlumatlarınızdan avtomatik Peşəkar Xülasə yaradın!
                   <span className="font-semibold"> Premium və Medium </span> istifadəçilər üçün mövcuddur.
                 </p>
               </div>

@@ -2,7 +2,10 @@ import { useState, useCallback, useEffect } from 'react';
 import { useNotification } from '@/components/ui/Toast';
 import TemplateSelector from './TemplateSelector';
 import CVPreviewA4 from './CVPreviewA4';
+import CVPreview from './CVPreview';
 import CVSectionManager from './CVSectionManager';
+import CVPreviewA4Complex from './CVPreviewA4-complex';
+import CVPreviewMedium from './CVPreviewMedium';
 import styles from './CVEditor.module.css';
 import { CVData, PersonalInfo, Experience, Education, Skill, Language, Project, Certification, VolunteerExperience } from '@/types/cv';
 
@@ -1346,8 +1349,8 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
 
         // Show success message and exit early
         setSuccess(cv.cvLanguage === 'english' ?
-          'CV successfully saved with English translation!' :
-          'CV tərcümə ilə birlikdə uğurla saxlanıldı!'
+            'CV successfully saved with English translation!' :
+            'CV tərcümə ilə birlikdə uğurla saxlanıldı!'
         );
         return; // Exit early to prevent any CV data updates
       }
@@ -2225,7 +2228,59 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                             minHeight: '100%',
                             boxSizing: 'border-box'
                           }}>
-                            <CVPreviewA4
+                            {/* Render different components based on templateId */}
+                            {cv.templateId === 'medium' && (
+                              <CVPreviewMedium
+                                cv={{
+                                  ...cv,
+                                  data: {
+                                    personalInfo: {
+                                      ...cv.personalInfo,
+                                      name: cv.personalInfo.fullName
+                                    },
+                                    experience: cv.experience || [],
+                                    education: cv.education || [],
+                                    skills: cv.skills || [],
+                                    languages: cv.languages || [],
+                                    projects: cv.projects || [],
+                                    certifications: cv.certifications || [],
+                                    volunteerExperience: cv.volunteerExperience || [],
+                                    publications: cv.publications || [],
+                                    honorsAwards: cv.honorsAwards || [],
+                                    testScores: cv.testScores || [],
+                                    recommendations: cv.recommendations || [],
+                                    courses: cv.courses || [],
+                                    customSections: cv.customSections || [],
+                                    cvLanguage: cv.cvLanguage || 'azerbaijani',
+                                    sectionOrder: cv.sectionOrder || []
+                                  } as any
+                                }}
+                              />
+                            )}
+                            {cv.templateId === 'professional-complex' && (
+                              <CVPreviewA4Complex
+                                cv={{
+                                  ...cv,
+                                  data: {
+                                    personalInfo: {
+                                      ...cv.personalInfo,
+                                      name: cv.personalInfo.fullName
+                                    },
+                                    experience: cv.experience || [],
+                                    education: cv.education || [],
+                                    skills: cv.skills || [],
+                                    languages: cv.languages || [],
+                                    projects: cv.projects || [],
+                                    certifications: cv.certifications || [],
+                                    volunteerExperience: cv.volunteerExperience || [],
+                                    publications: cv.publications || [],
+                                    sectionOrder: cv.sectionOrder || []
+                                  } as any
+                                }}
+                              />
+                            )}
+                            {(cv.templateId === 'basic' || cv.templateId === 'professional') && (
+                              <CVPreviewA4
                                 cv={{
                                   ...cv,
                                   data: {
@@ -2252,7 +2307,8 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                 }}
                                 enableSectionSelection={enablePreviewSelection}
                                 onSectionOrderChange={handleSectionOrderChange}
-                            />
+                              />
+                            )}
                           </div>
                         </div>
                     ) : (

@@ -38,20 +38,20 @@ function generatePreviewHTML(cvData: any, templateId: string): string {
 
   // Get sections in the order specified by sectionOrder, or default order
   const defaultSections = [
-    { id: 'personal', type: 'personal' },
-    { id: 'summary', type: 'summary' },
-    { id: 'experience', type: 'experience' },
-    { id: 'education', type: 'education' },
-    { id: 'skills', type: 'skills' },
-    { id: 'languages', type: 'languages' },
-    { id: 'projects', type: 'projects' },
-    { id: 'certifications', type: 'certifications' },
-    { id: 'volunteerExperience', type: 'volunteerExperience' },
-    { id: 'publications', type: 'publications' }
+    { id: 'personal', type: 'personal', isVisible: true },
+    { id: 'summary', type: 'summary', isVisible: true },
+    { id: 'experience', type: 'experience', isVisible: true },
+    { id: 'education', type: 'education', isVisible: true },
+    { id: 'skills', type: 'skills', isVisible: true },
+    { id: 'languages', type: 'languages', isVisible: true },
+    { id: 'projects', type: 'projects', isVisible: true },
+    { id: 'certifications', type: 'certifications', isVisible: true },
+    { id: 'volunteerExperience', type: 'volunteerExperience', isVisible: true },
+    { id: 'publications', type: 'publications', isVisible: true }
   ];
 
   const orderedSections = sectionOrder && sectionOrder.length > 0
-    ? sectionOrder.filter((section: any) => section.enabled !== false)
+    ? sectionOrder.filter((section: any) => section.isVisible !== false)
     : defaultSections;
 
   // Generate sections HTML based on the order
@@ -99,328 +99,140 @@ function generatePreviewHTML(cvData: any, templateId: string): string {
         }
 
         body {
-            font-family: 'Times New Roman', serif;
-            font-size: 9pt;
-            line-height: 1.3;
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
             color: #333;
             background: white;
-            width: 794px;
-            min-height: 1123px;
-            margin: 0;
-            padding: 12px 16px 16px 16px;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
         }
 
-        .cv-container {
-            width: 100%;
-            max-width: 100%;
-            margin: 0;
-            padding: 0;
-            background: white;
-        }
-
-        .cv-section {
-            margin-bottom: 0.4rem;
-            page-break-inside: avoid;
-            break-inside: avoid;
-            min-height: 25px;
-        }
-
-        .text-center {
+        .header {
             text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
         }
 
-        .mb-8 {
-            margin-bottom: 0.4rem;
+        .name {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
         }
 
-        h1 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 0.2rem;
-            line-height: 1.1;
-        }
-
-        h2 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 0.15rem;
-            margin-top: 0.4rem;
-            padding-bottom: 0.1rem;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        p {
-            margin-bottom: 0.3rem;
-            color: #4b5563;
-            font-size: 9pt;
-        }
-
-        .cv-contact-info {
+        .contact-info {
             display: flex;
-            flex-wrap: wrap;
-            gap: 0.6rem;
-            margin-bottom: 0.6rem;
-            padding: 0.6rem;
-            background: #f9fafb;
-            border-radius: 0.3rem;
             justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
         }
 
-        .cv-contact-item {
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-            color: #4b5563;
-            font-size: 8pt;
-            font-weight: 500;
-            white-space: nowrap;
+        .contact-item {
+            font-size: 0.9em;
+            color: #666;
         }
 
-        .cv-section-header {
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-            margin-bottom: 0.3rem;
-            padding-bottom: 0.2rem;
-            page-break-after: avoid;
-            break-after: avoid;
-            border-bottom: 1px solid #e5e7eb;
+        .section {
+            margin-bottom: 30px;
         }
 
-        .cv-section-title {
-            font-size: 1rem;
-            font-weight: 700;
-            color: #1f2937;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
+        .section-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
         }
 
-        .cv-experience-item {
-            margin-bottom: 0.4rem;
-            padding: 0.4rem;
-            border-left: 2px solid #3b82f6;
-            background: #f8fafc;
-            border-radius: 0 0.3rem 0.3rem 0;
-            page-break-inside: avoid;
-            break-inside: avoid;
-            min-height: 40px;
+        .experience-item, .education-item, .project-item {
+            margin-bottom: 20px;
+            padding-left: 20px;
+            border-left: 3px solid #3498db;
         }
 
-        .cv-experience-header {
+        .item-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 0.25rem;
-            gap: 0.6rem;
+            margin-bottom: 8px;
         }
 
-        .cv-experience-title {
-            font-size: 10pt;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 0.2rem;
+        .item-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #2c3e50;
         }
 
-        .cv-experience-company {
-            font-size: 9pt;
-            font-weight: 600;
-            color: #3b82f6;
-            margin-bottom: 0.2rem;
+        .item-company {
+            color: #7f8c8d;
+            font-size: 0.95em;
         }
 
-        .cv-experience-date {
-            font-size: 8pt;
-            color: #6b7280;
-            font-weight: 600;
+        .item-date {
+            color: #95a5a6;
+            font-size: 0.85em;
+            white-space: nowrap;
         }
 
-        .cv-experience-location {
-            font-size: 8pt;
-            color: #6b7280;
+        .item-description {
+            margin-top: 8px;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .skills-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .skill-item {
+            background: #ecf0f1;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            color: #2c3e50;
+        }
+
+        .languages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .language-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .language-name {
             font-weight: 500;
+        }
+
+        .language-level {
+            color: #7f8c8d;
             font-style: italic;
-        }
-
-        .cv-experience-description {
-            color: #4b5563;
-            line-height: 1.4;
-            margin-top: 0.2rem;
-            min-height: 20px;
-            padding-top: 0.2rem;
-            border-top: 1px solid #e5e7eb;
-            font-size: 9pt;
-        }
-
-        .cv-education-item {
-            margin-bottom: 0.4rem;
-            padding: 0.4rem;
-            border-left: 2px solid #10b981;
-            background: #f0fdf4;
-            border-radius: 0 0.3rem 0.3rem 0;
-            page-break-inside: avoid;
-            break-inside: avoid;
-            min-height: 40px;
-        }
-
-        .cv-education-degree {
-            font-size: 10pt;
-            font-weight: 700;
-            color: #1f2937;
-        }
-
-        .cv-education-institution {
-            font-size: 9pt;
-            font-weight: 600;
-            color: #10b981;
-            margin-bottom: 0.2rem;
-        }
-
-        .cv-skills-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 0.6rem;
-            width: 100%;
-            margin-top: 0.3rem;
-        }
-
-        .cv-skill-category {
-            background: #f3f4f6;
-            padding: 0.4rem;
-            border-radius: 0.3rem;
-            page-break-inside: avoid;
-            break-inside: avoid;
-            min-height: 40px;
-        }
-
-        .cv-skill-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.25rem 0;
-            border-bottom: 1px solid #e5e7eb;
-            margin-bottom: 0.15rem;
-        }
-
-        .cv-skill-item:last-child {
-            border-bottom: none;
-        }
-
-        .cv-skill-name {
-            font-weight: 600;
-            color: #374151;
-            font-size: 8pt;
-        }
-
-        .cv-skill-level {
-            font-size: 8pt;
-            color: #6b7280;
-            font-weight: 600;
-        }
-
-        .cv-languages-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 0.6rem;
-            width: 100%;
-        }
-
-        .cv-language-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.4rem;
-            background: #f3f4f6;
-            border-radius: 0.3rem;
-            margin-bottom: 0.15rem;
-        }
-
-        .cv-language-name {
-            font-weight: 600;
-            color: #1f2937;
-            font-size: 8pt;
-        }
-
-        .cv-language-level {
-            font-size: 8pt;
-            color: #6b7280;
-            font-weight: 500;
-        }
-
-        .cv-project-item {
-            margin-bottom: 0.4rem;
-            padding: 0.4rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.3rem;
-            background: #fafafa;
-            page-break-inside: avoid;
-            break-inside: avoid;
-            min-height: 40px;
-        }
-
-        .cv-project-title {
-            font-size: 10pt;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 0.3rem;
-        }
-
-        .cv-project-description {
-            color: #4b5563;
-            margin-bottom: 0.5rem;
-            font-size: 9pt;
-        }
-
-        .cv-certification-item {
-            margin-bottom: 0.4rem;
-            padding: 0.4rem;
-            border-left: 2px solid #f59e0b;
-            background: #fffbeb;
-            border-radius: 0 0.3rem 0.3rem 0;
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
-
-        .cv-certification-name {
-            font-size: 9pt;
-            font-weight: 700;
-            color: #1f2937;
-        }
-
-        .cv-certification-issuer {
-            font-size: 8pt;
-            font-weight: 600;
-            color: #f59e0b;
-            margin-bottom: 0.2rem;
-        }
-
-        .cv-certification-date {
-            font-size: 8pt;
-            color: #6b7280;
-            font-weight: 500;
         }
 
         @media print {
             body {
-                margin: 0;
-                padding: 12px 16px;
-                -webkit-print-color-adjust: exact;
-                color-adjust: exact;
-            }
-            
-            .cv-section {
-                page-break-inside: avoid;
+                padding: 20px;
+                max-width: none;
             }
         }
     </style>
 </head>
 <body>
-    <div class="cv-container">
-        ${sectionsHTML}
-    </div>
+    ${sectionsHTML}
 </body>
-</html>`;
+</html>
+  `;
 }
 
 function generatePersonalSection(personalInfo: any): string {
@@ -579,10 +391,9 @@ function generateProjectsSection(projects: any[]): string {
             <div class="cv-project-item">
                 <div class="cv-project-title">${project.name || ''}</div>
                 ${project.description ? `<div class="cv-project-description">${project.description}</div>` : ''}
-                ${project.technologies && Array.isArray(project.technologies) && project.technologies.length > 0 ? `
-                    <div class="cv-experience-location">Technologies: ${project.technologies.join(', ')}</div>
-                ` : ''}
-                ${project.url ? `<div class="cv-experience-location">URL: ${project.url}</div>` : ''}
+                ${project.technologies && Array.isArray(project.technologies) && project.technologies.length > 0 ? 
+                    `<div class="cv-project-tech">Technologies: ${project.technologies.join(', ')}</div>` : ''}
+                ${project.url ? `<div class="cv-project-url"><a href="${project.url}" target="_blank">Project Link</a></div>` : ''}
             </div>
         `).join('')}
     </div>
@@ -599,7 +410,8 @@ function generateCertificationsSection(certifications: any[]): string {
             <div class="cv-certification-item">
                 <div class="cv-certification-name">${cert.name || ''}</div>
                 <div class="cv-certification-issuer">${cert.issuer || ''}</div>
-                <div class="cv-certification-date">${cert.date || ''}</div>
+                ${cert.date || cert.issueDate ? `<div class="cv-certification-date">${cert.date || cert.issueDate}</div>` : ''}
+                ${cert.credentialId ? `<div class="cv-certification-id">Credential ID: ${cert.credentialId}</div>` : ''}
             </div>
         `).join('')}
     </div>
@@ -613,18 +425,18 @@ function generateVolunteerSection(volunteerExperience: any[]): string {
             <h2 class="cv-section-title">Volunteer Experience</h2>
         </div>
         ${volunteerExperience.map(vol => `
-            <div class="cv-experience-item">
-                <div class="cv-experience-header">
+            <div class="cv-volunteer-item">
+                <div class="cv-volunteer-header">
                     <div>
-                        <div class="cv-experience-title">${vol.role || ''}</div>
-                        <div class="cv-experience-company">${vol.organization || ''}</div>
-                        ${vol.cause ? `<div class="cv-experience-location">${vol.cause}</div>` : ''}
+                        <div class="cv-volunteer-role">${vol.role || ''}</div>
+                        <div class="cv-volunteer-organization">${vol.organization || ''}</div>
                     </div>
-                    <div class="cv-experience-date">
-                        ${vol.startDate || ''} - ${vol.current ? 'Present' : vol.endDate || ''}
+                    <div class="cv-volunteer-date">
+                        ${vol.startDate || ''} - ${vol.endDate ? vol.endDate : (vol.current ? 'Present' : '')}
                     </div>
                 </div>
-                ${vol.description ? `<div class="cv-experience-description">${vol.description}</div>` : ''}
+                ${vol.description ? `<div class="cv-volunteer-description">${vol.description}</div>` : ''}
+                ${vol.cause ? `<div class="cv-volunteer-cause">Cause: ${vol.cause}</div>` : ''}
             </div>
         `).join('')}
     </div>
@@ -638,16 +450,12 @@ function generatePublicationsSection(publications: any[]): string {
             <h2 class="cv-section-title">Publications</h2>
         </div>
         ${publications.map(pub => `
-            <div class="cv-experience-item">
-                <div class="cv-experience-header">
-                    <div>
-                        <div class="cv-experience-title">${pub.title || ''}</div>
-                        ${pub.publisher ? `<div class="cv-experience-company">${pub.publisher}</div>` : ''}
-                    </div>
-                    ${pub.date ? `<div class="cv-experience-date">${pub.date}</div>` : ''}
-                </div>
-                ${pub.description ? `<div class="cv-experience-description">${pub.description}</div>` : ''}
-                ${pub.url ? `<div class="cv-experience-location"><a href="${pub.url}">${pub.url}</a></div>` : ''}
+            <div class="cv-publication-item">
+                <div class="cv-publication-title">${pub.title || ''}</div>
+                ${pub.publisher ? `<div class="cv-publication-publisher">${pub.publisher}</div>` : ''}
+                ${pub.date ? `<div class="cv-publication-date">${pub.date}</div>` : ''}
+                ${pub.description ? `<div class="cv-publication-description">${pub.description}</div>` : ''}
+                ${pub.url ? `<div class="cv-publication-url"><a href="${pub.url}" target="_blank">Read Publication</a></div>` : ''}
             </div>
         `).join('')}
     </div>

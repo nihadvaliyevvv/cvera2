@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { getLabel } from '@/lib/cvLanguage';
+import { getLabel, CVLanguage } from '@/lib/cvLanguage';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 
 interface Certification {

@@ -74,19 +74,19 @@ async function testTemplateSaveIssue() {
       console.log('✅ Manual düzəlmə tamamlandı');
     }
 
-    // Template-i "modern"-ə dəyiş və test et
-    console.log('\n🔄 İndi template "modern"-ə dəyişdirilir...');
-    
-    const modernCvData = {
+    // Template-i "medium"-ə dəyiş və test et
+    console.log('\n🔄 İndi template "medium"-ə dəyişdirilir...');
+
+    const mediumCvData = {
       ...refreshedCV?.cv_data,
-      templateId: 'modern'
+      templateId: 'medium'
     };
 
     await prisma.cV.update({
       where: { id: testCV.id },
       data: {
-        templateId: 'modern',
-        cv_data: modernCvData
+        templateId: 'medium',
+        cv_data: mediumCvData
       }
     });
 
@@ -96,15 +96,15 @@ async function testTemplateSaveIssue() {
       select: { templateId: true, cv_data: true }
     });
 
-    console.log('\n📊 Modern template test nəticəsi:');
+    console.log('\n📊 Medium template test nəticəsi:');
     console.log(`  Database templateId: ${finalCV?.templateId}`);
     console.log(`  cv_data templateId: ${finalCV?.cv_data?.templateId}`);
 
-    if (finalCV?.templateId === 'modern' && finalCV?.cv_data?.templateId === 'modern') {
-      console.log('\n🎉 PERFECT: Modern template də düzgün işləyir!');
+    if (finalCV?.templateId === 'medium' && finalCV?.cv_data?.templateId === 'medium') {
+      console.log('\n🎉 PERFECT: Medium template də düzgün işləyir!');
       console.log('💾 Template save problemi həll olundu!');
     } else {
-      console.log('\n❌ STILL PROBLEM: Modern template save olmur');
+      console.log('\n❌ STILL PROBLEM: Medium template save olmur');
     }
 
     // Original template-ə geri qaytar

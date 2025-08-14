@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
 import { CVData as CVDataType } from '@/types/cv';
 import styles from './CVPreviewA4-complex.module.css';
@@ -9,7 +9,13 @@ interface CVData {
   id?: string;
   title: string;
   templateId: string;
-  data: CVDataType;
+  data: CVDataType & {
+    sectionOrder?: Array<{
+      id: string;
+      type: string;
+      isVisible: boolean;
+    }>;
+  };
 }
 
 interface Template {
@@ -212,6 +218,270 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
     }
   }, [cv.templateId, loadTemplate]);
 
+  // Section render functions
+  const renderPersonalSection = () => (
+    <div style={pdfStyles.header}>
+      <h1 style={pdfStyles.name}>
+        {cv.data.personalInfo.fullName || 'Ad Soyad'}
+      </h1>
+      <div style={pdfStyles.contactInfo}>
+        {cv.data.personalInfo.email && (
+          <div style={pdfStyles.contactItem}>
+            <span>Email:</span>
+            <span>{cv.data.personalInfo.email}</span>
+          </div>
+        )}
+        {cv.data.personalInfo.phone && (
+          <div style={pdfStyles.contactItem}>
+            <span>Tel:</span>
+            <span>{cv.data.personalInfo.phone}</span>
+          </div>
+        )}
+        {cv.data.personalInfo.linkedin && (
+          <div style={pdfStyles.contactItem}>
+            <span>LinkedIn:</span>
+            <span>LinkedIn</span>
+          </div>
+        )}
+        {cv.data.personalInfo.website && (
+          <div style={pdfStyles.contactItem}>
+            <span>Website:</span>
+            <span>Website</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderSummarySection = () => {
+    if (!cv.data.personalInfo.summary) return null;
+    return (
+      <div style={pdfStyles.section}>
+        <div style={pdfStyles.sectionHeader}>
+          <h2 style={pdfStyles.sectionTitle}>Özet</h2>
+        </div>
+        <div style={pdfStyles.summary} dangerouslySetInnerHTML={{ __html: cv.data.personalInfo.summary }}></div>
+      </div>
+    );
+  };
+
+  const renderExperienceSection = () => {
+    if (!cv.data.experience || cv.data.experience.length === 0) return null;
+    return (
+      <div style={pdfStyles.section}>
+        <div style={pdfStyles.sectionHeader}>
+          <h2 style={pdfStyles.sectionTitle}>İş Təcrübəsi</h2>
+        </div>
+        {cv.data.experience.map((exp, index) => (
+          <div key={index} style={pdfStyles.experienceItem}>
+            <div style={pdfStyles.experienceHeader}>
+              <div>
+                <div style={pdfStyles.experienceTitle}>{exp.position}</div>
+                <div style={pdfStyles.experienceCompany}>{exp.company}</div>
+              </div>
+              <div style={pdfStyles.experienceDate}>
+                {exp.startDate} - {exp.endDate || 'Hazırda'}
+              </div>
+            </div>
+            {exp.description && (
+              <div style={pdfStyles.experienceDescription} dangerouslySetInnerHTML={{ __html: exp.description }}></div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderEducationSection = () => {
+    if (!cv.data.education || cv.data.education.length === 0) return null;
+    return (
+      <div style={pdfStyles.section}>
+        <div style={pdfStyles.sectionHeader}>
+          <h2 style={pdfStyles.sectionTitle}>Təhsil</h2>
+        </div>
+        {cv.data.education.map((edu, index) => (
+          <div key={index} style={pdfStyles.educationItem}>
+            <div style={pdfStyles.educationDegree}>{edu.degree}</div>
+            <div style={pdfStyles.educationInstitution}>{edu.institution}</div>
+            <div style={pdfStyles.experienceDate}>
+              {edu.startDate} - {edu.endDate || 'Hazırda'}
+            </div>
+            {edu.gpa && (
+              <div style={{ fontSize: '10pt', color: '#6b7280' }}>GPA: {edu.gpa}</div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderSkillsSection = () => {
+    if (!cv.data.skills || cv.data.skills.length === 0) return null;
+    return (
+      <div style={pdfStyles.section}>
+        <div style={pdfStyles.sectionHeader}>
+          <h2 style={pdfStyles.sectionTitle}>Bacarıqlar</h2>
+        </div>
+        <div style={pdfStyles.skillsGrid}>
+          {cv.data.skills.map((skill, index) => (
+            <div key={index} style={pdfStyles.skillCategory}>
+              <div style={pdfStyles.skillItem}>
+                <span>{skill.name || 'Bacarıq'}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderLanguagesSection = () => {
+    if (!cv.data.languages || cv.data.languages.length === 0) return null;
+    return (
+      <div style={pdfStyles.section}>
+        <div style={pdfStyles.sectionHeader}>
+          <h2 style={pdfStyles.sectionTitle}>Dillər</h2>
+        </div>
+        {cv.data.languages.map((lang, index) => (
+          <div key={index} style={pdfStyles.languageItem}>
+            <span style={pdfStyles.languageName}>{lang.language}</span>
+            <span style={pdfStyles.languageLevel}>{lang.level}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderProjectsSection = () => {
+    if (!cv.data.projects || cv.data.projects.length === 0) return null;
+    return (
+      <div style={pdfStyles.section}>
+        <div style={pdfStyles.sectionHeader}>
+          <h2 style={pdfStyles.sectionTitle}>Layihələr</h2>
+        </div>
+        {cv.data.projects.map((project, index) => (
+          <div key={index} style={pdfStyles.projectItem}>
+            <div style={pdfStyles.projectName}>{project.name}</div>
+            {project.description && (
+              <div style={pdfStyles.projectDescription} dangerouslySetInnerHTML={{ __html: project.description }}></div>
+            )}
+            {project.technologies && project.technologies.length > 0 && (
+              <div style={pdfStyles.projectTech}>
+                Texnologiyalar: {project.technologies.join(', ')}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderCertificationsSection = () => {
+    if (!cv.data.certifications || cv.data.certifications.length === 0) return null;
+    return (
+      <div style={pdfStyles.section}>
+        <div style={pdfStyles.sectionHeader}>
+          <h2 style={pdfStyles.sectionTitle}>Sertifikatlar</h2>
+        </div>
+        {cv.data.certifications.map((cert, index) => (
+          <div key={index} style={pdfStyles.educationItem}>
+            <div style={pdfStyles.educationDegree}>{cert.name}</div>
+            <div style={pdfStyles.educationInstitution}>{cert.issuer}</div>
+            <div style={pdfStyles.experienceDate}>{cert.date}</div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderVolunteerSection = () => {
+    if (!cv.data.volunteerExperience || cv.data.volunteerExperience.length === 0) return null;
+    return (
+      <div style={pdfStyles.section}>
+        <div style={pdfStyles.sectionHeader}>
+          <h2 style={pdfStyles.sectionTitle}>Könüllü Təcrübə</h2>
+        </div>
+        {cv.data.volunteerExperience.map((vol, index) => (
+          <div key={index} style={pdfStyles.experienceItem}>
+            <div style={pdfStyles.experienceHeader}>
+              <div>
+                <div style={pdfStyles.experienceTitle}>{vol.role}</div>
+                <div style={pdfStyles.experienceCompany}>{vol.organization}</div>
+              </div>
+              <div style={pdfStyles.experienceDate}>
+                {vol.startDate} - {vol.endDate || 'Hazırda'}
+              </div>
+            </div>
+            {vol.description && (
+              <div style={pdfStyles.experienceDescription} dangerouslySetInnerHTML={{ __html: vol.description }}></div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderPublicationsSection = () => {
+    if (!cv.data.publications || cv.data.publications.length === 0) return null;
+    return (
+      <div style={pdfStyles.section}>
+        <div style={pdfStyles.sectionHeader}>
+          <h2 style={pdfStyles.sectionTitle}>Nəşrlər</h2>
+        </div>
+        {cv.data.publications.map((pub, index) => (
+          <div key={index} style={pdfStyles.projectItem}>
+            <div style={pdfStyles.projectName}>{pub.title}</div>
+            {pub.publisher && <div style={pdfStyles.educationInstitution}>{pub.publisher}</div>}
+            {pub.date && <div style={pdfStyles.experienceDate}>{pub.date}</div>}
+            {pub.description && (
+              <div style={pdfStyles.projectDescription} dangerouslySetInnerHTML={{ __html: pub.description }}></div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // Get ordered sections based on sectionOrder
+  const getOrderedSections = () => {
+    const defaultOrder = [
+      { id: 'personal', type: 'personal', isVisible: true },
+      { id: 'summary', type: 'summary', isVisible: true },
+      { id: 'experience', type: 'experience', isVisible: true },
+      { id: 'education', type: 'education', isVisible: true },
+      { id: 'skills', type: 'skills', isVisible: true },
+      { id: 'projects', type: 'projects', isVisible: true },
+      { id: 'languages', type: 'languages', isVisible: true },
+      { id: 'certifications', type: 'certifications', isVisible: true },
+      { id: 'volunteerExperience', type: 'volunteerExperience', isVisible: true },
+      { id: 'publications', type: 'publications', isVisible: true }
+    ];
+
+    const sectionOrder = cv.data.sectionOrder || defaultOrder;
+
+    const sectionRenderers: { [key: string]: () => React.ReactElement | null } = {
+      personal: renderPersonalSection,
+      summary: renderSummarySection,
+      experience: renderExperienceSection,
+      education: renderEducationSection,
+      skills: renderSkillsSection,
+      projects: renderProjectsSection,
+      languages: renderLanguagesSection,
+      certifications: renderCertificationsSection,
+      volunteerExperience: renderVolunteerSection,
+      publications: renderPublicationsSection
+    };
+
+    return sectionOrder
+      .filter((section: any) => section.isVisible !== false)
+      .map((section: any) => {
+        const sectionType = section.type || section.id;
+        const renderer = sectionRenderers[sectionType];
+        return renderer ? renderer() : null;
+      })
+      .filter(Boolean);
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
@@ -246,166 +516,7 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
         padding: '20px',
         boxSizing: 'border-box'
       }}>
-        {/* Header Section */}
-        <div style={pdfStyles.header}>
-          <h1 style={pdfStyles.name}>
-            {cv.data.personalInfo.fullName || 'Ad Soyad'}
-          </h1>
-          <div style={pdfStyles.contactInfo}>
-            {cv.data.personalInfo.email && (
-              <div style={pdfStyles.contactItem}>
-                <span>Email:</span>
-                <span>{cv.data.personalInfo.email}</span>
-              </div>
-            )}
-            {cv.data.personalInfo.phone && (
-              <div style={pdfStyles.contactItem}>
-                <span>Tel:</span>
-                <span>{cv.data.personalInfo.phone}</span>
-              </div>
-            )}
-            {cv.data.personalInfo.linkedin && (
-              <div style={pdfStyles.contactItem}>
-                <span>LinkedIn:</span>
-                <span>LinkedIn</span>
-              </div>
-            )}
-            {cv.data.personalInfo.website && (
-              <div style={pdfStyles.contactItem}>
-                <span>Website:</span>
-                <span>Website</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Summary */}
-        {cv.data.personalInfo.summary && (
-          <div style={pdfStyles.section}>
-            <div style={pdfStyles.sectionHeader}>
-            <h2 style={pdfStyles.sectionTitle}>Özet</h2>
-          </div>
-          <div style={pdfStyles.summary} dangerouslySetInnerHTML={{ __html: cv.data.personalInfo.summary }}></div>
-        </div>
-      )}
-
-      {/* Experience Section */}
-      {cv.data.experience && cv.data.experience.length > 0 && (
-        <div style={pdfStyles.section}>
-          <div style={pdfStyles.sectionHeader}>
-            <h2 style={pdfStyles.sectionTitle}>İş Təcrübəsi</h2>
-          </div>
-          {cv.data.experience.map((exp, index) => (
-            <div key={index} style={pdfStyles.experienceItem}>
-              <div style={pdfStyles.experienceHeader}>
-                <div>
-                  <div style={pdfStyles.experienceTitle}>{exp.position}</div>
-                  <div style={pdfStyles.experienceCompany}>{exp.company}</div>
-                </div>
-                <div style={pdfStyles.experienceDate}>
-                  {exp.startDate} - {exp.endDate || 'Hazırda'}
-                </div>
-              </div>
-              {exp.description && (
-                <div style={pdfStyles.experienceDescription} dangerouslySetInnerHTML={{ __html: exp.description }}></div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Education Section */}
-      {cv.data.education && cv.data.education.length > 0 && (
-        <div style={pdfStyles.section}>
-          <div style={pdfStyles.sectionHeader}>
-            <h2 style={pdfStyles.sectionTitle}>Təhsil</h2>
-          </div>
-          {cv.data.education.map((edu, index) => (
-            <div key={index} style={pdfStyles.educationItem}>
-              <div style={pdfStyles.educationDegree}>{edu.degree}</div>
-              <div style={pdfStyles.educationInstitution}>{edu.institution}</div>
-              <div style={pdfStyles.experienceDate}>
-                {edu.startDate} - {edu.endDate || 'Hazırda'}
-              </div>
-              {edu.gpa && (
-                <div style={{ fontSize: '10pt', color: '#6b7280' }}>GPA: {edu.gpa}</div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Skills Section */}
-      {cv.data.skills && cv.data.skills.length > 0 && (
-        <div style={pdfStyles.section}>
-          <div style={pdfStyles.sectionHeader}>
-            <h2 style={pdfStyles.sectionTitle}>Bacarıqlar</h2>
-          </div>
-          <div style={pdfStyles.skillsGrid}>
-            {cv.data.skills.map((skill, index) => (
-              <div key={index} style={pdfStyles.skillCategory}>
-                <div style={pdfStyles.skillCategoryTitle}>Bacarıqlar</div>
-                <div style={pdfStyles.skillItem}>
-                  <span>{skill.name || 'Bacarıq'}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Languages Section */}
-      {cv.data.languages && cv.data.languages.length > 0 && (
-        <div style={pdfStyles.section}>
-          <div style={pdfStyles.sectionHeader}>
-            <h2 style={pdfStyles.sectionTitle}>Dillər</h2>
-          </div>
-          {cv.data.languages.map((lang, index) => (
-            <div key={index} style={pdfStyles.languageItem}>
-              <span style={pdfStyles.languageName}>{lang.language}</span>
-              <span style={pdfStyles.languageLevel}>{lang.level}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Projects Section */}
-      {cv.data.projects && cv.data.projects.length > 0 && (
-        <div style={pdfStyles.section}>
-          <div style={pdfStyles.sectionHeader}>
-            <h2 style={pdfStyles.sectionTitle}>Layihələr</h2>
-          </div>
-          {cv.data.projects.map((project, index) => (
-            <div key={index} style={pdfStyles.projectItem}>
-              <div style={pdfStyles.projectName}>{project.name}</div>
-              {project.description && (
-                <div style={pdfStyles.projectDescription} dangerouslySetInnerHTML={{ __html: project.description }}></div>
-              )}
-              {project.technologies && project.technologies.length > 0 && (
-                <div style={pdfStyles.projectTech}>
-                  Texnologiyalar: {project.technologies.join(', ')}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Certifications Section */}
-      {cv.data.certifications && cv.data.certifications.length > 0 && (
-        <div style={pdfStyles.section}>
-          <div style={pdfStyles.sectionHeader}>
-            <h2 style={pdfStyles.sectionTitle}>Sertifikatlar</h2>
-          </div>
-          {cv.data.certifications.map((cert, index) => (
-            <div key={index} style={pdfStyles.educationItem}>
-              <div style={pdfStyles.educationDegree}>{cert.name}</div>
-              <div style={pdfStyles.educationInstitution}>{cert.issuer}</div>
-              <div style={pdfStyles.experienceDate}>{cert.date}</div>
-            </div>
-          ))}
-        </div>
-      )}
+        {getOrderedSections()}
       </div>
     </div>
   );

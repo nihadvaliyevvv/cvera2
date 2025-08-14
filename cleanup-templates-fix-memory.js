@@ -39,29 +39,29 @@ async function cleanupTemplatesAndFixMemory() {
     });
     console.log('✅ Basic template hazır:', basicTemplate.id);
 
-    // 3. Bir əlavə template saxla (modern)
-    console.log('\n📝 "modern" template yoxlanılır...');
-    const modernTemplate = await prisma.template.upsert({
-      where: { id: 'modern' },
+    // 3. Medium template əlavə et
+    console.log('\n📝 "medium" template yoxlanılır...');
+    const mediumTemplate = await prisma.template.upsert({
+      where: { id: 'medium' },
       update: {
-        name: 'Modern Template',
-        tier: 'Free',
-        description: 'Modern and stylish template'
+        name: 'Medium Professional',
+        tier: 'Medium',
+        description: 'Professional two-column template with ATS-friendly design'
       },
       create: {
-        id: 'modern',
-        name: 'Modern Template',
-        description: 'Modern and stylish template',
-        tier: 'Free',
-        previewUrl: '/templates/modern/preview.png'
+        id: 'medium',
+        name: 'Medium Professional',
+        description: 'Professional two-column template with ATS-friendly design',
+        tier: 'Medium',
+        previewUrl: '/templates/medium-preview.jpg'
       }
     });
-    console.log('✅ Modern template hazır:', modernTemplate.id);
+    console.log('✅ Medium template hazır:', mediumTemplate.id);
 
-    // 4. Digər template-ləri sil
+    // 4. Digər template-ləri sil (modern template-ləri də daxil olmaqla)
     console.log('\n🗑️ Artıq template-lər silinir...');
-    const templatesToKeep = ['basic', 'modern'];
-    
+    const templatesToKeep = ['basic', 'medium'];
+
     const deletedTemplates = await prisma.template.deleteMany({
       where: {
         id: {
@@ -72,7 +72,7 @@ async function cleanupTemplatesAndFixMemory() {
     
     console.log(`✅ ${deletedTemplates.count} artıq template silindi`);
 
-    // 5. CV-ləri yoxla və düzəlt - yalnız basic və modern istifadə et
+    // 5. CV-ləri yoxla və düzəlt - yalnız basic və medium istifadə et
     console.log('\n🔄 CV template-lərini düzəldir...');
     
     const allCVs = await prisma.cV.findMany({
@@ -164,7 +164,7 @@ async function cleanupTemplatesAndFixMemory() {
 
     if (memoryIssues === 0) {
       console.log('\n🎉 Template yaddaş problemi həll olundu!');
-      console.log('📋 İndi yalnız 2 template var: basic və modern');
+      console.log('📋 İndi yalnız 2 template var: basic və medium');
       console.log('💾 Bütün CV-lərdə template düzgün saxlanılır');
     } else {
       console.log(`\n⚠️ Hələ də ${memoryIssues} CV-də yaddaş problemi var`);

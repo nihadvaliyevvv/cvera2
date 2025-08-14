@@ -3,6 +3,88 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { CVLanguage, getLabel } from '@/lib/cvLanguage';
 
+// Utility function to safely render HTML content
+const stripHtmlTags = (html: string): string => {
+  if (!html) return '';
+  // Remove HTML tags but preserve line breaks
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<p[^>]*>/gi, '')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<div[^>]*>/gi, '')
+    .replace(/<\/h[1-6]>/gi, '\n')
+    .replace(/<h[1-6][^>]*>/gi, '')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '• ')
+    .replace(/<\/ul>/gi, '\n')
+    .replace(/<ul[^>]*>/gi, '')
+    .replace(/<\/ol>/gi, '\n')
+    .replace(/<ol[^>]*>/gi, '')
+    .replace(/<\/strong>/gi, '')
+    .replace(/<strong[^>]*>/gi, '')
+    .replace(/<\/b>/gi, '')
+    .replace(/<b[^>]*>/gi, '')
+    .replace(/<\/em>/gi, '')
+    .replace(/<em[^>]*>/gi, '')
+    .replace(/<\/i>/gi, '')
+    .replace(/<i[^>]*>/gi, '')
+    .replace(/<\/u>/gi, '')
+    .replace(/<u[^>]*>/gi, '')
+    .replace(/<\/span>/gi, '')
+    .replace(/<span[^>]*>/gi, '')
+    .replace(/<\/a>/gi, '')
+    .replace(/<a[^>]*>/gi, '')
+    .replace(/<[^>]+>/g, '') // Remove any remaining HTML tags
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&apos;/gi, "'")
+    .replace(/&#x27;/gi, "'")
+    .replace(/&#x2F;/gi, '/')
+    .replace(/&#39;/gi, "'")
+    .replace(/&rdquo;/gi, '"')
+    .replace(/&ldquo;/gi, '"')
+    .replace(/&rsquo;/gi, "'")
+    .replace(/&lsquo;/gi, "'")
+    .replace(/\n\s*\n/g, '\n') // Remove multiple empty lines
+    .trim();
+};
+
+// Component to render HTML content safely
+const SafeHtmlContent: React.FC<{ 
+  content: string; 
+  className?: string;
+  allowHtml?: boolean;
+}> = ({ content, className = '', allowHtml = true }) => {
+  if (!content) return null;
+  
+  // For Basic format or when HTML should be stripped, render as plain text
+  if (!allowHtml) {
+    const plainText = stripHtmlTags(content);
+    return (
+      <div className={className}>
+        {plainText.split('\n').map((line, index) => (
+          <React.Fragment key={index}>
+            {line}
+            {index < plainText.split('\n').length - 1 && <br />}
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  }
+  
+  // For Medium format, render HTML safely
+  return (
+    <div
+      className={className}
+      dangerouslySetInnerHTML={{ __html: content }}
+    />
+  );
+};
+
 interface CVData {
   id?: string;
   title: string;
@@ -46,12 +128,9 @@ interface CVData {
     customSections?: Array<any>;
     sectionOrder?: Array<{
       id: string;
-      name: string;
-      displayName: string;
+      type: string;
       isVisible: boolean;
-      order: number;
-      hasData: boolean;
-      icon: string;
+      order?: number;
     }>;
   };
 }
@@ -333,9 +412,10 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                         <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">
                           {getSectionName('summary', 'Özət')}
                         </h3>
-                        <div
+                        <SafeHtmlContent
+                          content={cv.data.personalInfo.summary}
                           className="text-gray-700 leading-relaxed prose prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{ __html: cv.data.personalInfo.summary || '' }}
+                          allowHtml={false}
                         />
                       </div>
                     )}
@@ -364,9 +444,10 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                             </span>
                           </div>
                           {exp.description && (
-                            <div
+                            <SafeHtmlContent
+                              content={exp.description}
                               className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
-                              dangerouslySetInnerHTML={{ __html: exp.description }}
+                              allowHtml={false}
                             />
                           )}
                         </div>
@@ -439,9 +520,10 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                         <div key={index} className="border-l-2 border-purple-500 pl-4">
                           <h4 className="font-semibold text-gray-900 mb-1">{project.name}</h4>
                           {project.description && (
-                            <div
+                            <SafeHtmlContent
+                              content={project.description}
                               className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
-                              dangerouslySetInnerHTML={{ __html: project.description }}
+                              allowHtml={false}
                             />
                           )}
                         </div>
@@ -520,9 +602,10 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                             </span>
                           </div>
                           {vol.description && (
-                            <div
+                            <SafeHtmlContent
+                              content={vol.description}
                               className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
-                              dangerouslySetInnerHTML={{ __html: vol.description }}
+                              allowHtml={false}
                             />
                           )}
                         </div>
@@ -553,9 +636,10 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                                   <p className="text-sm text-gray-700">{item.subtitle}</p>
                                 )}
                                 {item.description && (
-                                  <div
+                                  <SafeHtmlContent
+                                    content={item.description}
                                     className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
-                                    dangerouslySetInnerHTML={{ __html: item.description }}
+                                    allowHtml={false}
                                   />
                                 )}
                               </div>
