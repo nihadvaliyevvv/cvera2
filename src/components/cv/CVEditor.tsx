@@ -6,6 +6,7 @@ import CVPreview from './CVPreview';
 import CVSectionManager from './CVSectionManager';
 import CVPreviewA4Complex from './CVPreviewA4-complex';
 import CVPreviewMedium from './CVPreviewMedium';
+import FontManagementPanel from './FontManagementPanel';
 import styles from './CVEditor.module.css';
 import { CVData, PersonalInfo, Experience, Education, Skill, Language, Project, Certification, VolunteerExperience } from '@/types/cv';
 
@@ -1796,38 +1797,13 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                       className="w-full sm:w-64 text-lg font-semibold border-none outline-none focus:ring-2 focus:ring-blue-500 rounded-lg px-3 py-2 bg-gray-50 hover:bg-gray-100 focus:bg-white transition-colors"
                   />
 
+                  {/* Font Management Panel */}
+                  <FontManagementPanel
+                    cvId={cv.id || cvId}
+                    isPremium={userTier === 'Premium' || userTier === 'Medium'}
+                    onClose={() => console.log('Font settings applied')}
+                  />
 
-
-                  {/* AI Translation Button */}
-                  <div className="flex items-center space-x-2">
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                    </svg>
-                    <button
-                        onClick={() => setShowTranslationDialog(true)}
-                        disabled={translating || !cv.id}
-                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-all ${
-                            !cv.id || translating
-                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600'
-                        }`}
-                    >
-                      {translating ? (
-                          <div className="flex items-center gap-2">
-                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                            <span>Tərcümə...</span>
-                          </div>
-                      ) : (
-                          <div className="flex items-center gap-2">
-                            <span>🤖</span>
-                            <span>AI Tərcümə</span>
-                          </div>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-2">
                   <button
                       onClick={() => handleExport('pdf')}
                       disabled={!cv.id || exporting !== null}
