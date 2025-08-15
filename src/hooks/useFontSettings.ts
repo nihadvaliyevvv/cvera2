@@ -21,11 +21,13 @@ export const useFontSettings = (cvId?: string): UseFontSettingsReturn => {
     setError(null);
 
     try {
+      let loadedSettings = DEFAULT_FONT_SETTINGS;
+
       // First try to load from localStorage
       const localSettings = localStorage.getItem('cvFontSettings');
       if (localSettings) {
         const parsedSettings = JSON.parse(localSettings);
-        setFontSettings({ ...DEFAULT_FONT_SETTINGS, ...parsedSettings });
+        loadedSettings = { ...DEFAULT_FONT_SETTINGS, ...parsedSettings };
       }
 
       // If CV ID is provided, try to load specific settings for this CV
@@ -34,16 +36,38 @@ export const useFontSettings = (cvId?: string): UseFontSettingsReturn => {
         const cvSpecificSettings = localStorage.getItem(cvSpecificKey);
         if (cvSpecificSettings) {
           const parsedSettings = JSON.parse(cvSpecificSettings);
-          setFontSettings({ ...DEFAULT_FONT_SETTINGS, ...parsedSettings });
+          loadedSettings = { ...DEFAULT_FONT_SETTINGS, ...parsedSettings };
         }
       }
+
+      // Ensure fontSizes and fontWeight are properly initialized
+      const finalSettings: FontSettings = {
+        ...loadedSettings,
+        fontSizes: loadedSettings.fontSizes ? {
+          ...DEFAULT_FONT_SETTINGS.fontSizes,
+          ...loadedSettings.fontSizes
+        } : DEFAULT_FONT_SETTINGS.fontSizes,
+        fontWeight: loadedSettings.fontWeight ? {
+          ...DEFAULT_FONT_SETTINGS.fontWeight,
+          ...loadedSettings.fontWeight
+        } : DEFAULT_FONT_SETTINGS.fontWeight
+      };
+
+      // Set the settings in state
+      setFontSettings(finalSettings);
+
+      // IMPORTANT: Apply the loaded settings to the DOM immediately
+      await fontManager.applyFontSettings(finalSettings);
+
+      console.log('Font settings loaded and applied:', finalSettings);
+
     } catch (err) {
       console.error('Error loading font settings:', err);
       setError('Şrift tənzimləri yüklənərkən xəta baş verdi');
     } finally {
       setIsLoading(false);
     }
-  }, [cvId]);
+  }, [cvId, fontManager]);
 
   // Save font settings to localStorage and apply to DOM
   const updateFontSettings = useCallback(async (newSettings: FontSettings) => {
@@ -51,15 +75,27 @@ export const useFontSettings = (cvId?: string): UseFontSettingsReturn => {
     setError(null);
 
     try {
-      // Validate settings
-      const validatedSettings = {
+      // Ensure fontSizes and fontWeight are properly initialized
+      const validatedSettings: FontSettings = {
         ...DEFAULT_FONT_SETTINGS,
         ...newSettings,
-        fontSize: Math.max(9, Math.min(16, newSettings.fontSize)),
+        // Preserve the new fontSizes if provided
+        fontSizes: newSettings.fontSizes ? {
+          ...DEFAULT_FONT_SETTINGS.fontSizes,
+          ...newSettings.fontSizes
+        } : DEFAULT_FONT_SETTINGS.fontSizes,
+        // Preserve fontWeight if provided
+        fontWeight: newSettings.fontWeight ? {
+          ...DEFAULT_FONT_SETTINGS.fontWeight,
+          ...newSettings.fontWeight
+        } : DEFAULT_FONT_SETTINGS.fontWeight,
+        // Keep original fontSize for backward compatibility
+        fontSize: Math.max(8, Math.min(18, newSettings.fontSize)),
         lineHeight: Math.max(1.0, Math.min(2.0, newSettings.lineHeight)),
-        letterSpacing: Math.max(-1, Math.min(3, newSettings.letterSpacing))
+        letterSpacing: Math.max(-2, Math.min(5, newSettings.letterSpacing))
       };
 
+      // Update state immediately
       setFontSettings(validatedSettings);
 
       // Apply font settings to DOM
@@ -74,13 +110,17 @@ export const useFontSettings = (cvId?: string): UseFontSettingsReturn => {
         localStorage.setItem(cvSpecificKey, JSON.stringify(validatedSettings));
       }
 
+      console.log('Font settings saved successfully:', validatedSettings);
+
     } catch (err) {
       console.error('Error updating font settings:', err);
       setError('Şrift tənzimləri yadda saxlanarkən xəta baş verdi');
+      // Revert to previous settings on error
+      setFontSettings(fontSettings);
     } finally {
       setIsLoading(false);
     }
-  }, [cvId, fontManager]);
+  }, [cvId, fontManager, fontSettings]);
 
   // Reset to default settings
   const resetFontSettings = useCallback(() => {

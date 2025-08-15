@@ -13,11 +13,19 @@ const FontSelector: React.FC<FontSelectorProps> = ({
   isPremium = false
 }) => {
   const [fontManager] = useState(() => FontManager.getInstance());
-  const [activeTab, setActiveTab] = useState<'fonts' | 'advanced' | 'presets'>('fonts');
+  const [activeTab, setActiveTab] = useState<'advanced' | 'presets'>('advanced');
 
-  // Load fonts when component mounts
+  // Load fonts when component mounts and when settings change
   useEffect(() => {
-    fontManager.applyFontSettings(currentSettings);
+    const applyFonts = async () => {
+      try {
+        await fontManager.applyFontSettings(currentSettings);
+      } catch (error) {
+        console.warn('Font loading error:', error);
+        // Continue with fallback fonts
+      }
+    };
+    applyFonts();
   }, [currentSettings, fontManager]);
 
   const handleFontChange = (type: 'headingFont' | 'bodyFont', fontId: string) => {
@@ -77,23 +85,56 @@ const FontSelector: React.FC<FontSelectorProps> = ({
 
   const FontCategorySection: React.FC<{
     title: string;
-    category: 'serif' | 'sans-serif' | 'monospace';
+    category: 'serif' | 'sans-serif' | 'monospace' | 'display';
     selectedFont: string;
     onFontSelect: (fontId: string) => void;
   }> = ({ title, category, selectedFont, onFontSelect }) => {
     const fonts = fontManager.getFontsByCategory(category);
 
     return (
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-3">{title}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="mb-4">
+        <h4 className="text-xs font-medium text-gray-700 mb-2">{title}</h4>
+        <div className="space-y-2">
           {fonts.map((font) => (
-            <FontOptionCard
+            <div
               key={font.id}
-              font={font}
-              isSelected={selectedFont === font.id}
-              onSelect={() => onFontSelect(font.id)}
-            />
+              className={`p-2 border rounded-lg cursor-pointer transition-all text-xs ${
+                selectedFont === font.id
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+              } ${font.isPremium && !isPremium ? 'opacity-60' : ''}`}
+              onClick={font.isPremium && !isPremium ? undefined : () => onFontSelect(font.id)}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-medium text-gray-900 text-xs">{font.displayName}</span>
+                {font.isPremium && (
+                  <span className="px-1 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded">
+                    Premium
+                  </span>
+                )}
+              </div>
+              <div
+                className="text-sm mb-1"
+                style={{ fontFamily: font.fontFamily }}
+              >
+                {font.preview.substring(0, 30)}...
+              </div>
+              <p className="text-xs text-gray-500">{font.description.substring(0, 40)}...</p>
+              {font.suitableFor && font.suitableFor.length > 0 && (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {font.suitableFor.slice(0, 3).map(field => (
+                    <span key={field} className="px-1 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
+                      {field}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {font.isPremium && !isPremium && (
+                <div className="mt-1 text-xs text-red-600">
+                  Premium tələb olunur
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </div>
@@ -101,112 +142,170 @@ const FontSelector: React.FC<FontSelectorProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Şrift İdarəsi</h2>
-        <p className="text-gray-600">CV-nizin şriftlərini seçin və tənzimləyin</p>
+    <div className="w-full">
+      {/* Tab Navigation - Optimized for sidebar */}
+      <div className="flex flex-col border-b border-gray-200 mb-4">
+        <div className="grid grid-cols-2 gap-1">
+          {[
+            { id: 'advanced', label: 'Tənzimlər', icon: '⚙️' },
+            { id: 'presets', label: 'Hazır', icon: '🎨' }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-2 py-2 font-medium text-xs border-b-2 transition-colors text-center ${
+                activeTab === tab.id
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <div className="flex flex-col items-center">
+                <span className="text-sm">{tab.icon}</span>
+                <span className="mt-1">{tab.label}</span>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="flex border-b border-gray-200 mb-6">
-        {[
-          { id: 'fonts', label: 'Şriftlər', icon: '🔤' },
-          { id: 'advanced', label: 'Ətraflı Tənzimlər', icon: '⚙️' },
-          { id: 'presets', label: 'Hazır Kombinasiyalar', icon: '🎨' }
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-              activeTab === tab.id
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <span className="mr-2">{tab.icon}</span>
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Font Preview */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-        <h3 className="text-lg font-semibold text-gray-900 mb-3">Önizləmə</h3>
-        <div className="bg-white p-4 rounded border">
-          <div className="cv-heading mb-2">Başlıq Şrifti Nümunəsi</div>
-          <div className="cv-subheading mb-2">Alt başlıq şrifti nümunəsi</div>
-          <div className="cv-body mb-2">Əsas mətn şrifti nümunəsi - bu CV-də əsas məlumatların görünəcəyi şriftdir.</div>
-          <div className="cv-small">Kiçik mətn şrifti nümunəsi</div>
+      {/* Font Preview - Compact for sidebar */}
+      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+        <h3 className="text-sm font-semibold text-gray-900 mb-2">Önizləmə</h3>
+        <div className="bg-white p-3 rounded border text-xs space-y-1">
+          <div className="cv-heading">Başlıq Şrifti</div>
+          <div className="cv-subheading">Alt başlıq</div>
+          <div className="cv-body">Əsas mətn şrifti nümunəsi</div>
+          <div className="cv-small">Kiçik mətn</div>
         </div>
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'fonts' && (
-        <div className="space-y-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Başlıq Şrifti</h3>
-              <FontCategorySection
-                title="Serif Şriftləri"
-                category="serif"
-                selectedFont={currentSettings.headingFont}
-                onFontSelect={(fontId) => handleFontChange('headingFont', fontId)}
-              />
-              <FontCategorySection
-                title="Sans-serif Şriftləri"
-                category="sans-serif"
-                selectedFont={currentSettings.headingFont}
-                onFontSelect={(fontId) => handleFontChange('headingFont', fontId)}
-              />
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Əsas Mətn Şrifti</h3>
-              <FontCategorySection
-                title="Serif Şriftləri"
-                category="serif"
-                selectedFont={currentSettings.bodyFont}
-                onFontSelect={(fontId) => handleFontChange('bodyFont', fontId)}
-              />
-              <FontCategorySection
-                title="Sans-serif Şriftləri"
-                category="sans-serif"
-                selectedFont={currentSettings.bodyFont}
-                onFontSelect={(fontId) => handleFontChange('bodyFont', fontId)}
-              />
-              <FontCategorySection
-                title="Monospace Şriftləri"
-                category="monospace"
-                selectedFont={currentSettings.bodyFont}
-                onFontSelect={(fontId) => handleFontChange('bodyFont', fontId)}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
       {activeTab === 'advanced' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="space-y-4">
+          {/* Individual Font Size Controls */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Şrift Ölçüləri</h4>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Şrift Ölçüsü
+              <label className="block text-xs font-medium text-gray-700 mb-2">
+                Başlıq Ölçüsü: {currentSettings.fontSizes?.heading || 14}pt
+              </label>
+              <input
+                type="range"
+                min="10"
+                max="22"
+                step="0.5"
+                value={currentSettings.fontSizes?.heading || 14}
+                onChange={(e) => {
+                  const newSettings = {
+                    ...currentSettings,
+                    fontSizes: {
+                      heading: 14,
+                      subheading: 12,
+                      body: 11,
+                      small: 9,
+                      ...currentSettings.fontSizes,
+                      heading: parseFloat(e.target.value)
+                    }
+                  };
+                  onSettingsChange(newSettings);
+                }}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-2">
+                Alt Başlıq Ölçüsü: {currentSettings.fontSizes?.subheading || 12}pt
               </label>
               <input
                 type="range"
                 min="9"
-                max="16"
+                max="18"
                 step="0.5"
-                value={currentSettings.fontSize}
-                onChange={(e) => handleAdvancedChange('fontSize', parseFloat(e.target.value))}
+                value={currentSettings.fontSizes?.subheading || 12}
+                onChange={(e) => {
+                  const newSettings = {
+                    ...currentSettings,
+                    fontSizes: {
+                      heading: 14,
+                      subheading: 12,
+                      body: 11,
+                      small: 9,
+                      ...currentSettings.fontSizes,
+                      subheading: parseFloat(e.target.value)
+                    }
+                  };
+                  onSettingsChange(newSettings);
+                }}
                 className="w-full"
               />
-              <div className="text-sm text-gray-600 mt-1">{currentSettings.fontSize}pt</div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Sətir Hündürlüyü
+              <label className="block text-xs font-medium text-gray-700 mb-2">
+                Əsas Mətn Ölçüsü: {currentSettings.fontSizes?.body || 11}pt
+              </label>
+              <input
+                type="range"
+                min="8"
+                max="16"
+                step="0.5"
+                value={currentSettings.fontSizes?.body || 11}
+                onChange={(e) => {
+                  const newSettings = {
+                    ...currentSettings,
+                    fontSizes: {
+                      heading: 14,
+                      subheading: 12,
+                      body: 11,
+                      small: 9,
+                      ...currentSettings.fontSizes,
+                      body: parseFloat(e.target.value)
+                    }
+                  };
+                  onSettingsChange(newSettings);
+                }}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-2">
+                Kiçik Mətn Ölçüsü: {currentSettings.fontSizes?.small || 9}pt
+              </label>
+              <input
+                type="range"
+                min="7"
+                max="12"
+                step="0.5"
+                value={currentSettings.fontSizes?.small || 9}
+                onChange={(e) => {
+                  const newSettings = {
+                    ...currentSettings,
+                    fontSizes: {
+                      heading: 14,
+                      subheading: 12,
+                      body: 11,
+                      small: 9,
+                      ...currentSettings.fontSizes,
+                      small: parseFloat(e.target.value)
+                    }
+                  };
+                  onSettingsChange(newSettings);
+                }}
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          {/* General Font Settings */}
+          <div className="border-t pt-4 space-y-3">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Ümumi Tənzimlər</h4>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-2">
+                Sətir Hündürlüyü: {currentSettings.lineHeight}
               </label>
               <input
                 type="range"
@@ -217,52 +316,114 @@ const FontSelector: React.FC<FontSelectorProps> = ({
                 onChange={(e) => handleAdvancedChange('lineHeight', parseFloat(e.target.value))}
                 className="w-full"
               />
-              <div className="text-sm text-gray-600 mt-1">{currentSettings.lineHeight}</div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Hərf Aralığı
+              <label className="block text-xs font-medium text-gray-700 mb-2">
+                Hərf Aralığı: {currentSettings.letterSpacing}px
               </label>
               <input
                 type="range"
-                min="-1"
-                max="3"
+                min="-2"
+                max="5"
                 step="0.1"
                 value={currentSettings.letterSpacing}
                 onChange={(e) => handleAdvancedChange('letterSpacing', parseFloat(e.target.value))}
                 className="w-full"
               />
-              <div className="text-sm text-gray-600 mt-1">{currentSettings.letterSpacing}px</div>
-            </div>
-
-            <div>
-              <button
-                onClick={() => onSettingsChange(DEFAULT_FONT_SETTINGS)}
-                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Sıfırla
-              </button>
             </div>
           </div>
+
+          {/* Font Weight Controls */}
+          {currentSettings.fontWeight && (
+            <div className="border-t pt-4 space-y-3">
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Şrift Qalınlığı</h4>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-2">
+                  Başlıq Qalınlığı: {currentSettings.fontWeight.heading}
+                </label>
+                <input
+                  type="range"
+                  min="400"
+                  max="900"
+                  step="100"
+                  value={currentSettings.fontWeight.heading}
+                  onChange={(e) => {
+                    const newSettings = {
+                      ...currentSettings,
+                      fontWeight: {
+                        ...currentSettings.fontWeight!,
+                        heading: parseInt(e.target.value)
+                      }
+                    };
+                    onSettingsChange(newSettings);
+                  }}
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-2">
+                  Mətn Qalınlığı: {currentSettings.fontWeight.body}
+                </label>
+                <input
+                  type="range"
+                  min="300"
+                  max="700"
+                  step="100"
+                  value={currentSettings.fontWeight.body}
+                  onChange={(e) => {
+                    const newSettings = {
+                      ...currentSettings,
+                      fontWeight: {
+                        ...currentSettings.fontWeight!,
+                        body: parseInt(e.target.value)
+                      }
+                    };
+                    onSettingsChange(newSettings);
+                  }}
+                  className="w-full"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Font Performance Info */}
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <h4 className="text-xs font-medium text-blue-900 mb-2">Şrift Statusu</h4>
+            <div className="text-xs text-blue-700">
+              {(() => {
+                const status = fontManager.getFontLoadingStatus();
+                return `Yükləndi: ${status.loaded.length}/${status.total}`;
+              })()}
+            </div>
+          </div>
+
+          <button
+            onClick={() => onSettingsChange(DEFAULT_FONT_SETTINGS)}
+            className="w-full px-3 py-2 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            Sıfırla
+          </button>
         </div>
       )}
 
       {activeTab === 'presets' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-3">
           {fontManager.getRecommendedCombinations().map((preset, index) => (
             <div
               key={index}
-              className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 cursor-pointer transition-colors"
+              className="p-3 border border-gray-200 rounded-lg hover:border-gray-300 cursor-pointer transition-colors"
               onClick={() => applyPreset(preset)}
             >
-              <h4 className="font-semibold text-gray-900 mb-2">{preset.name}</h4>
-              <p className="text-sm text-gray-600 mb-3">{preset.description}</p>
-              <div className="space-y-2">
-                <div className="text-sm">
+              <h4 className="font-medium text-gray-900 text-sm mb-1">{preset.name}</h4>
+              <p className="text-xs text-gray-600 mb-2">{preset.description}</p>
+              <div className="space-y-1">
+                <div className="text-xs">
                   <span className="font-medium">Başlıq:</span> {fontManager.getFontOption(preset.heading)?.displayName}
                 </div>
-                <div className="text-sm">
+                <div className="text-xs">
                   <span className="font-medium">Mətn:</span> {fontManager.getFontOption(preset.body)?.displayName}
                 </div>
               </div>
@@ -270,32 +431,6 @@ const FontSelector: React.FC<FontSelectorProps> = ({
           ))}
         </div>
       )}
-
-      {/* Action Buttons */}
-      <div className="mt-8 flex justify-between items-center pt-6 border-t border-gray-200">
-        <div className="text-sm text-gray-600">
-          {!isPremium && (
-            <span>Premium üzvlük ilə bütün şriftlərə çıxış əldə edin</span>
-          )}
-        </div>
-        <div className="space-x-3">
-          <button
-            onClick={() => onSettingsChange(DEFAULT_FONT_SETTINGS)}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            Sıfırla
-          </button>
-          <button
-            onClick={() => {
-              // Save settings to localStorage or API
-              localStorage.setItem('cvFontSettings', JSON.stringify(currentSettings));
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Yadda Saxla
-          </button>
-        </div>
-      </div>
     </div>
   );
 };

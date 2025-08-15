@@ -42,67 +42,71 @@ const FontManagementPanel: React.FC<FontManagementPanelProps> = ({
         )}
       </button>
 
-      {/* Font Management Modal */}
+      {/* Font Management Sidebar Panel */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            {/* Backdrop */}
-            <div
-              className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
-              onClick={() => setIsOpen(false)}
-            ></div>
+        <>
+          {/* Backdrop for mobile */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-25 z-40 lg:hidden"
+            onClick={() => setIsOpen(false)}
+          />
 
-            {/* Modal Content */}
-            <div className="inline-block w-full max-w-6xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Şrift İdarəsi</h2>
-                  <p className="text-gray-600">CV-nizin şriftlərini peşəkar şəkildə idarə edin</p>
-                </div>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+          {/* Left Sidebar Panel */}
+          <div className={`fixed left-0 top-0 bottom-0 w-[600px] bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col ${
+            isOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}>
+            {/* Header - Fixed at top */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white flex-shrink-0">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Şrift İdarəsi</h2>
+                <p className="text-sm text-gray-600">CV şriftlərini tənzimləyin</p>
               </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-              {/* Error Display */}
-              {error && (
-                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="flex">
-                    <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="ml-3">
-                      <h3 className="text-sm font-medium text-red-800">Xəta</h3>
-                      <p className="text-sm text-red-700 mt-1">{error}</p>
-                    </div>
+            {/* Error Display */}
+            {error && (
+              <div className="m-4 p-3 bg-red-50 border border-red-200 rounded-lg flex-shrink-0">
+                <div className="flex">
+                  <svg className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="ml-2">
+                    <h3 className="text-sm font-medium text-red-800">Xəta</h3>
+                    <p className="text-sm text-red-700 mt-1">{error}</p>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Font Selector Component */}
-              <div className="max-h-[70vh] overflow-y-auto">
+            {/* Font Selector Content - Scrollable */}
+            <div className="flex-1 overflow-y-auto overscroll-contain">
+              <div className="p-4">
                 <FontSelector
                   currentSettings={fontSettings}
                   onSettingsChange={handleSettingsChange}
                   isPremium={isPremium}
                 />
               </div>
+            </div>
 
-              {/* Footer */}
-              <div className="mt-6 pt-4 border-t border-gray-200 flex justify-between items-center">
-                <div className="text-sm text-gray-500">
-                  Şrift dəyişiklikləri avtomatik olaraq yadda saxlanır
+            {/* Footer - Fixed at bottom */}
+            <div className="p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-gray-500">
+                  Dəyişikliklər avtomatik saxlanır
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
                   >
                     Bağla
                   </button>
@@ -112,16 +116,16 @@ const FontManagementPanel: React.FC<FontManagementPanelProps> = ({
                         setIsOpen(false);
                         onClose?.();
                       }}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                     >
-                      Tətbiq Et və Bağla
+                      Tətbiq Et
                     </button>
                   )}
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );

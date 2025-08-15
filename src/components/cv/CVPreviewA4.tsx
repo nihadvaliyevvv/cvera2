@@ -401,16 +401,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                   </div>
                 )}
                 
-                <div className="mt-3 text-center">
-                  <h1 className="cv-heading text-white font-bold text-base uppercase tracking-wide leading-tight">
-                    {fullName}
-                  </h1>
-                  {personalInfo?.title && (
-                    <p className="cv-subheading text-gray-300 text-xs mt-1 uppercase tracking-wider">
-                      {personalInfo.title}
-                    </p>
-                  )}
-                </div>
+
               </div>
             </DraggableSection>
           );
@@ -422,15 +413,15 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           return (
             <DraggableSection key={`contact-${section.order}`} sectionId="contact" className="w-full mb-6">
               <div className="cv-traditional-contact-draggable">
-                <h2 className="text-lg font-bold tracking-wider uppercase mb-3 text-white">Əlaqə</h2>
+                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">Əlaqə</h2>
                 <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
-                <div className="space-y-2 text-xs text-white">
+                <div className="space-y-2 cv-small text-white">
                   {personalInfo?.phone && (
                     <div className="flex items-center break-all">
                       <svg className="h-4 w-4 mr-2 flex-shrink-0 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                       </svg>
-                      <span className="text-white text-xs">{personalInfo.phone}</span>
+                      <span className="text-white cv-small">{personalInfo.phone}</span>
                     </div>
                   )}
                   {personalInfo?.email && (
@@ -438,7 +429,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                       <svg className="h-4 w-4 mr-2 flex-shrink-0 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
-                      <span className="text-white text-xs">{personalInfo.email}</span>
+                      <span className="text-white cv-small">{personalInfo.email}</span>
                     </div>
                   )}
                   {personalInfo?.website && (
@@ -446,7 +437,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                       <svg className="h-4 w-4 mr-2 flex-shrink-0 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3m0 18a9 9 0 009-9m-9 9a9 9 0 00-9-9" />
                       </svg>
-                      <span className="text-white text-xs">{personalInfo.website}</span>
+                      <span className="text-white cv-small">{personalInfo.website}</span>
                     </div>
                   )}
                   {personalInfo?.linkedin && (
@@ -454,7 +445,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                       <svg className="h-4 w-4 mr-2 flex-shrink-0 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3m0 18a9 9 0 009-9m-9 9a9 9 0 00-9-9" />
                       </svg>
-                      <span className="text-white text-xs">{personalInfo.linkedin}</span>
+                      <span className="text-white cv-small">{personalInfo.linkedin}</span>
                     </div>
                   )}
                 </div>
@@ -467,15 +458,15 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           return (
             <DraggableSection key={`education-${section.order}`} sectionId="education" className="w-full mb-6">
               <div>
-                <h2 className="text-lg font-bold tracking-wider uppercase mb-3 text-white">Təhsil</h2>
+                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">Təhsil</h2>
                 <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
                 <div className="space-y-3">
                   {cvData.education.map((edu: any, index: number) => (
                     <div key={index}>
-                      <h3 className="font-semibold text-white text-sm">{edu.degree || edu.institution}</h3>
-                      <p className="text-xs text-gray-200">{edu.institution || edu.degree}</p>
-                      <p className="text-xs text-gray-200">{edu.startDate} - {edu.current ? 'İndi' : edu.endDate}</p>
-                      {edu.gpa && <p className="text-xs text-gray-200">GPA: {edu.gpa}</p>}
+                      <h3 className="cv-body text-white">{edu.degree || edu.institution}</h3>
+                      <p className="cv-small text-gray-200">{edu.institution || edu.degree}</p>
+                      <p className="cv-small text-gray-200">{edu.startDate} - {edu.current ? 'İndi' : edu.endDate}</p>
+                      {edu.gpa && <p className="cv-small text-gray-200">GPA: {edu.gpa}</p>}
                     </div>
                   ))}
                 </div>
@@ -488,11 +479,11 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           return (
             <DraggableSection key={`skills-${section.order}`} sectionId="skills" className="w-full mb-6">
               <div>
-                <h2 className="text-lg font-bold tracking-wider uppercase mb-3 text-white">Bacarıqlar</h2>
+                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">Bacarıqlar</h2>
                 <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
-                <ul className="space-y-1 text-xs list-disc list-inside text-white">
+                <ul className="space-y-1 cv-small list-disc list-inside text-white">
                   {cvData.skills.map((skill: any, index: number) => (
-                    <li key={index} className="text-white text-xs">{typeof skill === 'string' ? skill : skill.name}</li>
+                    <li key={index} className="text-white cv-small">{typeof skill === 'string' ? skill : skill.name}</li>
                   ))}
                 </ul>
               </div>
@@ -504,14 +495,14 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           return (
             <DraggableSection key={`languages-${section.order}`} sectionId="languages" className="w-full mb-6">
               <div>
-                <h2 className="text-lg font-bold tracking-wider uppercase mb-3 text-white">Dillər</h2>
+                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">Dillər</h2>
                 <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
-                <ul className="space-y-1 text-xs list-disc list-inside text-white">
+                <ul className="space-y-1 cv-small list-disc list-inside text-white">
                   {cvData.languages.map((lang: any, index: number) => {
                     const languageName = typeof lang === 'string' ? lang : (lang.language || lang.name || '');
                     const languageLevel = typeof lang === 'object' ? (lang.level || lang.proficiency || '') : '';
                     return (
-                      <li key={index} className="text-white text-xs">{languageName} {languageLevel && `(${languageLevel})`}</li>
+                      <li key={index} className="text-white cv-small">{languageName} {languageLevel && `(${languageLevel})`}</li>
                     );
                   })}
                 </ul>
@@ -524,13 +515,13 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           return (
             <DraggableSection key={`certifications-${section.order}`} sectionId="certifications" className="w-full mb-6">
               <div>
-                <h2 className="text-lg font-bold tracking-wider uppercase mb-3 text-white">Sertifikatlar</h2>
+                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">Sertifikatlar</h2>
                 <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
                 <div className="space-y-3">
                   {cvData.certifications.map((cert: any, index: number) => (
                     <div key={index}>
-                      <h3 className="font-semibold text-white text-sm">{cert.name}</h3>
-                      <p className="text-xs text-gray-200">{cert.issuer} | {cert.date}</p>
+                      <h3 className="cv-body text-white">{cert.name}</h3>
+                      <p className="cv-small text-gray-200">{cert.issuer} | {cert.date}</p>
                     </div>
                   ))}
                 </div>
@@ -745,11 +736,11 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
         {/* Header Section */}
         <DraggableSection sectionId="personalInfo" className="text-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">{fullName}</h1>
+            <h1 className="cv-heading text-gray-800 mb-2">{fullName}</h1>
             {personalInfo?.title && (
-              <p className="text-lg text-gray-600 mb-4">{personalInfo.title}</p>
+              <p className="cv-subheading text-gray-600 mb-4">{personalInfo.title}</p>
             )}
-            <div className="flex justify-center gap-4 text-sm text-gray-600">
+            <div className="flex justify-center gap-4 cv-small text-gray-600">
               {personalInfo?.email && <span>{personalInfo.email}</span>}
               {personalInfo?.phone && <span>{personalInfo.phone}</span>}
               {personalInfo?.website && <span>{personalInfo.website}</span>}
@@ -762,12 +753,12 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
         {personalInfo?.summary && (
           <DraggableSection sectionId="summary">
             <div>
-              <h3 className="text-base font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">
+              <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
                 Özət
               </h3>
               <SafeHtmlContent
                 content={personalInfo.summary}
-                className="text-sm text-gray-600 leading-relaxed"
+                className="cv-body text-gray-600 leading-relaxed"
                 allowHtml={false}
               />
             </div>
@@ -782,7 +773,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
               return (
                 <DraggableSection key="experience" sectionId="experience">
                   <div>
-                    <h3 className="text-base font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">
+                    <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
                       İş Təcrübəsi
                     </h3>
                     <div className="space-y-4">
@@ -790,18 +781,18 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                         <div key={index} className="border-l-2 border-blue-500 pl-3">
                           <div className="flex justify-between items-start mb-1">
                             <div>
-                              <h4 className="font-semibold text-gray-900 text-sm">{exp.position}</h4>
-                              <p className="text-gray-700 text-sm">{exp.company}</p>
-                              {exp.location && <p className="text-xs text-gray-500">{exp.location}</p>}
+                              <h4 className="cv-subheading text-gray-900">{exp.position}</h4>
+                              <p className="cv-body text-gray-700">{exp.company}</p>
+                              {exp.location && <p className="cv-small text-gray-500">{exp.location}</p>}
                             </div>
-                            <span className="text-xs text-gray-500 whitespace-nowrap ml-3">
+                            <span className="cv-small text-gray-500 whitespace-nowrap ml-3">
                               {exp.startDate} - {exp.current ? 'Hazırda' : exp.endDate}
                             </span>
                           </div>
                           {exp.description && (
                             <SafeHtmlContent
                               content={exp.description}
-                              className="text-xs text-gray-600 leading-relaxed"
+                              className="cv-body text-gray-600 leading-relaxed"
                               allowHtml={false}
                             />
                           )}
@@ -817,18 +808,18 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
               return (
                 <DraggableSection key="education" sectionId="education">
                   <div>
-                    <h3 className="text-base font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">
+                    <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
                       Təhsil
                     </h3>
                     <div className="space-y-3">
                       {cvData.education.map((edu: any, index: number) => (
                         <div key={index} className="border-l-2 border-green-500 pl-3">
-                          <h4 className="font-semibold text-gray-900 text-sm">{edu.degree}</h4>
-                          <p className="text-gray-700 text-sm">{edu.institution}</p>
-                          <p className="text-xs text-gray-500">
+                          <h4 className="cv-subheading text-gray-900">{edu.degree}</h4>
+                          <p className="cv-body text-gray-700">{edu.institution}</p>
+                          <p className="cv-small text-gray-500">
                             {edu.startDate} - {edu.current ? 'Hazırda' : edu.endDate}
                           </p>
-                          {edu.gpa && <p className="text-xs text-gray-500">GPA: {edu.gpa}</p>}
+                          {edu.gpa && <p className="cv-small text-gray-500">GPA: {edu.gpa}</p>}
                         </div>
                       ))}
                     </div>
@@ -841,12 +832,12 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
               return (
                 <DraggableSection key="skills" sectionId="skills">
                   <div>
-                    <h3 className="text-base font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">
+                    <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
                       Bacarıqlar
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       {cvData.skills.map((skill: any, index: number) => (
-                        <span key={index} className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">
+                        <span key={index} className="bg-gray-100 text-gray-800 px-2 py-1 rounded cv-small">
                           {typeof skill === 'string' ? skill : skill.name}
                         </span>
                       ))}
@@ -860,27 +851,27 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
               return (
                 <DraggableSection key="projects" sectionId="projects">
                   <div>
-                    <h3 className="text-base font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">
+                    <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
                       Layihələr
                     </h3>
                     <div className="space-y-3">
                       {cvData.projects.map((project: any, index: number) => (
                         <div key={index} className="border-l-2 border-purple-500 pl-3">
-                          <h4 className="font-semibold text-gray-900 text-sm">{project.name}</h4>
+                          <h4 className="cv-subheading text-gray-900">{project.name}</h4>
                           {project.description && (
                             <SafeHtmlContent
                               content={project.description}
-                              className="text-xs text-gray-600 leading-relaxed"
+                              className="cv-body text-gray-600 leading-relaxed"
                               allowHtml={false}
                             />
                           )}
                           {project.technologies && Array.isArray(project.technologies) && project.technologies.length > 0 && (
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="cv-body text-gray-500 mt-2">
                               <strong>Texnologiyalar:</strong> {project.technologies.join(', ')}
                             </p>
                           )}
                           {project.url && (
-                            <p className="text-xs text-blue-600 mt-1">{project.url}</p>
+                            <p className="cv-small text-blue-600 mt-1">{project.url}</p>
                           )}
                         </div>
                       ))}
@@ -894,15 +885,15 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
               return (
                 <DraggableSection key="certifications" sectionId="certifications">
                   <div>
-                    <h3 className="text-base font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">
+                    <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
                       Sertifikatlar
                     </h3>
                     <div className="space-y-2">
                       {cvData.certifications.map((cert: any, index: number) => (
                         <div key={index} className="border-l-2 border-yellow-500 pl-3">
-                          <h4 className="font-semibold text-gray-900 text-sm">{cert.name}</h4>
-                          <p className="text-xs text-gray-700">{cert.issuer}</p>
-                          {cert.date && <p className="text-xs text-gray-500">{cert.date}</p>}
+                          <h4 className="cv-subheading text-gray-900">{cert.name}</h4>
+                          <p className="cv-small text-gray-700">{cert.issuer}</p>
+                          {cert.date && <p className="cv-small text-gray-500">{cert.date}</p>}
                         </div>
                       ))}
                     </div>
@@ -915,7 +906,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
               return (
                 <DraggableSection key="languages" sectionId="languages">
                   <div>
-                    <h3 className="text-base font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">
+                    <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
                       Dillər
                     </h3>
                     <div className="grid grid-cols-2 gap-2">
@@ -925,9 +916,9 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
 
                         return (
                           <div key={index} className="flex justify-between items-center">
-                            <span className="font-medium text-gray-900 text-sm">{languageName}</span>
+                            <span className="cv-body text-gray-900">{languageName}</span>
                             {languageLevel && (
-                              <span className="text-xs text-gray-600">({languageLevel})</span>
+                              <span className="cv-small text-gray-600">({languageLevel})</span>
                             )}
                           </div>
                         );
@@ -942,7 +933,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
               return (
                 <DraggableSection key="volunteerExperience" sectionId="volunteerExperience">
                   <div>
-                    <h3 className="text-base font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">
+                    <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
                       Könüllü Təcrübə
                     </h3>
                     <div className="space-y-3">
@@ -950,17 +941,17 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                         <div key={index} className="border-l-2 border-red-500 pl-3">
                           <div className="flex justify-between items-start mb-1">
                             <div>
-                              <h4 className="font-semibold text-gray-900 text-sm">{vol.role}</h4>
-                              <p className="text-gray-700 text-sm">{vol.organization}</p>
+                              <h4 className="cv-subheading text-gray-900">{vol.role}</h4>
+                              <p className="cv-body text-gray-700">{vol.organization}</p>
                             </div>
-                            <span className="text-xs text-gray-500 whitespace-nowrap ml-3">
+                            <span className="cv-small text-gray-500 whitespace-nowrap ml-3">
                               {vol.startDate} - {vol.current ? 'Hazırda' : vol.endDate}
                             </span>
                           </div>
                           {vol.description && (
                             <SafeHtmlContent
                               content={vol.description}
-                              className="text-xs text-gray-600 leading-relaxed"
+                              className="cv-body text-gray-600 leading-relaxed"
                               allowHtml={false}
                             />
                           )}
@@ -981,20 +972,20 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
 
                       return (
                         <div key={sectionIndex}>
-                          <h3 className="text-base font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">
+                          <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
                             {section.title || 'Əlavə Bölmə'}
                           </h3>
                           <div className="space-y-2">
                             {section.items.map((item: any, itemIndex: number) => (
                               <div key={itemIndex} className="border-l-2 border-gray-400 pl-3">
-                                <h4 className="font-semibold text-gray-900 text-sm">{item.title}</h4>
+                                <h4 className="cv-subheading text-gray-900">{item.title}</h4>
                                 {item.subtitle && (
-                                  <p className="text-xs text-gray-700">{item.subtitle}</p>
+                                  <p className="cv-small text-gray-700">{item.subtitle}</p>
                                 )}
                                 {item.description && (
                                   <SafeHtmlContent
                                     content={item.description}
-                                    className="text-xs text-gray-600 leading-relaxed"
+                                    className="cv-body text-gray-600 leading-relaxed"
                                     allowHtml={false}
                                   />
                                 )}
