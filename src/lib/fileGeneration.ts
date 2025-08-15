@@ -139,9 +139,16 @@ export class FileGenerationService {
 
     // Check if it's Bold template
     const isBoldTemplate = templateId === 'resumonk-bold' || templateId === 'Bold';
+    
+    // Check if it's Traditional CV template
+    const isTraditionalTemplate = templateId === 'traditional' || templateId === 'Ənənəvi CV';
 
     if (isBoldTemplate) {
       return this.generateBoldTemplate(cvData);
+    }
+    
+    if (isTraditionalTemplate) {
+      return this.generateTraditionalTemplate(cvData);
     }
 
     return this.generateBasicTemplate(cvData);
@@ -1083,6 +1090,248 @@ export class FileGenerationService {
                 `).join('')}
             </div>
         ` : ''}
+    </div>
+</body>
+</html>
+    `;
+  }
+
+  private static generateTraditionalTemplate(cvData: any): string {
+    const { personalInfo, experience, education, skills, languages, projects, certifications, volunteerExperience, publications } = cvData;
+
+    return `
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV - ${personalInfo.fullName || 'CV'}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .sidebar-heading-line {
+            border-bottom: 2px solid #4a5568;
+            width: 50px;
+            margin-top: 8px;
+        }
+        @media print {
+            body { -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4 md:p-8">
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden flex flex-col md:flex-row min-h-[1000px]">
+            
+            <!-- Sol Panel (Sidebar) -->
+            <aside class="w-full md:w-1/3 bg-[#0d2438] text-white p-8">
+                <div class="flex flex-col items-center md:items-start">
+                    <!-- Profil Şəkli -->
+                    ${personalInfo.profileImage ? `
+                        <img src="${personalInfo.profileImage}" alt="Profil Şəkli" class="rounded-full w-36 h-36 border-4 border-gray-400 object-cover">
+                    ` : `
+                        <img src="https://placehold.co/150x150/e2e8f0/334155?text=Şəkil" alt="Profil Şəkli" class="rounded-full w-36 h-36 border-4 border-gray-400 object-cover">
+                    `}
+                    
+                    <!-- Əlaqə Məlumatları -->
+                    <div class="mt-8 w-full">
+                        <h2 class="text-xl font-bold tracking-wider uppercase">Əlaqə</h2>
+                        <div class="sidebar-heading-line"></div>
+                        <ul class="mt-4 space-y-3 text-sm">
+                            ${personalInfo.phone ? `
+                                <li class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                                    <span>${personalInfo.phone}</span>
+                                </li>
+                            ` : ''}
+                            ${personalInfo.email ? `
+                                <li class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                    <span>${personalInfo.email}</span>
+                                </li>
+                            ` : ''}
+                            ${personalInfo.location ? `
+                                <li class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                    <span>${personalInfo.location}</span>
+                                </li>
+                            ` : ''}
+                            ${personalInfo.website ? `
+                                <li class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3m0 18a9 9 0 009-9m-9 9a9 9 0 00-9-9" /></svg>
+                                    <span>${personalInfo.website}</span>
+                                </li>
+                            ` : ''}
+                            ${personalInfo.linkedin ? `
+                                <li class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3m0 18a9 9 0 009-9m-9 9a9 9 0 00-9-9" /></svg>
+                                    <span>${personalInfo.linkedin}</span>
+                                </li>
+                            ` : ''}
+                        </ul>
+                    </div>
+
+                    <!-- Təhsil -->
+                    ${education && education.length > 0 ? `
+                        <div class="mt-8 w-full">
+                            <h2 class="text-xl font-bold tracking-wider uppercase">Təhsil</h2>
+                            <div class="sidebar-heading-line"></div>
+                            ${education.map((edu: any) => `
+                                <div class="mt-4">
+                                    <h3 class="font-semibold">${edu.degree || ''}</h3>
+                                    <p class="text-sm text-gray-300">${edu.institution || ''} | ${edu.startDate || ''} - ${edu.endDate ? edu.endDate : (edu.current ? 'İndi' : '')}</p>
+                                    ${edu.gpa ? `<p class="text-sm text-gray-300">GPA: ${edu.gpa}</p>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+
+                    <!-- Bacarıqlar -->
+                    ${skills && skills.length > 0 ? `
+                        <div class="mt-8 w-full">
+                            <h2 class="text-xl font-bold tracking-wider uppercase">Bacarıqlar</h2>
+                            <div class="sidebar-heading-line"></div>
+                            <ul class="mt-4 space-y-2 text-sm list-disc list-inside">
+                                ${skills.map((skill: any) => `
+                                    <li>${skill.name || skill.skill || ''}</li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Dillər -->
+                    ${languages && languages.length > 0 ? `
+                        <div class="mt-8 w-full">
+                            <h2 class="text-xl font-bold tracking-wider uppercase">Dillər</h2>
+                            <div class="sidebar-heading-line"></div>
+                            <ul class="mt-4 space-y-2 text-sm list-disc list-inside">
+                                ${languages.map((lang: any) => `
+                                    <li>${lang.language || lang.name || ''} (${lang.level || ''})</li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+
+                    <!-- Sertifikatlar -->
+                    ${certifications && certifications.length > 0 ? `
+                        <div class="mt-8 w-full">
+                            <h2 class="text-xl font-bold tracking-wider uppercase">Sertifikatlar</h2>
+                            <div class="sidebar-heading-line"></div>
+                            ${certifications.map((cert: any) => `
+                                <div class="mt-4">
+                                    <h3 class="font-semibold">${cert.name || ''}</h3>
+                                    <p class="text-sm text-gray-300">${cert.issuer || ''} | ${cert.date || ''}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            </aside>
+
+            <!-- Sağ Panel (Əsas Məzmun) -->
+            <main class="w-full md:w-2/3 p-8 md:p-12">
+                <!-- Başlıq (Ad və Vəzifə) -->
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-bold text-gray-800">${(personalInfo.fullName || '').toUpperCase()}</h1>
+                    <p class="text-lg md:text-xl font-medium text-gray-500 tracking-wider mt-2">${(personalInfo.title || '').toUpperCase()}</p>
+                </div>
+
+                <!-- Profil -->
+                ${personalInfo.summary ? `
+                    <section class="mt-10">
+                        <h2 class="text-2xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2">Profil</h2>
+                        <p class="mt-4 text-gray-600 text-sm leading-relaxed">
+                            ${personalInfo.summary}
+                        </p>
+                    </section>
+                ` : ''}
+
+                <!-- İş Təcrübəsi -->
+                ${experience && experience.length > 0 ? `
+                    <section class="mt-10">
+                        <h2 class="text-2xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2">İş Təcrübəsi</h2>
+                        ${experience.map((exp: any) => `
+                            <div class="mt-6">
+                                <div class="flex justify-between items-baseline">
+                                   <h3 class="text-lg font-semibold text-gray-700">${exp.position || ''}</h3>
+                                   <p class="text-sm text-gray-500">${exp.startDate || ''} - ${exp.endDate ? exp.endDate : (exp.current ? 'İNDİ' : '')}</p>
+                                </div>
+                                <p class="text-md text-gray-600">${exp.company || ''}</p>
+                                ${exp.location ? `<p class="text-sm text-gray-500">${exp.location}</p>` : ''}
+                                ${exp.description ? `
+                                    <div class="mt-2 text-sm text-gray-600 space-y-1">
+                                        ${exp.description.split('\n').map((line: string) => {
+                                            if (line.trim().startsWith('•') || line.trim().startsWith('-')) {
+                                                return `<p>• ${line.replace(/^[•-]\s*/, '')}</p>`;
+                                            } else if (line.trim()) {
+                                                return `<p>${line}</p>`;
+                                            }
+                                            return '';
+                                        }).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </section>
+                ` : ''}
+
+                <!-- Layihələr -->
+                ${projects && projects.length > 0 ? `
+                    <section class="mt-10">
+                        <h2 class="text-2xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2">Layihələr</h2>
+                        ${projects.map((project: any) => `
+                            <div class="mt-6">
+                                <h3 class="text-lg font-semibold text-gray-700">${project.name || ''}</h3>
+                                ${project.description ? `<p class="mt-2 text-sm text-gray-600">${project.description}</p>` : ''}
+                                ${project.technologies && Array.isArray(project.technologies) && project.technologies.length > 0 ? `
+                                    <p class="mt-2 text-sm text-gray-500"><strong>Texnologiyalar:</strong> ${project.technologies.join(', ')}</p>
+                                ` : ''}
+                                ${project.url ? `<p class="mt-1 text-sm text-blue-600">${project.url}</p>` : ''}
+                            </div>
+                        `).join('')}
+                    </section>
+                ` : ''}
+
+                <!-- Könüllü Təcrübə -->
+                ${volunteerExperience && volunteerExperience.length > 0 ? `
+                    <section class="mt-10">
+                        <h2 class="text-2xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2">Könüllü Təcrübə</h2>
+                        ${volunteerExperience.map((vol: any) => `
+                            <div class="mt-6">
+                                <div class="flex justify-between items-baseline">
+                                   <h3 class="text-lg font-semibold text-gray-700">${vol.role || ''}</h3>
+                                   <p class="text-sm text-gray-500">${vol.startDate || ''} - ${vol.current ? 'İNDİ' : vol.endDate || ''}</p>
+                                </div>
+                                <p class="text-md text-gray-600">${vol.organization || ''}</p>
+                                ${vol.cause ? `<p class="text-sm text-gray-500">${vol.cause}</p>` : ''}
+                                ${vol.description ? `<p class="mt-2 text-sm text-gray-600">${vol.description}</p>` : ''}
+                            </div>
+                        `).join('')}
+                    </section>
+                ` : ''}
+
+                <!-- Nəşrlər -->
+                ${publications && publications.length > 0 ? `
+                    <section class="mt-10">
+                        <h2 class="text-2xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2">Nəşrlər</h2>
+                        ${publications.map((pub: any) => `
+                            <div class="mt-6">
+                                <h3 class="text-lg font-semibold text-gray-700">${pub.title || ''}</h3>
+                                ${pub.publisher ? `<p class="text-md text-gray-600">${pub.publisher} | ${pub.date || ''}</p>` : ''}
+                                ${pub.authors && pub.authors.length > 0 ? `<p class="text-sm text-gray-500">Müəlliflər: ${pub.authors.join(', ')}</p>` : ''}
+                                ${pub.description ? `<p class="mt-2 text-sm text-gray-600">${pub.description}</p>` : ''}
+                                ${pub.url ? `<p class="mt-1 text-sm text-blue-600">${pub.url}</p>` : ''}
+                            </div>
+                        `).join('')}
+                    </section>
+                ` : ''}
+            </main>
+        </div>
     </div>
 </body>
 </html>

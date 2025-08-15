@@ -2309,6 +2309,40 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                 onSectionOrderChange={handleSectionOrderChange}
                               />
                             )}
+                            {/* Fallback for any other template IDs */}
+                            {(cv.templateId !== 'medium' &&
+                              cv.templateId !== 'professional-complex' &&
+                              cv.templateId !== 'basic' &&
+                              cv.templateId !== 'professional') && (
+                              <CVPreviewA4
+                                cv={{
+                                  ...cv,
+                                  data: {
+                                    personalInfo: {
+                                      ...cv.personalInfo,
+                                      name: cv.personalInfo.fullName
+                                    },
+                                    experience: cv.experience || [],
+                                    education: cv.education || [],
+                                    skills: cv.skills || [],
+                                    languages: cv.languages || [],
+                                    projects: cv.projects || [],
+                                    certifications: cv.certifications || [],
+                                    volunteerExperience: cv.volunteerExperience || [],
+                                    publications: cv.publications || [],
+                                    honorsAwards: cv.honorsAwards || [],
+                                    testScores: cv.testScores || [],
+                                    recommendations: cv.recommendations || [],
+                                    courses: cv.courses || [],
+                                    customSections: cv.customSections || [],
+                                    cvLanguage: cv.cvLanguage || 'azerbaijani',
+                                    sectionOrder: cv.sectionOrder || []
+                                  } as any
+                                }}
+                                enableSectionSelection={enablePreviewSelection}
+                                onSectionOrderChange={handleSectionOrderChange}
+                              />
+                            )}
                           </div>
                         </div>
                     ) : (

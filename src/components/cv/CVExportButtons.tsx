@@ -9,6 +9,7 @@ interface CVExportButtonsProps {
   cvData: any;
   cvElementId: string;
   fileName: string;
+  templateId?: string;
 }
 
 export default function CVExportButtons({ cvData, cvElementId, fileName }: CVExportButtonsProps) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface CursorPosition {
   x: number;
@@ -11,17 +11,19 @@ export function useCustomCursor() {
   const [cursorPosition, setCursorPosition] = useState<CursorPosition>({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
 
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    setCursorPosition({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  const handleMouseEnter = useCallback(() => setIsHovering(true), []);
+  const handleMouseLeave = useCallback(() => setIsHovering(false), []);
+
   useEffect(() => {
     // Only enable custom cursor on desktop (not mobile/tablet)
+    if (typeof window === 'undefined') return;
+
     const isDesktop = window.innerWidth >= 1024; // lg breakpoint
     if (!isDesktop) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      setCursorPosition({ x: e.clientX, y: e.clientY });
-    };
-
-    const handleMouseEnter = () => setIsHovering(true);
-    const handleMouseLeave = () => setIsHovering(false);
 
     // Add mouse move listener
     window.addEventListener('mousemove', handleMouseMove);
@@ -75,7 +77,7 @@ export function useCustomCursor() {
         styleToRemove.remove();
       }
     };
-  }, []);
+  }, [handleMouseMove, handleMouseEnter, handleMouseLeave]);
 
   return { cursorPosition, isHovering };
 }

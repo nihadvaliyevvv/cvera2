@@ -1,4 +1,4 @@
-/* A4 Preview Scroll Styles */
+/* A4 Preview Scroll Styles - Enhanced for better responsiveness */
 .a4PreviewContent {
   height: 100%;
   overflow-y: auto;
@@ -8,6 +8,10 @@
   scrollbar-color: #cbd5e1 #ffffff;
   scroll-behavior: smooth;
   box-sizing: border-box;
+  /* Improved touch scrolling for mobile devices */
+  -webkit-overflow-scrolling: touch;
+  /* Prevent bounce effect on iOS */
+  overscroll-behavior-y: contain;
 }
 
 .a4PreviewContent::-webkit-scrollbar {
@@ -37,4 +41,48 @@
 
 .a4PreviewContent::-webkit-scrollbar-corner {
   background: #ffffff;
+}
+
+/* Mobile-optimized scrollbar */
+@media (max-width: 768px) {
+  .a4PreviewContent {
+    padding: 15px;
+  }
+
+  .a4PreviewContent::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .a4PreviewContent::-webkit-scrollbar-thumb {
+    border: 1px solid #ffffff;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+  .a4PreviewContent {
+    padding: 10px;
+  }
+
+  .a4PreviewContent::-webkit-scrollbar {
+    width: 6px;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .a4PreviewContent::-webkit-scrollbar {
+    width: 10px;
+  }
+}
+
+/* Focus and accessibility improvements */
+.a4PreviewContent:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: -2px;
+}
+
+/* Smooth transitions for dynamic content changes */
+.a4PreviewContent * {
+  transition: opacity 0.2s ease;
 }
