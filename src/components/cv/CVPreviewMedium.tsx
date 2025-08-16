@@ -313,9 +313,10 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
 
   // Draggable section wrapper
   const DraggableSection: React.FC<{
-    sectionId: string;
-    children: React.ReactNode;
-  }> = ({ sectionId, children }) => {
+      sectionId: string,
+      children: React.ReactNode,
+      key?: string
+  }> = ({sectionId, children, key}) => {
     const isDragged = draggedSection === sectionId;
     const isDraggedOver = dragOverSection === sectionId && draggedSection !== sectionId;
 
@@ -398,8 +399,9 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
 
   return (
     <div
-      className="w-full h-full bg-white text-gray-900 font-sans overflow-y-auto"
+      className="w-full h-full bg-white text-gray-900 overflow-y-auto"
       style={{
+        fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
         scrollbarWidth: 'thin',
         scrollbarColor: '#CBD5E1 #F1F5F9',
         maxHeight: '100vh'

@@ -197,13 +197,16 @@ const FontSelector: React.FC<FontSelectorProps> = ({
                 step="0.5"
                 value={currentSettings.fontSizes?.heading || 14}
                 onChange={(e) => {
+                  const defaultSizes = {
+                    heading: 14,
+                    subheading: 12,
+                    body: 11,
+                    small: 9
+                  };
                   const newSettings = {
                     ...currentSettings,
                     fontSizes: {
-                      heading: 14,
-                      subheading: 12,
-                      body: 11,
-                      small: 9,
+                      ...defaultSizes,
                       ...currentSettings.fontSizes,
                       heading: parseFloat(e.target.value)
                     }
@@ -225,13 +228,16 @@ const FontSelector: React.FC<FontSelectorProps> = ({
                 step="0.5"
                 value={currentSettings.fontSizes?.subheading || 12}
                 onChange={(e) => {
+                  const defaultSizes = {
+                    heading: 14,
+                    subheading: 12,
+                    body: 11,
+                    small: 9
+                  };
                   const newSettings = {
                     ...currentSettings,
                     fontSizes: {
-                      heading: 14,
-                      subheading: 12,
-                      body: 11,
-                      small: 9,
+                      ...defaultSizes,
                       ...currentSettings.fontSizes,
                       subheading: parseFloat(e.target.value)
                     }
@@ -253,13 +259,16 @@ const FontSelector: React.FC<FontSelectorProps> = ({
                 step="0.5"
                 value={currentSettings.fontSizes?.body || 11}
                 onChange={(e) => {
+                  const defaultSizes = {
+                    heading: 14,
+                    subheading: 12,
+                    body: 11,
+                    small: 9
+                  };
                   const newSettings = {
                     ...currentSettings,
                     fontSizes: {
-                      heading: 14,
-                      subheading: 12,
-                      body: 11,
-                      small: 9,
+                      ...defaultSizes,
                       ...currentSettings.fontSizes,
                       body: parseFloat(e.target.value)
                     }
@@ -281,13 +290,16 @@ const FontSelector: React.FC<FontSelectorProps> = ({
                 step="0.5"
                 value={currentSettings.fontSizes?.small || 9}
                 onChange={(e) => {
+                  const defaultSizes = {
+                    heading: 14,
+                    subheading: 12,
+                    body: 11,
+                    small: 9
+                  };
                   const newSettings = {
                     ...currentSettings,
                     fontSizes: {
-                      heading: 14,
-                      subheading: 12,
-                      body: 11,
-                      small: 9,
+                      ...defaultSizes,
                       ...currentSettings.fontSizes,
                       small: parseFloat(e.target.value)
                     }

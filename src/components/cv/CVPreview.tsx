@@ -611,7 +611,7 @@ export default function CVPreview({ cv }: CVPreviewProps) {
 
       {/* Scrollable preview wrapper */}
       <div className="max-h-96 overflow-y-auto">
-        <div id={cvElementId} className="bg-white">
+        <div id={cvElementId} className="bg-white" style={{ fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"' }}>
 
           {/* Header Section - Different for each template */}
           <div className={styles.headerClass}>
