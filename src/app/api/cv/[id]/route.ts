@@ -101,16 +101,40 @@ export async function PUT(
       data: {
         title: title || existingCV.title,
         cv_data: cv_data ? {
-          // Merge existing CV data with new data to preserve all sections
+          // Use the enhanced merge function to preserve translation format
           ...existingCV.cv_data as any,
           ...cv_data,
+          // CRITICAL: Preserve translation metadata and language settings
+          cvLanguage: cv_data.cvLanguage || (existingCV.cv_data as any)?.cvLanguage,
+          translationMetadata: cv_data.translationMetadata || (existingCV.cv_data as any)?.translationMetadata,
+          // Preserve section names in the current language - this prevents reverting
+          sectionNames: cv_data.sectionNames ? {
+            ...(existingCV.cv_data as any)?.sectionNames,
+            ...cv_data.sectionNames
+          } : (existingCV.cv_data as any)?.sectionNames,
+          // Preserve section order if it exists
+          sectionOrder: cv_data.sectionOrder || (existingCV.cv_data as any)?.sectionOrder,
           // Specially handle custom sections to ensure they're preserved
           customSections: cv_data.customSections || (existingCV.cv_data as any)?.customSections || [],
           // Specially handle additional sections to ensure they're preserved
           additionalSections: {
             ...(existingCV.cv_data as any)?.additionalSections,
             ...cv_data.additionalSections
-          }
+          },
+          // Preserve all main sections with their translated content
+          personalInfo: cv_data.personalInfo ? {
+            ...(existingCV.cv_data as any)?.personalInfo,
+            ...cv_data.personalInfo
+          } : (existingCV.cv_data as any)?.personalInfo,
+          experience: cv_data.experience || (existingCV.cv_data as any)?.experience || [],
+          education: cv_data.education || (existingCV.cv_data as any)?.education || [],
+          skills: cv_data.skills || (existingCV.cv_data as any)?.skills || [],
+          projects: cv_data.projects || (existingCV.cv_data as any)?.projects || [],
+          certifications: cv_data.certifications || (existingCV.cv_data as any)?.certifications || [],
+          languages: cv_data.languages || (existingCV.cv_data as any)?.languages || [],
+          volunteerExperience: cv_data.volunteerExperience || (existingCV.cv_data as any)?.volunteerExperience || [],
+          publications: cv_data.publications || (existingCV.cv_data as any)?.publications || [],
+          honorsAwards: cv_data.honorsAwards || (existingCV.cv_data as any)?.honorsAwards || []
         } : existingCV.cv_data,
         templateId: templateId || existingCV.templateId,
         updatedAt: new Date()
@@ -120,6 +144,8 @@ export async function PUT(
     console.log('✅ CV updated successfully:', {
       cvId: id,
       title: updatedCV.title,
+      language: (updatedCV.cv_data as any)?.cvLanguage,
+      hasTranslationMetadata: !!(updatedCV.cv_data as any)?.translationMetadata,
       hasCustomSections: !!(updatedCV.cv_data as any)?.customSections && (updatedCV.cv_data as any).customSections.length > 0,
       hasAdditionalSections: !!(updatedCV.cv_data as any)?.additionalSections && Object.keys((updatedCV.cv_data as any).additionalSections).length > 0
     });
@@ -127,7 +153,7 @@ export async function PUT(
     return NextResponse.json({
       success: true,
       cv: updatedCV,
-      message: 'CV uğurla yeniləndi'
+      message: 'CV uğurla yeniləndi və tərcümə formatı saxlanıldı'
     });
 
   } catch (error) {

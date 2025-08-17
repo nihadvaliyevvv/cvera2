@@ -106,7 +106,7 @@ export default function LinkedInImportPage() {
 
     } catch (error) {
       console.error('❌ LinkedIn import xətası:', error);
-      setError(`LinkedIn import xətası: ${error instanceof Error ? error.message : 'Naməlum xəta'}`);
+      setError(`LinkedIn idxal xətası: ${error instanceof Error ? error.message : 'Naməlum xəta'}`);
     } finally {
       setLoading(false);
     }
@@ -141,7 +141,7 @@ export default function LinkedInImportPage() {
               </div>
               <h1 className="text-4xl font-bold text-gray-900 mb-4">LinkedIn-dən İdxal</h1>
               <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                LinkedIn profilinizi avtomatik olaraq import edin və bir neçə saniyədə peşəkar CV yaradın
+                LinkedIn profilinizi avtomatik olaraq idxal edin və bir neçə saniyədə peşəkar CV yaradın
               </p>
             </div>
 
@@ -164,7 +164,7 @@ export default function LinkedInImportPage() {
                   </svg>
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Dəqiq Məlumat</h3>
-                <p className="text-sm text-gray-600">Bütün iş təcrübəsi və təhsil məlumatları dəqiq şəkildə import edilir</p>
+                <p className="text-sm text-gray-600">Bütün iş təcrübəsi və təhsil məlumatları dəqiq şəkildə idxal edilir</p>
               </div>
 
               <div className="text-center p-6 bg-blue-50 rounded-2xl">

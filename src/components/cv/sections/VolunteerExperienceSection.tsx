@@ -188,19 +188,29 @@ export default function VolunteerExperienceSection({ data, onChange }: Volunteer
                         value={volunteer.endDate || ''}
                         onChange={(e) => updateVolunteerExperience(index, 'endDate', e.target.value)}
                         disabled={volunteer.current}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50"
                       />
                     </div>
-                    <div className="flex items-center">
-                      <label className="flex items-center gap-2 mt-6">
-                        <input
-                          type="checkbox"
-                          checked={volunteer.current}
-                          onChange={(e) => updateVolunteerExperience(index, 'current', e.target.checked)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        <span className="text-sm text-gray-700">Hələ də davam edir</span>
-                      </label>
+                    <div className="flex items-end">
+                      <div className="w-full">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newValue = !volunteer.current;
+                            updateVolunteerExperience(index, 'current', newValue);
+                            if (newValue) {
+                              updateVolunteerExperience(index, 'endDate', '');
+                            }
+                          }}
+                          className={`w-full p-3 rounded-lg border-2 font-medium text-sm transition-all duration-200 ${
+                            volunteer.current
+                              ? 'bg-red-100 border-red-300 text-red-800 hover:bg-red-200'
+                              : 'bg-blue-100 border-blue-300 text-blue-800 hover:bg-blue-200'
+                          }`}
+                        >
+                          {volunteer.current ? 'Davam etmir' : 'Davam edir'}
+                        </button>
+                      </div>
                     </div>
                   </div>
 

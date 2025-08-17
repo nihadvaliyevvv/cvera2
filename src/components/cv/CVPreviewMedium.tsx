@@ -316,7 +316,7 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
       sectionId: string,
       children: React.ReactNode,
       key?: string
-  }> = ({sectionId, children, key}) => {
+  }> = ({sectionId, children}) => {
     const isDragged = draggedSection === sectionId;
     const isDraggedOver = dragOverSection === sectionId && draggedSection !== sectionId;
 
@@ -452,7 +452,7 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
               case 'experience':
                 if (!data.experience || data.experience.length === 0) return null;
                 return (
-                  <DraggableSection key="experience" sectionId="experience">
+                  <DraggableSection key={section.id} sectionId="experience">
                     <section>
                       <h2 className="text-lg font-bold text-gray-800 mb-3 pb-1 border-b border-gray-400">
                         {texts.experience}
@@ -487,7 +487,7 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
               case 'education':
                 if (!data.education || data.education.length === 0) return null;
                 return (
-                  <DraggableSection key="education" sectionId="education">
+                  <DraggableSection key={section.id} sectionId="education">
                     <section>
                       <h2 className="text-lg font-bold text-gray-800 mb-3 pb-1 border-b border-gray-400">
                         {texts.education}
@@ -523,13 +523,13 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
               case 'skills':
                 if (!data.skills || data.skills.length === 0) return null;
                 return (
-                  <DraggableSection key="skills" sectionId="skills">
+                  <DraggableSection key={section.id} sectionId="skills">
                     <section>
                       <h2 className="text-lg font-bold text-gray-800 mb-3 pb-1 border-b border-gray-400">
                         {texts.skills}
                       </h2>
                       <div className="text-sm text-gray-700">
-                        {data.skills.map((skill, index) => skill.name).join(' • ')}
+                        {data.skills.map((skill) => skill.name).join(' • ')}
                       </div>
                     </section>
                   </DraggableSection>
@@ -538,7 +538,7 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
               case 'languages':
                 if (!data.languages || data.languages.length === 0) return null;
                 return (
-                  <DraggableSection key="languages" sectionId="languages">
+                  <DraggableSection key={section.id} sectionId="languages">
                     <section>
                       <h2 className="text-lg font-bold text-gray-800 mb-3 pb-1 border-b border-gray-400">
                         {texts.languages}
@@ -560,7 +560,7 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
               case 'projects':
                 if (!data.projects || data.projects.length === 0) return null;
                 return (
-                  <DraggableSection key="projects" sectionId="projects">
+                  <DraggableSection key={section.id} sectionId="projects">
                     <section>
                       <h2 className="text-lg font-bold text-gray-800 mb-3 pb-1 border-b border-gray-400">
                         {texts.projects}
@@ -579,11 +579,14 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
                             {project.description && (
                               <p className="text-sm text-gray-700 mb-1">{stripHtmlTags(project.description)}</p>
                             )}
-                            {project.technologies && (
+                            {project.technologies &&
+                             (Array.isArray(project.technologies)
+                               ? project.technologies.length > 0 && project.technologies.some(tech => tech && tech.trim() !== '')
+                               : project.technologies.trim() !== '') && (
                               <p className="text-sm text-gray-600">
                                 <span className="font-medium">Technologies: </span>
                                 {Array.isArray(project.technologies)
-                                  ? project.technologies.join(', ')
+                                  ? project.technologies.filter(tech => tech && tech.trim() !== '').join(', ')
                                   : project.technologies}
                               </p>
                             )}
@@ -597,7 +600,7 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
               case 'certifications':
                 if (!data.certifications || data.certifications.length === 0) return null;
                 return (
-                  <DraggableSection key="certifications" sectionId="certifications">
+                  <DraggableSection key={section.id} sectionId="certifications">
                     <section>
                       <h2 className="text-lg font-bold text-gray-800 mb-3 pb-1 border-b border-gray-400">
                         {texts.certifications}
@@ -624,7 +627,7 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
               case 'volunteerExperience':
                 if (!data.volunteerExperience || data.volunteerExperience.length === 0) return null;
                 return (
-                  <DraggableSection key="volunteerExperience" sectionId="volunteerExperience">
+                  <DraggableSection key={section.id} sectionId="volunteerExperience">
                     <section>
                       <h2 className="text-lg font-bold text-gray-800 mb-3 pb-1 border-b border-gray-400">
                         {texts.volunteer}
@@ -654,7 +657,7 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
               case 'customSections':
                 if (!data.customSections || data.customSections.length === 0) return null;
                 return (
-                  <DraggableSection key="customSections" sectionId="customSections">
+                  <DraggableSection key={section.id} sectionId="customSections">
                     <div className="space-y-6">
                       {data.customSections.map((section) => (
                         <section key={section.id}>

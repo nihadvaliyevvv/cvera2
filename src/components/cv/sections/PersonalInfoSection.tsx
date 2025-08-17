@@ -257,6 +257,20 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
     }
   };
 
+  // Ensure all values are strings to prevent controlled/uncontrolled input issues
+  const safeData = {
+    fullName: data.fullName || '',
+    firstName: data.firstName || '',
+    lastName: data.lastName || '',
+    email: data.email || '',
+    phone: data.phone || '',
+    website: data.website || '',
+    linkedin: data.linkedin || '',
+    summary: data.summary || '',
+    profileImage: data.profileImage || '',
+    additionalLinks: data.additionalLinks || []
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -324,7 +338,7 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
           <input
             id="first_name"
             type="text"
-            value={data.firstName || ''}
+            value={safeData.firstName}
             onChange={(e) => handleChange('firstName', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             placeholder="Adınız"
@@ -345,7 +359,7 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
           <input
             id="last_name"
             type="text"
-            value={data.lastName || ''}
+            value={safeData.lastName}
             onChange={(e) => handleChange('lastName', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             placeholder="Soyadınız"
@@ -368,7 +382,7 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
           <input
             id="email"
             type="email"
-            value={data.email}
+            value={safeData.email}
             onChange={(e) => handleChange('email', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             placeholder="email@example.com"
@@ -381,7 +395,7 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
           </label>
           <input
             type="tel"
-            value={data.phone}
+            value={safeData.phone}
             onChange={(e) => handleChange('phone', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             placeholder="+994 XX XXX XX XX"
@@ -394,7 +408,7 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
           </label>
           <input
             type="url"
-            value={data.website || ''}
+            value={safeData.website}
             onChange={(e) => handleChange('website', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             placeholder="https://example.com"
@@ -407,7 +421,7 @@ export default function PersonalInfoSection({ data, onChange, userTier = 'Free',
           </label>
           <input
             type="url"
-            value={data.linkedin || ''}
+            value={safeData.linkedin}
             onChange={(e) => handleChange('linkedin', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             placeholder="https://linkedin.com/in/username"

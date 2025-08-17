@@ -351,15 +351,19 @@ const FontSelector: React.FC<FontSelectorProps> = ({
             <div className="border-t pt-4 space-y-3">
               <h4 className="text-sm font-semibold text-gray-900 mb-3">Şrift Qalınlığı</h4>
 
+              {/* Başlıq Qalınlığı */}
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-2">
-                  Başlıq Qalınlığı: {currentSettings.fontWeight.heading}
+                  Başlıq Qalınlığı:
+                  <span className="text-gray-500 ml-1">
+                    {currentSettings.fontWeight.heading <= 500 ? 'Normal' : 'Qalın'}
+                  </span>
                 </label>
                 <input
                   type="range"
-                  min="400"
-                  max="900"
-                  step="100"
+                  min="300"
+                  max="700"
+                  step="50"
                   value={currentSettings.fontWeight.heading}
                   onChange={(e) => {
                     const newSettings = {
@@ -373,17 +377,57 @@ const FontSelector: React.FC<FontSelectorProps> = ({
                   }}
                   className="w-full"
                 />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>Normal (300-500)</span>
+                  <span>Qalın (550-700)</span>
+                </div>
               </div>
 
+              {/* Alt Başlıq Qalınlığı */}
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-2">
-                  Mətn Qalınlığı: {currentSettings.fontWeight.body}
+                  Alt Başlıq Qalınlığı:
+                  <span className="text-gray-500 ml-1">
+                    {(currentSettings.fontWeight.subheading || 450) <= 500 ? 'Normal' : 'Qalın'}
+                  </span>
                 </label>
                 <input
                   type="range"
                   min="300"
                   max="700"
-                  step="100"
+                  step="50"
+                  value={currentSettings.fontWeight.subheading || 450}
+                  onChange={(e) => {
+                    const newSettings = {
+                      ...currentSettings,
+                      fontWeight: {
+                        ...currentSettings.fontWeight!,
+                        subheading: parseInt(e.target.value)
+                      }
+                    };
+                    onSettingsChange(newSettings);
+                  }}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>Normal (300-500)</span>
+                  <span>Qalın (550-700)</span>
+                </div>
+              </div>
+
+              {/* Əsas Mətn Qalınlığı */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-2">
+                  Əsas Mətn Qalınlığı:
+                  <span className="text-gray-500 ml-1">
+                    {currentSettings.fontWeight.body <= 500 ? 'Normal' : 'Qalın'}
+                  </span>
+                </label>
+                <input
+                  type="range"
+                  min="300"
+                  max="700"
+                  step="50"
                   value={currentSettings.fontWeight.body}
                   onChange={(e) => {
                     const newSettings = {
@@ -397,6 +441,119 @@ const FontSelector: React.FC<FontSelectorProps> = ({
                   }}
                   className="w-full"
                 />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>Normal (300-500)</span>
+                  <span>Qalın (550-700)</span>
+                </div>
+              </div>
+
+              {/* Kiçik Mətn Qalınlığı */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-2">
+                  Kiçik Mətn Qalınlığı:
+                  <span className="text-gray-500 ml-1">
+                    {(currentSettings.fontWeight.small || 400) <= 500 ? 'Normal' : 'Qalın'}
+                  </span>
+                </label>
+                <input
+                  type="range"
+                  min="300"
+                  max="700"
+                  step="50"
+                  value={currentSettings.fontWeight.small || 400}
+                  onChange={(e) => {
+                    const newSettings = {
+                      ...currentSettings,
+                      fontWeight: {
+                        ...currentSettings.fontWeight!,
+                        small: parseInt(e.target.value)
+                      }
+                    };
+                    onSettingsChange(newSettings);
+                  }}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>Normal (300-500)</span>
+                  <span>Qalın (550-700)</span>
+                </div>
+              </div>
+
+              {/* Sürətli Seçim Presets */}
+              <div className="mt-4">
+                <label className="block text-xs font-medium text-gray-700 mb-2">Sürətli Seçim</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => {
+                      const newSettings = {
+                        ...currentSettings,
+                        fontWeight: {
+                          heading: 400,
+                          subheading: 400,
+                          body: 400,
+                          small: 300
+                        }
+                      };
+                      onSettingsChange(newSettings);
+                    }}
+                    className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-colors text-center"
+                  >
+                    Hamısı Normal
+                  </button>
+                  <button
+                    onClick={() => {
+                      const newSettings = {
+                        ...currentSettings,
+                        fontWeight: {
+                          heading: 600,
+                          subheading: 550,
+                          body: 500,
+                          small: 450
+                        }
+                      };
+                      onSettingsChange(newSettings);
+                    }}
+                    className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-colors text-center"
+                  >
+                    Sıralı Qalınlıq
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <button
+                    onClick={() => {
+                      const newSettings = {
+                        ...currentSettings,
+                        fontWeight: {
+                          heading: 700,
+                          subheading: 600,
+                          body: 550,
+                          small: 500
+                        }
+                      };
+                      onSettingsChange(newSettings);
+                    }}
+                    className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-colors text-center"
+                  >
+                    Hamısı Qalın
+                  </button>
+                  <button
+                    onClick={() => {
+                      const newSettings = {
+                        ...currentSettings,
+                        fontWeight: {
+                          heading: 350,
+                          subheading: 350,
+                          body: 350,
+                          small: 300
+                        }
+                      };
+                      onSettingsChange(newSettings);
+                    }}
+                    className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-colors text-center"
+                  >
+                    Hamısı İncə
+                  </button>
+                </div>
               </div>
             </div>
           )}

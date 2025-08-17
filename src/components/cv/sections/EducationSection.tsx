@@ -229,22 +229,24 @@ export default function EducationSection({ data, onChange }: EducationSectionPro
                     </div>
 
                     <div className="md:col-span-2">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id={`current-${education.id}`}
-                          checked={education.current}
-                          onChange={(e) => {
-                            updateEducation(education.id, 'current', e.target.checked);
-                            if (e.target.checked) {
+                      <div className="w-full">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newValue = !education.current;
+                            updateEducation(education.id, 'current', newValue);
+                            if (newValue) {
                               updateEducation(education.id, 'endDate', '');
                             }
                           }}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        <label htmlFor={`current-${education.id}`} className="text-sm text-gray-700">
-                          Davam edir
-                        </label>
+                          className={`w-full p-3 rounded-lg border-2 font-medium text-sm transition-all duration-200 ${
+                            education.current
+                              ? 'bg-red-100 border-red-300 text-red-800 hover:bg-red-200'
+                              : 'bg-blue-100 border-blue-300 text-blue-800 hover:bg-blue-200'
+                          }`}
+                        >
+                          {education.current ? 'Davam etmir' : 'Davam edir'}
+                        </button>
                       </div>
                     </div>
                   </div>

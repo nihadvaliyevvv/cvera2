@@ -180,22 +180,26 @@ export default function ExperienceSection({ data, onChange }: ExperienceSectionP
                       />
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id={`current-${experience.id}`}
-                        checked={experience.current}
-                        onChange={(e) => {
-                          updateExperience(experience.id, 'current', e.target.checked);
-                          if (e.target.checked) {
-                            updateExperience(experience.id, 'endDate', '');
-                          }
-                        }}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <label htmlFor={`current-${experience.id}`} className="text-sm text-gray-700">
-                        Hal-hazırda bu işdə çalışıram
-                      </label>
+                    <div className="md:col-span-2">
+                      <div className="w-full">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newValue = !experience.current;
+                            updateExperience(experience.id, 'current', newValue);
+                            if (newValue) {
+                              updateExperience(experience.id, 'endDate', '');
+                            }
+                          }}
+                          className={`w-full p-3 rounded-lg border-2 font-medium text-sm transition-all duration-200 ${
+                            experience.current
+                              ? 'bg-red-100 border-red-300 text-red-800 hover:bg-red-200'
+                              : 'bg-blue-100 border-blue-300 text-blue-800 hover:bg-blue-200'
+                          }`}
+                        >
+                          {experience.current ? 'Davam etmir' : 'Davam edir'}
+                        </button>
+                      </div>
                     </div>
                   </div>
 

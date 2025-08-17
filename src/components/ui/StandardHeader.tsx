@@ -233,7 +233,7 @@ export default function StandardHeader() {
               CV-lərim
             </Link>
             <Link href="/linkedin-import" className="text-white/90 hover:text-white font-medium transition-colors text-sm lg:text-base">
-              LinkedIn Import
+              LinkedIn İdxal
             </Link>
             <Link href="/pricing" className="text-white/90 hover:text-white font-medium transition-colors text-sm lg:text-base">
               Qiymətlər
@@ -387,7 +387,7 @@ export default function StandardHeader() {
                 onClick={closeMobileMenu}
                 className="block py-3 px-4 text-white/90 hover:text-white hover:bg-white/10 rounded-lg font-medium transition-all"
               >
-                LinkedIn Import
+                LinkedIn İdxal
               </Link>
               <Link
                 href="/pricing"

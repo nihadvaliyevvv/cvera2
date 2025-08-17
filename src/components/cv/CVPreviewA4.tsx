@@ -1,6 +1,14 @@
 // Component to render HTML content safely
 import React, {JSX, useEffect, useState, useCallback} from "react";
 import { useFontSettings } from "../../hooks/useFontSettings";
+import {
+  getLabel,
+  CVLanguage,
+  translateLanguageLevel,
+  translateDegree,
+  formatExperienceDateRange,
+  smartTranslateText
+} from "@/lib/cvLanguage";
 
 const SafeHtmlContent: ({content, className, allowHtml}: {
     content: any;
@@ -39,10 +47,6 @@ const SafeHtmlContent: ({content, className, allowHtml}: {
   );
 };
 
-interface CVLanguage {
-  code: string;
-  name: string;
-}
 
 interface PersonalInfo {
   name?: string;
@@ -204,6 +208,9 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
   const cvData = safeCV.data || ({} as CVData['data']);
   const personalInfo: PersonalInfo = (cvData.personalInfo || {}) as PersonalInfo;
   const fullName = personalInfo.fullName || personalInfo.name || 'İsim Daxil Edilməyib';
+
+  // Get current language for translations
+  const currentLanguage: CVLanguage = cvData.cvLanguage || 'azerbaijani';
 
   // Check if this is Traditional CV template
   const isTraditionalTemplate = cv?.templateId === 'traditional' ||
@@ -413,7 +420,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           return (
             <DraggableSection key={`contact-${section.order}`} sectionId="contact" className="w-full mb-6">
               <div className="cv-traditional-contact-draggable">
-                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">Əlaqə</h2>
+                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">{getLabel('personalInfo', currentLanguage)}</h2>
                 <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
                 <div className="space-y-2 cv-small text-white">
                   {personalInfo?.phone && (
@@ -458,15 +465,18 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           return (
             <DraggableSection key={`education-${section.order}`} sectionId="education" className="w-full mb-6">
               <div>
-                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">Təhsil</h2>
+                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">{getLabel('education', currentLanguage)}</h2>
                 <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
                 <div className="space-y-3">
                   {cvData.education.map((edu: any, index: number) => (
                     <div key={index}>
-                      <h3 className="cv-body text-white">{edu.degree || edu.institution}</h3>
-                      <p className="cv-small text-gray-200">{edu.institution || edu.degree}</p>
-                      <p className="cv-small text-gray-200">{edu.startDate} - {edu.current ? 'İndi' : edu.endDate}</p>
-                      {edu.gpa && <p className="cv-small text-gray-200">GPA: {edu.gpa}</p>}
+                      <h3 className="cv-body text-white">{translateDegree(edu.degree || '', currentLanguage) || edu.institution}</h3>
+                      <p className="cv-small text-gray-200">{edu.institution || translateDegree(edu.degree || '', currentLanguage)}</p>
+                      <p className="cv-small text-gray-200">
+                        {formatExperienceDateRange(edu.startDate, edu.endDate, edu.current || false, currentLanguage)}
+                      </p>
+                      {edu.gpa && <p className="cv-small text-gray-200">{getLabel('GPA', currentLanguage)}: {edu.gpa}</p>}
+                      {edu.field && <p className="cv-small text-gray-200">{getLabel('fieldOfStudy', currentLanguage)}: {edu.field}</p>}
                     </div>
                   ))}
                 </div>
@@ -479,12 +489,19 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           return (
             <DraggableSection key={`skills-${section.order}`} sectionId="skills" className="w-full mb-6">
               <div>
-                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">Bacarıqlar</h2>
+                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">{getLabel('skills', currentLanguage)}</h2>
                 <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
                 <ul className="space-y-1 cv-small list-disc list-inside text-white">
-                  {cvData.skills.map((skill: any, index: number) => (
-                    <li key={index} className="text-white cv-small">{typeof skill === 'string' ? skill : skill.name}</li>
-                  ))}
+                  {cvData.skills.map((skill: any, index: number) => {
+                    const skillName = typeof skill === 'string' ? skill : skill.name;
+                    const skillLevel = typeof skill === 'object' ? skill.level : undefined;
+                    return (
+                      <li key={index} className="text-white cv-small">
+                        {smartTranslateText(skillName, currentLanguage)}
+                        {skillLevel && ` (${smartTranslateText(skillLevel, currentLanguage)})`}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             </DraggableSection>
@@ -495,14 +512,18 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           return (
             <DraggableSection key={`languages-${section.order}`} sectionId="languages" className="w-full mb-6">
               <div>
-                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">Dillər</h2>
+                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">{getLabel('languages', currentLanguage)}</h2>
                 <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
                 <ul className="space-y-1 cv-small list-disc list-inside text-white">
                   {cvData.languages.map((lang: any, index: number) => {
                     const languageName = typeof lang === 'string' ? lang : (lang.language || lang.name || '');
                     const languageLevel = typeof lang === 'object' ? (lang.level || lang.proficiency || '') : '';
+                    const translatedLevel = languageLevel ? translateLanguageLevel(languageLevel, currentLanguage) : '';
+
                     return (
-                      <li key={index} className="text-white cv-small">{languageName} {languageLevel && `(${languageLevel})`}</li>
+                      <li key={index} className="text-white cv-small">
+                        {languageName} {translatedLevel && `(${translatedLevel})`}
+                      </li>
                     );
                   })}
                 </ul>
@@ -515,13 +536,15 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           return (
             <DraggableSection key={`certifications-${section.order}`} sectionId="certifications" className="w-full mb-6">
               <div>
-                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">Sertifikatlar</h2>
+                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">{getLabel('certifications', currentLanguage)}</h2>
                 <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
                 <div className="space-y-3">
                   {cvData.certifications.map((cert: any, index: number) => (
                     <div key={index}>
                       <h3 className="cv-body text-white">{cert.name}</h3>
-                      <p className="cv-small text-gray-200">{cert.issuer} | {cert.date}</p>
+                      <p className="cv-small text-gray-200">
+                        {cert.issuer} | {cert.date}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -550,7 +573,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           return (
             <DraggableSection key={`summary-${section.order}`} sectionId="summary" className="mb-6">
               <div>
-                <h2 className="cv-subheading text-gray-800 border-b-2 border-gray-300 pb-1 mb-3">Profil</h2>
+                <h2 className="cv-subheading text-gray-800 border-b-2 border-gray-300 pb-1 mb-3">{getLabel('summary', currentLanguage)}</h2>
                 <SafeHtmlContent
                   content={personalInfo.summary}
                   className="text-gray-600 leading-relaxed"
@@ -565,13 +588,13 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           return (
             <DraggableSection key={`experience-${section.order}`} sectionId="experience" className="mb-8">
               <section>
-                <h2 className="cv-subheading text-gray-800 border-b-2 border-gray-300 pb-2 mb-5">İş Təcrübəsi</h2>
+                <h2 className="cv-subheading text-gray-800 border-b-2 border-gray-300 pb-2 mb-5">{getLabel('experience', currentLanguage)}</h2>
                 <div className="space-y-5">
                   {cvData.experience.map((exp: any, index: number) => (
                     <div key={index}>
                       <div className="flex justify-between items-baseline mb-2">
                         <h3 className="cv-subheading text-gray-700">{exp.position}</h3>
-                        <p className="cv-small text-gray-500">{exp.startDate} - {exp.current ? 'İNDİ' : exp.endDate}</p>
+                        <p className="cv-small text-gray-500">{exp.startDate} - {exp.current ? getLabel('present', currentLanguage) : exp.endDate}</p>
                       </div>
                       <p className="cv-body text-gray-600 mb-1">{exp.company}</p>
                       {exp.location && <p className="cv-small text-gray-500 mb-2">{exp.location}</p>}
@@ -594,7 +617,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           return (
             <DraggableSection key={`projects-${section.order}`} sectionId="projects" className="mb-8">
               <section>
-                <h2 className="cv-subheading text-gray-800 border-b-2 border-gray-300 pb-2 mb-5">Layihələr</h2>
+                <h2 className="cv-subheading text-gray-800 border-b-2 border-gray-300 pb-2 mb-5">{getLabel('projects', currentLanguage)}</h2>
                 <div className="space-y-5">
                   {cvData.projects.map((project: any, index: number) => (
                     <div key={index}>
@@ -608,7 +631,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                       )}
                       {project.technologies && Array.isArray(project.technologies) && project.technologies.length > 0 && (
                         <p className="cv-body text-gray-500 mt-2">
-                          <strong>Texnologiyalar:</strong> {project.technologies.join(', ')}
+                          <strong>{getLabel('technologies', currentLanguage)}:</strong> {project.technologies.join(', ')}
                         </p>
                       )}
                       {project.url && (
@@ -626,13 +649,13 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           return (
             <DraggableSection key={`volunteerExperience-${section.order}`} sectionId="volunteerExperience" className="mb-8">
               <section>
-                <h2 className="cv-subheading text-gray-800 border-b-2 border-gray-300 pb-2 mb-5">Könüllü Təcrübə</h2>
+                <h2 className="cv-subheading text-gray-800 border-b-2 border-gray-300 pb-2 mb-5">{getLabel('volunteerExperience', currentLanguage)}</h2>
                 <div className="space-y-5">
                   {cvData.volunteerExperience.map((vol: any, index: number) => (
                     <div key={index}>
                       <div className="flex justify-between items-baseline mb-2">
                         <h3 className="cv-subheading text-gray-700">{vol.role}</h3>
-                        <p className="cv-small text-gray-500">{vol.startDate} - {vol.current ? 'İNDİ' : vol.endDate}</p>
+                        <p className="cv-small text-gray-500">{vol.startDate} - {vol.current ? getLabel('present', currentLanguage) : vol.endDate}</p>
                       </div>
                       <p className="cv-body text-gray-600 mb-1">{vol.organization}</p>
                       {vol.cause && <p className="cv-small text-gray-500 mb-2">{vol.cause}</p>}
@@ -754,7 +777,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           <DraggableSection sectionId="summary">
             <div>
               <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
-                Özət
+                {getLabel('summary', currentLanguage)}
               </h3>
               <SafeHtmlContent
                 content={personalInfo.summary}
@@ -774,7 +797,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                 <DraggableSection key="experience" sectionId="experience">
                   <div>
                     <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
-                      İş Təcrübəsi
+                      {getLabel('experience', currentLanguage)}
                     </h3>
                     <div className="space-y-4">
                       {cvData.experience.map((exp: any, index: number) => (
@@ -786,7 +809,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                               {exp.location && <p className="cv-small text-gray-500">{exp.location}</p>}
                             </div>
                             <span className="cv-small text-gray-500 whitespace-nowrap ml-3">
-                              {exp.startDate} - {exp.current ? 'Hazırda' : exp.endDate}
+                              {exp.startDate} - {exp.current ? getLabel('present', currentLanguage) : exp.endDate}
                             </span>
                           </div>
                           {exp.description && (
@@ -809,7 +832,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                 <DraggableSection key="education" sectionId="education">
                   <div>
                     <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
-                      Təhsil
+                      {getLabel('education', currentLanguage)}
                     </h3>
                     <div className="space-y-3">
                       {cvData.education.map((edu: any, index: number) => (
@@ -817,7 +840,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                           <h4 className="cv-subheading text-gray-900">{edu.degree}</h4>
                           <p className="cv-body text-gray-700">{edu.institution}</p>
                           <p className="cv-small text-gray-500">
-                            {edu.startDate} - {edu.current ? 'Hazırda' : edu.endDate}
+                            {edu.startDate} - {edu.current ? getLabel('present', currentLanguage) : edu.endDate}
                           </p>
                           {edu.gpa && <p className="cv-small text-gray-500">GPA: {edu.gpa}</p>}
                         </div>
@@ -833,7 +856,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                 <DraggableSection key="skills" sectionId="skills">
                   <div>
                     <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
-                      Bacarıqlar
+                      {getLabel('skills', currentLanguage)}
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       {cvData.skills.map((skill: any, index: number) => (
@@ -852,7 +875,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                 <DraggableSection key="projects" sectionId="projects">
                   <div>
                     <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
-                      Layihələr
+                      {getLabel('projects', currentLanguage)}
                     </h3>
                     <div className="space-y-3">
                       {cvData.projects.map((project: any, index: number) => (
@@ -867,7 +890,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                           )}
                           {project.technologies && Array.isArray(project.technologies) && project.technologies.length > 0 && (
                             <p className="cv-body text-gray-500 mt-2">
-                              <strong>Texnologiyalar:</strong> {project.technologies.join(', ')}
+                              <strong>{getLabel('technologies', currentLanguage)}:</strong> {project.technologies.join(', ')}
                             </p>
                           )}
                           {project.url && (
@@ -886,7 +909,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                 <DraggableSection key="certifications" sectionId="certifications">
                   <div>
                     <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
-                      Sertifikatlar
+                      {getLabel('certifications', currentLanguage)}
                     </h3>
                     <div className="space-y-2">
                       {cvData.certifications.map((cert: any, index: number) => (
@@ -907,7 +930,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                 <DraggableSection key="languages" sectionId="languages">
                   <div>
                     <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
-                      Dillər
+                      {getLabel('languages', currentLanguage)}
                     </h3>
                     <div className="grid grid-cols-2 gap-2">
                       {cvData.languages.map((lang: any, index: number) => {
@@ -934,7 +957,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                 <DraggableSection key="volunteerExperience" sectionId="volunteerExperience">
                   <div>
                     <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
-                      Könüllü Təcrübə
+                      {getLabel('volunteerExperience', currentLanguage)}
                     </h3>
                     <div className="space-y-3">
                       {cvData.volunteerExperience.map((vol: any, index: number) => (
@@ -945,7 +968,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                               <p className="cv-body text-gray-700">{vol.organization}</p>
                             </div>
                             <span className="cv-small text-gray-500 whitespace-nowrap ml-3">
-                              {vol.startDate} - {vol.current ? 'Hazırda' : vol.endDate}
+                              {vol.startDate} - {vol.current ? getLabel('present', currentLanguage) : vol.endDate}
                             </span>
                           </div>
                           {vol.description && (

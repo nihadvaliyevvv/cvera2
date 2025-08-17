@@ -1,772 +1,497 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { verifyJWT } from '@/lib/jwt';
+import { NextRequest } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { PrismaClient } from '@prisma/client';
+import { verifyJWT } from '@/lib/jwt';
+import { prisma } from '@/lib/prisma';
 
-// Type definitions for CV data structures
-interface Experience {
-  id?: string;
-  company?: string;
-  position?: string;
-  title?: string;
-  location?: string;
-  startDate?: string;
-  endDate?: string;
-  current?: boolean;
-  description?: string;
-  achievements?: string;
-}
-
-interface Education {
-  id?: string;
-  institution?: string;
-  school?: string;
-  degree?: string;
-  qualification?: string;
-  field?: string;
-  fieldOfStudy?: string;
-  location?: string;
-  startDate?: string;
-  endDate?: string;
-  current?: boolean;
-  gpa?: string;
-  description?: string;
-  achievements?: string;
-}
-
-interface Project {
-  id?: string;
-  name?: string;
-  title?: string;
-  technologies?: string;
-  description?: string;
-  role?: string;
-  achievements?: string;
-}
-
-const prisma = new PrismaClient();
-const geminiAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
-const PROFESSIONAL_TERMS: Record<string, Record<string, string>> = {
-  azerbaijani: {
-    // Job titles and positions
-    'Manager': 'Menecer',
-    'Senior': 'Böyük',
-    'Junior': 'Kiçik',
-    'Lead': 'Aparıcı',
-    'Director': 'Direktor',
-    'Supervisor': 'Nəzarətçi',
-    'Coordinator': 'Koordinator',
-    'Specialist': 'Mütəxəssis',
-    'Analyst': 'Analitik',
-    'Developer': 'Proqramçı',
-    'Engineer': 'Mühəndis',
-    'Designer': 'Dizayner',
-    'Consultant': 'Məsləhətçi',
-    'Administrator': 'Administrator',
-    'Assistant': 'Köməkçi',
-    'Executive': 'İcraçı',
-    'Officer': 'Məsul şəxs',
-    'Representative': 'Nümayəndə',
-    'Trainee': 'Stajyer',
-    'Intern': 'Təcrübəçi',
-
-    // Professional skills
-    'Leadership': 'Liderlik',
-    'Management': 'İdarəetmə',
-    'Communication': 'Ünsiyyət',
-    'Teamwork': 'Komanda işi',
-    'Problem Solving': 'Problem həlli',
-    'Critical Thinking': 'Tənqidi təfəkkür',
-    'Time Management': 'Vaxt idarəetməsi',
-    'Project Management': 'Layihə idarəetməsi',
-    'Strategic Planning': 'Strateji planlaşdırma',
-    'Customer Service': 'Müştəri xidməti',
-    'Sales': 'Satış',
-    'Marketing': 'Marketinq',
-    'Research': 'Tədqiqat',
-    'Analysis': 'Analiz',
-    'Presentation': 'Təqdimat',
-    'Negotiation': 'Danışıqlar',
-    'Training': 'Təlim',
-    'Mentoring': 'Mentorluq',
-    'Innovation': 'İnnovasiya',
-    'Quality Assurance': 'Keyfiyyət təminatı'
-  },
-  english: {
-    // Job titles and positions (Azerbaijani to English)
-    'Menecer': 'Manager',
-    'Böyük': 'Senior',
-    'Kiçik': 'Junior',
-    'Aparıcı': 'Lead',
-    'Direktor': 'Director',
-    'Nəzarətçi': 'Supervisor',
-    'Koordinator': 'Coordinator',
-    'Mütəxəssis': 'Specialist',
-    'Analitik': 'Analyst',
-    'Proqramçı': 'Developer',
-    'Mühəndis': 'Engineer',
-    'Dizayner': 'Designer',
-    'Məsləhətçi': 'Consultant',
-    'Administrator': 'Administrator',
-    'Köməkçi': 'Assistant',
-    'İcraçı': 'Executive',
-    'Məsul şəxs': 'Officer',
-    'Nümayəndə': 'Representative',
-    'Stajyer': 'Trainee',
-    'Təcrübəçi': 'Intern',
-
-    // Professional skills (Azerbaijani to English)
-    'Liderlik': 'Leadership',
-    'İdarəetmə': 'Management',
-    'Ünsiyyət': 'Communication',
-    'Komanda işi': 'Teamwork',
-    'Problem həlli': 'Problem Solving',
-    'Tənqidi təfəkkür': 'Critical Thinking',
-    'Vaxt idarəetməsi': 'Time Management',
-    'Layihə idarəetməsi': 'Project Management',
-    'Strateji planlaşdırma': 'Strategic Planning',
-    'Müştəri xidməti': 'Customer Service',
-    'Satış': 'Sales',
-    'Marketinq': 'Marketing',
-    'Tədqiqat': 'Research',
-    'Analiz': 'Analysis',
-    'Təqdimat': 'Presentation',
-    'Danışıqlar': 'Negotiation',
-    'Təlim': 'Training',
-    'Mentorluq': 'Mentoring',
-    'İnnovasiya': 'Innovation',
-    'Keyfiyyət təminatı': 'Quality Assurance'
+// Initialize Gemini AI
+function initializeGeminiAI() {
+  const geminiApiKey = process.env.GEMINI_API_KEY;
+  if (!geminiApiKey) {
+    throw new Error('GEMINI_API_KEY environment variable tapılmadı');
   }
+  return new GoogleGenerativeAI(geminiApiKey);
+}
+
+// Language mappings for better translation
+const LANGUAGE_NAMES = {
+  'az': 'Azərbaycan',
+  'en': 'English',
+  'tr': 'Türkçe',
+  'ru': 'Русский',
+  'de': 'Deutsch',
+  'fr': 'Français',
+  'es': 'Español',
+  'it': 'Italiano',
+  'pt': 'Português',
+  'ar': 'العربية',
+  'zh': '中文',
+  'ja': '日本語',
+  'ko': '한국어'
 };
 
-export async function POST(request: NextRequest) {
+// Function to translate CV sections
+async function translateCVContent(content: any, targetLanguage: string, sourceLanguage: string = 'auto') {
+  const geminiAI = initializeGeminiAI();
+  const model = geminiAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+  const targetLangName = LANGUAGE_NAMES[targetLanguage as keyof typeof LANGUAGE_NAMES] || targetLanguage;
+  const sourceLangName = sourceLanguage === 'auto' ? 'mətndə olan dil' : LANGUAGE_NAMES[sourceLanguage as keyof typeof LANGUAGE_NAMES];
+
+  const prompt = `
+Siz peşəkar tərcüməçisiniz. Aşağıdakı CV məzmununu ${sourceLangName} dilindən ${targetLangName} dilinə tərcümə edin.
+
+MÜTLƏQ QAYDALAR:
+1. Bütün mətnləri professional və dəqiq tərcümə edin
+2. Şəxs adları, şirkət adları və yer adlarını orijinal saxlayın
+3. Texniki terminləri düzgün tərcümə edin
+4. Bölmə başlıqlarını (section names) tərcümə edin
+5. CV formatını və strukturunu dəqiq saxlayın
+6. Tarixləri və rəqəmləri orijinal saxlayın
+7. JSON formatını dəqiq saxlayın
+8. Boş və ya null dəyərləri tərcümə etməyin
+
+Tərcümə ediləcək məzmun:
+${JSON.stringify(content, null, 2)}
+
+Yalnız tərcümə edilmiş JSON-u qaytarın, əlavə mətn yazmayın:`;
+
   try {
-    // Get JWT token from Authorization header or cookies
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '') ||
-                  request.cookies.get('token')?.value ||
-                  request.cookies.get('auth-token')?.value ||
-                  request.cookies.get('accessToken')?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    // Verify the JWT token
-    const payload = await verifyJWT(token);
-    if (!payload) {
-      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
-    }
-
-    const { cvId, targetLanguage } = await request.json();
-
-    if (!cvId || !targetLanguage) {
-      return NextResponse.json({ error: 'CV ID and target language are required' }, { status: 400 });
-    }
-
-    if (!['azerbaijani', 'english'].includes(targetLanguage)) {
-      return NextResponse.json({ error: 'Target language must be azerbaijani or english' }, { status: 400 });
-    }
-
-    // Check user tier - AI translation is for Premium and Medium users
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      select: { tier: true, name: true }
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    // Check if user can use AI features
-    const canUseAI = user.tier === 'Premium' || user.tier === 'Medium';
-    if (!canUseAI) {
-      return NextResponse.json({
-        error: 'AI translation is available for Premium and Medium subscribers only'
-      }, { status: 403 });
-    }
-
-    // Get CV data
-    const cv = await prisma.cV.findUnique({
-      where: { id: cvId, userId: payload.userId },
-      select: { cv_data: true }
-    });
-
-    if (!cv) {
-      return NextResponse.json({ error: 'CV not found' }, { status: 404 });
-    }
-
-    const cvData = cv.cv_data as any;
-
-    // Get current CV language from metadata or detect from content
-    const currentCvLanguage = cvData.cvLanguage || cvData.translationMetadata?.targetLanguage || 'english';
-    const sourceLangName = currentCvLanguage === 'azerbaijani' ? 'Azerbaijani (Azərbaycan dili)' : 'English (Professional/Business)';
-
-    console.log('🌍 Starting comprehensive AI translation from:', currentCvLanguage, 'to:', targetLanguage);
-
-    // Create enhanced professional translation prompt
-    const isAzerbaijani = targetLanguage === 'azerbaijani';
-    const targetLangName = isAzerbaijani ? 'Azerbaijani (Azərbaycan dili)' : 'English (Professional/Business)';
-
-    const prompt = `
-      PROFESSIONAL CV COMPREHENSIVE TRANSLATION SERVICE
-      ===============================================
-      
-      You are an expert professional CV translator specializing in career documents with deep knowledge of both Azerbaijani and English business terminology. 
-      
-      SOURCE LANGUAGE: ${sourceLangName}
-      TRANSLATION TARGET: ${targetLangName}
-      
-      CRITICAL INSTRUCTION: You MUST translate ALL textual content from ${sourceLangName} to ${targetLangName}. 
-      Do NOT leave any content untranslated. Every description, summary, and text field must be fully translated.
-      
-      IMPORTANT: The CV content below is currently in ${sourceLangName}. You need to translate it completely to ${targetLangName}.
-      
-      COMPREHENSIVE TRANSLATION REQUIREMENTS:
-      =====================================
-      
-      1. SECTION NAMES: Translate ALL section headers and titles
-      2. CONTENT: Translate ALL textual content while maintaining professional quality
-      3. TERMINOLOGY: Use appropriate business/professional terminology for target language
-      4. CULTURAL ADAPTATION: Adapt content for target language professional culture
-      5. CONSISTENCY: Maintain consistent terminology throughout the document
-      6. IMPACT PRESERVATION: Keep the professional impact and meaning of statements
-      7. COMPLETENESS: Every single text field must be translated - no exceptions
-      
-      SPECIFIC RULES:
-      ==============
-      
-      ✅ MUST TRANSLATE (EVERYTHING):
-      - All section names and headers
-      - Job titles and positions (using professional equivalents)
-      - Job descriptions and responsibilities (FULLY TRANSLATE EVERY WORD)
-      - Educational descriptions (FULLY TRANSLATE)
-      - Project descriptions (FULLY TRANSLATE)
-      - Skill names (soft skills and general professional skills)
-      - Certification descriptions (FULLY TRANSLATE)
-      - Personal summary/objective (FULLY TRANSLATE)
-      - Achievement descriptions (FULLY TRANSLATE)
-      - All narrative text (FULLY TRANSLATE)
-      - Location names (cities, countries)
-      - Role descriptions in volunteer work
-      - Award descriptions
-      - Any other descriptive text
-      
-      ❌ KEEP ORIGINAL (ONLY THESE):
-      - Company names (Google, Microsoft, etc.)
-      - Institution names (Harvard University, etc.)
-      - Programming languages (JavaScript, Python, etc.)
-      - Software names (Adobe Photoshop, AutoCAD, etc.)
-      - Technical frameworks (React, Angular, etc.)
-      - Certification brand names (AWS, Microsoft Azure, etc.)
-      - Dates and numbers
-      - URLs and email addresses
-      - Proper nouns (names of specific technologies, brands)
-      
-      ${isAzerbaijani ? `
-      AZERBAIJANI TRANSLATION SPECIFICS:
-      =================================
-      - Use formal business Azerbaijani
-      - Employ professional terminology appropriate for CV context
-      - Maintain respectful and formal tone throughout
-      - Use appropriate honorifics and professional language
-      - Adapt Western business concepts to Azerbaijani professional culture
-      - Use correct Azerbaijani grammar and sentence structure
-      - Translate soft skills to culturally appropriate equivalents
-      - Translate ALL English text to Azerbaijani
-      ` : `
-      ENGLISH TRANSLATION SPECIFICS:
-      =============================
-      - Use professional business English
-      - Employ industry-standard terminology
-      - Maintain formal and professional tone
-      - Use action-oriented language for achievements
-      - Follow Western CV writing conventions
-      - Use appropriate professional jargon
-      - Ensure grammatical accuracy and fluency
-      - Translate ALL Azerbaijani text to English
-      - Use strong action verbs (managed, developed, implemented, etc.)
-      - Make descriptions concise yet impactful
-      `}
-      
-      CV CONTENT TO TRANSLATE:
-      =======================
-      
-      PERSONAL INFORMATION SECTION:
-      Summary/Objective: ${cvData.personalInfo?.summary || 'No summary provided'}
-      
-      WORK EXPERIENCE SECTION:
-      ${(cvData.experience as Experience[] || []).map((exp, index) => 
-        `${index + 1}. Position: ${exp.position || exp.title || 'Not specified'}
-           Company: ${exp.company || 'Not specified'} (KEEP UNCHANGED)
-           Location: ${exp.location || 'Not specified'}
-           Description: ${exp.description || 'No description provided'}
-           Key Achievements: ${exp.achievements || 'No achievements listed'}`
-      ).join('\n')}
-      
-      EDUCATION SECTION:
-      ${(cvData.education as Education[] || []).map((edu, index) => 
-        `${index + 1}. Degree: ${edu.degree || 'Not specified'}
-           Field of Study: ${edu.field || edu.fieldOfStudy || 'Not specified'}
-           Institution: ${edu.institution || edu.school || 'Not specified'} (KEEP UNCHANGED)
-           Location: ${edu.location || 'Not specified'}
-           Description: ${edu.description || 'No description provided'}
-           Achievements: ${edu.achievements || 'No achievements listed'}`
-      ).join('\n')}
-      
-      PROJECTS SECTION:
-      ${(cvData.projects as Project[] || []).map((proj, index) => 
-        `${index + 1}. Project Name: ${proj.name || proj.title || 'Not specified'}
-           Technologies: ${proj.technologies || 'Not specified'} (Keep technical terms)
-           Description: ${proj.description || 'No description provided'}
-           Role: ${proj.role || 'Not specified'}
-           Achievements: ${proj.achievements || 'No achievements listed'}`
-      ).join('\n')}
-      
-      SKILLS SECTION:
-      Technical Skills: ${(cvData.skills || []).filter((skill: any) => 
-        typeof skill === 'string' ? 
-        /javascript|python|java|react|angular|css|html|sql|aws|azure|php|node|vue|laravel|docker|kubernetes/i.test(skill) :
-        /javascript|python|java|react|angular|css|html|sql|aws|azure|php|node|vue|laravel|docker|kubernetes/i.test(skill.name || '')
-      ).map((skill: any) => typeof skill === 'string' ? skill : skill.name).join(', ')}
-      
-      Soft Skills: ${(cvData.skills || []).filter((skill: any) => 
-        typeof skill === 'string' ? 
-        !/javascript|python|java|react|angular|css|html|sql|aws|azure|php|node|vue|laravel|docker|kubernetes/i.test(skill) :
-        !/javascript|python|java|react|angular|css|html|sql|aws|azure|php|node|vue|laravel|docker|kubernetes/i.test(skill.name || '')
-      ).map((skill: any) => typeof skill === 'string' ? skill : skill.name).join(', ')}
-      
-      CERTIFICATIONS SECTION:
-      ${(cvData.certifications || []).map((cert: any, index: number) => 
-        `${index + 1}. Certificate Name: ${cert.name || 'Not specified'}
-           Issuer: ${cert.issuer || 'Not specified'} (KEEP UNCHANGED)
-           Date: ${cert.date || 'Not specified'}
-           Description: ${cert.description || 'No description provided'}`
-      ).join('\n')}
-      
-      VOLUNTEER EXPERIENCE SECTION:
-      ${(cvData.volunteerExperience || []).map((vol: any, index: number) => 
-        `${index + 1}. Role: ${vol.role || 'Not specified'}
-           Organization: ${vol.organization || 'Not specified'} (KEEP UNCHANGED)
-           Location: ${vol.location || 'Not specified'}
-           Description: ${vol.description || 'No description provided'}
-           Impact: ${vol.impact || 'No impact mentioned'}`
-      ).join('\n')}
-      
-      LANGUAGES SECTION:
-      ${(cvData.languages || []).map((lang: any, index: number) => 
-        `${index + 1}. Language: ${lang.name || lang} 
-           Proficiency: ${lang.level || 'Not specified'}`
-      ).join('\n')}
-      
-      AWARDS SECTION:
-      ${(cvData.awards || []).map((award: any, index: number) => 
-        `${index + 1}. Award: ${award.name || award.title || 'Not specified'}
-           Issuer: ${award.issuer || 'Not specified'} (KEEP UNCHANGED)
-           Description: ${award.description || 'No description provided'}`
-      ).join('\n')}
-      
-      RESPONSE FORMAT:
-      ===============
-      Return the translated content in this exact JSON format with ALL sections fully translated.
-      CRITICAL: Every text field must contain translated content, not the original text.
-      
-      {
-        "sectionNames": {
-          "personalInfo": "${isAzerbaijani ? 'Şəxsi Məlumat' : 'Personal Information'}",
-          "experience": "${isAzerbaijani ? 'İş Təcrübəsi' : 'Work Experience'}",
-          "education": "${isAzerbaijani ? 'Təhsil' : 'Education'}",
-          "skills": "${isAzerbaijani ? 'Bacarıqlar' : 'Skills'}",
-          "projects": "${isAzerbaijani ? 'Layihələr' : 'Projects'}",
-          "certifications": "${isAzerbaijani ? 'Sertifikatlar' : 'Certifications'}",
-          "volunteerExperience": "${isAzerbaijani ? 'Könüllü Təcrübəsi' : 'Volunteer Experience'}",
-          "languages": "${isAzerbaijani ? 'Dillər' : 'Languages'}",
-          "awards": "${isAzerbaijani ? 'Mükafatlar' : 'Awards'}"
-        },
-        "personalInfo": {
-          "summary": "FULLY TRANSLATED professional summary with impact and professional terminology - MUST BE COMPLETELY TRANSLATED"
-        },
-        "experience": [
-          {
-            "position": "FULLY TRANSLATED position title using professional equivalent",
-            "location": "FULLY TRANSLATED location if applicable",
-            "description": "COMPLETELY TRANSLATED job description with professional terminology and impact statements - EVERY WORD TRANSLATED",
-            "achievements": "COMPLETELY TRANSLATED achievements with quantifiable results where possible - EVERY WORD TRANSLATED"
-          }
-        ],
-        "education": [
-          {
-            "degree": "FULLY TRANSLATED degree name using educational terminology",
-            "field": "FULLY TRANSLATED field of study",
-            "location": "FULLY TRANSLATED location if applicable", 
-            "description": "COMPLETELY TRANSLATED education description - EVERY WORD TRANSLATED",
-            "achievements": "COMPLETELY TRANSLATED academic achievements - EVERY WORD TRANSLATED"
-          }
-        ],
-        "projects": [
-          {
-            "name": "TRANSLATED project name (if not technical)",
-            "role": "FULLY TRANSLATED role/position in project",
-            "description": "COMPLETELY TRANSLATED project description with technical and business context - EVERY WORD TRANSLATED",
-            "achievements": "COMPLETELY TRANSLATED project achievements and impact - EVERY WORD TRANSLATED"
-          }
-        ],
-        "skills": [
-          {
-            "name": "TRANSLATED skill name (keep technical terms, translate soft skills)",
-            "category": "TRANSLATED skill category if applicable"
-          }
-        ],
-        "certifications": [
-          {
-            "name": "TRANSLATED certification name (if general term, keep specific brand names)",
-            "description": "COMPLETELY TRANSLATED certification description with professional context - EVERY WORD TRANSLATED"
-          }
-        ],
-        "volunteerExperience": [
-          {
-            "role": "FULLY TRANSLATED volunteer role with appropriate terminology",
-            "description": "COMPLETELY TRANSLATED volunteer description with impact and skills demonstrated - EVERY WORD TRANSLATED",
-            "impact": "COMPLETELY TRANSLATED impact statement with quantifiable results - EVERY WORD TRANSLATED"
-          }
-        ],
-        "languages": [
-          {
-            "name": "Language name in target language",
-            "level": "TRANSLATED proficiency level using standard terms"
-          }
-        ],
-        "awards": [
-          {
-            "name": "TRANSLATED award name (if general term)",
-            "description": "COMPLETELY TRANSLATED award description with achievement context - EVERY WORD TRANSLATED"
-          }
-        ]
-      }
-      
-      FINAL WARNING: DO NOT RETURN ANY UNTRANSLATED TEXT. Every description, summary, and text field must be fully translated to ${targetLangName}. 
-      
-      ${isAzerbaijani ? 
-        'HƏR ŞEYI Azərbaycan dilinə tərcümə edin. Heç bir mətn tərcümə edilməmiş qalmamalıdır!' :
-        'TRANSLATE EVERYTHING to English. No text should remain untranslated!'
-      }
-    `;
-
-    const model = geminiAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     const result = await model.generateContent(prompt);
-    const aiResponse = result.response.text().trim();
+    const response = await result.response;
+    const translatedText = response.text().trim();
 
-    console.log('🔍 AI Comprehensive Translation Response received');
+    // Clean the response and parse JSON
+    const cleanedResponse = translatedText.replace(/```json\s*|\s*```/g, '').trim();
+    return JSON.parse(cleanedResponse);
+  } catch (error) {
+    console.error('Translation error:', error);
+    throw new Error('Tərcümə zamanı xəta baş verdi');
+  }
+}
 
-    // Parse AI response with fixed regex
-    let translatedContent;
-    try {
-      const jsonMatch = aiResponse.match(/\{[\s\S]*}/);
-      if (!jsonMatch) {
-        console.error('No JSON found in AI response');
-        return NextResponse.json({ error: 'Failed to parse translation results' }, { status: 500 });
+// Function to generate default section names based on target language
+function getDefaultSectionNames(targetLanguage: string): Record<string, string> {
+  const sectionMappings = {
+    'az': {
+      personalInfo: 'Şəxsi Məlumatlar',
+      summary: 'Peşəkar Xülasə',
+      experience: 'İş Təcrübəsi',
+      education: 'Təhsil',
+      skills: 'Bacarıqlar',
+      languages: 'Dillər',
+      projects: 'Layihələr',
+      certifications: 'Sertifikatlar',
+      volunteerExperience: 'Könüllü Təcrübə',
+      publications: 'Nəşrlər',
+      honorsAwards: 'Mükafatlar və Təltiflər',
+      testScores: 'Test Nəticələri',
+      recommendations: 'Tövsiyələr',
+      courses: 'Kurslar',
+      customSections: 'Əlavə Bölmələr'
+    },
+    'en': {
+      personalInfo: 'Personal Information',
+      summary: 'Professional Summary',
+      experience: 'Work Experience',
+      education: 'Education',
+      skills: 'Skills',
+      languages: 'Languages',
+      projects: 'Projects',
+      certifications: 'Certifications',
+      volunteerExperience: 'Volunteer Experience',
+      publications: 'Publications',
+      honorsAwards: 'Honors & Awards',
+      testScores: 'Test Scores',
+      recommendations: 'Recommendations',
+      courses: 'Courses',
+      customSections: 'Additional Sections'
+    }
+  };
+
+  return sectionMappings[targetLanguage as keyof typeof sectionMappings] || sectionMappings['en'];
+}
+
+// Function to identify which fields need translation - Enhanced version
+function getTranslatableFields(cvData: any): any {
+  const translatableContent: any = {};
+
+  // Personal info translations
+  if (cvData.personalInfo) {
+    translatableContent.personalInfo = {};
+    if (cvData.personalInfo.professionalSummary) {
+      translatableContent.personalInfo.professionalSummary = cvData.personalInfo.professionalSummary;
+    }
+    if (cvData.personalInfo.headline) {
+      translatableContent.personalInfo.headline = cvData.personalInfo.headline;
+    }
+    if (cvData.personalInfo.summary) {
+      translatableContent.personalInfo.summary = cvData.personalInfo.summary;
+    }
+    if (cvData.personalInfo.title) {
+      translatableContent.personalInfo.title = cvData.personalInfo.title;
+    }
+  }
+
+  // Experience translations
+  if (cvData.experience && Array.isArray(cvData.experience)) {
+    translatableContent.experience = cvData.experience.map((exp: any) => ({
+      id: exp.id,
+      position: exp.position,
+      company: exp.company,
+      location: exp.location,
+      description: exp.description,
+      startDate: exp.startDate,
+      endDate: exp.endDate,
+      current: exp.current
+    }));
+  }
+
+  // Education translations
+  if (cvData.education && Array.isArray(cvData.education)) {
+    translatableContent.education = cvData.education.map((edu: any) => ({
+      id: edu.id,
+      degree: edu.degree,
+      institution: edu.institution,
+      field: edu.field,
+      description: edu.description,
+      startDate: edu.startDate,
+      endDate: edu.endDate,
+      current: edu.current,
+      gpa: edu.gpa
+    }));
+  }
+
+  // Skills translations
+  if (cvData.skills && Array.isArray(cvData.skills)) {
+    translatableContent.skills = cvData.skills.map((skill: any) => {
+      if (typeof skill === 'string') {
+        return skill;
       }
+      return {
+        id: skill.id,
+        name: skill.name,
+        level: skill.level,
+        category: skill.category
+      };
+    });
+  }
 
-      translatedContent = JSON.parse(jsonMatch[0]);
-    } catch (parseError) {
-      console.error('❌ Failed to parse AI translation response:', parseError);
-      return NextResponse.json({ error: 'Failed to parse translation results' }, { status: 500 });
+  // Projects translations
+  if (cvData.projects && Array.isArray(cvData.projects)) {
+    translatableContent.projects = cvData.projects.map((project: any) => ({
+      id: project.id,
+      name: project.name,
+      description: project.description,
+      technologies: project.technologies,
+      url: project.url,
+      startDate: project.startDate,
+      endDate: project.endDate
+    }));
+  }
+
+  // Certifications translations
+  if (cvData.certifications && Array.isArray(cvData.certifications)) {
+    translatableContent.certifications = cvData.certifications.map((cert: any) => ({
+      id: cert.id,
+      name: cert.name,
+      issuer: cert.issuer,
+      description: cert.description,
+      date: cert.date,
+      url: cert.url
+    }));
+  }
+
+  // Languages (translate language names but preserve levels)
+  if (cvData.languages && Array.isArray(cvData.languages)) {
+    translatableContent.languages = cvData.languages.map((lang: any) => {
+      if (typeof lang === 'string') {
+        return lang;
+      }
+      return {
+        id: lang.id,
+        language: lang.language || lang.name,
+        level: lang.level || lang.proficiency
+      };
+    });
+  }
+
+  // Volunteer work translations
+  if (cvData.volunteerExperience && Array.isArray(cvData.volunteerExperience)) {
+    translatableContent.volunteerExperience = cvData.volunteerExperience.map((vol: any) => ({
+      id: vol.id,
+      organization: vol.organization,
+      role: vol.role || vol.position,
+      cause: vol.cause,
+      description: vol.description,
+      startDate: vol.startDate,
+      endDate: vol.endDate,
+      current: vol.current
+    }));
+  }
+
+  // Awards and honors translations
+  if (cvData.honorsAwards && Array.isArray(cvData.honorsAwards)) {
+    translatableContent.honorsAwards = cvData.honorsAwards.map((award: any) => ({
+      id: award.id,
+      title: award.title || award.name,
+      issuer: award.issuer || award.organization,
+      description: award.description,
+      date: award.date
+    }));
+  }
+
+  // Publications translations
+  if (cvData.publications && Array.isArray(cvData.publications)) {
+    translatableContent.publications = cvData.publications.map((pub: any) => ({
+      id: pub.id,
+      title: pub.title,
+      authors: pub.authors,
+      publication: pub.publication,
+      description: pub.description,
+      date: pub.date,
+      url: pub.url
+    }));
+  }
+
+  // Custom sections translations
+  if (cvData.customSections && Array.isArray(cvData.customSections)) {
+    translatableContent.customSections = cvData.customSections.map((section: any) => ({
+      id: section.id,
+      title: section.title,
+      items: section.items ? section.items.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        subtitle: item.subtitle,
+        description: item.description,
+        startDate: item.startDate,
+        endDate: item.endDate
+      })) : []
+    }));
+  }
+
+  // Section names translations
+  if (cvData.sectionNames) {
+    translatableContent.sectionNames = { ...cvData.sectionNames };
+  }
+
+  return translatableContent;
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    console.log('🌐 CV Tərcümə API: Sorğu başladı');
+
+    // Verify authentication
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return Response.json({
+        success: false,
+        error: 'Authentication token tapılmadı'
+      }, { status: 401 });
     }
 
-    // Apply comprehensive translations to the original CV data
-    const translatedCvData = { ...cvData };
-
-    // Add section name translations
-    if (translatedContent.sectionNames) {
-      translatedCvData.sectionNames = translatedContent.sectionNames;
+    const token = authHeader.substring(7);
+    const decoded = await verifyJWT(token);
+    if (!decoded) {
+      return Response.json({
+        success: false,
+        error: 'Etibarsız token'
+      }, { status: 401 });
     }
 
-    // Apply professional terminology enhancements
-    const applyTerminologyEnhancement = (text: string, targetLang: string): string => {
-      if (!text || typeof text !== 'string') return text || '';
+    const { cvData, cvId, targetLanguage, sourceLanguage = 'auto', saveToDatabase = true } = await req.json();
 
-      let enhancedText = text;
-      const terms = PROFESSIONAL_TERMS[targetLang] || {};
+    // Handle both cvData and cvId inputs
+    let cvToTranslate = cvData;
+    let originalCvRecord = null;
 
+    if (!cvToTranslate && cvId) {
+      // Fetch CV data from database
       try {
-        Object.entries(terms).forEach(([original, translation]) => {
-          if (!original || !translation || typeof original !== 'string' || typeof translation !== 'string') {
-            return;
-          }
-
-          // Escape special regex characters in the original term
-          const escapedOriginal = original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const regex = new RegExp(`\\b${escapedOriginal}\\b`, 'gi');
-
-          // Ensure enhancedText is still a string before replacing
-          if (enhancedText && typeof enhancedText === 'string') {
-            const replaced = enhancedText.replace(regex, translation);
-            enhancedText = replaced || enhancedText;
+        originalCvRecord = await prisma.cV.findUnique({
+          where: {
+            id: cvId,
+            userId: decoded.userId
           }
         });
-      } catch (error) {
-        console.error('Error in terminology enhancement:', error);
-        return text; // Return original text if enhancement fails
+
+        if (!originalCvRecord) {
+          return Response.json({
+            success: false,
+            error: 'CV tapılmadı'
+          }, { status: 404 });
+        }
+
+        cvToTranslate = originalCvRecord.cv_data;
+      } catch (dbError) {
+        console.error('Database error:', dbError);
+        return Response.json({
+          success: false,
+          error: 'CV məlumatları əldə edilərkən xəta baş verdi'
+        }, { status: 500 });
       }
+    }
 
-      return enhancedText || text;
+    // Validate input
+    if (!cvToTranslate) {
+      return Response.json({
+        success: false,
+        error: 'CV məlumatları tapılmadı'
+      }, { status: 400 });
+    }
+
+    if (!targetLanguage) {
+      return Response.json({
+        success: false,
+        error: 'Hədəf dil göstərilmədi'
+      }, { status: 400 });
+    }
+
+    // Map frontend language codes to backend codes
+    const languageMapping: { [key: string]: string } = {
+      'azerbaijani': 'az',
+      'english': 'en',
+      'az': 'az',
+      'en': 'en'
     };
 
-    // Translate personal info with enhanced terminology
-    if (translatedContent.personalInfo?.summary) {
-      translatedCvData.personalInfo.summary = applyTerminologyEnhancement(
-        translatedContent.personalInfo.summary,
-        targetLanguage
-      );
+    const mappedTargetLanguage = languageMapping[targetLanguage] || targetLanguage;
+
+    if (!LANGUAGE_NAMES[mappedTargetLanguage as keyof typeof LANGUAGE_NAMES]) {
+      return Response.json({
+        success: false,
+        error: 'Dəstəklənməyən dil seçildi'
+      }, { status: 400 });
     }
 
-    // Translate experience with comprehensive coverage
-    if (translatedContent.experience && Array.isArray(translatedContent.experience)) {
-      translatedContent.experience.forEach((translatedExp: any, index: number) => {
-        if (translatedCvData.experience[index]) {
-          // Apply all translated fields from AI response
-          Object.keys(translatedExp).forEach((key: string) => {
-            if (translatedExp[key] && typeof translatedExp[key] === 'string') {
-              translatedCvData.experience[index][key] = applyTerminologyEnhancement(
-                translatedExp[key],
-                targetLanguage
-              );
-            }
-          });
-        }
-      });
+    console.log(`🌐 CV tərcümə edilir: ${sourceLanguage} → ${mappedTargetLanguage}`);
+
+    // Extract translatable content
+    const translatableContent = getTranslatableFields(cvToTranslate);
+
+    if (Object.keys(translatableContent).length === 0) {
+      return Response.json({
+        success: false,
+        error: 'Tərcümə ediləcək məzmun tapılmadı'
+      }, { status: 400 });
     }
 
-    // Translate education comprehensively
-    if (translatedContent.education && Array.isArray(translatedContent.education)) {
-      translatedContent.education.forEach((translatedEdu: any, index: number) => {
-        if (translatedCvData.education && translatedCvData.education[index]) {
-          // Apply all translated fields from AI response
-          Object.keys(translatedEdu).forEach((key: string) => {
-            if (translatedEdu[key] && typeof translatedEdu[key] === 'string') {
-              translatedCvData.education[index][key] = applyTerminologyEnhancement(
-                translatedEdu[key],
-                targetLanguage
-              );
-            }
-          });
-        }
-      });
-    }
+    // Translate the content
+    const translatedContent = await translateCVContent(translatableContent, mappedTargetLanguage, sourceLanguage);
 
-    // Translate projects with technical awareness
-    if (translatedContent.projects && Array.isArray(translatedContent.projects)) {
-      translatedContent.projects.forEach((translatedProj: any, index: number) => {
-        if (translatedCvData.projects && translatedCvData.projects[index]) {
-          // Apply all translated fields except technologies (keep technical terms)
-          Object.keys(translatedProj).forEach((key: string) => {
-            if (translatedProj[key] && typeof translatedProj[key] === 'string' && key !== 'technologies') {
-              translatedCvData.projects[index][key] = applyTerminologyEnhancement(
-                translatedProj[key],
-                targetLanguage
-              );
-            }
-          });
-        }
-      });
-    }
+    // Get default section names for target language
+    const defaultSectionNames = getDefaultSectionNames(mappedTargetLanguage);
 
-    // Translate skills with professional categorization
-    if (translatedContent.skills && Array.isArray(translatedContent.skills)) {
-      translatedContent.skills.forEach((translatedSkill: any, index: number) => {
-        if (translatedCvData.skills && translatedCvData.skills[index]) {
-          if (translatedSkill.name) {
-            if (typeof translatedCvData.skills[index] === 'object') {
-              translatedCvData.skills[index].name = translatedSkill.name;
-              if (translatedSkill.category) {
-                translatedCvData.skills[index].category = translatedSkill.category;
-              }
-            } else {
-              translatedCvData.skills[index] = translatedSkill.name;
-            }
-          }
-        }
-      });
-    }
-
-    // Translate certifications comprehensively
-    if (translatedContent.certifications && Array.isArray(translatedContent.certifications)) {
-      translatedContent.certifications.forEach((translatedCert: any, index: number) => {
-        if (translatedCvData.certifications && translatedCvData.certifications[index]) {
-          // Apply all translated fields except issuer (keep company names)
-          Object.keys(translatedCert).forEach((key: string) => {
-            if (translatedCert[key] && typeof translatedCert[key] === 'string' && key !== 'issuer') {
-              translatedCvData.certifications[index][key] = applyTerminologyEnhancement(
-                translatedCert[key],
-                targetLanguage
-              );
-            }
-          });
-        }
-      });
-    }
-
-    // Translate volunteer experience with impact focus
-    if (translatedContent.volunteerExperience && Array.isArray(translatedContent.volunteerExperience)) {
-      translatedContent.volunteerExperience.forEach((translatedVol: any, index: number) => {
-        if (translatedCvData.volunteerExperience && translatedCvData.volunteerExperience[index]) {
-          // Apply all translated fields except organization (keep organization names)
-          Object.keys(translatedVol).forEach((key: string) => {
-            if (translatedVol[key] && typeof translatedVol[key] === 'string' && key !== 'organization') {
-              translatedCvData.volunteerExperience[index][key] = applyTerminologyEnhancement(
-                translatedVol[key],
-                targetLanguage
-              );
-            }
-          });
-        }
-      });
-    }
-
-    // Translate languages section
-    if (translatedContent.languages && Array.isArray(translatedContent.languages)) {
-      translatedContent.languages.forEach((translatedLang: any, index: number) => {
-        if (translatedCvData.languages && translatedCvData.languages[index]) {
-          Object.keys(translatedLang).forEach((key: string) => {
-            if (translatedLang[key] && typeof translatedLang[key] === 'string') {
-              if (typeof translatedCvData.languages[index] === 'object') {
-                translatedCvData.languages[index][key] = translatedLang[key];
-              }
-            }
-          });
-        }
-      });
-    }
-
-    // Translate awards section
-    if (translatedContent.awards && Array.isArray(translatedContent.awards)) {
-      translatedContent.awards.forEach((translatedAward: any, index: number) => {
-        if (translatedCvData.awards && translatedCvData.awards[index]) {
-          // Apply all translated fields except issuer (keep organization names)
-          Object.keys(translatedAward).forEach((key: string) => {
-            if (translatedAward[key] && typeof translatedAward[key] === 'string' && key !== 'issuer') {
-              translatedCvData.awards[index][key] = applyTerminologyEnhancement(
-                translatedAward[key],
-                targetLanguage
-              );
-            }
-          });
-        }
-      });
-    }
-
-    // Add a delay and additional verification to prevent automatic reversion
-    const translationTimestamp = Date.now();
-
-    // Update CV language and add translation metadata with lock mechanism
-    translatedCvData.cvLanguage = targetLanguage;
-    translatedCvData.translationMetadata = {
-      translatedAt: new Date().toISOString(),
-      translatedBy: 'AI_Professional_Translator_v2.2',
-      sourceLanguage: currentCvLanguage,
-      targetLanguage: targetLanguage,
-      comprehensiveTranslation: true,
-      previousLanguage: currentCvLanguage,
-      translationLock: true, // Prevent automatic re-translation
-      lastTranslationId: `${translationTimestamp}-${targetLanguage}`, // Unique translation ID
-      translationLockUntil: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // Lock for 10 minutes
-      forceLanguage: targetLanguage, // Force this language to stay
-      PERMANENT_LOCK: true, // Never allow automatic changes
-      API_TRANSLATION: true // Mark as API translation
+    // Merge section names - use translated ones if available, otherwise use defaults
+    const finalSectionNames = {
+      ...defaultSectionNames,
+      ...(translatedContent.sectionNames || {}),
+      // Ensure we have section names for all existing sections
+      ...(cvToTranslate.sectionNames ?
+          Object.keys(cvToTranslate.sectionNames).reduce((acc, key) => {
+            acc[key] = translatedContent.sectionNames?.[key] || defaultSectionNames[key] || cvToTranslate.sectionNames[key];
+            return acc;
+          }, {} as Record<string, string>) : {})
     };
 
-    // Add language indicator to all major sections to prevent confusion
-    translatedCvData.languageIndicator = {
-      currentLanguage: targetLanguage,
-      lastUpdated: new Date().toISOString(),
-      isTranslated: true,
-      translationComplete: true,
-      locked: true,
-      lockExpires: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
-      NEVER_AUTO_CHANGE: true
-    };
-
-    // Add a strong language lock at the root level
-    translatedCvData.LANGUAGE_LOCK = {
-      language: targetLanguage,
-      timestamp: translationTimestamp,
-      DO_NOT_CHANGE: true,
-      TRANSLATION_IN_PROGRESS: false,
-      FINAL_LANGUAGE: targetLanguage,
-      LOCK_VERSION: "v2.2",
-      PERMANENT: true
-    };
-
-    // Add language markers to each section to prevent individual section changes
-    if (translatedCvData.personalInfo) {
-      translatedCvData.personalInfo.__language = targetLanguage;
-      translatedCvData.personalInfo.__locked = true;
-    }
-    if (translatedCvData.experience) {
-      translatedCvData.experience.forEach((exp: any) => {
-        exp.__language = targetLanguage;
-        exp.__locked = true;
-      });
-    }
-    if (translatedCvData.education) {
-      translatedCvData.education.forEach((edu: any) => {
-        edu.__language = targetLanguage;
-        edu.__locked = true;
-      });
-    }
-    if (translatedCvData.projects) {
-      translatedCvData.projects.forEach((proj: any) => {
-        proj.__language = targetLanguage;
-        proj.__locked = true;
-      });
-    }
-
-    console.log(`✅ Translation completed and PERMANENTLY LOCKED to ${targetLanguage} with timestamp ${translationTimestamp}`);
-
-    // Save the professionally translated CV with explicit language lock
-    await prisma.cV.update({
-      where: { id: cvId },
-      data: {
-        cv_data: translatedCvData
-        // Language is now tracked within cv_data.cvLanguage and cv_data.languageIndicator
-      }
-    });
-
-    // Log the comprehensive translation for analytics
-    await prisma.importSession.create({
-      data: {
-        userId: payload.userId,
-        type: 'ai_comprehensive_translation_completed',
-        data: JSON.stringify({
-          cvId,
-          targetLanguage,
-          userTier: user.tier,
-          translationType: 'comprehensive_professional',
-          timestamp: new Date().toISOString(),
-          sectionsTranslated: Object.keys(translatedContent.sectionNames || {}),
-          enhancementsApplied: ['terminology_enhancement', 'cultural_adaptation', 'professional_formatting']
-        }),
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
-      }
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: `CV professionally and comprehensively translated to ${targetLanguage}`,
-      translatedData: translatedCvData,
+    // Merge translated content back with original CV data, preserving structure
+    const translatedData = {
+      ...cvToTranslate,
+      ...translatedContent,
+      cvLanguage: targetLanguage, // Use original frontend language code
+      sectionNames: finalSectionNames, // Ensure section names are properly set
       translationMetadata: {
-        sectionsTranslated: Object.keys(translatedContent.sectionNames || {}),
-        enhancementsApplied: ['Professional terminology', 'Cultural adaptation', 'Comprehensive content coverage'],
-        qualityLevel: 'Professional'
+        sourceLanguage: sourceLanguage,
+        targetLanguage: mappedTargetLanguage,
+        translatedAt: new Date().toISOString(),
+        translatedBy: 'Gemini AI',
+        originalLanguage: cvToTranslate.cvLanguage || sourceLanguage,
+        sectionsTranslated: Object.keys(translatableContent),
+        totalSections: Object.keys(finalSectionNames).length
       }
+    };
+
+    console.log('✅ CV tərcümə tamamlandı');
+
+    // Save translated data to database if requested and cvId is provided
+    if (saveToDatabase && (cvId || originalCvRecord)) {
+      try {
+        const cvIdToUpdate = cvId || originalCvRecord?.id;
+
+        const updatedCV = await prisma.cV.update({
+          where: {
+            id: cvIdToUpdate,
+            userId: decoded.userId
+          },
+          data: {
+            cv_data: translatedData,
+            updatedAt: new Date(),
+            // Update title to reflect translation if needed
+            title: originalCvRecord?.title ?
+              `${originalCvRecord.title} (${LANGUAGE_NAMES[mappedTargetLanguage as keyof typeof LANGUAGE_NAMES]})` :
+              originalCvRecord?.title
+          }
+        });
+
+        console.log('💾 Tərcümə edilmiş CV verilənlər bazasında saxlanıldı:', cvIdToUpdate);
+
+        return Response.json({
+          success: true,
+          translatedData: translatedData,
+          savedCV: updatedCV,
+          saved: true,
+          message: `CV uğurla ${LANGUAGE_NAMES[mappedTargetLanguage as keyof typeof LANGUAGE_NAMES]} dilinə tərcümə edildi və saxlanıldı`
+        });
+
+      } catch (saveError) {
+        console.error('❌ Tərcümə edilmiş CV saxlanarkən xəta:', saveError);
+
+        // Return translated data even if saving failed
+        return Response.json({
+          success: true,
+          translatedData: translatedData,
+          saved: false,
+          saveError: 'Tərcümə edilmiş CV saxlanarkən xəta baş verdi',
+          message: `CV uğurla ${LANGUAGE_NAMES[mappedTargetLanguage as keyof typeof LANGUAGE_NAMES]} dilinə tərcümə edildi, lakin saxlanmadı`
+        });
+      }
+    }
+
+    return Response.json({
+      success: true,
+      translatedData: translatedData,
+      saved: false,
+      message: `CV uğurla ${LANGUAGE_NAMES[mappedTargetLanguage as keyof typeof LANGUAGE_NAMES]} dilinə tərcümə edildi`
     });
 
   } catch (error) {
-    console.error('❌ AI comprehensive translation error:', error);
-    return NextResponse.json(
-      { error: 'Failed to translate CV content comprehensively' },
-      { status: 500 }
-    );
+    console.error('❌ CV Tərcümə xətası:', error);
+
+    return Response.json({
+      success: false,
+      error: 'CV tərcümə edilərkən xəta baş verdi',
+      details: process.env.NODE_ENV === 'development' ?
+        (error instanceof Error ? error.message : 'Unknown error') : undefined
+    }, { status: 500 });
+  }
+}
+
+// GET endpoint to retrieve supported languages
+export async function GET() {
+  try {
+    return Response.json({
+      success: true,
+      data: {
+        supportedLanguages: LANGUAGE_NAMES,
+        defaultSourceLanguage: 'auto',
+        message: 'CV tərcümə xidməti əlçatandır'
+      }
+    });
+  } catch (error) {
+    console.error('❌ Dil siyahısı xətası:', error);
+    return Response.json({
+      success: false,
+      error: 'Dəstəklənən dillər əldə edilərkən xəta baş verdi'
+    }, { status: 500 });
   }
 }

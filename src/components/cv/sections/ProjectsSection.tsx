@@ -96,7 +96,8 @@ export default function ProjectsSection({ data, onChange }: ProjectsSectionProps
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             İlk layihənizi əlavə edin
-          </button>
+            </button>
+
         </div>
       ) : (
         <div className="space-y-4">
@@ -197,22 +198,24 @@ export default function ProjectsSection({ data, onChange }: ProjectsSectionProps
                     </div>
 
                     <div className="md:col-span-2">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id={`current-${project.id}`}
-                          checked={project.current}
-                          onChange={(e) => {
-                            updateProject(project.id, 'current', e.target.checked);
-                            if (e.target.checked) {
+                      <div className="w-full">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newValue = !project.current;
+                            updateProject(project.id, 'current', newValue);
+                            if (newValue) {
                               updateProject(project.id, 'endDate', '');
                             }
                           }}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        <label htmlFor={`current-${project.id}`} className="text-sm text-gray-700">
-                          Hal-hazırda bu layihə üzərində çalışıram
-                        </label>
+                          className={`w-full p-3 rounded-lg border-2 font-medium text-sm transition-all duration-200 ${
+                            project.current
+                              ? 'bg-red-100 border-red-300 text-red-800 hover:bg-red-200'
+                              : 'bg-blue-100 border-blue-300 text-blue-800 hover:bg-blue-200'
+                          }`}
+                        >
+                          {project.current ? 'Davam etmir' : 'Davam edir'}
+                        </button>
                       </div>
                     </div>
                   </div>
