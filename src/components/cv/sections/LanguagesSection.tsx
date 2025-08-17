@@ -179,51 +179,34 @@ export default function LanguagesSection({ data, onChange }: LanguagesSectionPro
         <div className="space-y-4">
           {languages.map((language) => (
             <div key={language.id} className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-blue-500">🌐</span>
-                    <h4 className="font-medium text-gray-900">
-                      {language.language || 'Yeni dil'}
-                    </h4>
-                    {/* Add move buttons */}
-                    <div className="ml-auto flex items-center gap-1">
-                      <button
-                        onClick={() => moveLanguage(language.id, 'up')}
-                        className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                        title="Yuxarı köçür"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        onClick={() => moveLanguage(language.id, 'down')}
-                        className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                        title="Aşağı köçür"
-                      >
-                        ↓
-                      </button>
-                    </div>
-                  </div>
-                  {language.level && (
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${levelColors[language.level as keyof typeof levelColors]}`}>
-                      {levelLabels[language.level as keyof typeof levelLabels]}
-                    </span>
-                  )}
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-blue-500">🌐</span>
+                  <h4 className="font-medium text-gray-900">
+                    {language.language || 'Yeni dil'}
+                  </h4>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setExpandedId(expandedId === language.id ? null : language.id)}
-                    className="text-blue-600 hover:text-blue-800 transition-colors"
-                  >
-                    {expandedId === language.id ? 'Bağla' : 'Redaktə et'}
-                  </button>
-                  <button
-                    onClick={() => removeLanguage(language.id)}
-                    className="text-red-600 hover:text-red-800 transition-colors"
-                  >
-                    Sil
-                  </button>
-                </div>
+                {language.level && (
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${levelColors[language.level as keyof typeof levelColors]}`}>
+                    {levelLabels[language.level as keyof typeof levelLabels]}
+                  </span>
+                )}
+              </div>
+
+              {/* Action links moved to bottom of card */}
+              <div className="flex items-center justify-end gap-4 mt-4 pt-2 border-t border-gray-100">
+                <button
+                  onClick={() => setExpandedId(expandedId === language.id ? null : language.id)}
+                  className="text-blue-600 hover:text-blue-800 transition-colors text-sm cursor-pointer"
+                >
+                  {expandedId === language.id ? 'Bağlayın' : 'Redaktə edin'}
+                </button>
+                <button
+                  onClick={() => removeLanguage(language.id)}
+                  className="text-red-600 hover:text-red-800 transition-colors text-sm cursor-pointer"
+                >
+                  Silin
+                </button>
               </div>
 
               {expandedId === language.id && (

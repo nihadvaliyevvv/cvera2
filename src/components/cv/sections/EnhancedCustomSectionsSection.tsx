@@ -431,18 +431,36 @@ export default function EnhancedCustomSectionsSection({
               )}
 
               {/* Section Header */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <span className="text-sm font-bold text-green-700">#{sectionIndex + 1}</span>
+                    <span className="text-sm font-medium text-green-700">#{sectionIndex + 1}</span>
                   </div>
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
                       <h3 className="text-lg font-semibold text-gray-900">
                         {section.title || 'Yeni Bölmə'}
                       </h3>
-                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                        {section.type || 'simple'}
+                      {section.type !== 'simple' && (
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
+                          {section.type}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Description - right after the title */}
+                    {section.description && (
+                      <div className="mb-3">
+                        <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 px-3 py-2 rounded-lg border-l-2 border-green-300">
+                          {section.description}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Element count */}
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm text-gray-500">
+                        {section.items?.length || 0} element
                       </span>
                       {section.isVisible === false && (
                         <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
@@ -450,65 +468,26 @@ export default function EnhancedCustomSectionsSection({
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500">
-                      {section.items?.length || 0} element
-                      {section.description && ` • ${section.description}`}
-                    </p>
                   </div>
                 </div>
+              </div>
 
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => updateSection(section.id, { isVisible: !section.isVisible })}
-                    className={`p-2 rounded-lg transition-colors ${
-                      section.isVisible !== false 
-                        ? 'text-green-600 hover:bg-green-100' 
-                        : 'text-gray-400 hover:bg-gray-100'
-                    }`}
-                    title={section.isVisible !== false ? 'Gizlə' : 'Göstər'}
-                  >
-                    {section.isVisible !== false ? '👁' : '👁‍🗨'}
-                  </button>
-                  <button
-                    onClick={() => duplicateSection(section.id)}
-                    className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                    title="Kopyala"
-                  >
-                    📋
-                  </button>
-                  <button
-                    onClick={() => moveSection(section.id, 'up')}
-                    disabled={sectionIndex === 0}
-                    className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    title="Yuxarı köçür"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    onClick={() => moveSection(section.id, 'down')}
-                    disabled={sectionIndex === filteredSections.length - 1}
-                    className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    title="Aşağı köçür"
-                  >
-                    ↓
-                  </button>
-                  <button
-                    onClick={() => setExpandedSectionId(
-                      expandedSectionId === section.id ? null : section.id
-                    )}
-                    className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                    title="Redaktə et"
-                  >
-                    {expandedSectionId === section.id ? 'Bağlayın' : 'Redaktə edin'}
-                  </button>
-                  <button
-                    onClick={() => removeSection(section.id)}
-                    className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                    title="Sil"
-                  >
-                    Silin
-                  </button>
-                </div>
+              {/* Action links moved to bottom of card */}
+              <div className="flex items-center justify-end gap-4 mt-4 pt-2 border-t border-gray-100">
+                <button
+                  onClick={() => setExpandedSectionId(
+                    expandedSectionId === section.id ? null : section.id
+                  )}
+                  className="text-blue-600 hover:text-blue-800 transition-colors text-sm cursor-pointer"
+                >
+                  {expandedSectionId === section.id ? 'Bağlayın' : 'Redaktə edin'}
+                </button>
+                <button
+                  onClick={() => removeSection(section.id)}
+                  className="text-red-600 hover:text-red-800 transition-colors text-sm cursor-pointer"
+                >
+                  Silin
+                </button>
               </div>
 
               {/* Section Content Preview (when collapsed) */}

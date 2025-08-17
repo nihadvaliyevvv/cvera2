@@ -156,7 +156,7 @@ export default function CVManagementPage() {
             {cvs.map((cv) => (
               <div key={cv.id} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
                 <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="mb-4">
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-gray-900 truncate">
                         {cv.title || 'Başlıqsız CV'}
@@ -164,17 +164,6 @@ export default function CVManagementPage() {
                       <p className="text-sm text-gray-600 mt-1">
                         {getTemplateDisplayName(cv.templateId)} şablonu
                       </p>
-                    </div>
-                    <div className="flex items-center space-x-2 ml-4">
-                      <button
-                        onClick={() => handleDeleteCV(cv.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                        title="CV-ni sil"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
                     </div>
                   </div>
 
@@ -193,7 +182,7 @@ export default function CVManagementPage() {
                     </div>
                   </div>
 
-                  <div className="flex space-x-3">
+                  <div className="flex space-x-2">
                     <Link
                       href={`/cv/edit/${cv.id}`}
                       className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors text-center"
@@ -206,6 +195,13 @@ export default function CVManagementPage() {
                     >
                       Önizləmə
                     </Link>
+                    <button
+                      onClick={() => handleDeleteCV(cv.id)}
+                      className="bg-red-100 hover:bg-red-200 text-red-600 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                      title="CV-ni sil"
+                    >
+                      Sil
+                    </button>
                   </div>
                 </div>
               </div>

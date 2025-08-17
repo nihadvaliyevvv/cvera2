@@ -20,6 +20,7 @@ export interface Experience {
   company: string;
   startDate: string;
   endDate?: string;
+  current: boolean;
   description?: string;
 }
 
@@ -29,6 +30,7 @@ export interface Education {
   institution: string;
   startDate: string;
   endDate?: string;
+  current: boolean;
   gpa?: string;
 }
 
@@ -52,6 +54,7 @@ export interface Project {
   github?: string;
   startDate?: string;
   endDate?: string;
+  current?: boolean;
 }
 
 export interface Certification {

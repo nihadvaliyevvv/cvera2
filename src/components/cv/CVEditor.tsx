@@ -1051,7 +1051,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                             courses: updatedCV.courses || [],
                             customSections: updatedCV.customSections || [],
                             sectionOrder: updatedCV.sectionOrder || [],
-                            cvLanguage: targetLanguage as CVLanguage, // Ensure proper type assertion
+                            cvLanguage: pendingLanguage as CVLanguage, // Ensure proper type assertion
                             translationMetadata: updatedCV.translationMetadata
                         }
                     };

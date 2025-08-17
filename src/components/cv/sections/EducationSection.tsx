@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { getLabel } from '@/lib/cvLanguage';
+import DateRangeInput from '@/components/cv/DateRangeInput';
 
 interface Education {
   id: string;
@@ -97,37 +98,37 @@ export default function EducationSection({ data, onChange }: EducationSectionPro
         <div className="space-y-4">
           {data.map((education, index) => (
             <div key={education.id} className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-blue-500">🎓</span>
-                    <h4 className="font-medium text-gray-900">
-                      {education.degree || 'Yeni təhsil'}
-                    </h4>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    {education.institution || 'Təhsil müəssisəsi'}
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-blue-500">🎓</span>
+                  <h4 className="font-medium text-gray-900">
+                    {education.degree || 'Yeni təhsil'}
+                  </h4>
+                </div>
+                <p className="text-sm text-gray-600">
+                  {education.institution || 'Təhsil müəssisəsi'}
+                </p>
+                {education.field && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {education.field}
                   </p>
-                  {education.field && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {education.field}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setExpandedId(expandedId === education.id ? null : education.id)}
-                    className="text-blue-600 hover:text-blue-800 transition-colors"
-                  >
-                    {expandedId === education.id ? 'Bağlayın' : 'Redaktə edin'}
-                  </button>
-                  <button
-                    onClick={() => removeEducation(education.id)}
-                    className="text-red-600 hover:text-red-800 transition-colors"
-                  >
-                    Silin
-                  </button>
-                </div>
+                )}
+              </div>
+
+              {/* Action links moved to bottom of card */}
+              <div className="flex items-center justify-end gap-4 mt-4 pt-2 border-t border-gray-100">
+                <button
+                  onClick={() => setExpandedId(expandedId === education.id ? null : education.id)}
+                  className="text-blue-600 hover:text-blue-800 transition-colors text-sm cursor-pointer"
+                >
+                  {expandedId === education.id ? 'Bağlayın' : 'Redaktə edin'}
+                </button>
+                <button
+                  onClick={() => removeEducation(education.id)}
+                  className="text-red-600 hover:text-red-800 transition-colors text-sm cursor-pointer"
+                >
+                  Silin
+                </button>
               </div>
 
               {expandedId === education.id && (
@@ -202,54 +203,20 @@ export default function EducationSection({ data, onChange }: EducationSectionPro
                         placeholder="3.8/4.0, Yüksək, və s."
                       />
                     </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Başlama tarixi <span className="text-gray-400 text-xs">(ixtiyari)</span>
-                      </label>
-                      <input
-                        type="month"
-                        value={education.startDate}
-                        onChange={(e) => updateEducation(education.id, 'startDate', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Bitirmə tarixi
-                      </label>
-                      <input
-                        type="month"
-                        value={education.endDate || ''}
-                        onChange={(e) => updateEducation(education.id, 'endDate', e.target.value)}
-                        disabled={education.current}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50"
-                      />
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <div className="w-full">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newValue = !education.current;
-                            updateEducation(education.id, 'current', newValue);
-                            if (newValue) {
-                              updateEducation(education.id, 'endDate', '');
-                            }
-                          }}
-                          className={`w-full p-3 rounded-lg border-2 font-medium text-sm transition-all duration-200 ${
-                            education.current
-                              ? 'bg-red-100 border-red-300 text-red-800 hover:bg-red-200'
-                              : 'bg-blue-100 border-blue-300 text-blue-800 hover:bg-blue-200'
-                          }`}
-                        >
-                          {education.current ? 'Davam etmir' : 'Davam edir'}
-                        </button>
-                      </div>
-                    </div>
                   </div>
+
+                  {/* Professional Date Range Input */}
+                  <DateRangeInput
+                    startDate={education.startDate}
+                    endDate={education.endDate}
+                    current={education.current}
+                    onStartDateChange={(date) => updateEducation(education.id, 'startDate', date)}
+                    onEndDateChange={(date) => updateEducation(education.id, 'endDate', date)}
+                    onCurrentChange={(current) => updateEducation(education.id, 'current', current)}
+                    startLabel="Başlama tarixi"
+                    endLabel="Bitirmə tarixi"
+                    currentLabel="Təhsil davam edir"
+                  />
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">

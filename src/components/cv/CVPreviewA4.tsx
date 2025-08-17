@@ -486,23 +486,51 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
 
         case 'skills':
           if (!cvData.skills || !Array.isArray(cvData.skills) || cvData.skills.length === 0) return null;
+
+          const hardSkills = cvData.skills.filter(skill => skill.type === 'hard' || !skill.type);
+          const softSkills = cvData.skills.filter(skill => skill.type === 'soft');
+
           return (
             <DraggableSection key={`skills-${section.order}`} sectionId="skills" className="w-full mb-6">
               <div>
                 <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">{getLabel('skills', currentLanguage)}</h2>
                 <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
-                <ul className="space-y-1 cv-small list-disc list-inside text-white">
-                  {cvData.skills.map((skill: any, index: number) => {
-                    const skillName = typeof skill === 'string' ? skill : skill.name;
-                    const skillLevel = typeof skill === 'object' ? skill.level : undefined;
-                    return (
-                      <li key={index} className="text-white cv-small">
-                        {smartTranslateText(skillName, currentLanguage)}
-                        {skillLevel && ` (${smartTranslateText(skillLevel, currentLanguage)})`}
-                      </li>
-                    );
-                  })}
-                </ul>
+
+                {hardSkills.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-sm font-semibold text-white mb-2 uppercase tracking-wide">Hard Skills</h3>
+                    <ul className="space-y-1 cv-small list-disc list-inside text-white">
+                      {hardSkills.map((skill: any, index: number) => {
+                        const skillName = typeof skill === 'string' ? skill : skill.name;
+                        const skillLevel = typeof skill === 'object' ? skill.level : undefined;
+                        return (
+                          <li key={index} className="text-white cv-small">
+                            {smartTranslateText(skillName, currentLanguage)}
+                            {skillLevel && ` (${smartTranslateText(skillLevel, currentLanguage)})`}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+
+                {softSkills.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-sm font-semibold text-white mb-2 uppercase tracking-wide">Soft Skills</h3>
+                    <ul className="space-y-1 cv-small list-disc list-inside text-white">
+                      {softSkills.map((skill: any, index: number) => {
+                        const skillName = typeof skill === 'string' ? skill : skill.name;
+                        const skillLevel = typeof skill === 'object' ? skill.level : undefined;
+                        return (
+                          <li key={index} className="text-white cv-small">
+                            {smartTranslateText(skillName, currentLanguage)}
+                            {skillLevel && ` (${smartTranslateText(skillLevel, currentLanguage)})`}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
               </div>
             </DraggableSection>
           );
@@ -852,19 +880,42 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
 
             case 'skills':
               if (!cvData.skills || !Array.isArray(cvData.skills) || cvData.skills.length === 0) return null;
+
+              const hardSkills = cvData.skills.filter(skill => skill.type === 'hard' || !skill.type);
+              const softSkills = cvData.skills.filter(skill => skill.type === 'soft');
+
               return (
                 <DraggableSection key="skills" sectionId="skills">
                   <div>
                     <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
                       {getLabel('skills', currentLanguage)}
                     </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {cvData.skills.map((skill: any, index: number) => (
-                        <span key={index} className="bg-gray-100 text-gray-800 px-2 py-1 rounded cv-small">
-                          {typeof skill === 'string' ? skill : skill.name}
-                        </span>
-                      ))}
-                    </div>
+
+                    {hardSkills.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="text-sm font-semibold text-gray-800 mb-2 uppercase tracking-wide">Hard Skills</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {hardSkills.map((skill: any, index: number) => (
+                            <span key={index} className="bg-gray-100 text-gray-800 px-2 py-1 rounded cv-small">
+                              {typeof skill === 'string' ? skill : skill.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {softSkills.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="text-sm font-semibold text-gray-800 mb-2 uppercase tracking-wide">Soft Skills</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {softSkills.map((skill: any, index: number) => (
+                            <span key={index} className="bg-gray-100 text-gray-800 px-2 py-1 rounded cv-small">
+                              {typeof skill === 'string' ? skill : skill.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </DraggableSection>
               );

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { getLabel } from '@/lib/cvLanguage';
 import RichTextEditor from '@/components/ui/RichTextEditor';
+import DateRangeInput from '@/components/cv/DateRangeInput';
 
 interface VolunteerExperience {
   id: string;
@@ -92,37 +93,37 @@ export default function VolunteerExperienceSection({ data, onChange }: Volunteer
         <div className="space-y-4">
           {data.map((volunteer, index) => (
             <div key={volunteer.id} className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-red-500">❤️</span>
-                    <h4 className="font-medium text-gray-900">
-                      {volunteer.role || 'Yeni könüllü təcrübə'}
-                    </h4>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    {volunteer.organization || 'Təşkilat adı'}
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-red-500">❤️</span>
+                  <h4 className="font-medium text-gray-900">
+                    {volunteer.role || 'Yeni könüllü təcrübə'}
+                  </h4>
+                </div>
+                <p className="text-sm text-gray-600">
+                  {volunteer.organization || 'Təşkilat adı'}
+                </p>
+                {volunteer.cause && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {volunteer.cause}
                   </p>
-                  {volunteer.cause && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {volunteer.cause}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setEditingIndex(editingIndex === index ? null : index)}
-                    className="text-blue-600 hover:text-blue-800 transition-colors"
-                  >
-                    {editingIndex === index ? 'Bağlayın' : 'Redaktə edin'}
-                  </button>
-                  <button
-                    onClick={() => removeVolunteerExperience(index)}
-                    className="text-red-600 hover:text-red-800 transition-colors"
-                  >
-                    Silin
-                  </button>
-                </div>
+                )}
+              </div>
+
+              {/* Action links moved to bottom of card */}
+              <div className="flex items-center justify-end gap-4 mt-4 pt-2 border-t border-gray-100">
+                <button
+                  onClick={() => setEditingIndex(editingIndex === index ? null : index)}
+                  className="text-blue-600 hover:text-blue-800 transition-colors text-sm cursor-pointer"
+                >
+                  {editingIndex === index ? 'Bağlayın' : 'Redaktə edin'}
+                </button>
+                <button
+                  onClick={() => removeVolunteerExperience(index)}
+                  className="text-red-600 hover:text-red-800 transition-colors text-sm cursor-pointer"
+                >
+                  Silin
+                </button>
               </div>
 
               {editingIndex === index && (
@@ -167,52 +168,18 @@ export default function VolunteerExperienceSection({ data, onChange }: Volunteer
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Başlama tarixi
-                      </label>
-                      <input
-                        type="month"
-                        value={volunteer.startDate}
-                        onChange={(e) => updateVolunteerExperience(index, 'startDate', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Bitirmə tarixi (ixtiyari)
-                      </label>
-                      <input
-                        type="month"
-                        value={volunteer.endDate || ''}
-                        onChange={(e) => updateVolunteerExperience(index, 'endDate', e.target.value)}
-                        disabled={volunteer.current}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50"
-                      />
-                    </div>
-                    <div className="flex items-end">
-                      <div className="w-full">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newValue = !volunteer.current;
-                            updateVolunteerExperience(index, 'current', newValue);
-                            if (newValue) {
-                              updateVolunteerExperience(index, 'endDate', '');
-                            }
-                          }}
-                          className={`w-full p-3 rounded-lg border-2 font-medium text-sm transition-all duration-200 ${
-                            volunteer.current
-                              ? 'bg-red-100 border-red-300 text-red-800 hover:bg-red-200'
-                              : 'bg-blue-100 border-blue-300 text-blue-800 hover:bg-blue-200'
-                          }`}
-                        >
-                          {volunteer.current ? 'Davam etmir' : 'Davam edir'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  {/* Date Range Input */}
+                  <DateRangeInput
+                    startDate={volunteer.startDate}
+                    endDate={volunteer.endDate}
+                    current={volunteer.current}
+                    onStartDateChange={(date) => updateVolunteerExperience(index, 'startDate', date)}
+                    onEndDateChange={(date) => updateVolunteerExperience(index, 'endDate', date)}
+                    onCurrentChange={(current) => updateVolunteerExperience(index, 'current', current)}
+                    startLabel="Başlama tarixi"
+                    endLabel="Bitirmə tarixi"
+                    currentLabel="Könüllü fəaliyyəti davam edir"
+                  />
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">

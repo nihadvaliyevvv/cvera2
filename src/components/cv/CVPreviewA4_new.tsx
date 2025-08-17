@@ -416,29 +416,85 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
               margin: '0'
             }}>Skills</h2>
           </div>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '0.8rem',
-            width: '100%',
-            marginTop: '0.5rem'
-          }}>
-            {skills.map((skill, index) => (
-              <div key={index} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '0.5rem 0',
-                borderBottom: '1px solid #e5e7eb',
-                marginBottom: '0.3rem'
-              }}>
-                <span style={{
-                  fontWeight: '500',
-                  color: '#374151'
-                }}>{skill.name || ''}</span>
+
+          {(() => {
+            const hardSkills = skills.filter(skill => skill.type === 'hard' || !skill.type);
+            const softSkills = skills.filter(skill => skill.type === 'soft');
+
+            return (
+              <div style={{ marginTop: '0.5rem' }}>
+                {hardSkills.length > 0 && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <h3 style={{
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      color: '#1f2937',
+                      marginBottom: '0.5rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.3px'
+                    }}>Hard Skills</h3>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                      gap: '0.8rem',
+                      width: '100%'
+                    }}>
+                      {hardSkills.map((skill, index) => (
+                        <div key={index} style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '0.5rem 0',
+                          borderBottom: '1px solid #e5e7eb',
+                          marginBottom: '0.3rem'
+                        }}>
+                          <span style={{
+                            fontWeight: '500',
+                            color: '#374151'
+                          }}>{skill.name || ''}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {softSkills.length > 0 && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <h3 style={{
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      color: '#1f2937',
+                      marginBottom: '0.5rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.3px'
+                    }}>Soft Skills</h3>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                      gap: '0.8rem',
+                      width: '100%'
+                    }}>
+                      {softSkills.map((skill, index) => (
+                        <div key={index} style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '0.5rem 0',
+                          borderBottom: '1px solid #e5e7eb',
+                          marginBottom: '0.3rem'
+                        }}>
+                          <span style={{
+                            fontWeight: '500',
+                            color: '#374151'
+                          }}>{skill.name || ''}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
+            );
+          })()}
         </div>
       )}
 

@@ -25,6 +25,7 @@ export interface FontSettings {
     heading: number;
     subheading: number;
     body: number;
+    small: number;
   };
   fontSizes?: {
     heading: number;
@@ -342,7 +343,8 @@ export const DEFAULT_FONT_SETTINGS: FontSettings = {
   fontWeight: {
     heading: 700,
     subheading: 600,
-    body: 400
+    body: 400,
+    small: 400
   },
   fontSizes: {
     heading: 14,

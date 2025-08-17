@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { getLabel } from '@/lib/cvLanguage';
 import RichTextEditor from '@/components/ui/RichTextEditor';
+import DateRangeInput from '@/components/cv/DateRangeInput';
 
 interface Experience {
   id: string;
@@ -93,129 +94,38 @@ export default function ExperienceSection({ data, onChange }: ExperienceSectionP
         <div className="space-y-4">
           {data.map((experience, index) => (
             <div key={experience.id} className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-blue-500">💼</span>
-                    <h4 className="font-medium text-gray-900">
-                      {experience.position || 'Yeni iş təcrübəsi'}
-                    </h4>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    {experience.company || 'Şirkət adı'}
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-blue-500">💼</span>
+                  <h4 className="font-medium text-gray-900">
+                    {experience.position || 'Yeni iş təcrübəsi'}
+                  </h4>
+                </div>
+                <p className="text-sm text-gray-600">
+                  {experience.company || 'Şirkət adı'}
+                </p>
+                {experience.startDate && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {experience.startDate} - {experience.current ? 'Davam edir' : experience.endDate}
                   </p>
-                  {experience.startDate && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {experience.startDate} - {experience.current ? 'Davam edir' : experience.endDate}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setExpandedId(expandedId === experience.id ? null : experience.id)}
-                    className="text-blue-600 hover:text-blue-800 transition-colors"
-                  >
-                    {expandedId === experience.id ? 'Bağlayın' : 'Redaktə edin'}
-                  </button>
-                  <button
-                    onClick={() => removeExperience(experience.id)}
-                    className="text-red-600 hover:text-red-800 transition-colors"
-                  >
-                    Silin
-                  </button>
-                </div>
+                )}
               </div>
 
-              {expandedId === experience.id && (
-                <div className="space-y-4 border-t border-gray-200 pt-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {getLabel('company', 'azerbaijani')} <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={experience.company}
-                        onChange={(e) => updateExperience(experience.id, 'company', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder={'Şirkət adı'}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {getLabel('position', 'azerbaijani')} <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={experience.position}
-                        onChange={(e) => updateExperience(experience.id, 'position', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder={'Vəzifə adı'}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Başlama tarixi <span className="text-gray-400 text-xs">(ixtiyari)</span>
-                      </label>
-                      <input
-                        type="month"
-                        value={experience.startDate}
-                        onChange={(e) => updateExperience(experience.id, 'startDate', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Bitirmə tarixi <span className="text-gray-400 text-xs">(ixtiyari)</span>
-                      </label>
-                      <input
-                        type="month"
-                        value={experience.endDate || ''}
-                        onChange={(e) => updateExperience(experience.id, 'endDate', e.target.value)}
-                        disabled={experience.current}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50"
-                      />
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <div className="w-full">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newValue = !experience.current;
-                            updateExperience(experience.id, 'current', newValue);
-                            if (newValue) {
-                              updateExperience(experience.id, 'endDate', '');
-                            }
-                          }}
-                          className={`w-full p-3 rounded-lg border-2 font-medium text-sm transition-all duration-200 ${
-                            experience.current
-                              ? 'bg-red-100 border-red-300 text-red-800 hover:bg-red-200'
-                              : 'bg-blue-100 border-blue-300 text-blue-800 hover:bg-blue-200'
-                          }`}
-                        >
-                          {experience.current ? 'Davam etmir' : 'Davam edir'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Təsvir
-                    </label>
-                    <RichTextEditor
-                      value={experience.description}
-                      onChange={(value) => updateExperience(experience.id, 'description', value)}
-                      placeholder="Vəzifə öhdəliklərinizi və nailiyyətlərinizi təsvir edin..."
-                      minHeight="120px"
-                    />
-                  </div>
-                </div>
-              )}
+              {/* Action links moved to bottom of card */}
+              <div className="flex items-center justify-end gap-4 mt-4 pt-2 border-t border-gray-100">
+                <button
+                  onClick={() => setExpandedId(expandedId === experience.id ? null : experience.id)}
+                  className="text-blue-600 hover:text-blue-800 transition-colors text-sm cursor-pointer"
+                >
+                  {expandedId === experience.id ? 'Bağlayın' : 'Redaktə edin'}
+                </button>
+                <button
+                  onClick={() => removeExperience(experience.id)}
+                  className="text-red-600 hover:text-red-800 transition-colors text-sm cursor-pointer"
+                >
+                  Silin
+                </button>
+              </div>
             </div>
           ))}
         </div>

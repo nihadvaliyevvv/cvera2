@@ -8,6 +8,7 @@ interface Skill {
   id: string;
   name: string;
   level?: string;
+  type?: 'hard' | 'soft'; // Add skill type
 }
 
 interface SkillsSectionProps {
@@ -43,7 +44,8 @@ export default function SkillsSection({ data, onChange, userTier = 'Free', cvDat
   const addSkill = () => {
     const newSkill: Skill = {
       id: Date.now().toString(),
-      name: ''
+      name: '',
+      type: 'hard' // Default to hard skill
     };
     onChange([...data, newSkill]);
     setExpandedId(newSkill.id);
@@ -262,61 +264,198 @@ export default function SkillsSection({ data, onChange, userTier = 'Free', cvDat
           </button>
         </div>
       ) : (
-        <div className="space-y-4">
-          {data.map((skill, index) => (
-            <div key={skill.id} className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-blue-500">💡</span>
-                    <h4 className="font-medium text-gray-900">
-                      {skill.name || 'Yeni bacarıq'}
-                    </h4>
-                  </div>
-                  {skill.level && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Səviyyə: {skill.level}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setExpandedId(expandedId === skill.id ? null : skill.id)}
-                    className="text-blue-600 hover:text-blue-800 transition-colors"
-                  >
-                    {expandedId === skill.id ? 'Bağlayın' : 'Redaktə edin'}
-                  </button>
-                  <button
-                    onClick={() => removeSkill(skill.id)}
-                    className="text-red-600 hover:text-red-800 transition-colors"
-                  >
-                    Sil
-                  </button>
-                </div>
+        <div className="space-y-6">
+          {/* Hard Skills Section */}
+          {data.filter(skill => skill.type === 'hard' || !skill.type).length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-2xl">⚙️</span>
+                <h4 className="text-lg font-semibold text-gray-900">Hard Skills</h4>
+                <span className="text-sm text-gray-500">
+                  ({data.filter(skill => skill.type === 'hard' || !skill.type).length})
+                </span>
               </div>
-
-              {expandedId === skill.id && (
-                <div className="space-y-4 border-t border-gray-200 pt-4">
-                  <div className="grid grid-cols-1 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Bacarıq adı <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={skill.name}
-                        onChange={(e) => updateSkill(skill.id, 'name', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="JavaScript, Photoshop, Project Management, və s."
-                      />
+              <div className="space-y-4">
+                {data.filter(skill => skill.type === 'hard' || !skill.type).map((skill, index) => (
+                  <div key={skill.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-blue-500">⚙️</span>
+                        <h4 className="font-medium text-gray-900">
+                          {skill.name || 'Yeni hard skill'}
+                        </h4>
+                      </div>
+                      {skill.level && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Səviyyə: {skill.level}
+                        </p>
+                      )}
                     </div>
+
+                    {/* Action links moved to bottom of card */}
+                    <div className="flex items-center justify-end gap-4 mt-4 pt-2 border-t border-gray-100">
+                      <button
+                        onClick={() => setExpandedId(expandedId === skill.id ? null : skill.id)}
+                        className="text-blue-600 hover:text-blue-800 transition-colors text-sm cursor-pointer"
+                      >
+                        {expandedId === skill.id ? 'Bağlayın' : 'Redaktə edin'}
+                      </button>
+                      <button
+                        onClick={() => removeSkill(skill.id)}
+                        className="text-red-600 hover:text-red-800 transition-colors text-sm cursor-pointer"
+                      >
+                        Silin
+                      </button>
+                    </div>
+
+                    {expandedId === skill.id && (
+                      <div className="space-y-4 border-t border-gray-200 pt-4">
+                        <div className="grid grid-cols-1 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Bacarıq adı <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={skill.name}
+                              onChange={(e) => updateSkill(skill.id, 'name', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                              placeholder="JavaScript, Python, Photoshop, AutoCAD, və s."
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Bacarıq növü
+                            </label>
+                            <select
+                              value={skill.type || 'hard'}
+                              onChange={(e) => updateSkill(skill.id, 'type', e.target.value as 'hard' | 'soft')}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            >
+                              <option value="hard">Hard Skill (Texniki bacarıqlar)</option>
+                              <option value="soft">Soft Skill (Şəxsi bacarıqlar)</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Səviyyə
+                            </label>
+                            <select
+                              value={skill.level || ''}
+                              onChange={(e) => updateSkill(skill.id, 'level', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            >
+                              <option value="">Səviyyə seçin</option>
+                              <option value="Başlanğıc">Başlanğıc</option>
+                              <option value="Orta">Orta</option>
+                              <option value="İrəliləmiş">İrəliləmiş</option>
+                              <option value="Ekspert">Ekspert</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-
-                </div>
-              )}
+                ))}
+              </div>
             </div>
-          ))}
+          )}
+
+          {/* Soft Skills Section */}
+          {data.filter(skill => skill.type === 'soft').length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-2xl">🤝</span>
+                <h4 className="text-lg font-semibold text-gray-900">Soft Skills</h4>
+                <span className="text-sm text-gray-500">
+                  ({data.filter(skill => skill.type === 'soft').length})
+                </span>
+              </div>
+              <div className="space-y-4">
+                {data.filter(skill => skill.type === 'soft').map((skill, index) => (
+                  <div key={skill.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-green-500">🤝</span>
+                        <h4 className="font-medium text-gray-900">
+                          {skill.name || 'Yeni soft skill'}
+                        </h4>
+                      </div>
+                      {skill.level && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Səviyyə: {skill.level}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Action links moved to bottom of card */}
+                    <div className="flex items-center justify-end gap-4 mt-4 pt-2 border-t border-gray-100">
+                      <button
+                        onClick={() => setExpandedId(expandedId === skill.id ? null : skill.id)}
+                        className="text-blue-600 hover:text-blue-800 transition-colors text-sm cursor-pointer"
+                      >
+                        {expandedId === skill.id ? 'Bağlayın' : 'Redaktə edin'}
+                      </button>
+                      <button
+                        onClick={() => removeSkill(skill.id)}
+                        className="text-red-600 hover:text-red-800 transition-colors text-sm cursor-pointer"
+                      >
+                        Silin
+                      </button>
+                    </div>
+
+                    {expandedId === skill.id && (
+                      <div className="space-y-4 border-t border-gray-200 pt-4">
+                        <div className="grid grid-cols-1 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Bacarıq adı <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={skill.name}
+                              onChange={(e) => updateSkill(skill.id, 'name', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                              placeholder="Liderlik, Komanda işi, Komunikasiya, və s."
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Bacarıq növü
+                            </label>
+                            <select
+                              value={skill.type || 'soft'}
+                              onChange={(e) => updateSkill(skill.id, 'type', e.target.value as 'hard' | 'soft')}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            >
+                              <option value="hard">Hard Skill (Texniki bacarıqlar)</option>
+                              <option value="soft">Soft Skill (Şəxsi bacarıqlar)</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Səviyyə
+                            </label>
+                            <select
+                              value={skill.level || ''}
+                              onChange={(e) => updateSkill(skill.id, 'level', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            >
+                              <option value="">Səviyyə seçin</option>
+                              <option value="Başlanğıc">Başlanğıc</option>
+                              <option value="Orta">Orta</option>
+                              <option value="İrəliləmiş">İrəliləmiş</option>
+                              <option value="Ekspert">Ekspert</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

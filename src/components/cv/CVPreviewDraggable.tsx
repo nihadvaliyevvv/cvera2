@@ -387,21 +387,47 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
 
       case 'skills':
         if (!cv.data.skills || cv.data.skills.length === 0) return null;
+
+        const hardSkills = cv.data.skills.filter(skill => skill.type === 'hard' || !skill.type);
+        const softSkills = cv.data.skills.filter(skill => skill.type === 'soft');
+
         return (
           <div className="space-y-3">
             <h3 className="font-semibold text-gray-800 border-b border-gray-300 pb-1">
               Bacarıqlar
             </h3>
-            <div className="flex flex-wrap gap-2">
-              {cv.data.skills.map((skill: any, index: number) => (
-                <span
-                  key={index}
-                  className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
-                >
-                  {typeof skill === 'string' ? skill : skill.name}
-                </span>
-              ))}
-            </div>
+
+            {hardSkills.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Hard Skills</h4>
+                <div className="flex flex-wrap gap-2">
+                  {hardSkills.map((skill: any, index: number) => (
+                    <span
+                      key={index}
+                      className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                    >
+                      {typeof skill === 'string' ? skill : skill.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {softSkills.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Soft Skills</h4>
+                <div className="flex flex-wrap gap-2">
+                  {softSkills.map((skill: any, index: number) => (
+                    <span
+                      key={index}
+                      className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full"
+                    >
+                      {typeof skill === 'string' ? skill : skill.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
 

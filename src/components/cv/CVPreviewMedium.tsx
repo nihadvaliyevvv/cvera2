@@ -96,6 +96,7 @@ interface CVData {
       name: string;
       category?: string;
       level?: string;
+      type?: 'hard' | 'soft';
     }>;
     languages?: Array<{
       id?: string;
@@ -376,7 +377,7 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
     projects: isEnglish ? 'PROJECTS' : 'LAYİHƏLƏR',
     certifications: isEnglish ? 'CERTIFICATIONS' : 'SERTİFİKATLAR',
     volunteer: isEnglish ? 'VOLUNTEER EXPERIENCE' : 'KÖNÜLLÜ TƏCRÜBƏSİ',
-    present: isEnglish ? 'Present' : 'Hazırda',
+    present: isEnglish ? 'Present' : 'davam edir',
     to: isEnglish ? 'to' : '-'
   };
 
@@ -390,11 +391,53 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
 
   const formatDateRange = (startDate: string, endDate: string, current: boolean) => {
     const start = formatDate(startDate);
-    const end = current ? texts.present : formatDate(endDate);
+
+    // Show "davam edir" if current is true OR if there's no end date (effectively current)
+    const shouldShowCurrent = current === true || (!endDate || endDate.trim() === '');
+    const end = shouldShowCurrent ? texts.present : formatDate(endDate);
 
     if (!start && !end) return '';
-    if (!end || current) return `${start} ${texts.to} ${texts.present}`;
-    return `${start} ${texts.to} ${end}`;
+    if (shouldShowCurrent) return `${start} ${texts.to} ${texts.present}`;
+    if (endDate && endDate.trim() !== '') return `${start} ${texts.to} ${end}`;
+    return start; // Only start date if no end date and not current
+  };
+
+  // Utility function to clean HTML content and check if valid
+  const isValidHtmlContent = (htmlContent?: string): boolean => {
+    if (!htmlContent) return false;
+
+    // Strip HTML tags and check content
+    const textContent = htmlContent
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/&[^;]+;/g, ' ') // Remove HTML entities
+      .trim();
+
+    return isValidContent(textContent);
+  };
+
+  // Utility function to check if content is empty or placeholder
+  const isValidContent = (content?: string): boolean => {
+    if (!content) return false;
+    const cleanContent = content.trim().toLowerCase();
+
+    // Check for common placeholder texts
+    const placeholders = [
+      'to be completed',
+      'tamamlanacaq',
+      'doldurulacaq',
+      'əlavə ediləcək',
+      'yazılacaq',
+      'enter your',
+      'add your',
+      'your description here',
+      'description',
+      'placeholder',
+      'example',
+      'sample',
+      ''
+    ];
+
+    return !placeholders.some(placeholder => cleanContent.includes(placeholder)) && cleanContent.length > 0;
   };
 
   return (
@@ -522,14 +565,33 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
 
               case 'skills':
                 if (!data.skills || data.skills.length === 0) return null;
+
+                const hardSkills = data.skills.filter(skill => skill.type === 'hard' || !skill.type);
+                const softSkills = data.skills.filter(skill => skill.type === 'soft');
+
                 return (
                   <DraggableSection key={section.id} sectionId="skills">
                     <section>
                       <h2 className="text-lg font-bold text-gray-800 mb-3 pb-1 border-b border-gray-400">
                         {texts.skills}
                       </h2>
-                      <div className="text-sm text-gray-700">
-                        {data.skills.map((skill) => skill.name).join(' • ')}
+                      <div className="space-y-3">
+                        {hardSkills.length > 0 && (
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-800 mb-1">Hard Skills</h3>
+                            <div className="text-sm text-gray-700">
+                              {hardSkills.map(skill => skill.name).join(' • ')}
+                            </div>
+                          </div>
+                        )}
+                        {softSkills.length > 0 && (
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-800 mb-1">Soft Skills</h3>
+                            <div className="text-sm text-gray-700">
+                              {softSkills.map(skill => skill.name).join(' • ')}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </section>
                   </DraggableSection>

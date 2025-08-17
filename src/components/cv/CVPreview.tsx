@@ -159,6 +159,56 @@ export default function CVPreview({ cv }: CVPreviewProps) {
   const [template, setTemplate] = useState<Template | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Language support - check if CV is in English
+  const isEnglish = cv.data.personalInfo?.summary?.includes('English') ||
+                    cv.data.experience?.some(exp => exp.description?.includes('English')) ||
+                    cv.templateId?.includes('english') ||
+                    false; // Default to Azerbaijani
+
+  // Text translations
+  const texts = {
+    present: isEnglish ? 'Present' : 'davam edir',
+    to: isEnglish ? 'to' : '-'
+  };
+
+  // Utility function to check if content is empty or placeholder
+  const isValidContent = (content?: string): boolean => {
+    if (!content) return false;
+    const cleanContent = content.trim().toLowerCase();
+
+    // Check for common placeholder texts
+    const placeholders = [
+      'to be completed',
+      'tamamlanacaq',
+      'doldurulacaq',
+      'əlavə ediləcək',
+      'yazılacaq',
+      'enter your',
+      'add your',
+      'your description here',
+      'description',
+      'placeholder',
+      'example',
+      'sample',
+      ''
+    ];
+
+    return !placeholders.some(placeholder => cleanContent.includes(placeholder)) && cleanContent.length > 0;
+  };
+
+  // Utility function to clean HTML content and check if valid
+  const isValidHtmlContent = (htmlContent?: string): boolean => {
+    if (!htmlContent) return false;
+
+    // Strip HTML tags and check content
+    const textContent = htmlContent
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/&[^;]+;/g, ' ') // Remove HTML entities
+      .trim();
+
+    return isValidContent(textContent);
+  };
+
   // Debug: Custom sections məlumatını console-da göstər
   console.log('🔍 CVPreview Debug:', {
     componentName: 'CVPreview.tsx',
@@ -170,7 +220,7 @@ export default function CVPreview({ cv }: CVPreviewProps) {
     customSections: cv.data.customSections,
     customSectionsLength: cv.data.customSections?.length || 0,
     hasItems: cv.data.customSections?.some(section => section.items && section.items.length > 0),
-    visibleSections: cv.data.customSections?.filter(section => section.isVisible !== false) || []
+    visibleSectionsCount: cv.data.customSections ? cv.data.customSections.filter(section => section.isVisible !== false).length : 0
   });
 
   const loadTemplate = useCallback(async () => {
@@ -201,23 +251,19 @@ export default function CVPreview({ cv }: CVPreviewProps) {
 
   const formatDateRange = (startDate: string, endDate?: string, current?: boolean) => {
     const start = formatDate(startDate);
-    if (current) {
-      return `${start} - İndiyə qədər`;
-    }
-    if (endDate) {
-      return `${start} - ${formatDate(endDate)}`;
-    }
-    return start;
-  };
 
-  const languageLevelWidth = (level: string) => {
-    switch (level) {
-      case 'Basic': return '25%';
-      case 'Conversational': return '50%';
-      case 'Professional': return '75%';
-      case 'Native': return '100%';
-      default: return '50%';
+    // Əgər "current" aktiv olaraq true-dursa, "davam edir" göstər
+    if (current === true) {
+      return `${start} - ${texts.present}`;
     }
+
+    // Əgər bitiş tarixi varsa, tarix aralığını göstər
+    if (endDate && endDate.trim() !== '') {
+      return `${start} ${texts.to} ${formatDate(endDate)}`;
+    }
+
+    // Əks halda (bitiş tarixi yoxdur və current açıq şəkildə false deyil), "davam edir" göstər
+    return `${start} - ${texts.present}`;
   };
 
   const cvElementId = `cv-preview-${cv.id || 'current'}`;
@@ -448,7 +494,7 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                 </div>
 
                 {/* Professional Summary */}
-                {cv.data.personalInfo.summary && (
+                {cv.data.personalInfo.summary && isValidHtmlContent(cv.data.personalInfo.summary) && (
                   <section className="mb-10">
                     <h2 className="text-2xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2 mb-4">Profil</h2>
                     <div
@@ -470,8 +516,8 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                             <p className="text-sm text-gray-500">{formatDateRange(exp.startDate, exp.endDate, exp.current)}</p>
                           </div>
                           <p className="text-md text-gray-600 mb-1">{exp.company}</p>
-                          {exp.location && <p className="text-sm text-gray-500 mb-2">{exp.location}</p>}
-                          {exp.description && (
+                          {exp.location && isValidContent(exp.location) && <p className="text-sm text-gray-500 mb-2">{exp.location}</p>}
+                          {exp.description && isValidHtmlContent(exp.description) && (
                             <div
                               className="text-sm text-gray-600 leading-relaxed"
                               dangerouslySetInnerHTML={{ __html: exp.description }}
@@ -491,7 +537,7 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                       {cv.data.projects.map((project) => (
                         <div key={project.id}>
                           <h3 className="text-lg font-semibold text-gray-700">{project.name}</h3>
-                          {project.description && (
+                          {project.description && isValidHtmlContent(project.description) && (
                             <p className="text-sm text-gray-600 mt-2">{project.description}</p>
                           )}
                           {project.technologies && project.technologies.length > 0 && (
@@ -521,7 +567,7 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                           </div>
                           <p className="text-md text-gray-600 mb-1">{vol.organization}</p>
                           {vol.cause && <p className="text-sm text-gray-500 mb-2">{vol.cause}</p>}
-                          {vol.description && (
+                          {vol.description && isValidContent(vol.description) && (
                             <p className="text-sm text-gray-600">{vol.description}</p>
                           )}
                         </div>
@@ -654,7 +700,7 @@ export default function CVPreview({ cv }: CVPreviewProps) {
           <div className="p-6">
 
             {/* Professional Summary */}
-            {cv.data.personalInfo.summary && (
+            {cv.data.personalInfo.summary && isValidHtmlContent(cv.data.personalInfo.summary) && (
               <div className={styles.sectionClass}>
                 <h2 className={styles.sectionHeaderClass}>
                   Peşəkar Özət
@@ -679,13 +725,13 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                         <div>
                           <h3 className="text-lg font-bold text-gray-900">{exp.position}</h3>
                           <p className="text-md font-semibold text-gray-700">{exp.company}</p>
-                          {exp.location && <p className="text-sm text-gray-600">{exp.location}</p>}
+                          {exp.location && isValidContent(exp.location) && <p className="text-sm text-gray-600">{exp.location}</p>}
                         </div>
                         <div className="text-sm text-gray-500 text-right">
                           {formatDateRange(exp.startDate, exp.endDate, exp.current)}
                         </div>
                       </div>
-                      {exp.description && (
+                      {exp.description && isValidHtmlContent(exp.description) && (
                         <div
                           className="text-sm text-gray-700 prose prose-sm max-w-none mt-2"
                           dangerouslySetInnerHTML={{ __html: exp.description }}
@@ -710,14 +756,14 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                         <div>
                           <h3 className="text-lg font-bold text-gray-900">{edu.degree}</h3>
                           <p className="text-md font-semibold text-gray-700">{edu.institution}</p>
-                          {edu.field && <p className="text-sm text-gray-600">{edu.field}</p>}
-                          {edu.gpa && <p className="text-sm text-gray-600">GPA: {edu.gpa}</p>}
+                          {edu.field && isValidContent(edu.field) && <p className="text-sm text-gray-600">{edu.field}</p>}
+                          {edu.gpa && isValidContent(edu.gpa) && <p className="text-sm text-gray-600">GPA: {edu.gpa}</p>}
                         </div>
                         <div className="text-sm text-gray-500 text-right">
                           {formatDateRange(edu.startDate, edu.endDate, edu.current)}
                         </div>
                       </div>
-                      {edu.description && (
+                      {edu.description && isValidContent(edu.description) && (
                         <p className="text-sm text-gray-700 mt-2">{edu.description}</p>
                       )}
                     </div>
@@ -733,7 +779,7 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                   Bacarıqlar
                 </h2>
                 <div className="grid grid-cols-2 gap-2">
-                  {cv.data.skills.map((skill) => (
+                  {cv.data.skills.filter(skill => isValidContent(skill.name)).map((skill) => (
                     <div key={skill.id} className="text-sm font-medium text-gray-900">
                       • {skill.name}
                     </div>
@@ -749,7 +795,7 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                   Dillər
                 </h2>
                 <div className="grid grid-cols-2 gap-3">
-                  {cv.data.languages.map((lang) => (
+                  {cv.data.languages.filter(lang => isValidContent(lang.name)).map((lang) => (
                     <div key={lang.id} className="flex justify-between items-center">
                       <span className="text-sm font-medium text-gray-900">{lang.name}</span>
                       <span className="text-xs text-gray-500 font-medium">{lang.level}</span>
@@ -774,7 +820,7 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                           {formatDateRange(project.startDate, project.endDate, project.current)}
                         </div>
                       </div>
-                      {project.description && (
+                      {project.description && isValidHtmlContent(project.description) && (
                         <div
                           className="text-sm text-gray-700 mb-2 prose prose-sm max-w-none"
                           dangerouslySetInnerHTML={{ __html: project.description }}
@@ -782,7 +828,7 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                       )}
                       {project.technologies.length > 0 && (
                         <div className="flex flex-wrap gap-1">
-                          {project.technologies.map((tech, i) => (
+                          {project.technologies.filter(tech => isValidContent(tech)).map((tech, i) => (
                             <span key={i} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
                               {tech}
                             </span>
@@ -807,7 +853,7 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                       <div>
                         <h3 className="font-bold text-gray-900">{cert.name}</h3>
                         <p className="text-sm text-gray-700">{cert.issuer}</p>
-                        {cert.credentialId && (
+                        {cert.credentialId && isValidContent(cert.credentialId) && (
                           <p className="text-xs text-gray-500">ID: {cert.credentialId}</p>
                         )}
                       </div>
@@ -832,7 +878,7 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                       {section.title || 'Əlavə Bölmə'}
                     </h2>
 
-                    {section.description && (
+                    {section.description && isValidHtmlContent(section.description) && (
                       <div
                         className="text-sm text-gray-600 mb-3 italic prose prose-sm max-w-none"
                         dangerouslySetInnerHTML={{ __html: section.description }}
@@ -845,14 +891,14 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                           <div key={item.id} className="mb-3">
                             <div className="flex justify-between items-start">
                               <h3 className="font-bold text-gray-900">{item.title}</h3>
-                              {item.date && (
+                              {item.date && isValidContent(item.date) && (
                                 <span className="text-sm text-gray-500">{item.date}</span>
                               )}
                             </div>
-                            {item.location && (
+                            {item.location && isValidContent(item.location) && (
                               <p className="text-sm text-gray-600">{item.location}</p>
                             )}
-                            {item.description && (
+                            {item.description && isValidHtmlContent(item.description) && (
                               <div
                                 className="text-sm text-gray-700 mt-1 prose prose-sm max-w-none"
                                 dangerouslySetInnerHTML={{ __html: item.description }}

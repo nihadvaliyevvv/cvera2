@@ -317,20 +317,59 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
 
   const renderSkillsSection = () => {
     if (!cv.data.skills || cv.data.skills.length === 0) return null;
+
+    const hardSkills = cv.data.skills.filter(skill => skill.type === 'hard' || !skill.type);
+    const softSkills = cv.data.skills.filter(skill => skill.type === 'soft');
+
     return (
       <div style={pdfStyles.section}>
         <div style={pdfStyles.sectionHeader}>
           <h2 style={pdfStyles.sectionTitle}>Bacarıqlar</h2>
         </div>
-        <div style={pdfStyles.skillsGrid}>
-          {cv.data.skills.map((skill, index) => (
-            <div key={index} style={pdfStyles.skillCategory}>
-              <div style={pdfStyles.skillItem}>
-                <span>{skill.name || 'Bacarıq'}</span>
-              </div>
+
+        {hardSkills.length > 0 && (
+          <div style={{ marginBottom: '16px' }}>
+            <h3 style={{
+              fontSize: '14px',
+              fontWeight: 'bold',
+              color: '#1f2937',
+              marginBottom: '8px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
+            }}>Hard Skills</h3>
+            <div style={pdfStyles.skillsGrid}>
+              {hardSkills.map((skill, index) => (
+                <div key={index} style={pdfStyles.skillCategory}>
+                  <div style={pdfStyles.skillItem}>
+                    <span>{skill.name || 'Bacarıq'}</span>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        )}
+
+        {softSkills.length > 0 && (
+          <div style={{ marginBottom: '16px' }}>
+            <h3 style={{
+              fontSize: '14px',
+              fontWeight: 'bold',
+              color: '#1f2937',
+              marginBottom: '8px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
+            }}>Soft Skills</h3>
+            <div style={pdfStyles.skillsGrid}>
+              {softSkills.map((skill, index) => (
+                <div key={index} style={pdfStyles.skillCategory}>
+                  <div style={pdfStyles.skillItem}>
+                    <span>{skill.name || 'Bacarıq'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   };

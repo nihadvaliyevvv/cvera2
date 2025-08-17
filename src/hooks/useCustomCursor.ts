@@ -38,20 +38,72 @@ export function useCustomCursor() {
     // Hide default cursor completely
     document.body.style.cursor = 'none';
 
-    // Create global style to hide cursor on all elements
+    // Create global style to hide cursor on most elements but allow normal cursor on form inputs
     const style = document.createElement('style');
     style.id = 'custom-cursor-style';
     style.textContent = `
-      * { 
+      body, div, span, p, h1, h2, h3, h4, h5, h6 { 
         cursor: none !important; 
       }
-      *:hover { 
-        cursor: none !important; 
-      }
-      input, textarea, button, a, [role="button"], .clickable {
+      button, a, [role="button"], .clickable {
         cursor: none !important;
       }
-    `;
+      /* Allow normal cursor on form inputs for better UX */
+      input[type="checkbox"], 
+      input[type="checkbox"] *,
+      input[type="radio"], 
+      input[type="range"], 
+      input[type="file"],
+      select,
+      textarea,
+      input[type="text"],
+      input[type="email"],
+      input[type="password"],
+      input[type="number"],
+      input[type="month"],
+      input[type="date"],
+      label[for],
+      label[htmlFor] {
+        cursor: auto !important;
+      }
+      /* Specifically for checkbox labels and containers */
+      label[for]:hover {
+        cursor: pointer !important;
+      }
+      
+      /* COMPLETELY DISABLE CUSTOM CURSOR ON CHECKBOX AREAS */
+      .checkbox-wrapper,
+      .checkbox-wrapper *,
+      .checkbox-button,
+      .checkbox-button *,
+      .checkbox-label,
+      .checkbox-label *,
+      .checkbox-container,
+      .checkbox-container *,
+      .form-control,
+      .form-control *,
+      [role="checkbox"],
+      [role="checkbox"] *,
+      .bg-blue-50,
+      .bg-blue-50 *,
+      .bg-gray-50,
+      .bg-gray-50 *,
+      button[aria-checked],
+      button[aria-checked] *,
+      label[style*="cursor: default"],
+      label[style*="cursor: default"] *,
+      /* Force default cursor on all checkbox related elements */
+      div:has(button[aria-checked]),
+      div:has(button[aria-checked]) *,
+      div:has(input[type="checkbox"]),
+      div:has(input[type="checkbox"]) *,
+      /* Override any cursor none for date range inputs */
+      div:has([class*="DateRangeInput"]),
+      div:has([class*="DateRangeInput"]) *,
+      [class*="DateRangeInput"],
+      [class*="DateRangeInput"] * {
+        cursor: default !important;
+      }`;
 
     // Remove existing style if any
     const existingStyle = document.getElementById('custom-cursor-style');

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { getLabel } from '@/lib/cvLanguage';
 import RichTextEditor from '@/components/ui/RichTextEditor';
+import DateRangeInput from '@/components/cv/DateRangeInput';
 
 interface Project {
   id: string;
@@ -103,44 +104,44 @@ export default function ProjectsSection({ data, onChange }: ProjectsSectionProps
         <div className="space-y-4">
           {data.map((project, index) => (
             <div key={project.id} className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-blue-500">🚀</span>
-                    <h4 className="font-medium text-gray-900">
-                      {project.name || 'Yeni layihə'}
-                    </h4>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-blue-500">🚀</span>
+                  <h4 className="font-medium text-gray-900">
+                    {project.name || 'Yeni layihə'}
+                  </h4>
+                </div>
+                <p className="text-sm text-gray-600 line-clamp-2">
+                  {project.description || 'Layihə təsviri'}
+                </p>
+                {project.technologies && project.technologies.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {project.technologies.slice(0, 3).map((tech, idx) => (
+                      <span key={idx} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                        {tech}
+                      </span>
+                    ))}
+                    {project.technologies.length > 3 && (
+                      <span className="text-xs text-gray-500">+{project.technologies.length - 3}</span>
+                    )}
                   </div>
-                  <p className="text-sm text-gray-600 line-clamp-2">
-                    {project.description || 'Layihə təsviri'}
-                  </p>
-                  {project.technologies && project.technologies.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {project.technologies.slice(0, 3).map((tech, idx) => (
-                        <span key={idx} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                          {tech}
-                        </span>
-                      ))}
-                      {project.technologies.length > 3 && (
-                        <span className="text-xs text-gray-500">+{project.technologies.length - 3}</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setExpandedId(expandedId === project.id ? null : project.id)}
-                    className="text-blue-600 hover:text-blue-800 transition-colors"
-                  >
-                    {expandedId === project.id ? 'Bağlayın' : 'Redaktə edin'}
-                  </button>
-                  <button
-                    onClick={() => removeProject(project.id)}
-                    className="text-red-600 hover:text-red-800 transition-colors"
-                  >
-                    Silin
-                  </button>
-                </div>
+                )}
+              </div>
+
+              {/* Action links moved to bottom of card */}
+              <div className="flex items-center justify-end gap-4 mt-4 pt-2 border-t border-gray-100">
+                <button
+                  onClick={() => setExpandedId(expandedId === project.id ? null : project.id)}
+                  className="text-blue-600 hover:text-blue-800 transition-colors text-sm cursor-pointer"
+                >
+                  {expandedId === project.id ? 'Bağlayın' : 'Redaktə edin'}
+                </button>
+                <button
+                  onClick={() => removeProject(project.id)}
+                  className="text-red-600 hover:text-red-800 transition-colors text-sm cursor-pointer"
+                >
+                  Silin
+                </button>
               </div>
 
               {expandedId === project.id && (
@@ -172,52 +173,20 @@ export default function ProjectsSection({ data, onChange }: ProjectsSectionProps
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Başlama tarixi <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="month"
-                        value={project.startDate}
-                        onChange={(e) => updateProject(project.id, 'startDate', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      />
-                    </div>
+                    {/* Professional Date Range Input */}
+                    <DateRangeInput
+                      startDate={project.startDate || ''}
+                      endDate={project.endDate}
+                      current={project.current || false}
+                      onStartDateChange={(date) => updateProject(project.id, 'startDate', date)}
+                      onEndDateChange={(date) => updateProject(project.id, 'endDate', date)}
+                      onCurrentChange={(current) => updateProject(project.id, 'current', current)}
+                      startLabel="Başlama tarixi"
+                      endLabel="Bitirmə tarixi"
+                      currentLabel="Layihə davam edir"
+                      required={true}
+                    />
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Bitirmə tarixi
-                      </label>
-                      <input
-                        type="month"
-                        value={project.endDate || ''}
-                        onChange={(e) => updateProject(project.id, 'endDate', e.target.value)}
-                        disabled={project.current}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50"
-                      />
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <div className="w-full">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newValue = !project.current;
-                            updateProject(project.id, 'current', newValue);
-                            if (newValue) {
-                              updateProject(project.id, 'endDate', '');
-                            }
-                          }}
-                          className={`w-full p-3 rounded-lg border-2 font-medium text-sm transition-all duration-200 ${
-                            project.current
-                              ? 'bg-red-100 border-red-300 text-red-800 hover:bg-red-200'
-                              : 'bg-blue-100 border-blue-300 text-blue-800 hover:bg-blue-200'
-                          }`}
-                        >
-                          {project.current ? 'Davam etmir' : 'Davam edir'}
-                        </button>
-                      </div>
-                    </div>
                   </div>
 
                   <div>

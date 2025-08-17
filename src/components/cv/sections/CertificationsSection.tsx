@@ -129,37 +129,37 @@ export default function CertificationsSection({ data, onChange }: Certifications
         <div className="space-y-4">
           {data.map((certification, index) => (
             <div key={`${certification.id}-${index}`} className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-blue-500">🏆</span>
-                    <h4 className="font-medium text-gray-900">
-                      {certification.name || 'Yeni sertifikat'}
-                    </h4>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    {certification.issuer || 'Verən təşkilat'}
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-blue-500">🏆</span>
+                  <h4 className="font-medium text-gray-900">
+                    {certification.name || 'Yeni sertifikat'}
+                  </h4>
+                </div>
+                <p className="text-sm text-gray-600">
+                  {certification.issuer || 'Verən təşkilat'}
+                </p>
+                {certification.date && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formatDate(certification.date)}
                   </p>
-                  {certification.date && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {formatDate(certification.date)}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setExpandedId(expandedId === certification.id ? null : certification.id)}
-                    className="text-blue-600 hover:text-blue-800 transition-colors"
-                  >
-                    {expandedId === certification.id ? 'Bağlayın' : 'Redaktə edin'}
-                  </button>
-                  <button
-                    onClick={() => removeCertification(certification.id)}
-                    className="text-red-600 hover:text-red-800 transition-colors"
-                  >
-                    Silin
-                  </button>
-                </div>
+                )}
+              </div>
+
+              {/* Action links moved to bottom of card */}
+              <div className="flex items-center justify-end gap-4 mt-4 pt-2 border-t border-gray-100">
+                <button
+                  onClick={() => setExpandedId(expandedId === certification.id ? null : certification.id)}
+                  className="text-blue-600 hover:text-blue-800 transition-colors text-sm cursor-pointer"
+                >
+                  {expandedId === certification.id ? 'Bağlayın' : 'Redaktə edin'}
+                </button>
+                <button
+                  onClick={() => removeCertification(certification.id)}
+                  className="text-red-600 hover:text-red-800 transition-colors text-sm cursor-pointer"
+                >
+                  Silin
+                </button>
               </div>
 
               {expandedId === certification.id && (

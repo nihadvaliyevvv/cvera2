@@ -452,7 +452,7 @@ const FontSelector: React.FC<FontSelectorProps> = ({
                 <label className="block text-xs font-medium text-gray-700 mb-2">
                   Kiçik Mətn Qalınlığı:
                   <span className="text-gray-500 ml-1">
-                    {(currentSettings.fontWeight.small || 400) <= 500 ? 'Normal' : 'Qalın'}
+                    {(currentSettings.fontWeight?.small || 400) <= 500 ? 'Normal' : 'Qalın'}
                   </span>
                 </label>
                 <input
@@ -460,7 +460,7 @@ const FontSelector: React.FC<FontSelectorProps> = ({
                   min="300"
                   max="700"
                   step="50"
-                  value={currentSettings.fontWeight.small || 400}
+                  value={currentSettings.fontWeight?.small || 400}
                   onChange={(e) => {
                     const newSettings = {
                       ...currentSettings,
