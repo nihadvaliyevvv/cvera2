@@ -147,7 +147,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
     customSections,
     customSectionsLength: customSections?.length || 0,
     hasItems: customSections?.some(section => section.items && section.items.length > 0),
-    visibleSections: customSections?.filter(section => section.isVisible !== false) || []
+    visibleSections: customSections?.filter((section: any) => section.isVisible !== false) || []
   });
 
   const fullName = personalInfo?.fullName || personalInfo?.name || '';

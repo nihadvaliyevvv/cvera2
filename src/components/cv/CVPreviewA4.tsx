@@ -487,8 +487,14 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
         case 'skills':
           if (!cvData.skills || !Array.isArray(cvData.skills) || cvData.skills.length === 0) return null;
 
-          const hardSkills = cvData.skills.filter(skill => skill.type === 'hard' || !skill.type);
-          const softSkills = cvData.skills.filter(skill => skill.type === 'soft');
+          const hardSkills = cvData.skills.filter(skill => {
+            if (typeof skill === 'string') return true; // String skills default to hard skills
+            return skill.type === 'hard' || !skill.type;
+          });
+          const softSkills = cvData.skills.filter(skill => {
+            if (typeof skill === 'string') return false; // String skills are not soft skills
+            return skill.type === 'soft';
+          });
 
           return (
             <DraggableSection key={`skills-${section.order}`} sectionId="skills" className="w-full mb-6">
@@ -880,8 +886,14 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
             case 'skills':
               if (!cvData.skills || !Array.isArray(cvData.skills) || cvData.skills.length === 0) return null;
 
-              const hardSkills = cvData.skills.filter(skill => skill.type === 'hard' || !skill.type);
-              const softSkills = cvData.skills.filter(skill => skill.type === 'soft');
+              const hardSkills = cvData.skills.filter(skill => {
+                if (typeof skill === 'string') return true; // String skills default to hard skills
+                return skill.type === 'hard' || !skill.type;
+              });
+              const softSkills = cvData.skills.filter(skill => {
+                if (typeof skill === 'string') return false; // String skills are not soft skills
+                return skill.type === 'soft';
+              });
 
               return (
                 <DraggableSection key="skills" sectionId="skills">

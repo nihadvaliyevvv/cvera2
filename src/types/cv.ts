@@ -37,6 +37,9 @@ export interface Education {
 export interface Skill {
   id: string;
   name: string;
+  type?: 'hard' | 'soft';
+  level?: string;
+  category?: string;
 }
 
 export interface Language {

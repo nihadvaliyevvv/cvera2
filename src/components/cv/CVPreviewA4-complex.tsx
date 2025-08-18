@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, CSSProperties } from 'react';
 import { apiClient } from '@/lib/api';
 import { CVData as CVDataType } from '@/types/cv';
 import styles from './CVPreviewA4-complex.module.css';
@@ -30,7 +30,7 @@ interface CVPreviewProps {
 }
 
 // Fixed PDF-like styling - no responsive behavior
-const pdfStyles = {
+const pdfStyles: { [key: string]: React.CSSProperties } = {
   page: {
     width: '100%',
     height: '100%',
@@ -46,7 +46,7 @@ const pdfStyles = {
     marginBottom: '16pt',
   },
   header: {
-    textAlign: 'center' as const,
+    textAlign: 'center',
     marginBottom: '24pt',
     paddingBottom: '12pt',
     borderBottom: '1pt solid #e5e7eb',
@@ -61,7 +61,7 @@ const pdfStyles = {
   contactInfo: {
     display: 'flex',
     justifyContent: 'center',
-    flexWrap: 'wrap' as const,
+    flexWrap: 'wrap',
     gap: '16pt',
     fontSize: '10pt',
     color: '#374151',
@@ -116,7 +116,7 @@ const pdfStyles = {
     fontSize: '10pt',
     color: '#6b7280',
     fontStyle: 'italic',
-    textAlign: 'right' as const,
+    textAlign: 'right',
   },
   experienceDescription: {
     fontSize: '10pt',
