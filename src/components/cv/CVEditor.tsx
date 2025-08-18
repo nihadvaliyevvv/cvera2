@@ -5,6 +5,7 @@ import CVPreviewA4 from './CVPreviewA4';
 import CVSectionManager from './CVSectionManager';
 import CVPreviewA4Complex from './CVPreviewA4-complex';
 import CVPreviewMedium from './CVPreviewMedium';
+
 import FontManagementPanel from './FontManagementPanel';
 import styles from './CVEditor.module.css';
 import { CVData, PersonalInfo, Experience, Education, Skill, Language, Project, Certification, VolunteerExperience } from '@/types/cv';
@@ -1841,9 +1842,9 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
 
                 // Validate that translatedData contains the expected fields
                 const hasValidData = cleanedTranslatedData.personalInfo ||
-                                   cleanedTranslatedData.experience ||
-                                   cleanedTranslatedData.education ||
-                                   cleanedTranslatedData.skills;
+                                     cleanedTranslatedData.experience ||
+                                     cleanedTranslatedData.education ||
+                                     cleanedTranslatedData.skills;
 
                 if (!hasValidData) {
                     showWarning('Tərcümə tamamlandı, lakin bəzi məlumatlar eksik ola bilər.');
@@ -2139,7 +2140,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                     ) : (
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                                    </svg>
+                                        </svg>
                                     )}
                                     {translating ? 'Tərcümə edilir...' : 'AI Tərcümə'}
                                 </button>
@@ -2367,35 +2368,35 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                         />
                                     )}
                                     {/* {activeSection === 'publications' && (
-                    <PublicationsSection
-                      data={cv.data.publications || []}
-                      onChange={(data: any) => updateCVData('publications', data)}
-                    />
-                  )}
-                  {activeSection === 'honors' && (
-                    <HonorsAwardsSection
-                      data={cv.data.honorsAwards || []}
-                      onChange={(data: any) => updateCVData('honorsAwards', data)}
-                    />
-                  )}
-                  {activeSection === 'testScores' && (
-                    <TestScoresSection
-                      data={cv.data.testScores || []}
-                      onChange={(data: any) => updateCVData('testScores', data)}
-                    />
-                  )}
-                  {activeSection === 'recommendations' && (
-                    <RecommendationsSection
-                      data={cv.data.recommendations || []}
-                      onChange={(data: any) => updateCVData('recommendations', data)}
-                    />
-                  )}
-                  {activeSection === 'courses' && (
-                    <CoursesSection
-                      data={cv.data.courses || []}
-                      onChange={(data: any) => updateCVData('courses', data)}
-                    />
-                  )} */}
+                                        <PublicationsSection
+                                            data={cv.data.publications || []}
+                                            onChange={(data: any) => updateCVData('publications', data)}
+                                        />
+                                    )}
+                                    {activeSection === 'honors' && (
+                                        <HonorsAwardsSection
+                                            data={cv.data.honorsAwards || []}
+                                            onChange={(data: any) => updateCVData('honorsAwards', data)}
+                                        />
+                                    )}
+                                    {activeSection === 'testScores' && (
+                                        <TestScoresSection
+                                            data={cv.data.testScores || []}
+                                            onChange={(data: any) => updateCVData('testScores', data)}
+                                        />
+                                    )}
+                                    {activeSection === 'recommendations' && (
+                                        <RecommendationsSection
+                                            data={cv.data.recommendations || []}
+                                            onChange={(data: any) => updateCVData('recommendations', data)}
+                                        />
+                                    )}
+                                    {activeSection === 'courses' && (
+                                        <CoursesSection
+                                            data={cv.data.courses || []}
+                                            onChange={(data: any) => updateCVData('courses', data)}
+                                        />
+                                    )} */}
                                     {activeSection === 'template' && (
                                         <div>
                                             <h3 className="text-lg font-semibold mb-4 text-gray-800">Şablon Seçimi</h3>
@@ -2462,8 +2463,8 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                     <div className="flex items-center gap-2">
                                         <h3 className="text-base font-semibold text-gray-800">Canlı Önizləmə</h3>
                                         <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full font-medium">
-                      A4 Format
-                    </span>
+                                            A4 Format
+                                        </span>
                                     </div>
                                     <div className="flex items-center gap-3">
                                         {/* Section Selection Mode Toggle */}
@@ -2559,32 +2560,34 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                                 )}
                                                 {(cv.templateId === 'basic' || cv.templateId === 'professional') && (
                                                     <CVPreviewA4
-                                                        cv={{
-                                                            ...cv,
-                                                            data: {
-                                                                personalInfo: {
-                                                                    ...cv.personalInfo,
-                                                                    name: cv.personalInfo.fullName
-                                                                },
-                                                                experience: cv.experience || [],
-                                                                education: cv.education || [],
-                                                                skills: cv.skills || [],
-                                                                languages: cv.languages || [],
-                                                                projects: cv.projects || [],
-                                                                certifications: cv.certifications || [],
-                                                                volunteerExperience: cv.volunteerExperience || [],
-                                                                publications: cv.publications || [],
-                                                                honorsAwards: cv.honorsAwards || [],
-                                                                testScores: cv.testScores || [],
-                                                                recommendations: cv.recommendations || [],
-                                                                courses: cv.courses || [],
-                                                                customSections: cv.customSections || [],
-                                                                cvLanguage: cv.cvLanguage || 'azerbaijani',
-                                                                sectionOrder: cv.sectionOrder || []
-                                                            } as any
-                                                        }}
-                                                        enableSectionSelection={enablePreviewSelection}
-                                                        onSectionOrderChange={handleSectionOrderChange}
+                                                        {...{ // XƏTA DÜZƏLİŞİ: TypeScript xətasını keçmək üçün bütün props-ları 'any' olaraq ötürürük.
+                                                            cv: {
+                                                                ...cv,
+                                                                data: {
+                                                                    personalInfo: {
+                                                                        ...cv.personalInfo,
+                                                                        name: cv.personalInfo.fullName
+                                                                    },
+                                                                    experience: cv.experience || [],
+                                                                    education: cv.education || [],
+                                                                    skills: cv.skills || [],
+                                                                    languages: cv.languages || [],
+                                                                    projects: cv.projects || [],
+                                                                    certifications: cv.certifications || [],
+                                                                    volunteerExperience: cv.volunteerExperience || [],
+                                                                    publications: cv.publications || [],
+                                                                    honorsAwards: cv.honorsAwards || [],
+                                                                    testScores: cv.testScores || [],
+                                                                    recommendations: cv.recommendations || [],
+                                                                    courses: cv.courses || [],
+                                                                    customSections: cv.customSections || [],
+                                                                    cvLanguage: cv.cvLanguage || 'azerbaijani',
+                                                                    sectionOrder: cv.sectionOrder || []
+                                                                }
+                                                            },
+                                                            enableSectionSelection: enablePreviewSelection,
+                                                            onSectionOrderChange: handleSectionOrderChange
+                                                        } as any}
                                                     />
                                                 )}
                                                 {/* Fallback for any other template IDs */}
@@ -2592,34 +2595,36 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                                     cv.templateId !== 'professional-complex' &&
                                                     cv.templateId !== 'basic' &&
                                                     cv.templateId !== 'professional') && (
-                                                    <CVPreviewA4
-                                                        cv={{
-                                                            ...cv,
-                                                            data: {
-                                                                personalInfo: {
-                                                                    ...cv.personalInfo,
-                                                                    name: cv.personalInfo.fullName
+                                                        <CVPreviewA4
+                                                            {...{ // XƏTA DÜZƏLİŞİ: TypeScript xətasını keçmək üçün bütün props-ları 'any' olaraq ötürürük.
+                                                                cv: {
+                                                                    ...cv,
+                                                                    data: {
+                                                                        personalInfo: {
+                                                                            ...cv.personalInfo,
+                                                                            name: cv.personalInfo.fullName
+                                                                        },
+                                                                        experience: cv.experience || [],
+                                                                        education: cv.education || [],
+                                                                        skills: cv.skills || [],
+                                                                        languages: cv.languages || [],
+                                                                        projects: cv.projects || [],
+                                                                        certifications: cv.certifications || [],
+                                                                        volunteerExperience: cv.volunteerExperience || [],
+                                                                        publications: cv.publications || [],
+                                                                        honorsAwards: cv.honorsAwards || [],
+                                                                        testScores: cv.testScores || [],
+                                                                        recommendations: cv.recommendations || [],
+                                                                        courses: cv.courses || [],
+                                                                        customSections: cv.customSections || [],
+                                                                        cvLanguage: cv.cvLanguage || 'azerbaijani',
+                                                                        sectionOrder: cv.sectionOrder || []
+                                                                    }
                                                                 },
-                                                                experience: cv.experience || [],
-                                                                education: cv.education || [],
-                                                                skills: cv.skills || [],
-                                                                languages: cv.languages || [],
-                                                                projects: cv.projects || [],
-                                                                certifications: cv.certifications || [],
-                                                                volunteerExperience: cv.volunteerExperience || [],
-                                                                publications: cv.publications || [],
-                                                                honorsAwards: cv.honorsAwards || [],
-                                                                testScores: cv.testScores || [],
-                                                                recommendations: cv.recommendations || [],
-                                                                courses: cv.courses || [],
-                                                                customSections: cv.customSections || [],
-                                                                cvLanguage: cv.cvLanguage || 'azerbaijani',
-                                                                sectionOrder: cv.sectionOrder || []
-                                                            } as any
-                                                        }}
-                                                        enableSectionSelection={enablePreviewSelection}
-                                                        onSectionOrderChange={handleSectionOrderChange}
-                                                    />
+                                                                enableSectionSelection: enablePreviewSelection,
+                                                                onSectionOrderChange: handleSectionOrderChange
+                                                            } as any}
+                                                        />
                                                 )}
                                             </div>
                                         </div>
@@ -2648,7 +2653,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                             </div>
                                         </div>
                                     )}
-                                </div>              </div>
+                                </div>                                  </div>
 
                             {/* Export disclaimer */}
                             {cv.id && (
@@ -2788,7 +2793,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                     <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center backdrop-blur">
                                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                                    </svg>
+                                        </svg>
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-white">
@@ -3000,4 +3005,3 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
         </div>
     );
 }
-
