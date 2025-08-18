@@ -38,6 +38,7 @@ interface CVData {
       id?: string;
       name?: string;
       category?: string;
+      type?: 'hard' | 'soft';
     }>;
     languages?: Array<{
       id?: string;
@@ -398,25 +399,6 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
       {/* Skills */}
       {skills && skills.length > 0 && (
         <div style={{ marginBottom: '0.8rem', pageBreakInside: 'avoid', minHeight: '40px' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            marginBottom: '0.5rem',
-            paddingBottom: '0.3rem',
-            pageBreakAfter: 'avoid',
-            borderBottom: '1px solid #e5e7eb'
-          }}>
-            <h2 style={{
-              fontSize: '1.375rem',
-              fontWeight: '700',
-              color: '#1f2937',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              margin: '0'
-            }}>Skills</h2>
-          </div>
-
           {(() => {
             const hardSkills = skills.filter(skill => skill.type === 'hard' || !skill.type);
             const softSkills = skills.filter(skill => skill.type === 'soft');
@@ -424,15 +406,25 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
             return (
               <div style={{ marginTop: '0.5rem' }}>
                 {hardSkills.length > 0 && (
-                  <div style={{ marginBottom: '1rem' }}>
-                    <h3 style={{
-                      fontSize: '1rem',
-                      fontWeight: '600',
-                      color: '#1f2937',
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
                       marginBottom: '0.5rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.3px'
-                    }}>Hard Skills</h3>
+                      paddingBottom: '0.3rem',
+                      pageBreakAfter: 'avoid',
+                      borderBottom: '1px solid #e5e7eb'
+                    }}>
+                      <h2 style={{
+                        fontSize: '1.375rem',
+                        fontWeight: '700',
+                        color: '#1f2937',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        margin: '0'
+                      }}>Hard Skills</h2>
+                    </div>
                     <div style={{
                       display: 'grid',
                       gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -460,14 +452,24 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
 
                 {softSkills.length > 0 && (
                   <div style={{ marginBottom: '1rem' }}>
-                    <h3 style={{
-                      fontSize: '1rem',
-                      fontWeight: '600',
-                      color: '#1f2937',
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
                       marginBottom: '0.5rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.3px'
-                    }}>Soft Skills</h3>
+                      paddingBottom: '0.3rem',
+                      pageBreakAfter: 'avoid',
+                      borderBottom: '1px solid #e5e7eb'
+                    }}>
+                      <h2 style={{
+                        fontSize: '1.375rem',
+                        fontWeight: '700',
+                        color: '#1f2937',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        margin: '0'
+                      }}>Soft Skills</h2>
+                    </div>
                     <div style={{
                       display: 'grid',
                       gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',

@@ -572,13 +572,12 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
                 return (
                   <DraggableSection key={section.id} sectionId="skills">
                     <section>
-                      <h2 className="text-lg font-bold text-gray-800 mb-3 pb-1 border-b border-gray-400">
-                        {texts.skills}
-                      </h2>
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         {hardSkills.length > 0 && (
                           <div>
-                            <h3 className="text-sm font-semibold text-gray-800 mb-1">Hard Skills</h3>
+                            <h2 className="text-lg font-bold text-gray-800 mb-3 pb-1 border-b border-gray-400">
+                              Hard Skills
+                            </h2>
                             <div className="text-sm text-gray-700">
                               {hardSkills.map(skill => skill.name).join(' • ')}
                             </div>
@@ -586,7 +585,9 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
                         )}
                         {softSkills.length > 0 && (
                           <div>
-                            <h3 className="text-sm font-semibold text-gray-800 mb-1">Soft Skills</h3>
+                            <h2 className="text-lg font-bold text-gray-800 mb-3 pb-1 border-b border-gray-400">
+                              Soft Skills
+                            </h2>
                             <div className="text-sm text-gray-700">
                               {softSkills.map(skill => skill.name).join(' • ')}
                             </div>

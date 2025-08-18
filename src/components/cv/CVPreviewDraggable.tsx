@@ -11,7 +11,12 @@ interface CVData {
     personalInfo: any;
     experience?: any[];
     education?: any[];
-    skills?: any[];
+    skills?: Array<{
+      id?: string;
+      name: string;
+      level?: string;
+      type?: 'hard' | 'soft';
+    }>;
     projects?: any[];
     certifications?: any[];
     volunteerExperience?: any[];

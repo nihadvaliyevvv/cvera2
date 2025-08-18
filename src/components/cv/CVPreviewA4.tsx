@@ -96,7 +96,7 @@ interface CVData {
       current?: boolean;
       gpa?: string;
     }>;
-    skills?: Array<string | { name: string; level?: string }>;
+    skills?: Array<string | { name: string; level?: string; type?: 'hard' | 'soft' }>;
     languages?: Array<string | {
       language?: string; 
       name?: string; 
@@ -493,12 +493,10 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           return (
             <DraggableSection key={`skills-${section.order}`} sectionId="skills" className="w-full mb-6">
               <div>
-                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">{getLabel('skills', currentLanguage)}</h2>
-                <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
-
                 {hardSkills.length > 0 && (
-                  <div className="mb-4">
-                    <h3 className="text-sm font-semibold text-white mb-2 uppercase tracking-wide">Hard Skills</h3>
+                  <div className="mb-6">
+                    <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">Hard Skills</h2>
+                    <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
                     <ul className="space-y-1 cv-small list-disc list-inside text-white">
                       {hardSkills.map((skill: any, index: number) => {
                         const skillName = typeof skill === 'string' ? skill : skill.name;
@@ -516,7 +514,8 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
 
                 {softSkills.length > 0 && (
                   <div className="mb-4">
-                    <h3 className="text-sm font-semibold text-white mb-2 uppercase tracking-wide">Soft Skills</h3>
+                    <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">Soft Skills</h2>
+                    <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
                     <ul className="space-y-1 cv-small list-disc list-inside text-white">
                       {softSkills.map((skill: any, index: number) => {
                         const skillName = typeof skill === 'string' ? skill : skill.name;
@@ -887,9 +886,6 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
               return (
                 <DraggableSection key="skills" sectionId="skills">
                   <div>
-                    <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
-                      {getLabel('skills', currentLanguage)}
-                    </h3>
 
                     {hardSkills.length > 0 && (
                       <div className="mb-4">
