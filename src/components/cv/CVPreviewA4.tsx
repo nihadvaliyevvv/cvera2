@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 // =======================================================================
 // FONT MANAGER (test1-dən inteqrasiya olunub)
@@ -13,6 +13,7 @@ const useFontSettings = (cvId: string | undefined) => {
         fontSize: '14px',
     });
 
+    // Load from localStorage on mount or cvId change
     useEffect(() => {
         if (cvId) {
             try {
@@ -26,9 +27,20 @@ const useFontSettings = (cvId: string | undefined) => {
         }
     }, [cvId]);
 
-    return { fontSettings };
-};
+    // Save to localStorage when fontSettings change
+    const setAndSaveFontSettings = useCallback((settings: typeof fontSettings) => {
+        setFontSettings(settings);
+        if (cvId) {
+            try {
+                localStorage.setItem(`font-settings-${cvId}`, JSON.stringify(settings));
+            } catch (error) {
+                console.error("Şrift ayarlarını saxlamaq alınmadı:", error);
+            }
+        }
+    }, [cvId]);
 
+    return { fontSettings, setFontSettings: setAndSaveFontSettings };
+};
 
 // =======================================================================
 // TRANSLATE FUNCTIONS (test1-dən inteqrasiya olunub)
@@ -267,7 +279,8 @@ interface CVData {
 
 interface CVPreviewProps {
     cv: CVData;
-    onSectionOrderChange?: (sections: any[]) => void;
+    enableSectionSelection?: boolean;
+    onSectionOrderChange?: (sections: any[]) => Promise<void>;
 }
 
 interface SectionConfig {
@@ -493,7 +506,7 @@ const ResumeATSTemplate: React.FC<CVPreviewProps> = ({ cv, onSectionOrderChange 
     if (!mounted) return <div className="min-h-screen bg-white"></div>;
 
     return (
-        <div className="font-sans bg-gray-100 h-full overflow-y-auto p-4 md:p-8" style={{ fontFamily: fontSettings.fontFamily, fontSize: fontSettings.fontSize }}>
+        <div className="font-sans bg-gray-100 h-full overflow-y-auto p-4 md:p-8"  style={{ fontFamily: fontSettings.fontFamily, fontSize: fontSettings.fontSize }}>
             <div className="w-full max-w-4xl bg-white shadow-lg p-8 md:p-12">
                 <header className="flex flex-col md:flex-row justify-between items-start mb-10">
                     <div className="md:w-3/4">
