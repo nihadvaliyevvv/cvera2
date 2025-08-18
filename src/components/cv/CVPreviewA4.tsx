@@ -1,1103 +1,671 @@
-// Component to render HTML content safely
-import React, {JSX, useEffect, useState, useCallback} from "react";
-import { useFontSettings } from "../../hooks/useFontSettings";
-import {
-  getLabel,
-  CVLanguage,
-  translateLanguageLevel,
-  translateDegree,
-  formatExperienceDateRange,
-  smartTranslateText
-} from "@/lib/cvLanguage";
+'use client';
 
-const SafeHtmlContent: ({content, className, allowHtml}: {
-    content: any;
-    className?: any;
-    allowHtml?: any
-}) => (null | JSX.Element) = ({ content, className = '', allowHtml = true }) => {
-  if (!content) return null;
+import React, { useState, useEffect, useCallback } from 'react';
 
-  function stripHtmlTags(content: any): string {
-    if (!content) return '';
-    const str = String(content);
-    return str.replace(/<[^>]*>/g, '');
-  }
+// =======================================================================
+// FONT MANAGER (test1-dən inteqrasiya olunub)
+// =======================================================================
+// Bu hook, CV üçün şrift ayarlarını idarə edir.
+// Əgər lokal yaddaşda saxlanmış ayarlar varsa, onları istifadə edir.
+const useFontSettings = (cvId: string | undefined) => {
+    const [fontSettings, setFontSettings] = useState({
+        fontFamily: 'Inter, sans-serif',
+        fontSize: '14px',
+    });
 
-  // For Basic format or when HTML should be stripped, render as plain text
-  if (!allowHtml) {
-    const plainText = stripHtmlTags(content);
-    return (
-      <div className={`cv-body ${className}`}>
-        {plainText.split('\n').map((line, index) => (
-          <React.Fragment key={index}>
-            {line}
-            {index < plainText.split('\n').length - 1 && <br />}
-          </React.Fragment>
-        ))}
-      </div>
-    );
-  }
+    useEffect(() => {
+        if (cvId) {
+            try {
+                const savedSettings = localStorage.getItem(`font-settings-${cvId}`);
+                if (savedSettings) {
+                    setFontSettings(JSON.parse(savedSettings));
+                }
+            } catch (error) {
+                console.error("Şrift ayarlarını yükləmək alınmadı:", error);
+            }
+        }
+    }, [cvId]);
 
-  // For Medium format, render HTML safely
-  return (
-    <div
-      className={`cv-body ${className}`}
-      dangerouslySetInnerHTML={{ __html: content }}
-    />
-  );
+    return { fontSettings };
 };
 
 
-interface PersonalInfo {
-  name?: string;
-  fullName?: string;
-  email?: string;
-  phone?: string;
-  website?: string;
-  linkedin?: string;
-  summary?: string;
-  title?: string;
-  profileImage?: string;
-}
+// =======================================================================
+// TRANSLATE FUNCTIONS (test1-dən inteqrasiya olunub)
+// =======================================================================
+type CVLanguage = 'azerbaijani' | 'english';
 
+const translations = {
+    // Ümumi etiketlər
+    summary: { azerbaijani: 'Peşəkar Özət', english: 'Professional Summary' },
+    experience: { azerbaijani: 'İş Təcrübəsi', english: 'Work Experience' },
+    education: { azerbaijani: 'Təhsil', english: 'Education' },
+    skills: { azerbaijani: 'Bacarıqlar', english: 'Skills' },
+    hardSkills: { azerbaijani: 'Texniki Bacarıqlar', english: 'Hard Skills' },
+    softSkills: { azerbaijani: 'Yumşaq Bacarıqlar', english: 'Soft Skills' },
+    projects: { azerbaijani: 'Layihələr', english: 'Projects' },
+    technologies: { azerbaijani: 'Texnologiyalar', english: 'Technologies' },
+    languages: { azerbaijani: 'Dillər', english: 'Languages' },
+    certifications: { azerbaijani: 'Sertifikatlar', english: 'Certifications' },
+    volunteerExperience: { azerbaijani: 'Könüllü Təcrübəsi', english: 'Volunteer Experience' },
+    references: { azerbaijani: 'İstinadlar', english: 'References' },
+    present: { azerbaijani: 'İndi', english: 'Present' },
+    to: { azerbaijani: '-', english: 'to' },
+    GPA: { azerbaijani: 'GPA', english: 'GPA' },
+    fieldOfStudy: { azerbaijani: 'İxtisas Sahəsi', english: 'Field of Study' },
+
+    // Dil səviyyələri
+    languageLevels: {
+        beginner: { azerbaijani: 'Başlanğıc', english: 'Beginner' },
+        elementary: { azerbaijani: 'Elementar', english: 'Elementary' },
+        intermediate: { azerbaijani: 'Orta', english: 'Intermediate' },
+        upper_intermediate: { azerbaijani: 'Yüksək-Orta', english: 'Upper-Intermediate' },
+        advanced: { azerbaijani: 'Qabaqcıl', english: 'Advanced' },
+        proficient: { azerbaijani: 'Peşəkar', english: 'Proficient' },
+        native: { azerbaijani: 'Ana dili', english: 'Native' },
+    },
+
+    // Təhsil dərəcələri
+    degrees: {
+        high_school: { azerbaijani: 'Orta Məktəb', english: 'High School' },
+        bachelor: { azerbaijani: 'Bakalavr', english: 'Bachelor' },
+        master: { azerbaijani: 'Magistr', english: 'Master' },
+        phd: { azerbaijani: 'Doktorantura', english: 'PhD' },
+    }
+};
+
+// Etiketləri tərcümə etmək üçün funksiya
+const getLabel = (key: keyof typeof translations, language: CVLanguage): string => {
+    const entry = translations[key];
+    if (entry && typeof entry === 'object' && language in entry) {
+        return (entry as Record<CVLanguage, string>)[language];
+    }
+    return key;
+};
+
+// Dil səviyyəsini tərcümə etmək üçün funksiya
+const translateLanguageLevel = (level: string, language: CVLanguage): string => {
+    const key = level.toLowerCase().replace(' ', '_') as keyof typeof translations.languageLevels;
+    const entry = translations.languageLevels[key];
+    if (entry) {
+        return entry[language];
+    }
+    return level;
+};
+
+// Təhsil dərəcəsini tərcümə etmək üçün funksiya
+const translateDegree = (degree: string, language: CVLanguage): string => {
+    const key = degree.toLowerCase().replace(' ', '_') as keyof typeof translations.degrees;
+    const entry = translations.degrees[key];
+    if (entry) {
+        return entry[language];
+    }
+    return degree;
+};
+
+// Tarix aralığını formatlamaq üçün funksiya
+const formatDate = (dateString: string, language: CVLanguage): string => {
+    if (!dateString) return '';
+    try {
+        return new Date(dateString).toLocaleDateString(language === 'english' ? 'en-US' : 'az-AZ', {
+            year: 'numeric',
+            month: 'long'
+        });
+    } catch {
+        return dateString;
+    }
+};
+
+const formatExperienceDateRange = (startDate: string, endDate: string | undefined, current: boolean, language: CVLanguage): string => {
+    const start = formatDate(startDate, language);
+    if (current) return `${start} – ${getLabel('present', language)}`;
+    return endDate ? `${start} – ${formatDate(endDate, language)}` : start;
+};
+
+
+// Utility function to safely render HTML content
+const stripHtmlTags = (html: string): string => {
+    if (!html) return '';
+    return html
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n')
+        .replace(/<p[^>]*>/gi, '')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<div[^>]*>/gi, '')
+        .replace(/<\/h[1-6]>/gi, '\n')
+        .replace(/<h[1-6][^>]*>/gi, '')
+        .replace(/<\/li>/gi, '\n')
+        .replace(/<li[^>]*>/gi, '• ')
+        .replace(/<\/ul>/gi, '\n')
+        .replace(/<ul[^>]*>/gi, '')
+        .replace(/<\/ol>/gi, '\n')
+        .replace(/<ol[^>]*>/gi, '')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/gi, ' ')
+        .trim();
+};
+
+// Interfaces for CV data structure
 interface CVData {
-  id?: string;
-  title: string;
-  templateId: string;
-  data: {
-    personalInfo: PersonalInfo;
-    cvLanguage?: CVLanguage;
-    sectionNames?: {
-      personalInfo?: string;
-      experience?: string;
-      education?: string;
-      skills?: string;
-      projects?: string;
-      certifications?: string;
-      volunteerExperience?: string;
-      languages?: string;
-      awards?: string;
+    id?: string;
+    title: string;
+    templateId: 'resume-ats' | 'medium-professional' | string;
+    data: {
+        personalInfo: {
+            name?: string;
+            fullName?: string;
+            email?: string;
+            phone?: string;
+            location?: string;
+            website?: string;
+            linkedin?: string;
+            github?: string;
+            summary?: string;
+            title?: string;
+            profileImage?: string;
+        };
+        experience?: Array<{
+            id: string;
+            company: string;
+            position: string;
+            startDate: string;
+            endDate?: string;
+            current: boolean;
+            description: string;
+            location?: string;
+        }>;
+        education?: Array<{
+            id: string;
+            institution: string;
+            degree: string;
+            field?: string;
+            startDate: string;
+            endDate?: string;
+            current: boolean;
+            gpa?: string;
+            description?: string;
+        }>;
+        skills?: Array<{
+            id?: string;
+            name: string;
+            category?: string;
+            level?: string;
+            type?: 'hard' | 'soft';
+        }>;
+        languages?: Array<{
+            id?: string;
+            language?: string;
+            name?: string;
+            level?: string;
+            proficiency?: string;
+        }>;
+        projects?: Array<{
+            id: string;
+            name: string;
+            description: string;
+            technologies?: string | string[];
+            startDate?: string;
+            endDate?: string;
+            url?: string;
+        }>;
+        certifications?: Array<{
+            id: string;
+            name: string;
+            issuer: string;
+            date?: string;
+            issueDate?: string;
+            expiryDate?: string;
+            credentialId?: string;
+            url?: string;
+            description?: string;
+        }>;
+        volunteerExperience?: Array<{
+            id: string;
+            organization: string;
+            role: string;
+            startDate: string;
+            endDate?: string;
+            current: boolean;
+            description?: string;
+            cause?: string;
+        }>;
+        references?: Array<{
+            id: string;
+            name: string;
+            title?: string;
+            company?: string;
+            email?: string;
+            phone?: string;
+            relationship?: string;
+        }>;
+        customSections?: Array<{
+            id: string;
+            title: string;
+            content?: string;
+            description?: string;
+            type?: 'simple' | 'detailed' | 'timeline';
+            isVisible?: boolean;
+            priority?: number;
+            items?: Array<{
+                id: string;
+                title: string;
+                description?: string;
+                date?: string;
+                location?: string;
+                url?: string;
+            }>;
+        }>;
+        sectionOrder?: Array<{
+            id: string;
+            type: string;
+            isVisible: boolean;
+            order?: number;
+        }>;
+        cvLanguage?: CVLanguage;
     };
-    experience?: Array<{
-      position?: string;
-      company?: string;
-      location?: string;
-      startDate?: string;
-      endDate?: string;
-      current?: boolean;
-      description?: string;
-    }>;
-    education?: Array<{
-      degree?: string;
-      institution?: string;
-      field?: string;
-      startDate?: string;
-      endDate?: string;
-      current?: boolean;
-      gpa?: string;
-    }>;
-    skills?: Array<string | { name: string; level?: string; type?: 'hard' | 'soft' }>;
-    languages?: Array<string | {
-      language?: string; 
-      name?: string; 
-      level?: string; 
-      proficiency?: string; 
-    }>;
-    projects?: Array<{
-      name?: string;
-      description?: string;
-      technologies?: string[];
-      url?: string;
-    }>;
-    certifications?: Array<{
-      name?: string;
-      issuer?: string;
-      date?: string;
-    }>;
-    volunteerExperience?: Array<{
-      role?: string;
-      organization?: string;
-      cause?: string;
-      startDate?: string;
-      endDate?: string;
-      current?: boolean;
-      description?: string;
-    }>;
-    publications?: Array<any>;
-    honorsAwards?: Array<any>;
-    testScores?: Array<any>;
-    recommendations?: Array<any>;
-    courses?: Array<any>;
-    customSections?: Array<{
-      title?: string;
-      items?: Array<{
-        title?: string;
-        subtitle?: string;
-        description?: string;
-      }>;
-    }>;
-    sectionOrder?: Array<{
-      id: string;
-      type: string;
-      isVisible: boolean;
-      order?: number;
-    }>;
-  };
 }
 
 interface CVPreviewProps {
-  cv: CVData;
-  onSectionOrderChange?: (sections: any[]) => void;
-  enableSectionSelection?: boolean;
+    cv: CVData;
+    onSectionOrderChange?: (sections: any[]) => void;
 }
 
 interface SectionConfig {
-  id: string;
-  name: string;
-  displayName: string;
-  isVisible: boolean;
-  order: number;
-  hasData: boolean;
-  icon: string;
+    id: string;
+    name: string;
+    displayName: string;
+    isVisible: boolean;
+    order: number;
+    hasData: boolean;
+    icon: string;
 }
 
+// Default section configuration
 const DEFAULT_SECTIONS = [
-  { id: 'personalInfo', name: 'personalInfo', displayName: 'Şəxsi Məlumatlar', icon: '👤', alwaysVisible: true },
-  { id: 'contact', name: 'contact', displayName: 'Əlaqə', icon: '📞', alwaysVisible: true },
-  { id: 'header', name: 'header', displayName: 'Başlıq', icon: '📄', alwaysVisible: true },
-  { id: 'summary', name: 'summary', displayName: 'Özət', icon: '📝', alwaysVisible: false },
-  { id: 'experience', name: 'experience', displayName: 'İş Təcrübəsi', icon: '💼', alwaysVisible: false },
-  { id: 'education', name: 'education', displayName: 'Təhsil', icon: '🎓', alwaysVisible: false },
-  { id: 'skills', name: 'skills', displayName: 'Bacarıqlar', icon: '⚡', alwaysVisible: false },
-  { id: 'projects', name: 'projects', displayName: 'Layihələr', icon: '🚀', alwaysVisible: false },
-  { id: 'certifications', name: 'certifications', displayName: 'Sertifikatlar', icon: '🏆', alwaysVisible: false },
-  { id: 'languages', name: 'languages', displayName: 'Dillər', icon: '🌍', alwaysVisible: false },
-  { id: 'volunteerExperience', name: 'volunteerExperience', displayName: 'Könüllü İş', icon: '❤️', alwaysVisible: false },
-  { id: 'customSections', name: 'customSections', displayName: 'Əlavə Bölmələr', icon: '📋', alwaysVisible: false }
+    { id: 'personalInfo', name: 'personalInfo', displayName: 'Personal Information', displayNameAz: 'Şəxsi Məlumatlar', icon: '👤', alwaysVisible: true },
+    { id: 'summary', name: 'summary', displayName: 'Professional Summary', displayNameAz: 'Peşəkar Özət', icon: '📝', alwaysVisible: false },
+    { id: 'experience', name: 'experience', displayName: 'Work Experience', displayNameAz: 'İş Təcrübəsi', icon: '💼', alwaysVisible: false },
+    { id: 'education', name: 'education', displayName: 'Education', displayNameAz: 'Təhsil', icon: '🎓', alwaysVisible: false },
+    { id: 'skills', name: 'skills', displayName: 'Skills', displayNameAz: 'Bacarıqlar', icon: '⚡', alwaysVisible: false },
+    { id: 'projects', name: 'projects', displayName: 'Projects', displayNameAz: 'Layihələr', icon: '🚀', alwaysVisible: false },
+    { id: 'certifications', name: 'certifications', displayName: 'Certifications', displayNameAz: 'Sertifikatlar', icon: '🏆', alwaysVisible: false },
+    { id: 'languages', name: 'languages', displayName: 'Languages', displayNameAz: 'Dillər', icon: '🌍', alwaysVisible: false },
+    { id: 'volunteerExperience', name: 'volunteerExperience', displayName: 'Volunteer Experience', displayNameAz: 'Könüllü İş', icon: '❤️', alwaysVisible: false },
+    { id: 'references', name: 'references', displayName: 'References', displayNameAz: 'İstinadlar', icon: '👥', alwaysVisible: false },
+    { id: 'customSections', name: 'customSections', displayName: 'Additional Sections', displayNameAz: 'Əlavə Bölmələr', icon: '📋', alwaysVisible: false }
 ];
 
-const CVPreviewA4: React.FC<CVPreviewProps> = ({
-  cv,
-  onSectionOrderChange,
-  enableSectionSelection = false
-}) => {
-  const [draggedSection, setDraggedSection] = useState<string | null>(null);
-  const [dragOverSection, setDragOverSection] = useState<string | null>(null);
-  const [sections, setSections] = useState<SectionConfig[]>([]);
-  const [mounted, setMounted] = useState(false);
+// --- Resume ATS Template Component ---
+const ResumeATSTemplate: React.FC<CVPreviewProps> = ({ cv, onSectionOrderChange }) => {
+    const { data } = cv;
+    const currentLanguage = data.cvLanguage || 'azerbaijani';
+    const { fontSettings } = useFontSettings(cv.id);
 
-  // Initialize font settings for this CV
-  const { fontSettings } = useFontSettings(cv?.id);
+    const [draggedSection, setDraggedSection] = useState<string | null>(null);
+    const [dragOverSection, setDragOverSection] = useState<string | null>(null);
+    const [sections, setSections] = useState<SectionConfig[]>([]);
+    const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
-  // Debug CV data structure
-  console.log('🔍 CVPreviewA4 Debug:', {
-    cvId: cv?.id,
-    templateId: cv?.templateId,
-    hasData: !!cv?.data,
-    dataKeys: cv?.data ? Object.keys(cv.data) : [],
-    personalInfoName: cv?.data?.personalInfo?.fullName || cv?.data?.personalInfo?.name,
-    cvTitle: cv?.title
-  });
+    const hasData = useCallback((sectionId: string): boolean => {
+        if (sectionId === 'personalInfo') return true;
+        if (sectionId === 'summary') return !!data.personalInfo?.summary;
 
-  // Safely extract data with fallbacks and proper typing
-  const safeCV = cv || ({} as CVData);
-  const cvData = safeCV.data || ({} as CVData['data']);
-  const personalInfo: PersonalInfo = (cvData.personalInfo || {}) as PersonalInfo;
-  const fullName = personalInfo.fullName || personalInfo.name || 'İsim Daxil Edilməyib';
+        const sectionData = data?.[sectionId as keyof typeof data];
+        return Array.isArray(sectionData) ? sectionData.length > 0 : !!sectionData;
+    }, [data]);
 
-  // Get current language for translations
-  const currentLanguage: CVLanguage = cvData.cvLanguage || 'azerbaijani';
+    useEffect(() => {
+        if (!mounted) return;
 
-  // Check if this is Traditional CV template
-  const isTraditionalTemplate = cv?.templateId === 'traditional' ||
-                               cv?.templateId === '8b26fb4c-7ec1-4c0d-bbd9-4b597fb1df45' ||
-                               cv?.templateId?.includes('traditional');
+        const currentSectionOrder = data?.sectionOrder || [];
+        const initializedSections = DEFAULT_SECTIONS.map((defaultSection, index) => {
+            const existingConfig = currentSectionOrder.find((s: any) => s.id === defaultSection.id);
+            return {
+                id: defaultSection.id,
+                name: defaultSection.name,
+                displayName: currentLanguage === 'english' ? defaultSection.displayName : defaultSection.displayNameAz,
+                isVisible: existingConfig?.isVisible ?? (hasData(defaultSection.id) || defaultSection.alwaysVisible),
+                order: existingConfig?.order ?? index,
+                hasData: hasData(defaultSection.id),
+                icon: defaultSection.icon
+            };
+        });
 
-  // Drag and drop handlers
-  const handleDragStart = (e: React.DragEvent, sectionId: string) => {
-    setDraggedSection(sectionId);
-    e.dataTransfer.effectAllowed = 'move';
-  };
+        const sectionsToShow = initializedSections
+            .filter(section => hasData(section.id))
+            .sort((a, b) => a.order - b.order);
 
-  const handleDragOver = (e: React.DragEvent, sectionId: string) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setDragOverSection(sectionId);
-  };
+        setSections(sectionsToShow);
+    }, [mounted, data, currentLanguage, hasData]);
 
-  const handleDrop = (e: React.DragEvent, targetSectionId: string) => {
-    e.preventDefault();
-
-    if (!draggedSection || draggedSection === targetSectionId) {
-      setDraggedSection(null);
-      setDragOverSection(null);
-      return;
-    }
-
-    const newSections = [...sections];
-    const draggedIndex = newSections.findIndex(s => s.id === draggedSection);
-    const targetIndex = newSections.findIndex(s => s.id === targetSectionId);
-
-    if (draggedIndex === -1 || targetIndex === -1) return;
-
-    // Remove the dragged section and insert it at the target position
-    const [draggedSectionObj] = newSections.splice(draggedIndex, 1);
-    newSections.splice(targetIndex, 0, draggedSectionObj);
-
-    // Update order values
-    const updatedSections = newSections.map((section, index) => ({
-      ...section,
-      order: index
-    }));
-
-    setSections(updatedSections);
-
-    // Notify parent component about the change
-    if (onSectionOrderChange) {
-      const sectionOrderData = updatedSections.map(section => ({
-        id: section.id,
-        type: section.name,
-        isVisible: section.isVisible,
-        order: section.order
-      }));
-      onSectionOrderChange(sectionOrderData);
-    }
-
-    setDraggedSection(null);
-    setDragOverSection(null);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedSection(null);
-    setDragOverSection(null);
-  };
-
-
-  // Check if section has data
-  const hasData = useCallback((sectionId: string): boolean => {
-    if (sectionId === 'personalInfo') return true;
-    if (sectionId === 'contact') return !!(personalInfo?.phone || personalInfo?.email || personalInfo?.website || personalInfo?.linkedin);
-    if (sectionId === 'header') return !!(personalInfo?.fullName || personalInfo?.name || personalInfo?.title);
-    if (sectionId === 'summary') return !!personalInfo?.summary;
-
-    const sectionData = cvData?.[sectionId as keyof typeof cvData];
-    if (Array.isArray(sectionData)) {
-      return sectionData.length > 0;
-    }
-    return !!sectionData;
-  }, [cvData, personalInfo]);
-
-  // Initialize sections from CV data
-  useEffect(() => {
-    if (!mounted) return;
-
-    const currentSectionOrder = cvData?.sectionOrder || [];
-    console.log('🔄 CVPreviewA4: Updating sections with order:', currentSectionOrder);
-
-    const initializedSections = DEFAULT_SECTIONS.map((defaultSection, index) => {
-      const existingConfig = currentSectionOrder.find((s: any) => s.id === defaultSection.id);
-
-      return {
-        id: defaultSection.id,
-        name: defaultSection.name,
-        displayName: defaultSection.displayName,
-        isVisible: existingConfig?.isVisible ?? (defaultSection.alwaysVisible || hasData(defaultSection.id)),
-        order: existingConfig?.order ?? index,
-        hasData: hasData(defaultSection.id),
-        icon: defaultSection.icon
-      };
-    }).sort((a, b) => a.order - b.order);
-
-    setSections(initializedSections);
-  }, [cvData, mounted, hasData]);
-
-  // Draggable Section Component
-  const DraggableSection: React.FC<{
-    sectionId: string;
-    children: React.ReactNode;
-    className?: string;
-    key?: string;
-  }> = ({ sectionId, children, className = '' }) => {
-    const isDragged = draggedSection === sectionId;
-    const isDraggedOver = dragOverSection === sectionId && draggedSection !== sectionId;
-
-    return (
-      <div
-        draggable
-        onDragStart={(e) => handleDragStart(e, sectionId)}
-        onDragOver={(e) => handleDragOver(e, sectionId)}
-        onDrop={(e) => handleDrop(e, sectionId)}
-        onDragEnd={handleDragEnd}
-        onDragLeave={(e) => {
-          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+    const handleDragStart = useCallback((e: React.DragEvent, sectionId: string) => { setDraggedSection(sectionId); }, []);
+    const handleDragOver = useCallback((e: React.DragEvent, sectionId: string) => { e.preventDefault(); if (sectionId !== draggedSection) setDragOverSection(sectionId); }, [draggedSection]);
+    const handleDrop = useCallback((e: React.DragEvent, targetSectionId: string) => {
+        if (!draggedSection || draggedSection === targetSectionId) {
+            setDraggedSection(null);
             setDragOverSection(null);
-          }
-        }}
-        className={`
-          ${className}
-          relative group cursor-move
-          transition-all duration-200
-          ${isDragged ? 'scale-105 rotate-1 z-50' : ''}
-          ${isDraggedOver ? 'ring-2 ring-blue-400 bg-blue-50 rounded-lg' : ''}
-          hover:shadow-md rounded-lg p-2 m-1
-        `}
-        style={{
-          userSelect: 'none',
-          WebkitUserSelect: 'none'
-        }}
-      >
-        {/* Drag indicator */}
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-700 text-white px-2 py-1 rounded text-xs">
-          <div className="flex items-center gap-1">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-            </svg>
-            Sürükləyin
-          </div>
-        </div>
+            return;
+        }
+        const draggedIndex = sections.findIndex(s => s.id === draggedSection);
+        const targetIndex = sections.findIndex(s => s.id === targetSectionId);
+        if (draggedIndex !== -1 && targetIndex !== -1) {
+            const newSections = [...sections];
+            const [draggedItem] = newSections.splice(draggedIndex, 1);
+            newSections.splice(targetIndex, 0, draggedItem);
+            const updatedSections = newSections.map((s, i) => ({ ...s, order: i }));
+            setSections(updatedSections);
+            if (onSectionOrderChange) onSectionOrderChange(updatedSections);
+        }
+        setDraggedSection(null);
+        setDragOverSection(null);
+    }, [draggedSection, sections, onSectionOrderChange]);
+    const handleDragEnd = useCallback(() => { setDraggedSection(null); setDragOverSection(null); }, []);
 
-        {/* Drop zone indicator */}
-        {isDraggedOver && (
-          <div className="absolute inset-0 border-2 border-dashed border-blue-400 rounded-lg bg-blue-100 bg-opacity-50 flex items-center justify-center pointer-events-none z-10">
-            <div className="bg-blue-500 text-white px-3 py-1 rounded text-sm font-medium animate-bounce">
-              🎯 Buraya burax
+    const MailIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block mr-2 text-gray-600"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>;
+    const PhoneIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block mr-2 text-gray-600"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>;
+    const LinkedinIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block mr-2 text-gray-600"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>;
+    const LocationIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block mr-2 text-gray-600"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>;
+    const SectionTitle = ({ title }: { title: string }) => <h2 className="text-sm font-bold uppercase text-gray-600 tracking-wider pb-2 mb-4 border-b border-gray-200">{title}</h2>;
+
+    const hardSkills = data.skills?.filter(skill => skill.type === 'hard' || !skill.type) || [];
+    const softSkills = data.skills?.filter(skill => skill.type === 'soft') || [];
+
+    const DraggableSection: React.FC<{ sectionId: string, children: React.ReactNode }> = ({ sectionId, children }) => {
+        const isDragged = draggedSection === sectionId;
+        const isDraggedOver = dragOverSection === sectionId && draggedSection !== sectionId;
+        return (
+            <div
+                draggable
+                onDragStart={(e) => handleDragStart(e, sectionId)}
+                onDragOver={(e) => handleDragOver(e, sectionId)}
+                onDrop={(e) => handleDrop(e, sectionId)}
+                onDragEnd={handleDragEnd}
+                className={`relative group cursor-move transition-all duration-200 ${isDragged ? 'scale-105 rotate-1 z-50' : ''} ${isDraggedOver ? 'ring-2 ring-blue-400 bg-blue-50 rounded-lg' : ''} hover:shadow-md rounded-lg p-2 -m-2`}
+            >
+                {children}
             </div>
-          </div>
-        )}
-
-        {children}
-      </div>
-    );
-  };
-
-  console.log('🎨 Template Check:', {
-    templateId: cv?.templateId,
-    isTraditional: isTraditionalTemplate
-  });
-
-  // If Traditional CV template, render with special layout
-  if (isTraditionalTemplate) {
-    // Create draggable sections that respect the order
-    const renderTraditionalSection = (section: SectionConfig) => {
-      switch (section.id) {
-        case 'personalInfo':
-          return (
-            <DraggableSection key={`personalInfo-${section.order}`} sectionId="personalInfo" className="w-full mb-4">
-              <div className="cv-traditional-personal-draggable relative">
-                {/* Enhanced drag indicator for personal info */}
-                <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-600 text-white px-1 py-1 rounded text-xs z-10">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                  </svg>
-                </div>
-
-                {personalInfo?.profileImage ? (
-                  <img
-                    src={personalInfo.profileImage}
-                    alt="Profil Şəkli"
-                    className="rounded-full w-24 h-24 border-3 border-gray-400 object-cover mx-auto"
-                    style={{ flexShrink: 0 }}
-                  />
-                ) : (
-                  <div className="rounded-full w-24 h-24 border-3 border-gray-400 bg-gray-300 flex items-center justify-center mx-auto" style={{ flexShrink: 0 }}>
-                    <span className="text-gray-700 text-xs font-medium">Şəkil</span>
-                  </div>
-                )}
-                
-
-              </div>
-            </DraggableSection>
-          );
-
-        case 'contact':
-          if (!personalInfo?.phone && !personalInfo?.email && !personalInfo?.website && !personalInfo?.linkedin) {
-            return null;
-          }
-          return (
-            <DraggableSection key={`contact-${section.order}`} sectionId="contact" className="w-full mb-6">
-              <div className="cv-traditional-contact-draggable">
-                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">{getLabel('personalInfo', currentLanguage)}</h2>
-                <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
-                <div className="space-y-2 cv-small text-white">
-                  {personalInfo?.phone && (
-                    <div className="flex items-center break-all">
-                      <svg className="h-4 w-4 mr-2 flex-shrink-0 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                      <span className="text-white cv-small">{personalInfo.phone}</span>
-                    </div>
-                  )}
-                  {personalInfo?.email && (
-                    <div className="flex items-center break-all">
-                      <svg className="h-4 w-4 mr-2 flex-shrink-0 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      <span className="text-white cv-small">{personalInfo.email}</span>
-                    </div>
-                  )}
-                  {personalInfo?.website && (
-                    <div className="flex items-center break-all">
-                      <svg className="h-4 w-4 mr-2 flex-shrink-0 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3m0 18a9 9 0 009-9m-9 9a9 9 0 00-9-9" />
-                      </svg>
-                      <span className="text-white cv-small">{personalInfo.website}</span>
-                    </div>
-                  )}
-                  {personalInfo?.linkedin && (
-                    <div className="flex items-center break-all">
-                      <svg className="h-4 w-4 mr-2 flex-shrink-0 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3m0 18a9 9 0 009-9m-9 9a9 9 0 00-9-9" />
-                      </svg>
-                      <span className="text-white cv-small">{personalInfo.linkedin}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </DraggableSection>
-          );
-
-        case 'education':
-          if (!cvData.education || !Array.isArray(cvData.education) || cvData.education.length === 0) return null;
-          return (
-            <DraggableSection key={`education-${section.order}`} sectionId="education" className="w-full mb-6">
-              <div>
-                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">{getLabel('education', currentLanguage)}</h2>
-                <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
-                <div className="space-y-3">
-                  {cvData.education.map((edu: any, index: number) => (
-                    <div key={index}>
-                      <h3 className="cv-body text-white">{translateDegree(edu.degree || '', currentLanguage) || edu.institution}</h3>
-                      <p className="cv-small text-gray-200">{edu.institution || translateDegree(edu.degree || '', currentLanguage)}</p>
-                      <p className="cv-small text-gray-200">
-                        {formatExperienceDateRange(edu.startDate, edu.endDate, edu.current || false, currentLanguage)}
-                      </p>
-                      {edu.gpa && <p className="cv-small text-gray-200">{getLabel('GPA', currentLanguage)}: {edu.gpa}</p>}
-                      {edu.field && <p className="cv-small text-gray-200">{getLabel('fieldOfStudy', currentLanguage)}: {edu.field}</p>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </DraggableSection>
-          );
-
-        case 'skills':
-          if (!cvData.skills || !Array.isArray(cvData.skills) || cvData.skills.length === 0) return null;
-
-          const hardSkills = cvData.skills.filter(skill => {
-            if (typeof skill === 'string') return true; // String skills default to hard skills
-            return skill.type === 'hard' || !skill.type;
-          });
-          const softSkills = cvData.skills.filter(skill => {
-            if (typeof skill === 'string') return false; // String skills are not soft skills
-            return skill.type === 'soft';
-          });
-
-          return (
-            <DraggableSection key={`skills-${section.order}`} sectionId="skills" className="w-full mb-6">
-              <div>
-                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">{getLabel('skills', currentLanguage)}</h2>
-                <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
-
-                {hardSkills.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="text-sm font-semibold text-gray-800 mb-2 uppercase tracking-wide">Hard Skills</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {hardSkills.map((skill: any, index: number) => {
-                        const skillName = typeof skill === 'string' ? skill : skill.name;
-                        const skillLevel = typeof skill === 'object' ? skill.level : undefined;
-                        return (
-                          <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded cv-small">
-                            {skillName}{skillLevel && ` (${skillLevel})`}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {softSkills.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="text-sm font-semibold text-gray-800 mb-2 uppercase tracking-wide">Soft Skills</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {softSkills.map((skill: any, index: number) => {
-                        const skillName = typeof skill === 'string' ? skill : skill.name;
-                        const skillLevel = typeof skill === 'object' ? skill.level : undefined;
-                        return (
-                          <span key={index} className="bg-green-100 text-green-800 px-2 py-1 rounded cv-small">
-                            {skillName}{skillLevel && ` (${skillLevel})`}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </DraggableSection>
-          );
-
-        case 'languages':
-          if (!cvData.languages || !Array.isArray(cvData.languages) || cvData.languages.length === 0) return null;
-          return (
-            <DraggableSection key={`languages-${section.order}`} sectionId="languages" className="w-full mb-6">
-              <div>
-                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">{getLabel('languages', currentLanguage)}</h2>
-                <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
-                <ul className="space-y-1 cv-small list-disc list-inside text-white">
-                  {cvData.languages.map((lang: any, index: number) => {
-                    const languageName = typeof lang === 'string' ? lang : (lang.language || lang.name || '');
-                    const languageLevel = typeof lang === 'object' ? (lang.level || lang.proficiency || '') : '';
-                    const translatedLevel = languageLevel ? translateLanguageLevel(languageLevel, currentLanguage) : '';
-
-                    return (
-                      <li key={index} className="text-white cv-small">
-                        {languageName} {translatedLevel && `(${translatedLevel})`}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            </DraggableSection>
-          );
-
-        case 'certifications':
-          if (!cvData.certifications || !Array.isArray(cvData.certifications) || cvData.certifications.length === 0) return null;
-          return (
-            <DraggableSection key={`certifications-${section.order}`} sectionId="certifications" className="w-full mb-6">
-              <div>
-                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">{getLabel('certifications', currentLanguage)}</h2>
-                <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
-                <div className="space-y-3">
-                  {cvData.certifications.map((cert: any, index: number) => (
-                    <div key={index}>
-                      <h3 className="cv-body text-white">{cert.name}</h3>
-                      <p className="cv-small text-gray-200">
-                        {cert.issuer} | {cert.date}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </DraggableSection>
-          );
-
-        case 'header':
-          return (
-            <DraggableSection key={`header-${section.order}`} sectionId="header" className="mb-4">
-              <div>
-                <h1 className="cv-heading text-gray-800 uppercase leading-tight">
-                  {fullName}
-                </h1>
-                {personalInfo?.title && (
-                  <p className="cv-subheading text-gray-600 tracking-wider mt-1 uppercase">
-                    {personalInfo.title}
-                  </p>
-                )}
-              </div>
-            </DraggableSection>
-          );
-
-        case 'summary':
-          if (!personalInfo?.summary) return null;
-          return (
-            <DraggableSection key={`summary-${section.order}`} sectionId="summary" className="mb-6">
-              <div>
-                <h2 className="cv-subheading text-gray-800 border-b-2 border-gray-300 pb-1 mb-3">{getLabel('summary', currentLanguage)}</h2>
-                <SafeHtmlContent
-                  content={personalInfo.summary}
-                  className="text-gray-600 leading-relaxed"
-                  allowHtml={false}
-                />
-              </div>
-            </DraggableSection>
-          );
-
-        case 'experience':
-          if (!cvData.experience || !Array.isArray(cvData.experience) || cvData.experience.length === 0) return null;
-          return (
-            <DraggableSection key={`experience-${section.order}`} sectionId="experience" className="mb-8">
-              <section>
-                <h2 className="cv-subheading text-gray-800 border-b-2 border-gray-300 pb-2 mb-5">{getLabel('experience', currentLanguage)}</h2>
-                <div className="space-y-5">
-                  {cvData.experience.map((exp: any, index: number) => (
-                    <div key={index}>
-                      <div className="flex justify-between items-baseline mb-2">
-                        <h3 className="cv-subheading text-gray-700">{exp.position}</h3>
-                        <p className="cv-small text-gray-500">{exp.startDate} - {exp.current ? getLabel('present', currentLanguage) : exp.endDate}</p>
-                      </div>
-                      <p className="cv-body text-gray-600 mb-1">{exp.company}</p>
-                      {exp.location && <p className="cv-small text-gray-500 mb-2">{exp.location}</p>}
-                      {exp.description && (
-                        <SafeHtmlContent
-                          content={exp.description}
-                          className="text-gray-600 leading-relaxed"
-                          allowHtml={false}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </DraggableSection>
-          );
-
-        case 'projects':
-          if (!cvData.projects || !Array.isArray(cvData.projects) || cvData.projects.length === 0) return null;
-          return (
-            <DraggableSection key={`projects-${section.order}`} sectionId="projects" className="mb-8">
-              <section>
-                <h2 className="cv-subheading text-gray-800 border-b-2 border-gray-300 pb-2 mb-5">{getLabel('projects', currentLanguage)}</h2>
-                <div className="space-y-5">
-                  {cvData.projects.map((project: any, index: number) => (
-                    <div key={index}>
-                      <h3 className="cv-subheading text-gray-700">{project.name}</h3>
-                      {project.description && (
-                        <SafeHtmlContent
-                          content={project.description}
-                          className="text-gray-600 mt-2"
-                          allowHtml={false}
-                        />
-                      )}
-                      {project.technologies && Array.isArray(project.technologies) && project.technologies.length > 0 && (
-                        <p className="cv-body text-gray-500 mt-2">
-                          <strong>{getLabel('technologies', currentLanguage)}:</strong> {project.technologies.join(', ')}
-                        </p>
-                      )}
-                      {project.url && (
-                        <p className="cv-small text-blue-600 mt-1">{project.url}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </DraggableSection>
-          );
-
-        case 'volunteerExperience':
-          if (!cvData.volunteerExperience || !Array.isArray(cvData.volunteerExperience) || cvData.volunteerExperience.length === 0) return null;
-          return (
-            <DraggableSection key={`volunteerExperience-${section.order}`} sectionId="volunteerExperience" className="mb-8">
-              <section>
-                <h2 className="cv-subheading text-gray-800 border-b-2 border-gray-300 pb-2 mb-5">{getLabel('volunteerExperience', currentLanguage)}</h2>
-                <div className="space-y-5">
-                  {cvData.volunteerExperience.map((vol: any, index: number) => (
-                    <div key={index}>
-                      <div className="flex justify-between items-baseline mb-2">
-                        <h3 className="cv-subheading text-gray-700">{vol.role}</h3>
-                        <p className="cv-small text-gray-500">{vol.startDate} - {vol.current ? getLabel('present', currentLanguage) : vol.endDate}</p>
-                      </div>
-                      <p className="cv-body text-gray-600 mb-1">{vol.organization}</p>
-                      {vol.cause && <p className="cv-small text-gray-500 mb-2">{vol.cause}</p>}
-                      {vol.description && (
-                        <SafeHtmlContent
-                          content={vol.description}
-                          className="text-gray-600"
-                          allowHtml={false}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </DraggableSection>
-          );
-
-        default:
-          return null;
-      }
+        );
     };
 
-    // Filter sections that should appear in sidebar (reordered for better fit)
-    const sidebarSections = sections.filter(section =>
-      ['personalInfo', 'contact', 'skills', 'languages', 'certifications', 'education'].includes(section.id) &&
-      section.isVisible
-    );
-
-    // Filter sections for main content (include header and summary now)
-    const mainSections = sections.filter(section =>
-      ['header', 'summary', 'experience', 'projects', 'volunteerExperience', 'customSections'].includes(section.id) &&
-      section.isVisible
-    );
-
-    return (
-      <div className="w-full h-full bg-white overflow-y-auto" style={{
-        fontFamily: 'Inter, sans-serif',
-        fontSize: '13px',
-        scrollbarWidth: 'thin',
-        scrollbarColor: '#CBD5E1 #F1F5F9'
-      }}>
-        {/* Drag status indicator */}
-        {draggedSection && (
-          <div className="sticky top-0 z-50 bg-blue-500 text-white p-2 text-center text-sm">
-            🔄 "{DEFAULT_SECTIONS.find(s => s.id === draggedSection)?.displayName}" sürüklənir...
-          </div>
-        )}
-
-        {/* Traditional CV Template with Sidebar Layout */}
-        <div className="flex min-h-[297mm]" style={{ width: '210mm', margin: '0 auto' }}>
-          {/* Left Sidebar - Dark Blue with compact sections */}
-          <div className="w-[32%] bg-[#0d2438] text-white p-4" style={{ minHeight: '297mm' }}>
-            <div className="space-y-4">
-              {/* Render all sidebar sections in order */}
-              {sidebarSections.map(section => renderTraditionalSection(section))}
-            </div>
-          </div>
-
-          {/* Right Main Content - White with draggable sections */}
-          <div className="w-[68%] p-6" style={{ minHeight: '297mm' }}>
-            {/* Render all main content sections in order */}
-            {mainSections.map(section => renderTraditionalSection(section))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Default modern template rendering
-  if (!cvData || Object.keys(cvData).length === 0) {
-    return (
-      <div className="w-full h-full bg-white flex items-center justify-center">
-        <div className="text-center p-8">
-          <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2h-2V2z"/>
-          </svg>
-          <h3 className="text-lg font-medium mb-2 text-gray-600">CV məlumatları yoxdur</h3>
-          <p className="text-sm text-gray-500">CV formunu doldurun və ya məlumatları import edin</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Default template rendering for other templates
-  return (
-    <div className="w-full h-full bg-white overflow-y-auto" style={{
-      scrollbarWidth: 'thin',
-      scrollbarColor: '#CBD5E1 #F1F5F9',
-      maxHeight: '100vh',
-      fontSize: '14px'
-    }}>
-      {/* Drag status indicator */}
-      {draggedSection && (
-        <div className="sticky top-0 z-50 bg-blue-500 text-white p-2 text-center text-sm">
-          🔄 "{DEFAULT_SECTIONS.find(s => s.id === draggedSection)?.displayName}" sürüklənir...
-        </div>
-      )}
-
-      {/* Modern template content */}
-      <div className="p-6 space-y-5" style={{ width: '210mm', margin: '0 auto', minHeight: '297mm' }}>
-        {/* Header Section */}
-        <DraggableSection sectionId="personalInfo" className="text-center">
-          <div>
-            <h1 className="cv-heading text-gray-800 mb-2">{fullName}</h1>
-            {personalInfo?.title && (
-              <p className="cv-subheading text-gray-600 mb-4">{personalInfo.title}</p>
-            )}
-            <div className="flex justify-center gap-4 cv-small text-gray-600">
-              {personalInfo?.email && <span>{personalInfo.email}</span>}
-              {personalInfo?.phone && <span>{personalInfo.phone}</span>}
-              {personalInfo?.website && <span>{personalInfo.website}</span>}
-              {personalInfo?.linkedin && <span>{personalInfo.linkedin}</span>}
-            </div>
-          </div>
-        </DraggableSection>
-
-        {/* Summary Section */}
-        {personalInfo?.summary && (
-          <DraggableSection sectionId="summary">
-            <div>
-              <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
-                {getLabel('summary', currentLanguage)}
-              </h3>
-              <SafeHtmlContent
-                content={personalInfo.summary}
-                className="cv-body text-gray-600 leading-relaxed"
-                allowHtml={false}
-              />
-            </div>
-          </DraggableSection>
-        )}
-
-        {/* Render sections in order */}
-        {sections.filter(section => section.isVisible && section.id !== 'personalInfo' && section.id !== 'contact' && section.id !== 'summary').map(section => {
-          switch (section.id) {
-            case 'experience':
-              if (!cvData.experience || !Array.isArray(cvData.experience) || cvData.experience.length === 0) return null;
-              return (
-                <DraggableSection key="experience" sectionId="experience">
-                  <div>
-                    <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
-                      {getLabel('experience', currentLanguage)}
-                    </h3>
-                    <div className="space-y-4">
-                      {cvData.experience.map((exp: any, index: number) => (
-                        <div key={index} className="border-l-2 border-blue-500 pl-3">
-                          <div className="flex justify-between items-start mb-1">
-                            <div>
-                              <h4 className="cv-subheading text-gray-900">{exp.position}</h4>
-                              <p className="cv-body text-gray-700">{exp.company}</p>
-                              {exp.location && <p className="cv-small text-gray-500">{exp.location}</p>}
-                            </div>
-                            <span className="cv-small text-gray-500 whitespace-nowrap ml-3">
-                              {exp.startDate} - {exp.current ? getLabel('present', currentLanguage) : exp.endDate}
-                            </span>
-                          </div>
-                          {exp.description && (
-                            <SafeHtmlContent
-                              content={exp.description}
-                              className="cv-body text-gray-600 leading-relaxed"
-                              allowHtml={false}
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </DraggableSection>
-              );
-
-            case 'education':
-              if (!cvData.education || !Array.isArray(cvData.education) || cvData.education.length === 0) return null;
-              return (
-                <DraggableSection key="education" sectionId="education">
-                  <div>
-                    <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
-                      {getLabel('education', currentLanguage)}
-                    </h3>
-                    <div className="space-y-3">
-                      {cvData.education.map((edu: any, index: number) => (
-                        <div key={index} className="border-l-2 border-green-500 pl-3">
-                          <h4 className="cv-subheading text-gray-900">{edu.degree}</h4>
-                          <p className="cv-body text-gray-700">{edu.institution}</p>
-                          <p className="cv-small text-gray-500">
-                            {edu.startDate} - {edu.current ? getLabel('present', currentLanguage) : edu.endDate}
-                          </p>
-                          {edu.gpa && <p className="cv-small text-gray-500">GPA: {edu.gpa}</p>}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </DraggableSection>
-              );
-
+    const renderSectionContent = (sectionId: string) => {
+        switch (sectionId) {
+            case 'summary':
+                return data.personalInfo?.summary && (
+                    <section>
+                        <SectionTitle title={getLabel('summary', currentLanguage)} />
+                        <p className="text-gray-600 text-base leading-relaxed">{stripHtmlTags(data.personalInfo.summary)}</p>
+                    </section>
+                );
             case 'skills':
-              if (!cvData.skills || !Array.isArray(cvData.skills) || cvData.skills.length === 0) return null;
-
-              const hardSkills = cvData.skills.filter(skill => {
-                if (typeof skill === 'string') return true; // String skills default to hard skills
-                return skill.type === 'hard' || !skill.type;
-              });
-              const softSkills = cvData.skills.filter(skill => {
-                if (typeof skill === 'string') return false; // String skills are not soft skills
-                return skill.type === 'soft';
-              });
-
-              return (
-                <DraggableSection key="skills" sectionId="skills">
-                  <div>
-                    <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
-                      {getLabel('skills', currentLanguage)}
-                    </h3>
-
-                    {hardSkills.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="text-sm font-semibold text-gray-800 mb-2 uppercase tracking-wide">Hard Skills</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {hardSkills.map((skill: any, index: number) => {
-                            const skillName = typeof skill === 'string' ? skill : skill.name;
-                            const skillLevel = typeof skill === 'object' ? skill.level : undefined;
-                            return (
-                              <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded cv-small">
-                                {skillName}{skillLevel && ` (${skillLevel})`}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {softSkills.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="text-sm font-semibold text-gray-800 mb-2 uppercase tracking-wide">Soft Skills</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {softSkills.map((skill: any, index: number) => {
-                            const skillName = typeof skill === 'string' ? skill : skill.name;
-                            const skillLevel = typeof skill === 'object' ? skill.level : undefined;
-                            return (
-                              <span key={index} className="bg-green-100 text-green-800 px-2 py-1 rounded cv-small">
-                                {skillName}{skillLevel && ` (${skillLevel})`}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </DraggableSection>
-              );
-
-            case 'projects':
-              if (!cvData.projects || !Array.isArray(cvData.projects) || cvData.projects.length === 0) return null;
-              return (
-                <DraggableSection key="projects" sectionId="projects">
-                  <div>
-                    <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
-                      {getLabel('projects', currentLanguage)}
-                    </h3>
-                    <div className="space-y-3">
-                      {cvData.projects.map((project: any, index: number) => (
-                        <div key={index} className="border-l-2 border-purple-500 pl-3">
-                          <h4 className="cv-subheading text-gray-900">{project.name}</h4>
-                          {project.description && (
-                            <SafeHtmlContent
-                              content={project.description}
-                              className="cv-body text-gray-600 leading-relaxed"
-                              allowHtml={false}
-                            />
-                          )}
-                          {project.technologies && Array.isArray(project.technologies) && project.technologies.length > 0 && (
-                            <p className="cv-body text-gray-500 mt-2">
-                              <strong>{getLabel('technologies', currentLanguage)}:</strong> {project.technologies.join(', ')}
-                            </p>
-                          )}
-                          {project.url && (
-                            <p className="cv-small text-blue-600 mt-1">{project.url}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </DraggableSection>
-              );
-
-            case 'certifications':
-              if (!cvData.certifications || !Array.isArray(cvData.certifications) || cvData.certifications.length === 0) return null;
-              return (
-                <DraggableSection key="certifications" sectionId="certifications">
-                  <div>
-                    <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
-                      {getLabel('certifications', currentLanguage)}
-                    </h3>
-                    <div className="space-y-2">
-                      {cvData.certifications.map((cert: any, index: number) => (
-                        <div key={index} className="border-l-2 border-yellow-500 pl-3">
-                          <h4 className="cv-subheading text-gray-900">{cert.name}</h4>
-                          <p className="cv-small text-gray-700">{cert.issuer}</p>
-                          {cert.date && <p className="cv-small text-gray-500">{cert.date}</p>}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </DraggableSection>
-              );
-
-            case 'languages':
-              if (!cvData.languages || !Array.isArray(cvData.languages) || cvData.languages.length === 0) return null;
-              return (
-                <DraggableSection key="languages" sectionId="languages">
-                  <div>
-                    <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
-                      {getLabel('languages', currentLanguage)}
-                    </h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      {cvData.languages.map((lang: any, index: number) => {
-                        const languageName = typeof lang === 'string' ? lang : (lang.language || lang.name || '');
-                        const languageLevel = typeof lang === 'object' ? (lang.level || lang.proficiency || '') : '';
-
-                        return (
-                          <div key={index} className="flex justify-between items-center">
-                            <span className="cv-body text-gray-900">{languageName}</span>
-                            {languageLevel && (
-                              <span className="cv-small text-gray-600">({languageLevel})</span>
+                return data.skills && data.skills.length > 0 && (
+                    <section>
+                        <SectionTitle title={getLabel('skills', currentLanguage)} />
+                        <div className="space-y-4">
+                            {hardSkills.length > 0 && (
+                                <div>
+                                    <h3 className="font-semibold text-gray-700 mb-2">{getLabel('hardSkills', currentLanguage)}</h3>
+                                    <ul className="space-y-2 text-gray-700">{hardSkills.map((skill, index) => <li key={skill.id || index}>{stripHtmlTags(skill.name)}</li>)}</ul>
+                                </div>
                             )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </DraggableSection>
-              );
-
+                            {softSkills.length > 0 && (
+                                <div>
+                                    <h3 className="font-semibold text-gray-700 mb-2 mt-4">{getLabel('softSkills', currentLanguage)}</h3>
+                                    <ul className="space-y-2 text-gray-700">{softSkills.map((skill, index) => <li key={skill.id || index}>{stripHtmlTags(skill.name)}</li>)}</ul>
+                                </div>
+                            )}
+                        </div>
+                    </section>
+                );
+            case 'education':
+                return data.education && data.education.length > 0 && (
+                    <section>
+                        <SectionTitle title={getLabel('education', currentLanguage)} />
+                        <div className="text-gray-700">{data.education.map((edu) => <div key={edu.id} className="mb-6"><h3 className="font-bold text-lg">{stripHtmlTags(edu.institution)}</h3><p className="font-semibold">{translateDegree(edu.degree, currentLanguage)}{edu.field && ` - ${stripHtmlTags(edu.field)}`}</p><p className="text-sm text-gray-500">{formatExperienceDateRange(edu.startDate, edu.endDate, edu.current, currentLanguage)}</p>{edu.gpa && <p className="text-sm text-gray-500">{getLabel('GPA', currentLanguage)}: {stripHtmlTags(edu.gpa)}</p>}{edu.description && <ul className="list-disc list-inside mt-2 space-y-2 text-sm">{stripHtmlTags(edu.description).split('\n').map((line, index) => line.trim() && <li key={index}>{line}</li>)}</ul>}</div>)}</div>
+                    </section>
+                );
+            case 'experience':
+                return data.experience && data.experience.length > 0 && (
+                    <section>
+                        <SectionTitle title={getLabel('experience', currentLanguage)} />
+                        <div className="space-y-6">{data.experience.map((job) => <div key={job.id}><h3 className="text-lg font-bold text-gray-800">{stripHtmlTags(job.company)}{job.location && `, ${stripHtmlTags(job.location)}`}</h3><div className="flex justify-between items-baseline"><p className="font-semibold text-gray-700">{stripHtmlTags(job.position)}</p><p className="text-sm text-gray-500">{formatExperienceDateRange(job.startDate, job.endDate, job.current, currentLanguage)}</p></div>{job.description && <ul className="list-disc list-inside mt-2 space-y-2 text-gray-600">{stripHtmlTags(job.description).split('\n').map((duty, i) => duty.trim() && <li key={i}>{duty.startsWith('•') ? duty.substring(1).trim() : duty}</li>)}</ul>}</div>)}</div>
+                    </section>
+                );
+            case 'projects':
+                return data.projects && data.projects.length > 0 && (
+                    <section>
+                        <SectionTitle title={getLabel('projects', currentLanguage)} />
+                        <div className="space-y-6">{data.projects.map((project) => <div key={project.id}><h3 className="text-lg font-bold text-gray-800">{stripHtmlTags(project.name)}</h3>{(project.startDate || project.endDate) && <p className="text-sm text-gray-500">{project.startDate && project.endDate && `${formatDate(project.startDate, currentLanguage)} - ${formatDate(project.endDate, currentLanguage)}`}{project.startDate && !project.endDate && formatDate(project.startDate, currentLanguage)}</p>}{project.description && <p className="mt-2 text-gray-600">{stripHtmlTags(project.description)}</p>}{project.technologies && <p className="mt-1 text-sm text-gray-500">{getLabel('technologies', currentLanguage)}: {Array.isArray(project.technologies) ? project.technologies.join(', ') : project.technologies}</p>}</div>)}</div>
+                    </section>
+                );
+            case 'languages':
+                return data.languages && data.languages.length > 0 && (
+                    <section>
+                        <SectionTitle title={getLabel('languages', currentLanguage)} />
+                        <ul className="space-y-2 text-gray-700">{data.languages.map((lang, index) => <li key={lang.id || index}>{lang.language || lang.name} - {translateLanguageLevel(lang.level || lang.proficiency || '', currentLanguage)}</li>)}</ul>
+                    </section>
+                );
+            case 'certifications':
+                return data.certifications && data.certifications.length > 0 && (
+                    <section>
+                        <SectionTitle title={getLabel('certifications', currentLanguage)} />
+                        <div className="space-y-4">{data.certifications.map(cert => <div key={cert.id}><h3 className="font-semibold text-gray-800">{cert.name}</h3><p className="text-sm text-gray-600">{cert.issuer}</p>{cert.date && <p className="text-sm text-gray-500">{formatDate(cert.date, currentLanguage)}</p>}</div>)}</div>
+                    </section>
+                );
             case 'volunteerExperience':
-              if (!cvData.volunteerExperience || !Array.isArray(cvData.volunteerExperience) || cvData.volunteerExperience.length === 0) return null;
-              return (
-                <DraggableSection key="volunteerExperience" sectionId="volunteerExperience">
-                  <div>
-                    <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
-                      {getLabel('volunteerExperience', currentLanguage)}
-                    </h3>
-                    <div className="space-y-3">
-                      {cvData.volunteerExperience.map((vol: any, index: number) => (
-                        <div key={index} className="border-l-2 border-red-500 pl-3">
-                          <div className="flex justify-between items-start mb-1">
-                            <div>
-                              <h4 className="cv-subheading text-gray-900">{vol.role}</h4>
-                              <p className="cv-body text-gray-700">{vol.organization}</p>
-                            </div>
-                            <span className="cv-small text-gray-500 whitespace-nowrap ml-3">
-                              {vol.startDate} - {vol.current ? getLabel('present', currentLanguage) : vol.endDate}
-                            </span>
-                          </div>
-                          {vol.description && (
-                            <SafeHtmlContent
-                              content={vol.description}
-                              className="cv-body text-gray-600 leading-relaxed"
-                              allowHtml={false}
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </DraggableSection>
-              );
-
+                return data.volunteerExperience && data.volunteerExperience.length > 0 && (
+                    <section>
+                        <SectionTitle title={getLabel('volunteerExperience', currentLanguage)} />
+                        <div className="space-y-4">{data.volunteerExperience.map(vol => <div key={vol.id}><h3 className="font-semibold text-gray-800">{vol.role} at {vol.organization}</h3><p className="text-sm text-gray-500">{formatExperienceDateRange(vol.startDate, vol.endDate, vol.current, currentLanguage)}</p>{vol.description && <p className="text-sm text-gray-600 mt-1">{stripHtmlTags(vol.description)}</p>}</div>)}</div>
+                    </section>
+                );
+            case 'references':
+                return data.references && data.references.length > 0 && (
+                    <section>
+                        <SectionTitle title={getLabel('references', currentLanguage)} />
+                        <p className="text-sm text-gray-600">{currentLanguage === 'english' ? 'Available upon request' : 'Tələb olunduqda təqdim ediləcək'}</p>
+                    </section>
+                );
             case 'customSections':
-              if (!cvData.customSections || !Array.isArray(cvData.customSections) || cvData.customSections.length === 0) return null;
-              return (
-                <DraggableSection key="customSections" sectionId="customSections">
-                  <div className="space-y-4">
-                    {cvData.customSections.map((section: any, sectionIndex: number) => {
-                      if (!section.items || section.items.length === 0) return null;
-
-                      return (
-                        <div key={sectionIndex}>
-                          <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
-                            {section.title || 'Əlavə Bölmə'}
-                          </h3>
-                          <div className="space-y-2">
-                            {section.items.map((item: any, itemIndex: number) => (
-                              <div key={itemIndex} className="border-l-2 border-gray-400 pl-3">
-                                <h4 className="cv-subheading text-gray-900">{item.title}</h4>
-                                {item.subtitle && (
-                                  <p className="cv-small text-gray-700">{item.subtitle}</p>
-                                )}
-                                {item.description && (
-                                  <SafeHtmlContent
-                                    content={item.description}
-                                    className="cv-body text-gray-600 leading-relaxed"
-                                    allowHtml={false}
-                                  />
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </DraggableSection>
-              );
-
+                return data.customSections && data.customSections.length > 0 && (
+                    <>
+                        {data.customSections.map(section => (
+                            <section key={section.id}>
+                                <SectionTitle title={section.title} />
+                                <div className="text-gray-600">{stripHtmlTags(section.content || section.description || '')}</div>
+                            </section>
+                        ))}
+                    </>
+                );
             default:
-              return null;
-          }
-        })}
-      </div>
-    </div>
-  );
+                return null;
+        }
+    };
+
+    const asideSectionIds = ['skills', 'education', 'languages', 'certifications', 'volunteerExperience', 'references'];
+    const mainSectionIds = ['summary', 'experience', 'projects', 'customSections'];
+    const sectionsForAside = sections.filter(s => asideSectionIds.includes(s.id));
+    const sectionsForMain = sections.filter(s => mainSectionIds.includes(s.id));
+
+    if (!mounted) return <div className="min-h-screen bg-white"></div>;
+
+    return (
+        <div className="font-sans bg-gray-100 h-full overflow-y-auto p-4 md:p-8" style={{ fontFamily: fontSettings.fontFamily, fontSize: fontSettings.fontSize }}>
+            <div className="w-full max-w-4xl bg-white shadow-lg p-8 md:p-12">
+                <header className="flex flex-col md:flex-row justify-between items-start mb-10">
+                    <div className="md:w-3/4">
+                        <h1 className="text-4xl md:text-5xl font-bold text-gray-800">{stripHtmlTags(data.personalInfo?.name || data.personalInfo?.fullName || '')}</h1>
+                        <h2 className="text-xl md:text-2xl font-semibold text-gray-700 mt-2">{stripHtmlTags(data.personalInfo?.title || 'Professional')}</h2>
+                    </div>
+                    <div className="text-left md:text-right mt-6 md:mt-0 text-sm text-gray-600 w-full md:w-auto space-y-1">
+                        {data.personalInfo?.location && <p className="flex items-center justify-start md:justify-end"><LocationIcon /> {stripHtmlTags(data.personalInfo.location)}</p>}
+                        {data.personalInfo?.phone && <p className="flex items-center justify-start md:justify-end"><PhoneIcon /> {stripHtmlTags(data.personalInfo.phone)}</p>}
+                        {data.personalInfo?.email && <a href={`mailto:${data.personalInfo.email}`} className="mt-1 text-blue-600 hover:underline flex items-center justify-start md:justify-end"><MailIcon /> {stripHtmlTags(data.personalInfo.email)}</a>}
+                        {data.personalInfo?.linkedin && <a href={data.personalInfo.linkedin.startsWith('http') ? data.personalInfo.linkedin : `https://${data.personalInfo.linkedin}`} target="_blank" rel="noopener noreferrer" className="mt-1 text-blue-600 hover:underline flex items-center justify-start md:justify-end"><LinkedinIcon /> {stripHtmlTags(data.personalInfo.linkedin)}</a>}
+                    </div>
+                </header>
+                <main className="flex flex-col md:flex-row-reverse gap-12">
+                    <aside className="w-full md:w-1/3 space-y-8">
+                        {sectionsForAside.map(section => (
+                            <DraggableSection key={section.id} sectionId={section.id}>
+                                {renderSectionContent(section.id)}
+                            </DraggableSection>
+                        ))}
+                    </aside>
+                    <div className="w-full md:w-2/3 space-y-8">
+                        {sectionsForMain.map(section => (
+                            <DraggableSection key={section.id} sectionId={section.id}>
+                                {renderSectionContent(section.id)}
+                            </DraggableSection>
+                        ))}
+                    </div>
+                </main>
+            </div>
+        </div>
+    );
 };
 
-export default CVPreviewA4;
+
+// --- Medium Professional Template Component ---
+const MediumProfessionalTemplate: React.FC<CVPreviewProps> = ({ cv, onSectionOrderChange }) => {
+    const { data } = cv;
+    const currentLanguage = data.cvLanguage || 'azerbaijani';
+    const { fontSettings } = useFontSettings(cv.id);
+
+    const [draggedSection, setDraggedSection] = useState<string | null>(null);
+    const [dragOverSection, setDragOverSection] = useState<string | null>(null);
+    const [sections, setSections] = useState<SectionConfig[]>([]);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => { setMounted(true); }, []);
+
+    const hasData = useCallback((sectionId: string): boolean => {
+        if (sectionId === 'personalInfo') return true;
+        if (sectionId === 'summary') return !!data.personalInfo?.summary;
+        const sectionData = data?.[sectionId as keyof typeof data];
+        return Array.isArray(sectionData) ? sectionData.length > 0 : !!sectionData;
+    }, [data]);
+
+    useEffect(() => {
+        if (!mounted) return;
+        const currentSectionOrder = data?.sectionOrder || [];
+        const initializedSections = DEFAULT_SECTIONS.map((defaultSection, index) => {
+            const existingConfig = currentSectionOrder.find((s: any) => s.id === defaultSection.id);
+            return {
+                id: defaultSection.id,
+                name: defaultSection.name,
+                displayName: currentLanguage === 'english' ? defaultSection.displayName : defaultSection.displayNameAz,
+                isVisible: existingConfig?.isVisible ?? (hasData(defaultSection.id) || defaultSection.alwaysVisible),
+                order: existingConfig?.order ?? index,
+                hasData: hasData(defaultSection.id),
+                icon: defaultSection.icon
+            };
+        });
+        const sectionsToShow = initializedSections.filter(s => hasData(s.id)).sort((a, b) => a.order - b.order);
+        setSections([...sectionsToShow]);
+    }, [mounted, data, hasData, currentLanguage]);
+
+    const handleDragStart = useCallback((e: React.DragEvent, sectionId: string) => { setDraggedSection(sectionId); }, []);
+    const handleDragOver = useCallback((e: React.DragEvent, sectionId: string) => { e.preventDefault(); if (sectionId !== draggedSection) setDragOverSection(sectionId); }, [draggedSection]);
+    const handleDrop = useCallback((e: React.DragEvent, targetSectionId: string) => {
+        if (!draggedSection || draggedSection === targetSectionId) {
+            setDraggedSection(null); setDragOverSection(null); return;
+        }
+        const draggedIndex = sections.findIndex(s => s.id === draggedSection);
+        const targetIndex = sections.findIndex(s => s.id === targetSectionId);
+        if (draggedIndex !== -1 && targetIndex !== -1) {
+            const newSections = [...sections];
+            const [draggedItem] = newSections.splice(draggedIndex, 1);
+            newSections.splice(targetIndex, 0, draggedItem);
+            const updatedSections = newSections.map((s, i) => ({ ...s, order: i }));
+            setSections(updatedSections);
+            if (onSectionOrderChange) onSectionOrderChange(updatedSections);
+        }
+        setDraggedSection(null); setDragOverSection(null);
+    }, [draggedSection, sections, onSectionOrderChange]);
+    const handleDragEnd = useCallback(() => { setDraggedSection(null); setDragOverSection(null); }, []);
+
+    const DraggableSection: React.FC<{ sectionId: string, children: React.ReactNode }> = ({ sectionId, children }) => {
+        const isDragged = draggedSection === sectionId;
+        const isDraggedOver = dragOverSection === sectionId && draggedSection !== sectionId;
+        const dragDropText = {
+            drag: currentLanguage === 'english' ? 'Drag' : 'Sürükləyin',
+            drop: currentLanguage === 'english' ? 'Drop here' : 'Buraya burax'
+        }
+        return (
+            <div
+                draggable onDragStart={(e) => handleDragStart(e, sectionId)} onDragOver={(e) => handleDragOver(e, sectionId)} onDrop={(e) => handleDrop(e, sectionId)} onDragEnd={handleDragEnd}
+                className={`relative group cursor-move transition-all duration-200 ${isDragged ? 'scale-105 rotate-1 z-50' : ''} ${isDraggedOver ? 'ring-2 ring-blue-400 bg-blue-50 rounded-lg' : ''} hover:shadow-md rounded-lg p-2 m-1`}
+            >
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-700 text-white px-2 py-1 rounded text-xs">{dragDropText.drag}</div>
+                {isDraggedOver && <div className="absolute inset-0 border-2 border-dashed border-blue-400 rounded-lg bg-blue-100 bg-opacity-50 flex items-center justify-center pointer-events-none z-10"><div className="bg-blue-500 text-white px-3 py-1 rounded text-sm font-medium animate-bounce">🎯 {dragDropText.drop}</div></div>}
+                {children}
+            </div>
+        );
+    };
+
+    const hardSkills = data.skills?.filter(skill => skill.type === 'hard' || !skill.type) || [];
+    const softSkills = data.skills?.filter(skill => skill.type === 'soft') || [];
+
+    return (
+        <div className="w-full h-full bg-white text-gray-900 overflow-y-auto" style={{ fontFamily: fontSettings.fontFamily, fontSize: fontSettings.fontSize }}>
+            {draggedSection && <div className="sticky top-0 z-50 bg-blue-500 text-white p-2 text-center text-sm">{currentLanguage === 'english' ? `🔄 Dragging "${DEFAULT_SECTIONS.find(s => s.id === draggedSection)?.displayName}"...` : `🔄 "${DEFAULT_SECTIONS.find(s => s.id === draggedSection)?.displayNameAz}" sürüklənir...`}</div>}
+            <div className="p-8">
+                <header className="text-center border-b-2 border-gray-200 pb-6 mb-8">
+                    <h1 className="text-4xl font-bold text-gray-900 mb-2">{data.personalInfo.name || data.personalInfo.fullName || 'Your Name'}</h1>
+                    <h2 className="text-xl font-light text-gray-600 tracking-widest uppercase">{data.personalInfo.title || 'Professional Title'}</h2>
+                    <div className="flex justify-center gap-x-6 gap-y-2 flex-wrap mt-4 text-sm text-gray-600">
+                        {data.personalInfo.email && <span>{data.personalInfo.email}</span>}
+                        {data.personalInfo.phone && <span>{data.personalInfo.phone}</span>}
+                        {data.personalInfo.location && <span>{data.personalInfo.location}</span>}
+                        {data.personalInfo.linkedin && <span>{data.personalInfo.linkedin}</span>}
+                    </div>
+                </header>
+                <div className="space-y-8">
+                    {sections.map((section) => {
+                        const sectionContent = () => {
+                            switch (section.id) {
+                                case 'summary':
+                                    return data.personalInfo.summary && <section><h2 className="text-xl font-semibold text-gray-900 mb-4">{getLabel('summary', currentLanguage).toUpperCase()}</h2><p className="text-sm text-gray-700 leading-relaxed">{stripHtmlTags(data.personalInfo.summary)}</p></section>;
+                                case 'experience':
+                                    return data.experience?.length > 0 && <section><h2 className="text-xl font-semibold text-gray-900 mb-4">{getLabel('experience', currentLanguage).toUpperCase()}</h2><div className="space-y-6">{data.experience.map(exp => <div key={exp.id} className="pl-4 border-l-2 border-blue-500"><div className="flex justify-between items-start mb-1"><div><h3 className="font-semibold text-gray-800">{exp.position}</h3><p className="text-gray-600">{exp.company}</p></div><span className="text-sm text-gray-500 whitespace-nowrap pl-4">{formatExperienceDateRange(exp.startDate, exp.endDate, exp.current, currentLanguage)}</span></div>{exp.location && <p className="text-sm text-gray-500 mb-2">{exp.location}</p>}{exp.description && <p className="text-sm text-gray-700 leading-relaxed mt-2">{stripHtmlTags(exp.description)}</p>}</div>)}</div></section>;
+                                case 'education':
+                                    return data.education?.length > 0 && <section><h2 className="text-xl font-semibold text-gray-900 mb-4">{getLabel('education', currentLanguage).toUpperCase()}</h2><div className="space-y-4">{data.education.map(edu => <div key={edu.id} className="pl-4 border-l-2 border-green-500"><div className="flex justify-between items-start mb-1"><div><h3 className="font-semibold text-gray-800">{translateDegree(edu.degree, currentLanguage)}</h3><p className="text-gray-600">{edu.institution}</p></div><span className="text-sm text-gray-500 whitespace-nowrap pl-4">{formatExperienceDateRange(edu.startDate, edu.endDate, edu.current, currentLanguage)}</span></div>{edu.field && <p className="text-sm text-gray-500">{edu.field}</p>}{edu.gpa && <p className="text-sm text-gray-500">{getLabel('GPA', currentLanguage)}: {edu.gpa}</p>}</div>)}</div></section>;
+                                case 'skills':
+                                    return data.skills?.length > 0 && <section><h2 className="text-xl font-semibold text-gray-900 mb-4">{getLabel('skills', currentLanguage).toUpperCase()}</h2><div className="space-y-4">{hardSkills.length > 0 && <div><h3 className="text-md font-semibold text-gray-700 mb-2">{getLabel('hardSkills', currentLanguage)}</h3><div className="flex flex-wrap gap-2">{hardSkills.map((skill, index) => <span key={skill.id || index} className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">{skill.name}</span>)}</div></div>}{softSkills.length > 0 && <div><h3 className="text-md font-semibold text-gray-700 mb-2">{getLabel('softSkills', currentLanguage)}</h3><div className="flex flex-wrap gap-2">{softSkills.map((skill, index) => <span key={skill.id || index} className="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">{skill.name}</span>)}</div></div>}</div></section>;
+                                case 'projects':
+                                    return data.projects?.length > 0 && <section><h2 className="text-xl font-semibold text-gray-900 mb-4">{getLabel('projects', currentLanguage).toUpperCase()}</h2><div className="space-y-6">{data.projects.map(proj => <div key={proj.id} className="pl-4 border-l-2 border-purple-500"><h3 className="font-semibold text-gray-800">{proj.name}</h3><p className="text-sm text-gray-700 leading-relaxed mt-1">{stripHtmlTags(proj.description)}</p></div>)}</div></section>;
+                                case 'certifications':
+                                    return data.certifications?.length > 0 && <section><h2 className="text-xl font-semibold text-gray-900 mb-4">{getLabel('certifications', currentLanguage).toUpperCase()}</h2><div className="space-y-4">{data.certifications.map(cert => <div key={cert.id}><h3 className="font-semibold text-gray-800">{cert.name} - <span className="font-normal text-gray-600">{cert.issuer}</span></h3></div>)}</div></section>;
+                                case 'languages':
+                                    return data.languages?.length > 0 && <section><h2 className="text-xl font-semibold text-gray-900 mb-4">{getLabel('languages', currentLanguage).toUpperCase()}</h2><div className="flex flex-wrap gap-4">{data.languages.map(lang => <div key={lang.id}><span className="font-semibold">{lang.language || lang.name}</span>: <span className="text-gray-600">{translateLanguageLevel(lang.level || lang.proficiency || '', currentLanguage)}</span></div>)}</div></section>;
+                                default: return null;
+                            }
+                        };
+                        const content = sectionContent();
+                        return content ? <DraggableSection key={section.id} sectionId={section.id}>{content}</DraggableSection> : null;
+                    })}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- Main CV Preview Router Component ---
+export default function CVPreview({ cv, onSectionOrderChange }: CVPreviewProps) {
+    if (!cv || !cv.templateId) {
+        return <div className="flex items-center justify-center h-full bg-gray-100"><p>Loading CV...</p></div>;
+    }
+
+    switch (cv.templateId) {
+        case 'resume-ats':
+            return <ResumeATSTemplate cv={cv} onSectionOrderChange={onSectionOrderChange} />;
+        case 'medium-professional':
+            return <MediumProfessionalTemplate cv={cv} onSectionOrderChange={onSectionOrderChange} />;
+        default:
+            return <MediumProfessionalTemplate cv={cv} onSectionOrderChange={onSectionOrderChange} />;
+    }
+}
