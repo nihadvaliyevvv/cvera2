@@ -596,4 +596,3 @@ export default function CVPreview({ cv, onSectionOrderChange }: CVPreviewProps) 
             return <MediumProfessionalTemplate cv={cv} onSectionOrderChange={onSectionOrderChange} />;
     }
 }
-�
