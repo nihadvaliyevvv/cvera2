@@ -565,12 +565,88 @@ const MediumProfessionalTemplate: React.FC<CVPreviewProps> = ({ cv, onSectionOrd
                     {sections.map((section) => {
                         switch (section.id) {
                             case 'experience':
-                                return data.experience?.length > 0 && <DraggableSection key={section.id} sectionId="experience"><section><h2 className="text-xl font-semibold text-gray-900 mb-4">{texts.experience}</h2><div className="space-y-6">{data.experience?.map(exp => <div key={exp.id} className="pl-4 border-l-2 border-blue-500"><div className="flex justify-between items-start mb-1"><div><h3 className="font-semibold text-gray-800">{exp.position}</h3><p className="text-gray-600">{exp.company}</p></div><span className="text-sm text-gray-500 whitespace-nowrap pl-4">{formatDateRange(exp.startDate, exp.endDate || '', exp.current)}</span></div>{exp.location && <p className="text-sm text-gray-500 mb-2">{exp.location}</p>}{exp.description && <p className="text-sm text-gray-700 leading-relaxed mt-2">{stripHtmlTags(exp.description)}</p>}</div>)}</div></section></DraggableSection>;
+                                case 'experience':
+    return Array.isArray(data.experience) && data.experience.length > 0 && (
+        <DraggableSection key={section.id} sectionId="experience">
+            <section>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">{texts.experience}</h2>
+                <div className="space-y-6">
+                    {data.experience.map(exp => (
+                        <div key={exp.id} className="pl-4 border-l-2 border-blue-500">
+                            <div className="flex justify-between items-start mb-1">
+                                <div>
+                                    <h3 className="font-semibold text-gray-800">{exp.position}</h3>
+                                    <p className="text-gray-600">{exp.company}</p>
+                                </div>
+                                <span className="text-sm text-gray-500 whitespace-nowrap pl-4">
+                                    {formatDateRange(exp.startDate, exp.endDate || '', exp.current)}
+                                </span>
+                            </div>
+                            {exp.location && <p className="text-sm text-gray-500 mb-2">{exp.location}</p>}
+                            {exp.description && <p className="text-sm text-gray-700 leading-relaxed mt-2">{stripHtmlTags(exp.description)}</p>}
+                        </div>
+                    ))}
+                </div>
+            </section>
+        </DraggableSection>
+    );
                             case 'education':
-                                return data.education?.length > 0 && <DraggableSection key={section.id} sectionId="education"><section><h2 className="text-xl font-semibold text-gray-900 mb-4">{texts.education}</h2><div className="space-y-4">{data.education?.map(edu => <div key={edu.id} className="pl-4 border-l-2 border-green-500"><div className="flex justify-between items-start mb-1"><div><h3 className="font-semibold text-gray-800">{edu.degree}</h3><p className="text-gray-600">{edu.institution}</p></div><span className="text-sm text-gray-500 whitespace-nowrap pl-4">{formatDateRange(edu.startDate, edu.endDate || '', edu.current)}</span></div>{edu.field && <p className="text-sm text-gray-500">{edu.field}</p>}{edu.gpa && <p className="text-sm text-gray-500">GPA: {edu.gpa}</p>}</div>)}</div></section></DraggableSection>;
-                            case 'skills':
-                                return data.skills?.length > 0 && <DraggableSection key={section.id} sectionId="skills"><section><h2 className="text-xl font-semibold text-gray-900 mb-4">{texts.skills}</h2><div className="space-y-4">{hardSkills.length > 0 && <div><h3 className="text-md font-semibold text-gray-700 mb-2">Hard Skills</h3><div className="flex flex-wrap gap-2">{hardSkills.map((skill, index) => <span key={index} className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">{skill.name}</span>)}</div></div>}{softSkills.length > 0 && <div><h3 className="text-md font-semibold text-gray-700 mb-2">Soft Skills</h3><div className="flex flex-wrap gap-2">{softSkills.map((skill, index) => <span key={index} className="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">{skill.name}</span>)}</div></div>}</div></section></DraggableSection>;
-                            default: return null;
+                               return Array.isArray(data.education) && data.education.length > 0 && (
+                <DraggableSection key={section.id} sectionId="education">
+                    <section>
+                        <h2 className="text-xl font-semibold text-gray-900 mb-4">{texts.education}</h2>
+                        <div className="space-y-4">
+                            {data.education.map(edu => (
+                                <div key={edu.id} className="pl-4 border-l-2 border-green-500">
+                                    <div className="flex justify-between items-start mb-1">
+                                        <div>
+                                            <h3 className="font-semibold text-gray-800">{edu.degree}</h3>
+                                            <p className="text-gray-600">{edu.institution}</p>
+                                        </div>
+                                        <span className="text-sm text-gray-500 whitespace-nowrap pl-4">
+                                            {formatDateRange(edu.startDate, edu.endDate || '', edu.current)}
+                                        </span>
+                                    </div>
+                                    {edu.field && <p className="text-sm text-gray-500">{edu.field}</p>}
+                                    {edu.gpa && <p className="text-sm text-gray-500">GPA: {edu.gpa}</p>}
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                </DraggableSection>
+            );
+        case 'skills':
+            return Array.isArray(data.skills) && data.skills.length > 0 && (
+                <DraggableSection key={section.id} sectionId="skills">
+                    <section>
+                        <h2 className="text-xl font-semibold text-gray-900 mb-4">{texts.skills}</h2>
+                        <div className="space-y-4">
+                            {hardSkills.length > 0 && (
+                                <div>
+                                    <h3 className="text-md font-semibold text-gray-700 mb-2">Hard Skills</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {hardSkills.map((skill, index) => (
+                                            <span key={index} className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">{skill.name}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {softSkills.length > 0 && (
+                                <div>
+                                    <h3 className="text-md font-semibold text-gray-700 mb-2">Soft Skills</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {softSkills.map((skill, index) => (
+                                            <span key={index} className="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">{skill.name}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </section>
+                </DraggableSection>
+            );
+        default:
+            return null;
                         }
                     })}
                 </div>
