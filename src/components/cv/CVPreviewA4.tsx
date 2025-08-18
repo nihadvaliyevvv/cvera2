@@ -343,7 +343,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           transition-all duration-200
           ${isDragged ? 'scale-105 rotate-1 z-50' : ''}
           ${isDraggedOver ? 'ring-2 ring-blue-400 bg-blue-50 rounded-lg' : ''}
-          hover:shadow-md hover:bg-gray-50 rounded-lg p-2 m-1
+          hover:shadow-md rounded-lg p-2 m-1
         `}
         style={{
           userSelect: 'none',
@@ -499,41 +499,40 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
           return (
             <DraggableSection key={`skills-${section.order}`} sectionId="skills" className="w-full mb-6">
               <div>
+                <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">{getLabel('skills', currentLanguage)}</h2>
+                <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
+
                 {hardSkills.length > 0 && (
-                  <div className="mb-6">
-                    <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">Hard Skills</h2>
-                    <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
-                    <ul className="space-y-1 cv-small list-disc list-inside text-white">
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-gray-800 mb-2 uppercase tracking-wide">Hard Skills</h4>
+                    <div className="flex flex-wrap gap-2">
                       {hardSkills.map((skill: any, index: number) => {
                         const skillName = typeof skill === 'string' ? skill : skill.name;
                         const skillLevel = typeof skill === 'object' ? skill.level : undefined;
                         return (
-                          <li key={index} className="text-white cv-small">
-                            {smartTranslateText(skillName, currentLanguage)}
-                            {skillLevel && ` (${smartTranslateText(skillLevel, currentLanguage)})`}
-                          </li>
+                          <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded cv-small">
+                            {skillName}{skillLevel && ` (${skillLevel})`}
+                          </span>
                         );
                       })}
-                    </ul>
+                    </div>
                   </div>
                 )}
 
                 {softSkills.length > 0 && (
                   <div className="mb-4">
-                    <h2 className="cv-subheading tracking-wider uppercase mb-3 text-white">Soft Skills</h2>
-                    <div className="border-b-2 border-gray-400 w-10 mb-3"></div>
-                    <ul className="space-y-1 cv-small list-disc list-inside text-white">
+                    <h4 className="text-sm font-semibold text-gray-800 mb-2 uppercase tracking-wide">Soft Skills</h4>
+                    <div className="flex flex-wrap gap-2">
                       {softSkills.map((skill: any, index: number) => {
                         const skillName = typeof skill === 'string' ? skill : skill.name;
                         const skillLevel = typeof skill === 'object' ? skill.level : undefined;
                         return (
-                          <li key={index} className="text-white cv-small">
-                            {smartTranslateText(skillName, currentLanguage)}
-                            {skillLevel && ` (${smartTranslateText(skillLevel, currentLanguage)})`}
-                          </li>
+                          <span key={index} className="bg-green-100 text-green-800 px-2 py-1 rounded cv-small">
+                            {skillName}{skillLevel && ` (${skillLevel})`}
+                          </span>
                         );
                       })}
-                    </ul>
+                    </div>
                   </div>
                 )}
               </div>
@@ -898,16 +897,23 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
               return (
                 <DraggableSection key="skills" sectionId="skills">
                   <div>
+                    <h3 className="cv-subheading text-gray-800 mb-3 border-b border-gray-300 pb-1">
+                      {getLabel('skills', currentLanguage)}
+                    </h3>
 
                     {hardSkills.length > 0 && (
                       <div className="mb-4">
                         <h4 className="text-sm font-semibold text-gray-800 mb-2 uppercase tracking-wide">Hard Skills</h4>
                         <div className="flex flex-wrap gap-2">
-                          {hardSkills.map((skill: any, index: number) => (
-                            <span key={index} className="bg-gray-100 text-gray-800 px-2 py-1 rounded cv-small">
-                              {typeof skill === 'string' ? skill : skill.name}
-                            </span>
-                          ))}
+                          {hardSkills.map((skill: any, index: number) => {
+                            const skillName = typeof skill === 'string' ? skill : skill.name;
+                            const skillLevel = typeof skill === 'object' ? skill.level : undefined;
+                            return (
+                              <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded cv-small">
+                                {skillName}{skillLevel && ` (${skillLevel})`}
+                              </span>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -916,11 +922,15 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({
                       <div className="mb-4">
                         <h4 className="text-sm font-semibold text-gray-800 mb-2 uppercase tracking-wide">Soft Skills</h4>
                         <div className="flex flex-wrap gap-2">
-                          {softSkills.map((skill: any, index: number) => (
-                            <span key={index} className="bg-gray-100 text-gray-800 px-2 py-1 rounded cv-small">
-                              {typeof skill === 'string' ? skill : skill.name}
-                            </span>
-                          ))}
+                          {softSkills.map((skill: any, index: number) => {
+                            const skillName = typeof skill === 'string' ? skill : skill.name;
+                            const skillLevel = typeof skill === 'object' ? skill.level : undefined;
+                            return (
+                              <span key={index} className="bg-green-100 text-green-800 px-2 py-1 rounded cv-small">
+                                {skillName}{skillLevel && ` (${skillLevel})`}
+                              </span>
+                            );
+                          })}
                         </div>
                       </div>
                     )}

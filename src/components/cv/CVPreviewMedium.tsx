@@ -338,7 +338,7 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
           transition-all duration-200
           ${isDragged ? 'scale-105 rotate-1 z-50' : ''}
           ${isDraggedOver ? 'ring-2 ring-blue-400 bg-blue-50 rounded-lg' : ''}
-          hover:shadow-md hover:bg-gray-50 rounded-lg p-2 m-1
+          hover:shadow-md rounded-lg p-2 m-1
         `}
         style={{
           userSelect: 'none',
@@ -566,8 +566,14 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
               case 'skills':
                 if (!data.skills || data.skills.length === 0) return null;
 
-                const hardSkills = data.skills.filter(skill => skill.type === 'hard' || !skill.type);
-                const softSkills = data.skills.filter(skill => skill.type === 'soft');
+                const hardSkills = data.skills.filter(skill => {
+                  if (typeof skill === 'string') return true; // String skills default to hard skills
+                  return skill.type === 'hard' || !skill.type;
+                });
+                const softSkills = data.skills.filter(skill => {
+                  if (typeof skill === 'string') return false; // String skills are not soft skills
+                  return skill.type === 'soft';
+                });
 
                 return (
                   <DraggableSection key={section.id} sectionId="skills">
@@ -579,7 +585,11 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
                               Hard Skills
                             </h2>
                             <div className="text-sm text-gray-700">
-                              {hardSkills.map(skill => skill.name).join(' • ')}
+                              {hardSkills.map((skill, index) => {
+                                const skillName = typeof skill === 'string' ? skill : skill.name;
+                                const skillLevel = typeof skill === 'object' ? skill.level : undefined;
+                                return skillName + (skillLevel ? ` (${skillLevel})` : '');
+                              }).join(' • ')}
                             </div>
                           </div>
                         )}
@@ -589,7 +599,11 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
                               Soft Skills
                             </h2>
                             <div className="text-sm text-gray-700">
-                              {softSkills.map(skill => skill.name).join(' • ')}
+                              {softSkills.map((skill, index) => {
+                                const skillName = typeof skill === 'string' ? skill : skill.name;
+                                const skillLevel = typeof skill === 'object' ? skill.level : undefined;
+                                return skillName + (skillLevel ? ` (${skillLevel})` : '');
+                              }).join(' • ')}
                             </div>
                           </div>
                         )}

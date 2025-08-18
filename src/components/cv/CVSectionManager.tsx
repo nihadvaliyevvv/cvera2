@@ -198,7 +198,7 @@ export default function CVSectionManager({ cvData, onSectionOrderChange, languag
     return (
         <div
             ref={containerRef}
-            className="w-full relative bg-white"
+            className="w-full relative bg-gray-900"
             style={{
                 position: 'relative',
                 zIndex: 10,
@@ -206,19 +206,19 @@ export default function CVSectionManager({ cvData, onSectionOrderChange, languag
             }}
         >
             {/* Header with better positioning */}
-            <div className="sticky top-0 bg-gradient-to-r from-blue-50 via-white to-purple-50 border-b border-blue-200 p-4 mb-4 rounded-t-xl" style={{ zIndex: 20 }}>
+            <div className="sticky top-0 bg-gradient-to-r from-gray-800 via-gray-900 to-gray-800 border-b border-gray-700 p-4 mb-4 rounded-t-xl" style={{ zIndex: 20 }}>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg">
                             ⚡
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900">Bölmə Sıralaması</h3>
-                            <p className="text-sm text-gray-600">Bölmələri sürükləyərək yenidən sıralayın</p>
+                            <h3 className="text-lg font-bold text-white">Bölmə Sıralaması</h3>
+                            <p className="text-sm text-gray-300">Bölmələri sürükləyərək yenidən sıralayın</p>
                         </div>
                     </div>
                     {isDragging && (
-                        <div className="flex items-center gap-2 text-blue-600 animate-pulse">
+                        <div className="flex items-center gap-2 text-blue-400 animate-pulse">
                             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M4 4h2v2H4V4zm0 5h2v2H4V9zm0 5h2v2H4v-2zm5-10h2v2H9V4zm0 5h2v2H9V9zm0 5h2v2H9v-2zm5-10h2v2h-2V4zm0 5h2v2h-2V9zm0 5h2v2h-2v-2z"/>
                             </svg>
@@ -246,16 +246,16 @@ export default function CVSectionManager({ cvData, onSectionOrderChange, languag
                         onDragEnter={(e) => handleDragEnter(e, index)}
                         onDragLeave={handleDragLeave}
                         onDrop={(e) => handleDrop(e, index)}
-                        className={`bg-white border-2 rounded-xl p-4 transition-all duration-300 select-none ${
+                        className={`border-2 rounded-xl p-4 transition-all duration-300 select-none ${
                             draggedItem === index
-                                ? 'opacity-50 transform scale-110 shadow-2xl z-50 border-blue-400 bg-blue-50'
-                                : 'shadow-lg border-gray-200 hover:shadow-xl hover:border-blue-300 hover:scale-[1.02] cursor-grab active:cursor-grabbing'
+                                ? 'opacity-50 transform scale-110 shadow-2xl z-50 border-blue-400 bg-gray-700'
+                                : 'shadow-lg border-gray-600 hover:shadow-xl hover:border-blue-400 hover:scale-[1.02] cursor-grab active:cursor-grabbing bg-gray-800'
                         } ${
                             dragOverItem === index && draggedItem !== index
-                                ? 'border-2 border-dashed border-green-400 bg-green-50 transform scale-105 shadow-lg'
+                                ? 'border-2 border-dashed border-green-400 bg-gray-700 transform scale-105 shadow-lg'
                                 : ''
                         } ${
-                            !section.isVisible ? 'opacity-60 bg-gray-50' : ''
+                            !section.isVisible ? 'opacity-60 bg-gray-800' : ''
                         }`}
                         style={{
                             position: 'relative',
@@ -278,8 +278,18 @@ export default function CVSectionManager({ cvData, onSectionOrderChange, languag
                             <div className="flex items-center space-x-4 flex-1 min-w-0">
                                 {/* Professional drag handle */}
                                 <div className="flex items-center space-x-3 flex-shrink-0 group">
-                                    <div className="w-8 h-12 bg-gradient-to-b from-gray-300 to-gray-400 rounded-lg flex items-center justify-center cursor-grab active:cursor-grabbing hover:from-blue-300 hover:to-blue-400 transition-all shadow-md group-hover:shadow-lg">
-                                        <svg className="w-4 h-4 text-gray-600 group-hover:text-white transition-colors" fill="currentColor" viewBox="0 0 20 20">
+                                    <div className="w-8 h-12 rounded-lg flex items-center justify-center cursor-grab active:cursor-grabbing transition-all shadow-md group-hover:shadow-lg"
+                                         style={{
+                                             background: '#0d2438',
+                                             color: 'white'
+                                         }}
+                                         onMouseEnter={(e) => {
+                                             e.currentTarget.style.background = '#1e3a52';
+                                         }}
+                                         onMouseLeave={(e) => {
+                                             e.currentTarget.style.background = '#0d2438';
+                                         }}>
+                                        <svg className="w-4 h-4 text-white transition-colors" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M4 4h2v2H4V4zm0 5h2v2H4V9zm0 5h2v2H4v-2zm5-10h2v2H9V4zm0 5h2v2H9V9zm0 5h2v2H9v-2zm5-10h2v2h-2V4zm0 5h2v2h-2V9zm0 5h2v2h-2v-2z"/>
                                         </svg>
                                     </div>
@@ -292,21 +302,21 @@ export default function CVSectionManager({ cvData, onSectionOrderChange, languag
                                 </div>
 
                                 <div className="flex-1 min-w-0">
-                                    <div className="font-bold text-gray-900 text-lg truncate mb-1">
+                                    <div className="font-bold text-white text-lg truncate mb-1">
                                         {section.displayName}
                                     </div>
                                     <div className="flex items-center space-x-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
                         section.hasData
-                            ? 'bg-green-100 text-green-800 border border-green-300 shadow-sm'
-                            : 'bg-gray-100 text-gray-600 border border-gray-300'
+                            ? 'bg-green-900 text-green-200 border border-green-600 shadow-sm'
+                            : 'bg-gray-700 text-gray-300 border border-gray-600'
                     }`}>
                       {section.hasData ? '✅ Məlumat var' : '⭕ Boş'}
                     </span>
                                         <span className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
                                             section.isVisible
-                                                ? 'bg-blue-100 text-blue-800 border border-blue-300 shadow-sm'
-                                                : 'bg-red-100 text-red-800 border border-red-300'
+                                                ? 'bg-blue-900 text-blue-200 border border-blue-600 shadow-sm'
+                                                : 'bg-red-900 text-red-200 border border-red-600'
                                         }`}>
                       {section.isVisible ? '👁️ Görünür' : '🚫 Gizli'}
                     </span>
@@ -338,27 +348,27 @@ export default function CVSectionManager({ cvData, onSectionOrderChange, languag
             </div>
 
             {/* Enhanced help section */}
-            <div className="mt-4 mx-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl">
-                <div className="text-sm text-gray-700">
-                    <div className="flex items-center gap-2 font-bold mb-3 text-blue-800">
+            <div className="mt-4 mx-4 p-4 bg-gradient-to-r from-gray-800 to-gray-700 border-2 border-gray-600 rounded-xl">
+                <div className="text-sm text-gray-300">
+                    <div className="flex items-center gap-2 font-bold mb-3 text-blue-400">
                         <span className="text-lg">💡</span>
                         <span>Necə istifadə edilir:</span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                         <div className="flex items-start gap-2">
-                            <span className="text-blue-600 text-base">🖱️</span>
+                            <span className="text-blue-400 text-base">🖱️</span>
                             <span><strong>Sürükləmə:</strong> Sol handleni tutub sürükləyin</span>
                         </div>
                         <div className="flex items-start gap-2">
-                            <span className="text-green-600 text-base">👁️</span>
+                            <span className="text-green-400 text-base">👁️</span>
                             <span><strong>Görünürlük:</strong> Göstər/Gizlə düymələri</span>
                         </div>
                         <div className="flex items-start gap-2">
-                            <span className="text-purple-600 text-base">🎯</span>
+                            <span className="text-purple-400 text-base">🎯</span>
                             <span><strong>Yerləşdirmə:</strong> Yaşıl sahəyə bırakın</span>
                         </div>
                         <div className="flex items-start gap-2">
-                            <span className="text-orange-600 text-base">📱</span>
+                            <span className="text-orange-400 text-base">📱</span>
                             <span><strong>Mobil:</strong> Toxunaraq sürükləyin</span>
                         </div>
                     </div>

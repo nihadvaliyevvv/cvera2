@@ -198,12 +198,24 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
   const debouncedSave = useCallback((newSections: SectionConfig[]) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
     timeoutRef.current = setTimeout(() => {
       saveSectionOrder(newSections);
       setIsReordering(false);
+      timeoutRef.current = null;
     }, 300);
   }, [saveSectionOrder]);
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // Handle drag start
   const handleDragStart = useCallback((e: React.DragEvent, sectionId: string) => {
@@ -393,8 +405,14 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
       case 'skills':
         if (!cv.data.skills || cv.data.skills.length === 0) return null;
 
-        const hardSkills = cv.data.skills.filter(skill => skill.type === 'hard' || !skill.type);
-        const softSkills = cv.data.skills.filter(skill => skill.type === 'soft');
+        const hardSkills = cv.data.skills.filter(skill => {
+          if (typeof skill === 'string') return true; // String skills default to hard skills
+          return skill.type === 'hard' || !skill.type;
+        });
+        const softSkills = cv.data.skills.filter(skill => {
+          if (typeof skill === 'string') return false; // String skills are not soft skills
+          return skill.type === 'soft';
+        });
 
         return (
           <div className="space-y-3">
@@ -406,14 +424,18 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Hard Skills</h4>
                 <div className="flex flex-wrap gap-2">
-                  {hardSkills.map((skill: any, index: number) => (
-                    <span
-                      key={index}
-                      className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
-                    >
-                      {typeof skill === 'string' ? skill : skill.name}
-                    </span>
-                  ))}
+                  {hardSkills.map((skill: any, index: number) => {
+                    const skillName = typeof skill === 'string' ? skill : skill.name;
+                    const skillLevel = typeof skill === 'object' ? skill.level : undefined;
+                    return (
+                      <span
+                        key={index}
+                        className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                      >
+                        {skillName}{skillLevel && ` (${skillLevel})`}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -422,14 +444,18 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Soft Skills</h4>
                 <div className="flex flex-wrap gap-2">
-                  {softSkills.map((skill: any, index: number) => (
-                    <span
-                      key={index}
-                      className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full"
-                    >
-                      {typeof skill === 'string' ? skill : skill.name}
-                    </span>
-                  ))}
+                  {softSkills.map((skill: any, index: number) => {
+                    const skillName = typeof skill === 'string' ? skill : skill.name;
+                    const skillLevel = typeof skill === 'object' ? skill.level : undefined;
+                    return (
+                      <span
+                        key={index}
+                        className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full"
+                      >
+                        {skillName}{skillLevel && ` (${skillLevel})`}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -534,7 +560,7 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
 
   if (!mounted) {
     return (
-      <div className="w-full h-full bg-white animate-pulse">
+      <div className="w-full h-full bg-s animate-pulse">
         <div className="p-8 space-y-6">
           {Array.from({ length: 6 }).map((_, index) => (
             <div key={index} className="space-y-3">
@@ -584,8 +610,7 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
                 relative transition-all duration-200 ease-in-out
                 ${enableDragDrop ? 'cursor-move' : 'cursor-default'}
                 ${isDragged ? 'opacity-50 scale-95 rotate-1 z-10' : 'opacity-100 scale-100'}
-                ${isDragOver ? 'transform translate-y-1 bg-blue-50 border-2 border-blue-300 border-dashed rounded-lg' : ''}
-                ${enableDragDrop ? 'hover:shadow-md hover:bg-gray-50' : ''}
+                ${isDragOver ? 'transform translate-y-1 bg-blue-50 border-2 border-blue-300 border-dashed rounded-lg' : ''}                ${enableDragDrop ? 'hover:shadow-md' : ''}
                 group
               `}
               style={{
