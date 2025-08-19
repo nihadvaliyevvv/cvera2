@@ -169,174 +169,331 @@ export class FileGenerationService {
     }
   }
 
-  // YENİ METHOD: CVPreviewA4 component-in exact kopyası
+  // CVPreviewA4 component-in EXACT template matching - real template-ə uyğun PDF generation
   private static generateReactLikeHTML(cvData: any, templateId?: string): string {
     const { personalInfo, experience, education, skills, languages, projects, certifications } = cvData;
     
-    const sanitizeText = (text: string) => {
-      if (!text) return '';
-      return text
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#x27;');
+    // CVPreviewA4-ün EXACT HTML handling functions
+    const sanitizeHtml = (html: string): string => {
+        if (!html) return '';
+        return html
+            // Remove dangerous tags but keep formatting ones
+            .replace(/<script[^>]*>.*?<\/script>/gi, '')
+            .replace(/<style[^>]*>.*?<\/style>/gi, '')
+            .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
+            .replace(/<object[^>]*>.*?<\/object>/gi, '')
+            .replace(/<embed[^>]*>.*?<\/embed>/gi, '')
+            .replace(/<link[^>]*>/gi, '')
+            .replace(/<meta[^>]*>/gi, '')
+            // Keep basic formatting tags
+            // Convert line breaks properly
+            .replace(/<br\s*\/?>/gi, '<br>')
+            // Clean up HTML entities
+            .replace(/&nbsp;/gi, ' ')
+            .replace(/&amp;/gi, '&')
+            .replace(/&lt;/gi, '<')
+            .replace(/&gt;/gi, '>')
+            .replace(/&quot;/gi, '"')
+            .replace(/&#39;/gi, "'")
+            .trim();
     };
 
-    // Tailwind CSS-i tam inline styles-a çeviririk
+    // CVPreviewA4-ün EXACT stripHtmlTags function
+    const stripHtmlTags = (html: string): string => {
+        if (!html) return '';
+        return html
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<\/p>/gi, '\n\n')
+            .replace(/<p[^>]*>/gi, '')
+            .replace(/<\/div>/gi, '\n')
+            .replace(/<div[^>]*>/gi, '')
+            .replace(/<\/h[1-6]>/gi, '\n\n')
+            .replace(/<h[1-6][^>]*>/gi, '')
+            .replace(/<\/li>/gi, '')
+            .replace(/<li[^>]*>/gi, '• ')
+            .replace(/<\/ul>/gi, '\n')
+            .replace(/<ul[^>]*>/gi, '')
+            .replace(/<\/ol>/gi, '\n')
+            .replace(/<ol[^>]*>/gi, '')
+            .replace(/<[^>]+>/g, '')
+            .replace(/&nbsp;/gi, ' ')
+            .replace(/&amp;/gi, '&')
+            .replace(/&lt;/gi, '<')
+            .replace(/&gt;/gi, '>')
+            .replace(/&quot;/gi, '"')
+            .replace(/&#39;/gi, "'")
+            .replace(/\n\s*\n\s*\n/g, '\n\n')
+            .replace(/[ \t]+/g, ' ')
+            .trim();
+    };
+
     let html = '<!DOCTYPE html>';
     html += '<html lang="az">';
     html += '<head>';
     html += '<meta charset="UTF-8">';
     html += '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
-    html += '<title>CV - ' + sanitizeText(personalInfo?.fullName || personalInfo?.name || 'CV') + '</title>';
+    html += '<title>CV - ' + stripHtmlTags(personalInfo?.fullName || personalInfo?.name || 'CV') + '</title>';
     html += '<style>';
     
-    // Exact Tailwind CSS styles from CVPreviewA4
+    // EXACT MediumProfessionalTemplate styling - tam real template kimi
     html += '* { margin: 0; padding: 0; box-sizing: border-box; }';
-    html += 'body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif; background-color: rgb(243 244 246); height: 100%; overflow-y: auto; padding: 2rem; }';
-    html += '@media (min-width: 768px) { body { padding: 2rem; } }';
+    html += 'body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif; font-size: 16px; line-height: 1.5; color: rgb(17 24 39); }';
     
-    // Main container - matching "w-full max-w-4xl bg-white shadow-lg p-8 md:p-12"
-    html += '.cv-container { width: 794px; max-width: 56rem; background-color: white; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); padding: 2rem; margin: 0 auto; }';
-    html += '@media (min-width: 768px) { .cv-container { padding: 3rem; } }';
+    // Main wrapper - exact "w-full h-full bg-white text-gray-900 overflow-y-auto"
+    html += '.main-wrapper { width: 100%; height: auto; min-height: 100vh; background-color: white; color: rgb(17 24 39); overflow-y: auto; }';
     
-    // Header styles - matching "flex flex-col md:flex-row justify-between items-start mb-10"
-    html += '.header { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem; }';
-    html += '@media (min-width: 768px) { .header { flex-direction: row; } }';
+    // Container - exact "p-8"
+    html += '.container { padding: 2rem; }';
     
-    // Name - matching "font-bold text-gray-800" with custom fontSize
-    html += '.name { font-weight: 700; color: rgb(31 41 55); font-size: 2rem; line-height: 2.5rem; margin-bottom: 0.5rem; }';
+    // Header - exact "text-center border-b-2 border-gray-200 pb-6 mb-8"
+    html += '.header { text-align: center; border-bottom: 2px solid rgb(229 231 235); padding-bottom: 1.5rem; margin-bottom: 2rem; }';
     
-    // Title - matching subtitle styling  
-    html += '.title { color: rgb(107 114 128); font-size: 1.25rem; line-height: 1.75rem; margin-bottom: 1rem; }';
+    // Name - exact "font-bold text-gray-900 mb-2"
+    html += '.name { font-weight: 700; color: rgb(17 24 39); margin-bottom: 0.5rem; font-size: 2rem; line-height: 2.5rem; }';
     
-    // Contact info - matching contact styling
-    html += '.contact-info { display: flex; flex-wrap: wrap; gap: 1rem; color: rgb(75 85 99); font-size: 0.875rem; margin-bottom: 1.5rem; }';
+    // Title - exact "font-light text-gray-600 tracking-widest uppercase"
+    html += '.title { font-weight: 300; color: rgb(75 85 99); letter-spacing: 0.1em; text-transform: uppercase; font-size: 1.25rem; line-height: 1.75rem; }';
     
-    // Sections - matching section spacing
+    // Contact info - exact "flex justify-center gap-x-6 gap-y-2 flex-wrap mt-4 text-gray-600"
+    html += '.contact-info { display: flex; justify-content: center; gap: 1.5rem 0.5rem; flex-wrap: wrap; margin-top: 1rem; color: rgb(75 85 99); font-size: 0.75rem; }';
+    html += '.contact-info span { margin: 0 0.75rem; }';
+    
+    // Content area - exact "space-y-8"
+    html += '.content { margin-top: 2rem; }';
     html += '.section { margin-bottom: 2rem; }';
     
-    // Section titles - matching "text-lg font-semibold text-gray-800 border-b-2 border-blue-500 pb-1 mb-4"
-    html += '.section-title { font-size: 1.125rem; font-weight: 600; color: rgb(31 41 55); border-bottom: 2px solid rgb(59 130 246); padding-bottom: 0.25rem; margin-bottom: 1rem; }';
+    // Section titles - exact "font-semibold text-gray-900 mb-4" with uppercase
+    html += '.section-title { font-size: 1.125rem; font-weight: 600; color: rgb(17 24 39); margin-bottom: 1rem; text-transform: uppercase; }';
     
-    // Experience items - matching experience styling
-    html += '.experience-item { margin-bottom: 1.5rem; padding-left: 1rem; border-left: 2px solid rgb(59 130 246); position: relative; }';
+    // Experience styling - exact "space-y-6" and "pl-4 border-l-2 border-blue-500"
+    html += '.experience-list { margin-top: 1rem; }';
+    html += '.experience-item { margin-bottom: 1.5rem; padding-left: 1rem; border-left: 2px solid rgb(59 130 246); }';
+    html += '.experience-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.25rem; }';
+    html += '.experience-left { flex: 1; }';
+    html += '.experience-position { font-weight: 600; color: rgb(31 41 55); }';
+    html += '.experience-company { color: rgb(75 85 99); }';
+    html += '.experience-dates { font-size: 0.75rem; color: rgb(107 114 128); white-space: nowrap; padding-left: 1rem; }';
+    html += '.experience-location { font-size: 0.75rem; color: rgb(107 114 128); margin-bottom: 0.5rem; }';
+    html += '.experience-description { color: rgb(55 65 81); line-height: 1.625; margin-top: 0.5rem; font-size: 0.875rem; }';
     
-    // Job titles - matching job title styling
-    html += '.job-title { font-size: 1.125rem; font-weight: 600; color: rgb(31 41 55); }';
+    // Education styling - exact "pl-4 border-l-2 border-green-500"
+    html += '.education-list { margin-top: 1rem; }';
+    html += '.education-item { margin-bottom: 1rem; padding-left: 1rem; border-left: 2px solid rgb(34 197 94); }';
+    html += '.education-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.25rem; }';
+    html += '.education-left { flex: 1; }';
+    html += '.education-degree { font-weight: 600; color: rgb(31 41 55); }';
+    html += '.education-institution { color: rgb(75 85 99); }';
+    html += '.education-dates { font-size: 0.75rem; color: rgb(107 114 128); white-space: nowrap; padding-left: 1rem; }';
+    html += '.education-field { font-size: 0.75rem; color: rgb(107 114 128); }';
+    html += '.education-gpa { font-size: 0.75rem; color: rgb(107 114 128); }';
     
-    // Company names - matching company styling
-    html += '.company { font-weight: 500; color: rgb(31 41 55); }';
+    // Skills styling - exact "space-y-4" and "flex flex-wrap gap-2"
+    html += '.skills-list { margin-top: 1rem; }';
+    html += '.skills-category { margin-bottom: 1rem; }';
+    html += '.skills-category-title { font-size: 0.875rem; font-weight: 600; color: rgb(55 65 81); margin-bottom: 0.5rem; }';
+    html += '.skills-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }';
+    html += '.skill-tag-hard { background-color: rgb(219 234 254); color: rgb(30 64 175); font-weight: 500; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; }';
+    html += '.skill-tag-soft { background-color: rgb(220 252 231); color: rgb(22 101 52); font-weight: 500; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; }';
     
-    // Dates - matching date styling
-    html += '.dates { font-size: 0.875rem; color: rgb(107 114 128); margin-bottom: 0.5rem; }';
+    // Projects styling - exact "pl-4 border-l-2 border-purple-500"
+    html += '.projects-list { margin-top: 1rem; }';
+    html += '.project-item { margin-bottom: 1.5rem; padding-left: 1rem; border-left: 2px solid rgb(168 85 247); }';
+    html += '.project-name { font-weight: 600; color: rgb(31 41 55); }';
+    html += '.project-description { color: rgb(55 65 81); line-height: 1.625; margin-top: 0.25rem; font-size: 0.875rem; }';
     
-    // Descriptions - matching description styling
-    html += '.description { color: rgb(55 65 81); line-height: 1.5; margin-top: 0.5rem; }';
+    // Certifications styling
+    html += '.certifications-list { margin-top: 1rem; }';
+    html += '.certification-item { margin-bottom: 1rem; }';
+    html += '.certification-name { font-weight: 600; color: rgb(31 41 55); }';
+    html += '.certification-issuer { font-weight: 400; color: rgb(75 85 99); }';
     
-    // Skills grid - matching skills grid
-    html += '.skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; }';
+    // Languages styling - exact "flex flex-wrap gap-4"
+    html += '.languages-list { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; }';
+    html += '.language-item { }';
+    html += '.language-name { font-weight: 600; }';
+    html += '.language-level { font-size: 0.75rem; color: rgb(75 85 99); }';
     
-    // Skill items - matching skill styling
-    html += '.skill-item { background-color: rgb(243 244 246); padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; color: rgb(31 41 55); }';
-    
-    // Summary - matching summary styling
-    html += '.summary { line-height: 1.625; color: rgb(55 65 81); }';
+    // Summary styling
+    html += '.summary-text { color: rgb(55 65 81); line-height: 1.625; font-size: 0.875rem; }';
     
     html += '</style>';
     html += '</head>';
     html += '<body>';
     
-    // Main container exact structure
-    html += '<div class="cv-container">';
+    // EXACT MediumProfessionalTemplate structure
+    html += '<div class="main-wrapper">';
+    html += '<div class="container">';
     
-    // Header section - exact structure from CVPreviewA4
+    // Header - exact centered structure like MediumProfessionalTemplate
     html += '<header class="header">';
-    html += '<div>';
-    html += '<h1 class="name">' + sanitizeText(personalInfo?.fullName || personalInfo?.name || '') + '</h1>';
+    html += '<h1 class="name">' + stripHtmlTags(personalInfo?.name || personalInfo?.fullName || 'Your Name') + '</h1>';
+    html += '<h2 class="title">' + stripHtmlTags(personalInfo?.title || 'Professional Title') + '</h2>';
     
-    if (personalInfo?.title) {
-      html += '<h2 class="title">' + sanitizeText(personalInfo.title) + '</h2>';
-    }
-    
-    // Contact info
+    // Contact info - exact centered format like MediumProfessionalTemplate
     html += '<div class="contact-info">';
-    if (personalInfo?.email) html += '<span>' + sanitizeText(personalInfo.email) + '</span>';
-    if (personalInfo?.phone) html += '<span>' + sanitizeText(personalInfo.phone) + '</span>';
-    if (personalInfo?.linkedin) html += '<span>' + sanitizeText(personalInfo.linkedin) + '</span>';
-    if (personalInfo?.website) html += '<span>' + sanitizeText(personalInfo.website) + '</span>';
-    html += '</div>';
-    
+    if (personalInfo?.email) {
+      html += '<span>' + stripHtmlTags(personalInfo.email) + '</span>';
+    }
+    if (personalInfo?.phone) {
+      html += '<span>' + stripHtmlTags(personalInfo.phone) + '</span>';
+    }
+    if (personalInfo?.location) {
+      html += '<span>' + stripHtmlTags(personalInfo.location) + '</span>';
+    }
+    if (personalInfo?.linkedin) {
+      html += '<span>' + stripHtmlTags(personalInfo.linkedin) + '</span>';
+    }
     html += '</div>';
     html += '</header>';
-
-    // Summary section - exact structure
+    
+    // Content sections - exact MediumProfessionalTemplate order and structure
+    html += '<div class="content">';
+    
+    // Summary section - exact MediumProfessionalTemplate structure
     if (personalInfo?.summary) {
       html += '<section class="section">';
       html += '<h2 class="section-title">Peşəkar Özət</h2>';
-      html += '<div class="summary">' + sanitizeText(personalInfo.summary) + '</div>';
+      html += '<p class="summary-text">' + stripHtmlTags(personalInfo.summary) + '</p>';
       html += '</section>';
     }
-
-    // Experience section - exact structure
+    
+    // Experience section - exact MediumProfessionalTemplate structure
     if (experience && experience.length > 0) {
       html += '<section class="section">';
       html += '<h2 class="section-title">İş Təcrübəsi</h2>';
+      html += '<div class="experience-list">';
       experience.forEach((exp: any) => {
         html += '<div class="experience-item">';
-        html += '<h3 class="job-title">' + sanitizeText(exp.position || '') + '</h3>';
-        html += '<div class="company">' + sanitizeText(exp.company || '') + '</div>';
-        html += '<div class="dates">' + sanitizeText(exp.startDate || '') + ' - ' + (exp.current ? 'İndi' : sanitizeText(exp.endDate || '')) + '</div>';
+        html += '<div class="experience-header">';
+        html += '<div class="experience-left">';
+        html += '<h3 class="experience-position">' + stripHtmlTags(exp.position || '') + '</h3>';
+        html += '<p class="experience-company">' + stripHtmlTags(exp.company || '') + '</p>';
+        html += '</div>';
+        html += '<span class="experience-dates">' + stripHtmlTags(exp.startDate || '') + ' - ' + (exp.current ? 'İndi' : stripHtmlTags(exp.endDate || '')) + '</span>';
+        html += '</div>';
+        if (exp.location) {
+          html += '<p class="experience-location">' + stripHtmlTags(exp.location) + '</p>';
+        }
         if (exp.description) {
-          html += '<div class="description">' + sanitizeText(exp.description) + '</div>';
+          html += '<p class="experience-description">' + stripHtmlTags(exp.description) + '</p>';
         }
         html += '</div>';
       });
+      html += '</div>';
       html += '</section>';
     }
-
-    // Education section - exact structure
+    
+    // Education section - exact MediumProfessionalTemplate structure  
     if (education && education.length > 0) {
       html += '<section class="section">';
       html += '<h2 class="section-title">Təhsil</h2>';
+      html += '<div class="education-list">';
       education.forEach((edu: any) => {
-        html += '<div class="experience-item">';
-        html += '<h3 class="job-title">' + sanitizeText(edu.degree || '') + '</h3>';
-        html += '<div class="company">' + sanitizeText(edu.institution || '') + '</div>';
-        html += '<div class="dates">' + sanitizeText(edu.startDate || '') + ' - ' + sanitizeText(edu.endDate || '') + '</div>';
+        html += '<div class="education-item">';
+        html += '<div class="education-header">';
+        html += '<div class="education-left">';
+        html += '<h3 class="education-degree">' + stripHtmlTags(edu.degree || '') + '</h3>';
+        html += '<p class="education-institution">' + stripHtmlTags(edu.institution || '') + '</p>';
+        html += '</div>';
+        html += '<span class="education-dates">' + stripHtmlTags(edu.startDate || '') + ' - ' + (edu.current ? 'İndi' : stripHtmlTags(edu.endDate || '')) + '</span>';
+        html += '</div>';
         if (edu.field) {
-          html += '<div class="description">İxtisas: ' + sanitizeText(edu.field) + '</div>';
+          html += '<p class="education-field">' + stripHtmlTags(edu.field) + '</p>';
+        }
+        if (edu.gpa) {
+          html += '<p class="education-gpa">GPA: ' + stripHtmlTags(edu.gpa) + '</p>';
         }
         html += '</div>';
       });
+      html += '</div>';
       html += '</section>';
     }
-
-    // Skills section - exact structure
+    
+    // Skills section - exact MediumProfessionalTemplate structure with tags
     if (skills && skills.length > 0) {
       html += '<section class="section">';
       html += '<h2 class="section-title">Bacarıqlar</h2>';
-      html += '<div class="skills-grid">';
-      skills.forEach((skill: any) => {
-        html += '<div class="skill-item">' + sanitizeText(skill.name || skill) + '</div>';
+      html += '<div class="skills-list">';
+      
+      // Separate hard and soft skills like MediumProfessionalTemplate
+      const hardSkills = skills.filter((skill: any) => skill.type === 'hard' || !skill.type);
+      const softSkills = skills.filter((skill: any) => skill.type === 'soft');
+      
+      if (hardSkills.length > 0) {
+        html += '<div class="skills-category">';
+        html += '<h3 class="skills-category-title">Texniki Bacarıqlar</h3>';
+        html += '<div class="skills-tags">';
+        hardSkills.forEach((skill: any) => {
+          html += '<span class="skill-tag-hard">' + stripHtmlTags(skill.name || skill) + '</span>';
+        });
+        html += '</div>';
+        html += '</div>';
+      }
+      
+      if (softSkills.length > 0) {
+        html += '<div class="skills-category">';
+        html += '<h3 class="skills-category-title">Yumşaq Bacarıqlar</h3>';
+        html += '<div class="skills-tags">';
+        softSkills.forEach((skill: any) => {
+          html += '<span class="skill-tag-soft">' + stripHtmlTags(skill.name || skill) + '</span>';
+        });
+        html += '</div>';
+        html += '</div>';
+      }
+      
+      html += '</div>';
+      html += '</section>';
+    }
+    
+    // Projects section - exact MediumProfessionalTemplate structure
+    if (projects && projects.length > 0) {
+      html += '<section class="section">';
+      html += '<h2 class="section-title">Layihələr</h2>';
+      html += '<div class="projects-list">';
+      projects.forEach((proj: any) => {
+        html += '<div class="project-item">';
+        html += '<h3 class="project-name">' + stripHtmlTags(proj.name || '') + '</h3>';
+        if (proj.description) {
+          html += '<p class="project-description">' + stripHtmlTags(proj.description) + '</p>';
+        }
+        html += '</div>';
       });
       html += '</div>';
       html += '</section>';
     }
-
-    // Languages section - exact structure
+    
+    // Certifications section - exact MediumProfessionalTemplate structure
+    if (certifications && certifications.length > 0) {
+      html += '<section class="section">';
+      html += '<h2 class="section-title">Sertifikatlar</h2>';
+      html += '<div class="certifications-list">';
+      certifications.forEach((cert: any) => {
+        html += '<div class="certification-item">';
+        html += '<h3><span class="certification-name">' + stripHtmlTags(cert.name || '') + '</span> - <span class="certification-issuer">' + stripHtmlTags(cert.issuer || '') + '</span></h3>';
+        html += '</div>';
+      });
+      html += '</div>';
+      html += '</section>';
+    }
+    
+    // Languages section - exact MediumProfessionalTemplate structure
     if (languages && languages.length > 0) {
       html += '<section class="section">';
       html += '<h2 class="section-title">Dillər</h2>';
-      html += '<div class="skills-grid">';
+      html += '<div class="languages-list">';
       languages.forEach((lang: any) => {
-        html += '<div class="skill-item">' + sanitizeText(lang.name || lang) + (lang.level ? ' - ' + sanitizeText(lang.level) : '') + '</div>';
+        html += '<div class="language-item">';
+        html += '<span class="language-name">' + stripHtmlTags(lang.language || lang.name || lang) + '</span>: ';
+        html += '<span class="language-level">' + stripHtmlTags(lang.level || lang.proficiency || '') + '</span>';
+        html += '</div>';
       });
       html += '</div>';
       html += '</section>';
     }
-
-    html += '</div>'; // Close cv-container
+    
+    html += '</div>'; // Close content
+    html += '</div>'; // Close container
+    html += '</div>'; // Close main-wrapper
     html += '</body>';
     html += '</html>';
 

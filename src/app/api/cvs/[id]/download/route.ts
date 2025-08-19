@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { verifyJWT } from "@/lib/jwt";
-import FileGenerationService from "@/lib/fileGeneration";
+import { FileGenerationService } from "@/lib/fileGeneration";
 import { CVData } from "@/types/cv";
 import { v4 as uuidv4 } from "uuid";
 import { canExportFormat, incrementDailyUsage } from "@/lib/subscription-limits";

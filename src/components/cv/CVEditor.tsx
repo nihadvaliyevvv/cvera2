@@ -1702,13 +1702,13 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
     // AI Translation Functions
     const handleAITranslation = async (targetLanguage: 'azerbaijani' | 'english') => {
         if (!cv.id) {
-            showWarning('AI tərcümə üçün CV-ni əvvəlcə saxlamalısınız');
+            showWarning('Süni İntellekt ilə tərcümə üçün CV-ni əvvəlcə saxlamalısınız');
             return;
         }
 
         const canUseAI = userTier === 'Premium' || userTier === 'Medium';
         if (!canUseAI) {
-            showWarning(`AI tərcümə funksiyası Premium və Medium istifadəçilər üçün mövcuddur! Sizin tier: ${userTier}`);
+            showWarning(`Süni İntellekt ilə tərcümə funksiyası Premium və Populyar istifadəçilər üçün mövcuddur! Sizin abunəliyiniz: ${userTier}`);
             return;
         }
 
@@ -1744,7 +1744,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                 if (response.status === 401) {
                     showError('Giriş icazəsi yoxdur. Yenidən giriş edin.');
                 } else if (response.status === 403) {
-                    showError(result.error || 'AI tərcümə üçün Premium/Medium planı lazımdır');
+                    showError(result.error || 'Süni İntellekt ilə tərcümə üçün Premium/Populyar abunəliyi lazımdır');
                 } else if (response.status === 429) {
                     showError('Çox sayda sorğu göndərildi. Bir neçə dəqiqə sonra yenidən cəhd edin.');
                 } else if (response.status >= 500) {
@@ -1984,7 +1984,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                 // Handle specific error cases from the API
                 if (result.error) {
                     if (result.error.includes('comprehensive')) {
-                        showError('AI tərcümə xidməti şu anda əlçatan deyil. Daha sonra yenidən cəhd edin.');
+                        showError('Süni İntellekt ilə tərcümə xidməti indi əlçatan deyil. Daha sonra yenidən cəhd edin.');
                     } else if (result.error.includes('content')) {
                         showError('CV məzmunu tərcümə üçün uyğun deyil. Məzmunu yoxlayın və yenidən cəhd edin.');
                     } else if (result.error.includes('token') || result.error.includes('auth')) {
@@ -2002,8 +2002,8 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
             }
 
         } catch (error) {
-            console.error('AI Translation error:', error);
-            showError(error instanceof Error ? error.message : 'AI tərcümə zamanı xəta baş verdi');
+            console.error('Süni İntellekt ilə tərcümə xətası:', error);
+            showError(error instanceof Error ? error.message : 'Süni İntellekt ilə tərcümə zamanı xəta baş verdi');
         } finally {
             setTranslating(false);
         }
@@ -2059,8 +2059,9 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
             <div className="sticky top-0 z-[60] border-b border-gray-200 shadow-sm">
                 <div className="bg-white">
                     <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex items-center justify-between h-16 gap-10">
-                            <div className="flex items-center space-x-4">
+                        <div className="flex items-center justify-between h-16 gap-4">
+                            {/* Sol tərəf - Geri, Title, Font, Tərcümə */}
+                            <div className="flex items-center space-x-4 flex-1">
                                 <button
                                     onClick={onCancel}
                                     className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
@@ -2070,6 +2071,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                     </svg>
                                     <span className="hidden sm:inline">Geri</span>
                                 </button>
+                                
                                 <input
                                     type="text"
                                     placeholder="CV başlığı..."
@@ -2085,10 +2087,39 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                     onClose={() => console.log('Font settings applied')}
                                 />
 
+                                {/* AI Translate Button */}
+                                <button
+                                    onClick={() => setShowTranslationDialog(true)}
+                                    disabled={!cv.id || translating}
+                                    className={`hidden lg:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                        !cv.id || translating
+                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                            : 'bg-purple-600 text-white hover:bg-purple-700'
+                                    }`}
+                                    title="Süni İntellekt ilə CV tərcümə et"
+                                >
+                                    {translating ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                            Tərcümə edilir...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                                            </svg>
+                                            Sİ Tərcümə
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+
+                            {/* Sağ tərəf - Export və Saxla butonları */}
+                            <div className="hidden lg:flex items-center gap-3">
                                 <button
                                     onClick={() => handleExport('pdf')}
                                     disabled={!cv.id || exporting !== null}
-                                    className={`hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                                         !cv.id || exporting !== null
                                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                             : 'bg-red-600 text-white hover:bg-red-700'
@@ -2099,7 +2130,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                     ) : (
                                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                                             <path d="M8 2v4h8V2h2a2 2 0 00-2 2v16a2 2 0 00-2-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                                    </svg>
+                                        </svg>
                                     )}
                                     PDF
                                 </button>
@@ -2107,7 +2138,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                 <button
                                     onClick={() => handleExport('docx')}
                                     disabled={!cv.id || exporting !== null}
-                                    className={`hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                                         !cv.id || exporting !== null
                                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                             : 'bg-blue-600 text-white hover:bg-blue-700'
@@ -2123,27 +2154,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                     DOCX
                                 </button>
 
-                                {/* AI Translate Button */}
-                                <button
-                                    onClick={() => setShowTranslationDialog(true)}
-                                    disabled={!cv.id || translating}
-                                    className={`hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                        !cv.id || translating
-                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                            : 'bg-purple-600 text-white hover:bg-purple-700'
-                                    }`}
-                                    title="AI ilə CV tərcümə et"
-                                >
-                                    {translating ? (
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                    ) : (
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                                    </svg>
-                                    )}
-                                    {translating ? 'Tərcümə edilir...' : 'AI Tərcümə'}
-                                </button>
-
+                                {/* Save Button */}
                                 <button
                                     onClick={handleSave}
                                     disabled={saving}
@@ -2155,7 +2166,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                 >
                                     {saving ? (
                                         <>
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                                             <span>Saxlanılır...</span>
                                         </>
                                     ) : (
@@ -2163,7 +2174,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 00-2-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                                             </svg>
-                                            <span>CV-ni Saxla</span>
+                                            <span>CV Saxla</span>
                                         </>
                                     )}
                                 </button>
@@ -2780,9 +2791,10 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
             {/* Enhanced AI Translation Dialog */}
             {showTranslationDialog && (
                 <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm">
+               
                     <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden">
                         {/* Modern Header with Gradient */}
-                        <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 px-6 py-4">
+                        <div className="bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 px-6 py-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center backdrop-blur">
@@ -2792,10 +2804,10 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-white">
-                                            AI Peşəkar Tərcümə
+                                            Süni İntellekt ilə tərcümə
                                         </h3>
                                         <p className="text-purple-100 text-sm">
-                                            Gemini AI ilə gücləndirilmiş professional tərcümə
+                                            Tam peşəkar formada 
                                         </p>
                                     </div>
                                 </div>
@@ -2814,8 +2826,8 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                             {/* User Tier Status */}
                             <div className={`p-4 rounded-xl border-2 ${
                                 canUseAIFeatures(userTier) 
-                                    ? 'bg-green-50 border-green-200' 
-                                    : 'bg-amber-50 border-amber-200'
+                                    ? ' border-green-200' 
+                                    : ' border-amber-200'
                             }`}>
                                 <div className="flex items-center gap-3">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -2823,7 +2835,7 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                             ? 'bg-green-100 text-green-600' 
                                             : 'bg-amber-100 text-amber-600'
                                     }`}>
-                                        {canUseAIFeatures(userTier) ? '✅' : '⚡'}
+                                        {canUseAIFeatures(userTier) ? '⚡' : '⚡'}
                                     </div>
                                     <div>
                                         <p className={`font-semibold ${
@@ -2832,8 +2844,8 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                                 : 'text-amber-800'
                                         }`}>
                                             {canUseAIFeatures(userTier)
-                                                ? `${userTier} Plan Aktiv`
-                                                : 'Premium/Medium Plan Tələb olunur'}
+                                                ? `${userTier} abunəlik aktivdir!`
+                                                : 'Premium/Populyar Abunəlik Tələb olunur'}
                                         </p>
                                         <p className={`text-sm ${
                                             canUseAIFeatures(userTier) 
@@ -2841,59 +2853,18 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                                 : 'text-amber-700'
                                         }`}>
                                             {canUseAIFeatures(userTier)
-                                                ? 'AI tərcümə xidmətindən istifadə edə bilərsiniz'
-                                                : 'AI tərcümə üçün planınızı yüksəldin'}
+                                                ? 'Süni İntellekt ilə tərcümə xidmətindən istifadə edə bilərsiniz'
+                                                : 'Süni İntellekt ilə tərcümə üçün abunəliyinizi yüksəldin'}
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* AI Features Info */}
-                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
-                                <div className="flex items-start gap-3">
-                                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <span className="text-blue-600 text-lg">🧠</span>
-                                    </div>
-                                    <div>
-                                        <h4 className="font-semibold text-blue-900 mb-2">Gemini AI Tərcümə Xüsusiyyətləri</h4>
-                                        <div className="grid grid-cols-2 gap-2 text-sm text-blue-800">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-blue-600">•</span>
-                                                <span>Peşəkar xülasə tərcüməsi</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-blue-600">•</span>
-                                                <span>İş təcrübəsi tərcüməsi</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-blue-600">•</span>
-                                                <span>Təhsil məlumatları</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-blue-600">•</span>
-                                                <span>Layihə təsvirləri</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-blue-600">•</span>
-                                                <span>Sertifikat məlumatları</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-blue-600">•</span>
-                                                <span>İndustiya terminləri</span>
-                                            </div>
-                                        </div>
-                                        <div className="mt-3 p-2 bg-blue-100 rounded-lg">
-                                            <p className="text-xs text-blue-700 font-medium">
-                                                ⚡ Şirkət adları və şəxsi məlumatlar orijinal saxlanılır
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
 
                             {/* Translation Options */}
                             <div className="space-y-3">
                                 <h4 className="font-semibold text-gray-800 text-center">Tərcümə dilini seçin</h4>
+                                
                                 <div className="grid grid-cols-2 gap-4">
                                     <button
                                         onClick={() => handleAITranslation('azerbaijani')}
@@ -2901,18 +2872,13 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                         className={`group relative p-6 rounded-xl border-2 transition-all duration-300 ${
                                             translating || !canUseAIFeatures(userTier)
                                                 ? 'border-gray-200 bg-gray-50 cursor-not-allowed'
-                                                : 'border-red-200 bg-red-50 hover:border-red-300 hover:bg-red-100 hover:shadow-lg transform hover:scale-105'
+                                                : 'border-red-200 hover:border-red-300 hover:bg-red-100 hover:shadow-lg transform hover:scale-105'
                                         }`}
                                     >
                                         <div className="text-center">
                                             <div className="text-4xl mb-3">🇦🇿</div>
                                             <div className="font-bold text-lg text-red-800">Azərbaycan dili</div>
-                                            <div className="text-sm text-red-600 mt-1">Ana dil tərcüməsi</div>
-                                            {translating && (
-                                                <div className="absolute inset-0 bg-white bg-opacity-80 rounded-xl flex items-center justify-center">
-                                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
-                                                </div>
-                                            )}
+                                           
                                         </div>
                                     </button>
 
@@ -2922,18 +2888,13 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                         className={`group relative p-6 rounded-xl border-2 transition-all duration-300 ${
                                             translating || !canUseAIFeatures(userTier)
                                                 ? 'border-gray-200 bg-gray-50 cursor-not-allowed'
-                                                : 'border-blue-200 bg-blue-50 hover:border-blue-300 hover:bg-blue-100 hover:shadow-lg transform hover:scale-105'
+                                                : 'border-blue-200 hover:border-blue-300 hover:bg-blue-100 hover:shadow-lg transform hover:scale-105'
                                         }`}
                                     >
                                         <div className="text-center">
                                             <div className="text-4xl mb-3">🇺🇸</div>
-                                            <div className="font-bold text-lg text-blue-800">English</div>
-                                            <div className="text-sm text-blue-600 mt-1">Professional quality</div>
-                                            {translating && (
-                                                <div className="absolute inset-0 bg-white bg-opacity-80 rounded-xl flex items-center justify-center">
-                                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                                                </div>
-                                            )}
+                                            <div className="font-bold text-lg text-blue-800">İngilis dili</div>
+                                        
                                         </div>
                                     </button>
                                 </div>
@@ -2941,12 +2902,16 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
 
                             {/* Processing Status */}
                             {translating && (
-                                <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-4">
+                                <div className=" bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
                                         <div>
-                                            <p className="font-semibold text-purple-800">AI tərcümə prosesi davam edir...</p>
-                                            <p className="text-sm text-purple-600">Gemini AI CV məzmununuzu analiz edir və tərcümə edir</p>
+                                           <div className="absolute inset-0 flex items-center justify-center">
+  <div className="bg-blue-400 rounded-full p-3 shadow-md">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 "></div>
+  </div>
+</div>
+                                            <p className="font-semibold text-purple-800">Süni İntellekt ilə tərcümə prosesi davam edir...</p>
+                                            <p className="text-sm text-purple-600">Peşəkar Süni İntellektimiz CV məzmununuzu analiz edir və tərcümə edir</p>
                                         </div>
                                     </div>
                                 </div>
@@ -2961,18 +2926,17 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                                         </div>
                                         <div className="flex-1">
                                             <h4 className="font-bold text-purple-800 mb-2">
-                                                AI Professional Translation
+                                            Süni İntellekt ilə tərcümə
                                             </h4>
                                             <p className="text-sm text-purple-700 mb-3">
-                                                CV məzmununuzu Gemini AI ilə dərin analiz edərək professional tərcümə xidməti alın.
-                                                İndustiya terminləri və kontekst dəqiq saxlanılır.
+                                                CV məzmununuzu süni intellektimiz ilə tərcümə etmək üçün Premium və ya Populyar abunəliyiniz olmalıdır.
                                             </p>
                                             <div className="flex gap-2">
                                                 <span className="px-2 py-1 bg-purple-200 text-purple-700 rounded-lg text-xs font-medium">
-                                                    Premium Plan
+                                                    Premium abunəlik
                                                 </span>
                                                 <span className="px-2 py-1 bg-purple-200 text-purple-700 rounded-lg text-xs font-medium">
-                                                    Medium Plan
+                                                    Populyar abunəlik
                                                 </span>
                                             </div>
                                         </div>
@@ -2984,14 +2948,14 @@ export default function CVEditor({ cvId, onSave, onCancel, initialData, userTier
                         {/* Footer */}
                         <div className="bg-gray-50 px-6 py-4 flex justify-between items-center">
                             <div className="text-sm text-gray-600">
-                                <span className="font-medium">💡 Məsləhət:</span>
+                                <span className="font-medium">💡 Məlumat:</span>
                                 <span className="ml-1">Tərcümə avtomatik saxlanılacaq</span>
                             </div>
                             <button
                                 onClick={() => setShowTranslationDialog(false)}
                                 className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
                             >
-                                Bağla
+                                Bağlayın
                             </button>
                         </div>
                     </div>
