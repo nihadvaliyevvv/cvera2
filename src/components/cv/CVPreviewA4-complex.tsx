@@ -4,6 +4,55 @@ import React, { useState, useEffect, useCallback, CSSProperties } from 'react';
 import { apiClient } from '@/lib/api';
 import { CVData as CVDataType } from '@/types/cv';
 import styles from './CVPreviewA4-complex.module.css';
+import { useSimpleFontSettings } from '@/hooks/useSimpleFontSettings';
+import { FontManager } from '@/lib/fontManager';
+
+// Utility function to safely render HTML content while preserving formatting
+const sanitizeHtml = (html: string): string => {
+    if (!html) return '';
+    return html
+        // Remove dangerous tags but keep formatting ones
+        .replace(/<script[^>]*>.*?<\/script>/gi, '')
+        .replace(/<style[^>]*>.*?<\/style>/gi, '')
+        .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
+        .replace(/<object[^>]*>.*?<\/object>/gi, '')
+        .replace(/<embed[^>]*>.*?<\/embed>/gi, '')
+        .replace(/<link[^>]*>/gi, '')
+        .replace(/<meta[^>]*>/gi, '')
+        // Keep basic formatting tags
+        // Convert line breaks properly
+        .replace(/<br\s*\/?>/gi, '<br>')
+        // Clean up HTML entities
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .trim();
+};
+
+// Alternative text-only function for fallback
+const stripHtmlTags = (html: string): string => {
+    if (!html) return '';
+    return html
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n')
+        .replace(/<p[^>]*>/gi, '')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<div[^>]*>/gi, '')
+        .replace(/<\/h[1-6]>/gi, '\n')
+        .replace(/<h[1-6][^>]*>/gi, '')
+        .replace(/<\/li>/gi, '\n')
+        .replace(/<li[^>]*>/gi, '• ')
+        .replace(/<\/ul>/gi, '\n')
+        .replace(/<ul[^>]*>/gi, '')
+        .replace(/<\/ol>/gi, '\n')
+        .replace(/<ol[^>]*>/gi, '')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/gi, ' ')
+        .trim();
+};
 
 interface CVData {
   id?: string;
@@ -197,6 +246,9 @@ const pdfStyles: { [key: string]: React.CSSProperties } = {
 export default function CVPreviewA4({ cv }: CVPreviewProps) {
   const [template, setTemplate] = useState<Template | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  // Font settings
+  const { fontSettings } = useSimpleFontSettings(cv.id);
 
   const loadTemplate = useCallback(async () => {
     setLoading(true);
@@ -260,7 +312,7 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
         <div style={pdfStyles.sectionHeader}>
           <h2 style={pdfStyles.sectionTitle}>Özet</h2>
         </div>
-        <div style={pdfStyles.summary} dangerouslySetInnerHTML={{ __html: cv.data.personalInfo.summary }}></div>
+        <div style={pdfStyles.summary}>{stripHtmlTags(cv.data.personalInfo.summary)}</div>
       </div>
     );
   };
@@ -284,7 +336,7 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
               </div>
             </div>
             {exp.description && (
-              <div style={pdfStyles.experienceDescription} dangerouslySetInnerHTML={{ __html: exp.description }}></div>
+              <div style={pdfStyles.experienceDescription}>{stripHtmlTags(exp.description)}</div>
             )}
           </div>
         ))}
@@ -401,8 +453,21 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
         {cv.data.projects.map((project, index) => (
           <div key={index} style={pdfStyles.projectItem}>
             <div style={pdfStyles.projectName}>{project.name}</div>
+            {(project.startDate || project.endDate || project.current) && (
+              <div style={pdfStyles.dateRange}>
+                {project.startDate && project.endDate && !project.current && 
+                  `${project.startDate} - ${project.endDate}`
+                }
+                {project.startDate && project.current && 
+                  `${project.startDate} - davam edir`
+                }
+                {project.startDate && !project.endDate && !project.current && 
+                  project.startDate
+                }
+              </div>
+            )}
             {project.description && (
-              <div style={pdfStyles.projectDescription} dangerouslySetInnerHTML={{ __html: project.description }}></div>
+              <div style={pdfStyles.projectDescription}>{stripHtmlTags(project.description)}</div>
             )}
             {project.technologies && project.technologies.length > 0 && (
               <div style={pdfStyles.projectTech}>
@@ -452,7 +517,7 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
               </div>
             </div>
             {vol.description && (
-              <div style={pdfStyles.experienceDescription} dangerouslySetInnerHTML={{ __html: vol.description }}></div>
+              <div style={pdfStyles.experienceDescription}>{stripHtmlTags(vol.description)}</div>
             )}
           </div>
         ))}
@@ -473,7 +538,7 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
             {pub.publisher && <div style={pdfStyles.educationInstitution}>{pub.publisher}</div>}
             {pub.date && <div style={pdfStyles.experienceDate}>{pub.date}</div>}
             {pub.description && (
-              <div style={pdfStyles.projectDescription} dangerouslySetInnerHTML={{ __html: pub.description }}></div>
+              <div style={pdfStyles.projectDescription}>{stripHtmlTags(pub.description)}</div>
             )}
           </div>
         ))}
@@ -543,6 +608,8 @@ export default function CVPreviewA4({ cv }: CVPreviewProps) {
   return (
     <div style={{
       ...pdfStyles.page,
+      fontFamily: fontSettings.fontFamily,
+      fontSize: `${fontSettings.fontSize}pt`,
       height: '100%',
       overflow: 'hidden',
       margin: 0,

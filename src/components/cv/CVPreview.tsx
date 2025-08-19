@@ -4,6 +4,61 @@ import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
 import CVExportButtons from './CVExportButtons';
 import CVPreviewMedium from './CVPreviewMedium';
+import { useSimpleFontSettings } from '@/hooks/useSimpleFontSettings';
+
+// Utility function to safely render HTML content while preserving formatting
+const sanitizeHtml = (html: string): string => {
+    if (!html) return '';
+    return html
+        // Remove dangerous tags but keep formatting ones
+        .replace(/<script[^>]*>.*?<\/script>/gi, '')
+        .replace(/<style[^>]*>.*?<\/style>/gi, '')
+        .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
+        .replace(/<object[^>]*>.*?<\/object>/gi, '')
+        .replace(/<embed[^>]*>.*?<\/embed>/gi, '')
+        .replace(/<link[^>]*>/gi, '')
+        .replace(/<meta[^>]*>/gi, '')
+        // Keep basic formatting tags
+        // Convert line breaks properly
+        .replace(/<br\s*\/?>/gi, '<br>')
+        // Clean up HTML entities
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .trim();
+};
+
+// Alternative text-only function for fallback
+const stripHtmlTags = (html: string): string => {
+    if (!html) return '';
+    return html
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n\n')
+        .replace(/<p[^>]*>/gi, '')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<div[^>]*>/gi, '')
+        .replace(/<\/h[1-6]>/gi, '\n\n')
+        .replace(/<h[1-6][^>]*>/gi, '')
+        .replace(/<\/li>/gi, '')
+        .replace(/<li[^>]*>/gi, '• ')
+        .replace(/<\/ul>/gi, '\n')
+        .replace(/<ul[^>]*>/gi, '')
+        .replace(/<\/ol>/gi, '\n')
+        .replace(/<ol[^>]*>/gi, '')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .replace(/\n\s*\n\s*\n/g, '\n\n')
+        .replace(/[ \t]+/g, ' ')
+        .trim();
+};
 
 interface CVData {
   id?: string;
@@ -158,6 +213,9 @@ interface CVPreviewProps {
 export default function CVPreview({ cv }: CVPreviewProps) {
   const [template, setTemplate] = useState<Template | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  // Font settings
+  const { fontSettings } = useSimpleFontSettings(cv.id);
 
   // Language support - check if CV is in English
   const isEnglish = cv.data.personalInfo?.summary?.includes('English') ||
@@ -346,9 +404,16 @@ export default function CVPreview({ cv }: CVPreviewProps) {
 
         {/* Traditional CV Layout - Full A4 Preview */}
         <div className="overflow-y-auto" style={{ maxHeight: '800px' }}>
-          <div id={`cv-preview-${cv.id || 'current'}`} className="bg-white">
+          <div 
+            id={`cv-preview-${cv.id || 'current'}`} 
+            className="bg-white"
+            style={{ 
+              fontFamily: fontSettings.fontFamily, 
+              fontSize: `${fontSettings.fontSize}px` 
+            }}
+          >
             {/* Traditional CV Template with Sidebar Layout */}
-            <div className="flex min-h-[1000px]" style={{ fontFamily: 'Inter, sans-serif' }}>
+            <div className="flex min-h-[1000px]">
 
               {/* Left Sidebar - Dark Blue */}
               <div className="w-1/3 bg-[#0d2438] text-white p-8">
@@ -497,9 +562,9 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                 {cv.data.personalInfo.summary && isValidHtmlContent(cv.data.personalInfo.summary) && (
                   <section className="mb-10">
                     <h2 className="text-2xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2 mb-4">Profil</h2>
-                    <div
+                    <div 
                       className="text-gray-600 text-sm leading-relaxed"
-                      dangerouslySetInnerHTML={{ __html: cv.data.personalInfo.summary }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(cv.data.personalInfo.summary) }}
                     />
                   </section>
                 )}
@@ -518,10 +583,9 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                           <p className="text-md text-gray-600 mb-1">{exp.company}</p>
                           {exp.location && isValidContent(exp.location) && <p className="text-sm text-gray-500 mb-2">{exp.location}</p>}
                           {exp.description && isValidHtmlContent(exp.description) && (
-                            <div
-                              className="text-sm text-gray-600 leading-relaxed"
-                              dangerouslySetInnerHTML={{ __html: exp.description }}
-                            />
+                            <div className="text-sm text-gray-600 leading-relaxed">
+                              {stripHtmlTags(exp.description)}
+                            </div>
                           )}
                         </div>
                       ))}
@@ -538,7 +602,7 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                         <div key={project.id}>
                           <h3 className="text-lg font-semibold text-gray-700">{project.name}</h3>
                           {project.description && isValidHtmlContent(project.description) && (
-                            <p className="text-sm text-gray-600 mt-2">{project.description}</p>
+                            <p className="text-sm text-gray-600 mt-2">{stripHtmlTags(project.description)}</p>
                           )}
                           {project.technologies && project.technologies.length > 0 && (
                             <p className="text-sm text-gray-500 mt-2">
@@ -568,7 +632,7 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                           <p className="text-md text-gray-600 mb-1">{vol.organization}</p>
                           {vol.cause && <p className="text-sm text-gray-500 mb-2">{vol.cause}</p>}
                           {vol.description && isValidContent(vol.description) && (
-                            <p className="text-sm text-gray-600">{vol.description}</p>
+                            <p className="text-sm text-gray-600">{stripHtmlTags(vol.description)}</p>
                           )}
                         </div>
                       ))}
@@ -591,7 +655,7 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                             <p className="text-sm text-gray-500">Müəlliflər: {pub.authors.join(', ')}</p>
                           )}
                           {pub.description && (
-                            <p className="text-sm text-gray-600 mt-2">{pub.description}</p>
+                            <p className="text-sm text-gray-600 mt-2">{stripHtmlTags(pub.description)}</p>
                           )}
                           {pub.url && (
                             <p className="text-sm text-blue-600 mt-1">{pub.url}</p>
@@ -657,7 +721,14 @@ export default function CVPreview({ cv }: CVPreviewProps) {
 
       {/* Scrollable preview wrapper */}
       <div className="max-h-96 overflow-y-auto">
-        <div id={cvElementId} className="bg-white" style={{ fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"' }}>
+        <div 
+          id={cvElementId} 
+          className="bg-white" 
+          style={{ 
+            fontFamily: fontSettings.fontFamily,
+            fontSize: `${fontSettings.fontSize}px`
+          }}
+        >
 
           {/* Header Section - Different for each template */}
           <div className={styles.headerClass}>
@@ -705,10 +776,9 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                 <h2 className={styles.sectionHeaderClass}>
                   Peşəkar Özət
                 </h2>
-                <div
-                  className="text-gray-700 leading-relaxed prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: cv.data.personalInfo.summary }}
-                />
+                <div className="text-gray-700 leading-relaxed prose prose-sm max-w-none">
+                  {stripHtmlTags(cv.data.personalInfo.summary)}
+                </div>
               </div>
             )}
 
@@ -732,10 +802,9 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                         </div>
                       </div>
                       {exp.description && isValidHtmlContent(exp.description) && (
-                        <div
-                          className="text-sm text-gray-700 prose prose-sm max-w-none mt-2"
-                          dangerouslySetInnerHTML={{ __html: exp.description }}
-                        />
+                        <div className="text-sm text-gray-700 prose prose-sm max-w-none mt-2">
+                          {stripHtmlTags(exp.description)}
+                        </div>
                       )}
                     </div>
                   ))}
@@ -764,7 +833,7 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                         </div>
                       </div>
                       {edu.description && isValidContent(edu.description) && (
-                        <p className="text-sm text-gray-700 mt-2">{edu.description}</p>
+                        <p className="text-sm text-gray-700 mt-2">{stripHtmlTags(edu.description)}</p>
                       )}
                     </div>
                   ))}
@@ -821,10 +890,9 @@ export default function CVPreview({ cv }: CVPreviewProps) {
                         </div>
                       </div>
                       {project.description && isValidHtmlContent(project.description) && (
-                        <div
-                          className="text-sm text-gray-700 mb-2 prose prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{ __html: project.description }}
-                        />
+                        <div className="text-sm text-gray-700 mb-2 prose prose-sm max-w-none">
+                          {stripHtmlTags(project.description)}
+                        </div>
                       )}
                       {project.technologies.length > 0 && (
                         <div className="flex flex-wrap gap-1">

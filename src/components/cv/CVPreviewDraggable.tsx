@@ -2,6 +2,54 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { CVLanguage, getLabel } from '@/lib/cvLanguage';
+import { useSimpleFontSettings } from '@/hooks/useSimpleFontSettings';
+
+// Utility function to safely render HTML content while preserving formatting
+const sanitizeHtml = (html: string): string => {
+    if (!html) return '';
+    return html
+        // Remove dangerous tags but keep formatting ones
+        .replace(/<script[^>]*>.*?<\/script>/gi, '')
+        .replace(/<style[^>]*>.*?<\/style>/gi, '')
+        .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
+        .replace(/<object[^>]*>.*?<\/object>/gi, '')
+        .replace(/<embed[^>]*>.*?<\/embed>/gi, '')
+        .replace(/<link[^>]*>/gi, '')
+        .replace(/<meta[^>]*>/gi, '')
+        // Keep basic formatting tags
+        // Convert line breaks properly
+        .replace(/<br\s*\/?>/gi, '<br>')
+        // Clean up HTML entities
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .trim();
+};
+
+// Alternative text-only function for fallback
+const stripHtmlTags = (html: string): string => {
+    if (!html) return '';
+    return html
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n')
+        .replace(/<p[^>]*>/gi, '')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<div[^>]*>/gi, '')
+        .replace(/<\/h[1-6]>/gi, '\n')
+        .replace(/<h[1-6][^>]*>/gi, '')
+        .replace(/<\/li>/gi, '\n')
+        .replace(/<li[^>]*>/gi, '• ')
+        .replace(/<\/ul>/gi, '\n')
+        .replace(/<ul[^>]*>/gi, '')
+        .replace(/<\/ol>/gi, '\n')
+        .replace(/<ol[^>]*>/gi, '')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/gi, ' ')
+        .trim();
+};
 
 interface CVData {
   id?: string;
@@ -56,6 +104,9 @@ const DEFAULT_SECTIONS = [
 ];
 
 export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDragDrop = true }: CVPreviewDraggableProps) {
+  // Font settings
+  const { fontSettings } = useSimpleFontSettings(cv.id);
+  
   const [sections, setSections] = useState<SectionConfig[]>([]);
   const [draggedSection, setDraggedSection] = useState<string | null>(null);
   const [dragOverSection, setDragOverSection] = useState<string | null>(null);
@@ -338,9 +389,11 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
             {cv.data.personalInfo?.summary && (
               <div className="mt-4">
                 <h3 className="font-semibold text-gray-800 mb-2">Özət</h3>
-                <div
-                  className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: cv.data.personalInfo.summary }}
+                <div 
+                  className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none whitespace-pre-line"
+                  dangerouslySetInnerHTML={{
+                    __html: sanitizeHtml(cv.data.personalInfo.summary)
+                  }}
                 />
               </div>
             )}
@@ -366,9 +419,11 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
                   </span>
                 </div>
                 {exp.description && (
-                  <div
-                    className="text-xs text-gray-600 leading-relaxed prose prose-xs max-w-none"
-                    dangerouslySetInnerHTML={{ __html: exp.description }}
+                  <div 
+                    className="text-xs text-gray-600 leading-relaxed prose prose-xs max-w-none whitespace-pre-line"
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeHtml(exp.description)
+                    }}
                   />
                 )}
               </div>
@@ -472,10 +527,25 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
             {cv.data.projects.map((project: any, index: number) => (
               <div key={index} className="space-y-1">
                 <h4 className="font-medium text-gray-900">{project.name}</h4>
+                {(project.startDate || project.endDate || project.current) && (
+                  <p className="text-xs text-gray-500">
+                    {project.startDate && project.endDate && !project.current && 
+                      `${project.startDate} - ${project.endDate}`
+                    }
+                    {project.startDate && project.current && 
+                      `${project.startDate} - davam edir`
+                    }
+                    {project.startDate && !project.endDate && !project.current && 
+                      project.startDate
+                    }
+                  </p>
+                )}
                 {project.description && (
-                  <div
-                    className="text-xs text-gray-600 leading-relaxed prose prose-xs max-w-none"
-                    dangerouslySetInnerHTML={{ __html: project.description }}
+                  <div 
+                    className="text-xs text-gray-600 leading-relaxed prose prose-xs max-w-none whitespace-pre-line"
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeHtml(project.description)
+                    }}
                   />
                 )}
               </div>
@@ -543,9 +613,11 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
                   </span>
                 </div>
                 {vol.description && (
-                  <div
-                    className="text-xs text-gray-600 leading-relaxed prose prose-xs max-w-none"
-                    dangerouslySetInnerHTML={{ __html: vol.description }}
+                  <div 
+                    className="text-xs text-gray-600 leading-relaxed prose prose-xs max-w-none whitespace-pre-line"
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeHtml(vol.description)
+                    }}
                   />
                 )}
               </div>
@@ -577,7 +649,13 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
   }
 
   return (
-    <div className="w-full h-full bg-white relative">
+    <div 
+      className="w-full h-full bg-white relative" 
+      style={{ 
+        fontFamily: fontSettings.fontFamily, 
+        fontSize: `${fontSettings.fontSize}px` 
+      }}
+    >
       {/* Reordering indicator */}
       {isReordering && (
         <div className="absolute top-2 right-2 z-10 bg-blue-500 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
@@ -609,8 +687,9 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
               className={`
                 relative transition-all duration-200 ease-in-out
                 ${enableDragDrop ? 'cursor-move' : 'cursor-default'}
-                ${isDragged ? 'opacity-50 scale-95 rotate-1 z-10' : 'opacity-100 scale-100'}
-                ${isDragOver ? 'transform translate-y-1 bg-blue-50 border-2 border-blue-300 border-dashed rounded-lg' : ''}                ${enableDragDrop ? 'hover:shadow-md' : ''}
+                ${isDragged ? 'opacity-50 scale-95 rotate-1 z-[9999]' : 'opacity-100 scale-100'}
+                ${isDragOver ? 'transform translate-y-1 bg-blue-50 border-2 border-blue-300 border-dashed rounded-lg' : ''}
+                ${enableDragDrop ? 'hover:shadow-md hover:bg-gray-100' : ''}
                 group
               `}
               style={{
@@ -638,7 +717,7 @@ export default function CVPreviewDraggable({ cv, onSectionOrderChange, enableDra
               {isDragOver && draggedSection && draggedSection !== section.id && (
                 <div className="absolute inset-0 bg-blue-100 bg-opacity-50 border-2 border-blue-400 border-dashed rounded-lg flex items-center justify-center">
                   <div className="bg-blue-500 text-white px-3 py-1 rounded text-sm font-medium">
-                    Buraya burax
+                    {cv.data.cvLanguage === 'english' ? 'Drop here' : 'Buraya burax'}
                   </div>
                 </div>
               )}

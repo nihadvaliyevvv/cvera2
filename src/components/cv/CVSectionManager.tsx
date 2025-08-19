@@ -352,24 +352,24 @@ export default function CVSectionManager({ cvData, onSectionOrderChange, languag
                 <div className="text-sm text-gray-300">
                     <div className="flex items-center gap-2 font-bold mb-3 text-blue-400">
                         <span className="text-lg">💡</span>
-                        <span>Necə istifadə edilir:</span>
+                        <span>{language === 'en' ? 'How to use:' : 'Necə istifadə edilir:'}</span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                         <div className="flex items-start gap-2">
                             <span className="text-blue-400 text-base">🖱️</span>
-                            <span><strong>Sürükləmə:</strong> Sol handleni tutub sürükləyin</span>
+                            <span><strong>{language === 'en' ? 'Dragging:' : 'Sürükləmə:'}</strong> {language === 'en' ? 'Hold left handle and drag' : 'Sol handleni tutub sürükləyin'}</span>
                         </div>
                         <div className="flex items-start gap-2">
                             <span className="text-green-400 text-base">👁️</span>
-                            <span><strong>Görünürlük:</strong> Göstər/Gizlə düymələri</span>
+                            <span><strong>{language === 'en' ? 'Visibility:' : 'Görünürlük:'}</strong> {language === 'en' ? 'Show/Hide buttons' : 'Göstər/Gizlə düymələri'}</span>
                         </div>
                         <div className="flex items-start gap-2">
                             <span className="text-purple-400 text-base">🎯</span>
-                            <span><strong>Yerləşdirmə:</strong> Yaşıl sahəyə bırakın</span>
+                            <span><strong>{language === 'en' ? 'Positioning:' : 'Yerləşdirmə:'}</strong> {language === 'en' ? 'Drop in green area' : 'Yaşıl sahəyə bırakın'}</span>
                         </div>
                         <div className="flex items-start gap-2">
                             <span className="text-orange-400 text-base">📱</span>
-                            <span><strong>Mobil:</strong> Toxunaraq sürükləyin</span>
+                            <span><strong>{language === 'en' ? 'Mobile:' : 'Mobil:'}</strong> {language === 'en' ? 'Touch and drag' : 'Toxunaraq sürükləyin'}</span>
                         </div>
                     </div>
                 </div>

@@ -22,11 +22,9 @@ export function CVTranslationPanel({
 }: CVTranslationPanelProps) {
   const { translationState, translateFullCV, resetTranslationState } = useAITranslation();
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [targetLanguageInTranslation, setTargetLanguageInTranslation] = useState<CVLanguage | null>(null);
 
   const handleFullTranslation = async (targetLanguage: CVLanguage) => {
     try {
-      setTargetLanguageInTranslation(targetLanguage);
       resetTranslationState();
 
       console.log('🌐 CVTranslationPanel: Starting full CV translation...', {
@@ -59,8 +57,6 @@ export function CVTranslationPanel({
 
     } catch (error) {
       console.error('❌ CVTranslationPanel: Translation failed:', error);
-    } finally {
-      setTargetLanguageInTranslation(null);
     }
   };
 
@@ -167,8 +163,8 @@ export function CVTranslationPanel({
                   <span className="text-xs font-medium">Hazırki</span>
                 </div>
               )}
-              {/* LOADING ONLY ON SELECTED TARGET LANGUAGE */}
-              {translationState.isTranslating && targetLanguageInTranslation === 'azerbaijani' && (
+              {/* LOADING ONLY ON SELECTED LANGUAGE */}
+              {translationState.isTranslating && currentLanguage === 'english' && (
                 <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 rounded-lg">
                   <svg className="w-6 h-6 animate-spin text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -206,8 +202,8 @@ export function CVTranslationPanel({
                   <span className="text-xs font-medium">Current</span>
                 </div>
               )}
-              {/* LOADING ONLY ON SELECTED TARGET LANGUAGE */}
-              {translationState.isTranslating && targetLanguageInTranslation === 'english' && (
+              {/* LOADING ONLY ON SELECTED LANGUAGE */}
+              {translationState.isTranslating && currentLanguage === 'azerbaijani' && (
                 <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 rounded-lg">
                   <svg className="w-6 h-6 animate-spin text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -273,15 +269,13 @@ export function CVTranslationPanel({
         </div>
       </div>
 
-      {/* Translation Progress Modal - Disabled to avoid duplicate loading */}
-      {/* 
+      {/* Translation Progress Modal */}
       <TranslationProgress
         isTranslating={translationState.isTranslating}
         progress={translationState.progress}
         error={translationState.error}
         language={currentLanguage}
       />
-      */}
     </div>
   );
 }

@@ -1,8 +1,34 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSimpleFontSettings } from '@/hooks/useSimpleFontSettings';
 
-// Utility function to safely render HTML content
+// Utility function to safely render HTML content while preserving formatting
+const sanitizeHtml = (html: string): string => {
+    if (!html) return '';
+    return html
+        // Remove dangerous tags but keep formatting ones
+        .replace(/<script[^>]*>.*?<\/script>/gi, '')
+        .replace(/<style[^>]*>.*?<\/style>/gi, '')
+        .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
+        .replace(/<object[^>]*>.*?<\/object>/gi, '')
+        .replace(/<embed[^>]*>.*?<\/embed>/gi, '')
+        .replace(/<link[^>]*>/gi, '')
+        .replace(/<meta[^>]*>/gi, '')
+        // Keep basic formatting tags
+        // Convert line breaks properly
+        .replace(/<br\s*\/?>/gi, '<br>')
+        // Clean up HTML entities
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .trim();
+};
+
+// Alternative text-only function for fallback
 const stripHtmlTags = (html: string): string => {
   if (!html) return '';
   // Remove HTML tags but preserve line breaks
@@ -112,6 +138,7 @@ interface CVData {
       technologies?: string | string[];
       startDate?: string;
       endDate?: string;
+      current?: boolean;
       url?: string;
     }>;
     certifications?: Array<{
@@ -193,6 +220,9 @@ const DEFAULT_SECTIONS = [
 export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewMediumProps) {
   const { data } = cv;
   const isEnglish = data.cvLanguage === 'english';
+  
+  // Font settings
+  const { fontSettings } = useSimpleFontSettings(cv.id);
 
   // Drag and drop state
   const [draggedSection, setDraggedSection] = useState<string | null>(null);
@@ -336,9 +366,9 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
         className={`
           relative group cursor-move
           transition-all duration-200
-          ${isDragged ? 'scale-105 rotate-1 z-50' : ''}
+          ${isDragged ? 'scale-105 rotate-1 z-[9999]' : ''}
           ${isDraggedOver ? 'ring-2 ring-blue-400 bg-blue-50 rounded-lg' : ''}
-          hover:shadow-md rounded-lg p-2 m-1
+          hover:shadow-md hover:bg-gray-100 rounded-lg p-2 m-1
         `}
         style={{
           userSelect: 'none',
@@ -351,7 +381,7 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
             </svg>
-            Sürükləyin
+            {isEnglish ? 'Drag' : 'Sürükləyin'}
           </div>
         </div>
 
@@ -359,7 +389,7 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
         {isDraggedOver && (
           <div className="absolute inset-0 border-2 border-dashed border-blue-400 rounded-lg bg-blue-100 bg-opacity-50 flex items-center justify-center pointer-events-none z-10">
             <div className="bg-blue-500 text-white px-3 py-1 rounded text-sm font-medium animate-bounce">
-              🎯 Buraya burax
+              🎯 {isEnglish ? 'Drop here' : 'Buraya burax'}
             </div>
           </div>
         )}
@@ -444,7 +474,8 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
     <div
       className="w-full h-full bg-white text-gray-900 overflow-y-auto"
       style={{
-        fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
+        fontFamily: fontSettings.fontFamily,
+        fontSize: `${fontSettings.fontSize}px`,
         scrollbarWidth: 'thin',
         scrollbarColor: '#CBD5E1 #F1F5F9',
         maxHeight: '100vh'
@@ -481,9 +512,12 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
 
           {data.personalInfo.summary && (
             <div className="mt-3">
-              <p className="text-gray-800 leading-relaxed text-sm">
-                {stripHtmlTags(data.personalInfo.summary)}
-              </p>
+              <div 
+                className="text-gray-800 leading-relaxed text-sm whitespace-pre-line"
+                dangerouslySetInnerHTML={{
+                  __html: sanitizeHtml(data.personalInfo.summary)
+                }}
+              />
             </div>
           )}
         </header>
@@ -516,9 +550,12 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
                               <p className="text-sm text-gray-600 mb-2">{exp.location}</p>
                             )}
                             {exp.description && (
-                              <p className="text-sm text-gray-700 leading-relaxed">
-                                {stripHtmlTags(exp.description)}
-                              </p>
+                              <div 
+                                className="text-sm text-gray-700 leading-relaxed whitespace-pre-line"
+                                dangerouslySetInnerHTML={{
+                                  __html: sanitizeHtml(exp.description)
+                                }}
+                              />
                             )}
                           </div>
                         ))}
@@ -554,7 +591,12 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
                               <p className="text-sm text-gray-600">GPA: {edu.gpa}</p>
                             )}
                             {edu.description && (
-                              <p className="text-sm text-gray-700">{stripHtmlTags(edu.description)}</p>
+                              <div 
+                                className="text-sm text-gray-700 whitespace-pre-line"
+                                dangerouslySetInnerHTML={{
+                                  __html: sanitizeHtml(edu.description)
+                                }}
+                              />
                             )}
                           </div>
                         ))}
@@ -649,12 +691,17 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
                               <h3 className="font-bold text-gray-900">{project.name}</h3>
                               {(project.startDate || project.endDate) && (
                                 <span className="text-sm text-gray-600">
-                                  {formatDateRange(project.startDate || '', project.endDate || '', false)}
+                                  {formatDateRange(project.startDate || '', project.endDate || '', project.current || false)}
                                 </span>
                               )}
                             </div>
                             {project.description && (
-                              <p className="text-sm text-gray-700 mb-1">{stripHtmlTags(project.description)}</p>
+                              <div 
+                                className="text-sm text-gray-700 mb-1 whitespace-pre-line"
+                                dangerouslySetInnerHTML={{
+                                  __html: sanitizeHtml(project.description)
+                                }}
+                              />
                             )}
                             {project.technologies &&
                              (Array.isArray(project.technologies)
@@ -722,7 +769,12 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
                               </span>
                             </div>
                             {vol.description && (
-                              <p className="text-sm text-gray-700">{stripHtmlTags(vol.description)}</p>
+                              <div 
+                                className="text-sm text-gray-700 whitespace-pre-line"
+                                dangerouslySetInnerHTML={{
+                                  __html: sanitizeHtml(vol.description)
+                                }}
+                              />
                             )}
                           </div>
                         ))}
@@ -741,9 +793,12 @@ export default function CVPreviewMedium({ cv, onSectionOrderChange }: CVPreviewM
                           <h2 className="text-lg font-bold text-gray-800 mb-3 pb-1 border-b border-gray-400">
                             {section.title}
                           </h2>
-                          <div className="text-sm text-gray-700">
-                            {stripHtmlTags(section.content || section.description || '')}
-                          </div>
+                          <div 
+                            className="text-sm text-gray-700 whitespace-pre-line"
+                            dangerouslySetInnerHTML={{
+                              __html: sanitizeHtml(section.content || section.description || '')
+                            }}
+                          />
                         </section>
                       ))}
                     </div>

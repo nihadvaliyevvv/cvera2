@@ -1,6 +1,54 @@
 'use client';
 
 import React from 'react';
+import { useSimpleFontSettings } from '@/hooks/useSimpleFontSettings';
+
+// Utility function to safely render HTML content while preserving formatting
+const sanitizeHtml = (html: string): string => {
+    if (!html) return '';
+    return html
+        // Remove dangerous tags but keep formatting ones
+        .replace(/<script[^>]*>.*?<\/script>/gi, '')
+        .replace(/<style[^>]*>.*?<\/style>/gi, '')
+        .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
+        .replace(/<object[^>]*>.*?<\/object>/gi, '')
+        .replace(/<embed[^>]*>.*?<\/embed>/gi, '')
+        .replace(/<link[^>]*>/gi, '')
+        .replace(/<meta[^>]*>/gi, '')
+        // Keep basic formatting tags
+        // Convert line breaks properly
+        .replace(/<br\s*\/?>/gi, '<br>')
+        // Clean up HTML entities
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .trim();
+};
+
+// Text-only function for PDF-compatible rendering
+const stripHtmlTags = (html: string): string => {
+    if (!html) return '';
+    return html
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n')
+        .replace(/<p[^>]*>/gi, '')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<div[^>]*>/gi, '')
+        .replace(/<\/h[1-6]>/gi, '\n')
+        .replace(/<h[1-6][^>]*>/gi, '')
+        .replace(/<\/li>/gi, '\n')
+        .replace(/<li[^>]*>/gi, '• ')
+        .replace(/<\/ul>/gi, '\n')
+        .replace(/<ul[^>]*>/gi, '')
+        .replace(/<\/ol>/gi, '\n')
+        .replace(/<ol[^>]*>/gi, '')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/gi, ' ')
+        .trim();
+};
 
 interface CVData {
   id?: string;
@@ -142,6 +190,9 @@ interface CVPreviewProps {
 const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
   const { personalInfo, experience, education, skills, languages, projects, certifications, volunteerExperience, publications, honorsAwards, testScores, recommendations, courses, customSections } = cv.data;
 
+  // Font settings
+  const { fontSettings } = useSimpleFontSettings(cv.id);
+
   // Debug: Custom sections məlumatını console-da göstər
   console.log('🔍 CVPreviewA4_new Debug:', {
     customSections,
@@ -154,8 +205,8 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
   
   return (
     <div style={{
-      fontFamily: 'Times New Roman, serif',
-      fontSize: '11pt',
+      fontFamily: fontSettings.fontFamily,
+      fontSize: `${fontSettings.fontSize}pt`,
       lineHeight: '1.4',
       color: '#333',
       background: 'white',
@@ -259,10 +310,9 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
                 margin: '0'
               }}>Summary</h2>
             </div>
-            <div
-                            className="text-gray-700 leading-relaxed prose prose-sm max-w-none"
-                            dangerouslySetInnerHTML={{ __html: personalInfo.summary || '' }}
-                          />
+            <div className="text-gray-700 leading-relaxed prose prose-sm max-w-none">
+              {stripHtmlTags(personalInfo.summary || '')}
+            </div>
           </div>
         )}
       </div>
@@ -335,7 +385,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
                   minHeight: '30px',
                   paddingTop: '0.3rem',
                   borderTop: '1px solid #e5e7eb'
-                }}>{exp.description}</div>
+                }}>{stripHtmlTags(exp.description)}</div>
               )}
             </div>
           ))}
@@ -590,7 +640,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
                 <div style={{
                   color: '#4b5563',
                   marginBottom: '0.75rem'
-                }}>{project.description}</div>
+                }}>{stripHtmlTags(project.description)}</div>
               )}
               {project.technologies && Array.isArray(project.technologies) && project.technologies.length > 0 && (
                 <div style={{
@@ -741,7 +791,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
                   minHeight: '30px',
                   paddingTop: '0.3rem',
                   borderTop: '1px solid #e5e7eb'
-                }}>{vol.description}</div>
+                }}>{stripHtmlTags(vol.description)}</div>
               )}
             </div>
           ))}
@@ -825,7 +875,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
                   minHeight: '30px',
                   paddingTop: '0.3rem',
                   borderTop: '1px solid #e5e7eb'
-                }}>{pub.description}</div>
+                }}>{stripHtmlTags(pub.description)}</div>
               )}
               {pub.url && (
                 <div style={{
@@ -889,7 +939,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
                 <div style={{
                   color: '#4b5563',
                   marginBottom: '0.75rem'
-                }}>{award.description}</div>
+                }}>{stripHtmlTags(award.description)}</div>
               )}
               {award.issuer && (
                 <div style={{
@@ -966,7 +1016,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
                 <div style={{
                   color: '#4b5563',
                   marginBottom: '0.75rem'
-                }}>{test.description}</div>
+                }}>{stripHtmlTags(test.description)}</div>
               )}
             </div>
           ))}
@@ -1100,7 +1150,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
                 <div style={{
                   color: '#4b5563',
                   marginBottom: '0.75rem'
-                }}>{course.description}</div>
+                }}>{stripHtmlTags(course.description)}</div>
               )}
               {course.certificate && (
                 <div style={{
@@ -1154,7 +1204,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
                     color: '#4b5563',
                     marginBottom: '0.5rem',
                     lineHeight: '1.6'
-                  }}>{section.description}</div>
+                  }}>{stripHtmlTags(section.description)}</div>
                 )}
                 {section.items && section.items.length > 0 && (
                   <div style={{
@@ -1184,7 +1234,7 @@ const CVPreviewA4: React.FC<CVPreviewProps> = ({ cv }) => {
                             color: '#4b5563',
                             marginBottom: '0.5rem',
                             lineHeight: '1.6'
-                          }}>{item.description}</div>
+                          }}>{stripHtmlTags(item.description)}</div>
                         )}
                         {item.date && (
                           <div style={{

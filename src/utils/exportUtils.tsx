@@ -34,108 +34,11 @@ export const exportToPDF = async (
 
     // Apply exact styling to match preview
     const style = document.createElement('style');
-    style.textContent = `
-      #${elementId} {
-        background: white !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        box-shadow: none !important;
-        border: none !important;
-        transform: none !important;
-        width: 794px !important; /* A4 width in pixels at 96 DPI */
-        min-height: 1123px !important; /* A4 height in pixels at 96 DPI */
-      }
-
-      #${elementId} * {
-        -webkit-print-color-adjust: exact !important;
-        color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-
-      /* Remove all hover effects and interactive states */
-      #${elementId} .hover\\:bg-gray-50:hover,
-      #${elementId} .hover\\:bg-blue-50:hover,
-      #${elementId} .hover\\:shadow-md:hover {
-        background-color: transparent !important;
-        box-shadow: none !important;
-      }
-
-      /* Hide drag indicators and interactive elements */
-      #${elementId} .drag-handle,
-      #${elementId} .section-drag-indicator,
-      #${elementId} .cursor-move,
-      #${elementId} .cursor-pointer {
-        display: none !important;
-      }
-
-      /* Ensure exact spacing matches preview */
-      #${elementId} .space-y-8 > * + * { margin-top: 2rem !important; }
-      #${elementId} .space-y-6 > * + * { margin-top: 1.5rem !important; }
-      #${elementId} .space-y-4 > * + * { margin-top: 1rem !important; }
-      #${elementId} .space-y-3 > * + * { margin-top: 0.75rem !important; }
-      #${elementId} .space-y-2 > * + * { margin-top: 0.5rem !important; }
-      #${elementId} .space-y-1 > * + * { margin-top: 0.25rem !important; }
-
-      #${elementId} .mb-8 { margin-bottom: 2rem !important; }
-      #${elementId} .mb-6 { margin-bottom: 1.5rem !important; }
-      #${elementId} .mb-4 { margin-bottom: 1rem !important; }
-      #${elementId} .mb-3 { margin-bottom: 0.75rem !important; }
-      #${elementId} .mb-2 { margin-bottom: 0.5rem !important; }
-      #${elementId} .mb-1 { margin-bottom: 0.25rem !important; }
-
-      #${elementId} .p-8 { padding: 2rem !important; }
-      #${elementId} .p-4 { padding: 1rem !important; }
-      #${elementId} .p-2 { padding: 0.5rem !important; }
-      #${elementId} .pl-4 { padding-left: 1rem !important; }
-      #${elementId} .pb-1 { padding-bottom: 0.25rem !important; }
-
-      /* Exact text styling from preview */
-      #${elementId} .text-3xl { font-size: 1.875rem !important; line-height: 2.25rem !important; }
-      #${elementId} .text-2xl { font-size: 1.5rem !important; line-height: 2rem !important; }
-      #${elementId} .text-xl { font-size: 1.25rem !important; line-height: 1.75rem !important; }
-      #${elementId} .text-lg { font-size: 1.125rem !important; line-height: 1.75rem !important; }
-      #${elementId} .text-base { font-size: 1rem !important; line-height: 1.5rem !important; }
-      #${elementId} .text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
-      #${elementId} .text-xs { font-size: 0.75rem !important; line-height: 1rem !important; }
-
-      #${elementId} .font-bold { font-weight: 700 !important; }
-      #${elementId} .font-semibold { font-weight: 600 !important; }
-      #${elementId} .font-medium { font-weight: 500 !important; }
-
-      /* Exact colors from preview */
-      #${elementId} .text-gray-900 { color: #111827 !important; }
-      #${elementId} .text-gray-800 { color: #1f2937 !important; }
-      #${elementId} .text-gray-700 { color: #374151 !important; }
-      #${elementId} .text-gray-600 { color: #4b5563 !important; }
-      #${elementId} .text-gray-500 { color: #6b7280 !important; }
-
-      /* Border colors exactly as in preview */
-      #${elementId} .border-l-2 { border-left-width: 2px !important; border-left-style: solid !important; }
-      #${elementId} .border-b { border-bottom-width: 1px !important; border-bottom-style: solid !important; }
-      
-      #${elementId} .border-blue-500 { border-color: #3b82f6 !important; }
-      #${elementId} .border-green-500 { border-color: #10b981 !important; }
-      #${elementId} .border-purple-500 { border-color: #8b5cf6 !important; }
-      #${elementId} .border-yellow-500 { border-color: #f59e0b !important; }
-      #${elementId} .border-red-500 { border-color: #ef4444 !important; }
-      #${elementId} .border-gray-300 { border-color: #d1d5db !important; }
-
-      /* Background colors for skill tags etc. */
-      #${elementId} .bg-blue-100 { background-color: #dbeafe !important; }
-      #${elementId} .bg-green-100 { background-color: #dcfce7 !important; }
-      #${elementId} .text-blue-800 { color: #1e40af !important; }
-      #${elementId} .text-green-800 { color: #166534 !important; }
-
-      /* Layout exactly as preview */
-      #${elementId} .text-center { text-align: center !important; }
-      #${elementId} .text-left { text-align: left !important; }
-      #${elementId} .flex { display: flex !important; }
-      #${elementId} .items-center { align-items: center !important; }
-      #${elementId} .justify-between { justify-content: space-between !important; }
-      #${elementId} .gap-2 { gap: 0.5rem !important; }
-      #${elementId} .gap-4 { gap: 1rem !important; }
-    `;
-
+    style.textContent = 
+      '#' + elementId + ' { background: white !important; padding: 0 !important; margin: 0 !important; box-shadow: none !important; border: none !important; transform: none !important; width: 794px !important; min-height: 1123px !important; font-family: -apple-system, BlinkMacSystemFont, sans-serif !important; }' +
+      '#' + elementId + ' * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box !important; }' +
+      '#' + elementId + ' .hover\\:bg-gray-50:hover, #' + elementId + ' .hover\\:bg-blue-50:hover, #' + elementId + ' .hover\\:bg-gray-100:hover, #' + elementId + ' .hover\\:bg-blue-100:hover, #' + elementId + ' .hover\\:shadow-md:hover, #' + elementId + ' .hover\\:shadow-lg:hover { background-color: transparent !important; box-shadow: none !important; transform: none !important; }' +
+      '#' + elementId + ' .drag-handle, #' + elementId + ' .section-drag-indicator, #' + elementId + ' .cursor-move, #' + elementId + ' .cursor-pointer, #' + elementId + ' .group, #' + elementId + ' .relative.group { cursor: default !important; transform: none !important; background-color: transparent !important; box-shadow: none !important; }' +
     document.head.appendChild(style);
 
     // Wait for styles to apply

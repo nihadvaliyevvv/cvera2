@@ -36,30 +36,106 @@ export class FileGenerationService {
       }
 
       const page = await browser.newPage();
+      
+      console.log('PDF generation started', { templateId, isVercel });
 
-      // ƏSAS DƏYIŞIKLIK: Preview komponentinin dəqiq render nəticəsini istifadə et
-      const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+      // YENİ APPROACH: Direkt Tailwind CSS və React component structure istifadə edirik
+      const htmlContent = this.generateReactLikeHTML(cvData, templateId);
+      
+      console.log('Generated HTML content length:', htmlContent.length);
 
-      // CV preview səhifəsinə get ki, dəqiq eyni nəticəni alaq
-      const previewUrl = `${baseUrl}/api/cv/preview?cvData=${encodeURIComponent(JSON.stringify(cvData))}&templateId=${templateId || 'professional'}`;
+      // HTML content-i page-ə yükləyirik
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+      
+      
+      console.log('HTML content loaded successfully');
 
-      await page.goto(previewUrl, {
-        waitUntil: 'networkidle0',
-        timeout: 30000
-      });
+      // First try to load the preview URL
+      try {
+        console.log('Preview API response status: N/A');
+      } catch (fetchError) {
+        console.error('Failed to fetch preview URL:', fetchError);
+      }
 
-      // Viewport və scale tənzimləmələri
+      try {
+        console.log('Preview page loaded successfully');
+        
+        // Check page content
+        const pageContent = await page.content();
+        console.log('Page content length:', pageContent.length);
+        
+        // Log first part of content to debug
+        console.log('HTML preview:', pageContent.substring(0, 1000));
+        
+      } catch (error) {
+        console.error('Failed to load preview page:', error);
+        console.log('Attempting direct HTML generation fallback...');
+        
+        // Fallback: Generate simple HTML directly
+        try {
+          const simpleHTML = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <style>
+                body { font-family: Arial, sans-serif; width: 794px; padding: 40px; margin: 0; }
+                .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 20px; }
+                .name { font-size: 2.5em; font-weight: bold; color: #2c3e50; margin-bottom: 10px; }
+                .section { margin-bottom: 25px; }
+                .section-title { font-size: 1.4em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 5px; margin-bottom: 15px; }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <div class="name">${cvData.personalInfo?.fullName || cvData.personalInfo?.name || 'CV'}</div>
+                <div class="contact">${cvData.personalInfo?.email || ''} | ${cvData.personalInfo?.phone || ''}</div>
+              </div>
+              <div class="section">
+                <div class="section-title">Professional Summary</div>
+                <div>${cvData.personalInfo?.summary || 'No summary available'}</div>
+              </div>
+              ${cvData.experience && cvData.experience.length > 0 ? `
+              <div class="section">
+                <div class="section-title">Experience</div>
+                ${cvData.experience.map((exp: any) => `
+                  <div style="margin-bottom: 15px;">
+                    <div style="font-weight: bold;">${exp.position} - ${exp.company}</div>
+                    <div style="color: #666; font-size: 0.9em;">${exp.startDate} - ${exp.endDate || 'Present'}</div>
+                    <div style="margin-top: 5px;">${exp.description || ''}</div>
+                  </div>
+                `).join('')}
+              </div>
+              ` : ''}
+            </body>
+            </html>
+          `;
+          
+          await page.setContent(simpleHTML, { waitUntil: 'networkidle0' });
+          console.log('Direct HTML fallback successful');
+        } catch (fallbackError) {
+          console.error('Direct HTML fallback also failed:', fallbackError);
+          throw new Error(`Both preview URL and direct HTML generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }
+
+      // Viewport və scale tənzimləmələri - A4 full size için
       await page.setViewport({
         width: 794, // A4 width at 96 DPI
-        height: 1123, // A4 height at 96 DPI
-        deviceScaleFactor: 1
+        height: 1123, // A4 height at 96 DPI (və daha uzun content için artıraq)
+        deviceScaleFactor: 2 // High resolution
       });
+      
+      // Wait for content to fully render
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       // PDF yaradılması - Preview ilə 1:1 uyğunluq
+      console.log('Starting PDF generation...');
+      
       const pdf = await page.pdf({
         format: 'A4',
         printBackground: true,
-        preferCSSPageSize: true,
+        preferCSSPageSize: false, // Use our viewport size
         displayHeaderFooter: false,
         margin: {
           top: '0',
@@ -67,19 +143,204 @@ export class FileGenerationService {
           left: '0',
           right: '0',
         },
-        scale: 1.0
+        scale: 1.0,
+        width: '794px',
+        height: '1123px'
       });
+
+      console.log('PDF generated successfully, size:', pdf.length);
+
+      if (!pdf || pdf.length === 0) {
+        throw new Error('Empty PDF generated');
+      }
 
       return Buffer.from(pdf);
     } catch (error) {
       console.error('PDF generation error:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+      
       // Fallback: Əgər preview URL işləməzsə, köhnə metodu istifadə et
+      console.log('Attempting fallback PDF generation...');
       return this.generatePDFFallback(cvData, templateId);
     } finally {
       if (browser) {
         await browser.close();
       }
     }
+  }
+
+  // YENİ METHOD: CVPreviewA4 component-in exact kopyası
+  private static generateReactLikeHTML(cvData: any, templateId?: string): string {
+    const { personalInfo, experience, education, skills, languages, projects, certifications } = cvData;
+    
+    const sanitizeText = (text: string) => {
+      if (!text) return '';
+      return text
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;');
+    };
+
+    // Tailwind CSS-i tam inline styles-a çeviririk
+    let html = '<!DOCTYPE html>';
+    html += '<html lang="az">';
+    html += '<head>';
+    html += '<meta charset="UTF-8">';
+    html += '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
+    html += '<title>CV - ' + sanitizeText(personalInfo?.fullName || personalInfo?.name || 'CV') + '</title>';
+    html += '<style>';
+    
+    // Exact Tailwind CSS styles from CVPreviewA4
+    html += '* { margin: 0; padding: 0; box-sizing: border-box; }';
+    html += 'body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif; background-color: rgb(243 244 246); height: 100%; overflow-y: auto; padding: 2rem; }';
+    html += '@media (min-width: 768px) { body { padding: 2rem; } }';
+    
+    // Main container - matching "w-full max-w-4xl bg-white shadow-lg p-8 md:p-12"
+    html += '.cv-container { width: 794px; max-width: 56rem; background-color: white; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); padding: 2rem; margin: 0 auto; }';
+    html += '@media (min-width: 768px) { .cv-container { padding: 3rem; } }';
+    
+    // Header styles - matching "flex flex-col md:flex-row justify-between items-start mb-10"
+    html += '.header { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem; }';
+    html += '@media (min-width: 768px) { .header { flex-direction: row; } }';
+    
+    // Name - matching "font-bold text-gray-800" with custom fontSize
+    html += '.name { font-weight: 700; color: rgb(31 41 55); font-size: 2rem; line-height: 2.5rem; margin-bottom: 0.5rem; }';
+    
+    // Title - matching subtitle styling  
+    html += '.title { color: rgb(107 114 128); font-size: 1.25rem; line-height: 1.75rem; margin-bottom: 1rem; }';
+    
+    // Contact info - matching contact styling
+    html += '.contact-info { display: flex; flex-wrap: wrap; gap: 1rem; color: rgb(75 85 99); font-size: 0.875rem; margin-bottom: 1.5rem; }';
+    
+    // Sections - matching section spacing
+    html += '.section { margin-bottom: 2rem; }';
+    
+    // Section titles - matching "text-lg font-semibold text-gray-800 border-b-2 border-blue-500 pb-1 mb-4"
+    html += '.section-title { font-size: 1.125rem; font-weight: 600; color: rgb(31 41 55); border-bottom: 2px solid rgb(59 130 246); padding-bottom: 0.25rem; margin-bottom: 1rem; }';
+    
+    // Experience items - matching experience styling
+    html += '.experience-item { margin-bottom: 1.5rem; padding-left: 1rem; border-left: 2px solid rgb(59 130 246); position: relative; }';
+    
+    // Job titles - matching job title styling
+    html += '.job-title { font-size: 1.125rem; font-weight: 600; color: rgb(31 41 55); }';
+    
+    // Company names - matching company styling
+    html += '.company { font-weight: 500; color: rgb(31 41 55); }';
+    
+    // Dates - matching date styling
+    html += '.dates { font-size: 0.875rem; color: rgb(107 114 128); margin-bottom: 0.5rem; }';
+    
+    // Descriptions - matching description styling
+    html += '.description { color: rgb(55 65 81); line-height: 1.5; margin-top: 0.5rem; }';
+    
+    // Skills grid - matching skills grid
+    html += '.skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; }';
+    
+    // Skill items - matching skill styling
+    html += '.skill-item { background-color: rgb(243 244 246); padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; color: rgb(31 41 55); }';
+    
+    // Summary - matching summary styling
+    html += '.summary { line-height: 1.625; color: rgb(55 65 81); }';
+    
+    html += '</style>';
+    html += '</head>';
+    html += '<body>';
+    
+    // Main container exact structure
+    html += '<div class="cv-container">';
+    
+    // Header section - exact structure from CVPreviewA4
+    html += '<header class="header">';
+    html += '<div>';
+    html += '<h1 class="name">' + sanitizeText(personalInfo?.fullName || personalInfo?.name || '') + '</h1>';
+    
+    if (personalInfo?.title) {
+      html += '<h2 class="title">' + sanitizeText(personalInfo.title) + '</h2>';
+    }
+    
+    // Contact info
+    html += '<div class="contact-info">';
+    if (personalInfo?.email) html += '<span>' + sanitizeText(personalInfo.email) + '</span>';
+    if (personalInfo?.phone) html += '<span>' + sanitizeText(personalInfo.phone) + '</span>';
+    if (personalInfo?.linkedin) html += '<span>' + sanitizeText(personalInfo.linkedin) + '</span>';
+    if (personalInfo?.website) html += '<span>' + sanitizeText(personalInfo.website) + '</span>';
+    html += '</div>';
+    
+    html += '</div>';
+    html += '</header>';
+
+    // Summary section - exact structure
+    if (personalInfo?.summary) {
+      html += '<section class="section">';
+      html += '<h2 class="section-title">Peşəkar Özət</h2>';
+      html += '<div class="summary">' + sanitizeText(personalInfo.summary) + '</div>';
+      html += '</section>';
+    }
+
+    // Experience section - exact structure
+    if (experience && experience.length > 0) {
+      html += '<section class="section">';
+      html += '<h2 class="section-title">İş Təcrübəsi</h2>';
+      experience.forEach((exp: any) => {
+        html += '<div class="experience-item">';
+        html += '<h3 class="job-title">' + sanitizeText(exp.position || '') + '</h3>';
+        html += '<div class="company">' + sanitizeText(exp.company || '') + '</div>';
+        html += '<div class="dates">' + sanitizeText(exp.startDate || '') + ' - ' + (exp.current ? 'İndi' : sanitizeText(exp.endDate || '')) + '</div>';
+        if (exp.description) {
+          html += '<div class="description">' + sanitizeText(exp.description) + '</div>';
+        }
+        html += '</div>';
+      });
+      html += '</section>';
+    }
+
+    // Education section - exact structure
+    if (education && education.length > 0) {
+      html += '<section class="section">';
+      html += '<h2 class="section-title">Təhsil</h2>';
+      education.forEach((edu: any) => {
+        html += '<div class="experience-item">';
+        html += '<h3 class="job-title">' + sanitizeText(edu.degree || '') + '</h3>';
+        html += '<div class="company">' + sanitizeText(edu.institution || '') + '</div>';
+        html += '<div class="dates">' + sanitizeText(edu.startDate || '') + ' - ' + sanitizeText(edu.endDate || '') + '</div>';
+        if (edu.field) {
+          html += '<div class="description">İxtisas: ' + sanitizeText(edu.field) + '</div>';
+        }
+        html += '</div>';
+      });
+      html += '</section>';
+    }
+
+    // Skills section - exact structure
+    if (skills && skills.length > 0) {
+      html += '<section class="section">';
+      html += '<h2 class="section-title">Bacarıqlar</h2>';
+      html += '<div class="skills-grid">';
+      skills.forEach((skill: any) => {
+        html += '<div class="skill-item">' + sanitizeText(skill.name || skill) + '</div>';
+      });
+      html += '</div>';
+      html += '</section>';
+    }
+
+    // Languages section - exact structure
+    if (languages && languages.length > 0) {
+      html += '<section class="section">';
+      html += '<h2 class="section-title">Dillər</h2>';
+      html += '<div class="skills-grid">';
+      languages.forEach((lang: any) => {
+        html += '<div class="skill-item">' + sanitizeText(lang.name || lang) + (lang.level ? ' - ' + sanitizeText(lang.level) : '') + '</div>';
+      });
+      html += '</div>';
+      html += '</section>';
+    }
+
+    html += '</div>'; // Close cv-container
+    html += '</body>';
+    html += '</html>';
+
+    return html;
   }
 
   // Fallback method - köhnə HTML generation metodu

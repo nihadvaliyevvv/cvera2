@@ -4,6 +4,28 @@ import { useState } from 'react';
 import { getLabel } from '@/lib/cvLanguage';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 
+// Utility function to safely render HTML content
+const stripHtmlTags = (html: string): string => {
+    if (!html) return '';
+    return html
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n')
+        .replace(/<p[^>]*>/gi, '')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<div[^>]*>/gi, '')
+        .replace(/<\/h[1-6]>/gi, '\n')
+        .replace(/<h[1-6][^>]*>/gi, '')
+        .replace(/<\/li>/gi, '\n')
+        .replace(/<li[^>]*>/gi, '• ')
+        .replace(/<\/ul>/gi, '\n')
+        .replace(/<ul[^>]*>/gi, '')
+        .replace(/<\/ol>/gi, '\n')
+        .replace(/<ol[^>]*>/gi, '')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/gi, ' ')
+        .trim();
+};
+
 interface CustomSection {
   id: string;
   title: string;
@@ -210,7 +232,7 @@ export default function CustomSectionsSection({ data, onChange, userTier = 'Free
                     {section.description && (
                       <div className="mb-3">
                         <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 px-3 py-2 rounded-lg border-l-2 border-green-300">
-                          {section.description}
+                          {stripHtmlTags(section.description)}
                         </p>
                       </div>
                     )}

@@ -5,6 +5,47 @@ import { getLabel } from '@/lib/cvLanguage';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import DateRangeInput from '@/components/cv/DateRangeInput';
 
+// Utility function to safely render HTML content
+const stripHtmlTags = (html: string): string => {
+    if (!html) return '';
+    return html
+        // Convert line breaks to newlines
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n\n')
+        .replace(/<p[^>]*>/gi, '')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<div[^>]*>/gi, '')
+        // Handle headers with spacing
+        .replace(/<\/h[1-6]>/gi, '\n\n')
+        .replace(/<h[1-6][^>]*>/gi, '')
+        // Convert lists to bullet points
+        .replace(/<\/li>/gi, '')
+        .replace(/<li[^>]*>/gi, '• ')
+        .replace(/<\/ul>/gi, '\n')
+        .replace(/<ul[^>]*>/gi, '')
+        .replace(/<\/ol>/gi, '\n')
+        .replace(/<ol[^>]*>/gi, '')
+        // Handle emphasis tags
+        .replace(/<\/?strong>/gi, '')
+        .replace(/<\/?b>/gi, '')
+        .replace(/<\/?em>/gi, '')
+        .replace(/<\/?i>/gi, '')
+        .replace(/<\/?u>/gi, '')
+        // Remove all other HTML tags
+        .replace(/<[^>]+>/g, '')
+        // Clean up HTML entities
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        // Clean up multiple newlines and spaces
+        .replace(/\n\s*\n\s*\n/g, '\n\n')
+        .replace(/[ \t]+/g, ' ')
+        .trim();
+};
+
 interface Project {
   id: string;
   name: string;
@@ -111,8 +152,8 @@ export default function ProjectsSection({ data, onChange }: ProjectsSectionProps
                     {project.name || 'Yeni layihə'}
                   </h4>
                 </div>
-                <p className="text-sm text-gray-600 line-clamp-2">
-                  {project.description || 'Layihə təsviri'}
+                <p className="text-sm text-gray-600 line-clamp-2 whitespace-pre-line">
+                  {stripHtmlTags(project.description) || 'Layihə təsviri'}
                 </p>
                 {project.technologies && project.technologies.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2">

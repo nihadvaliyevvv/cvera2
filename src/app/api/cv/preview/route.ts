@@ -53,19 +53,35 @@ export async function GET(request: NextRequest) {
     const cvDataParam = searchParams.get('cvData');
     const templateId = searchParams.get('templateId') || 'professional';
 
+    console.log('CV Preview API called:', { templateId, hasData: !!cvDataParam });
+
     if (!cvDataParam) {
-      return NextResponse.json({ error: 'CV data is required' });
+      console.error('No CV data provided');
+      return new NextResponse(
+        `<!DOCTYPE html><html><body><h1>Error: No CV data provided</h1></body></html>`,
+        { headers: { 'Content-Type': 'text/html' } }
+      );
     }
 
     let cvData;
     try {
       cvData = JSON.parse(decodeURIComponent(cvDataParam));
+      console.log('CV data parsed successfully', { 
+        hasPersonalInfo: !!cvData.personalInfo,
+        hasExperience: !!(cvData.experience && cvData.experience.length > 0)
+      });
     } catch (error) {
-      return NextResponse.json({ error: 'Invalid CV data format' });
+      console.error('Invalid CV data format:', error);
+      return new NextResponse(
+        `<!DOCTYPE html><html><body><h1>Error: Invalid CV data format</h1></body></html>`,
+        { headers: { 'Content-Type': 'text/html' } }
+      );
     }
 
     // Generate HTML that matches the preview component exactly
     const html = generatePreviewHTML(cvData, templateId);
+
+    console.log('Generated HTML length:', html.length);
 
     return new NextResponse(html, {
       headers: {
@@ -75,7 +91,19 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('CV preview API error:', error);
-    return NextResponse.json({ error: 'Failed to generate preview' });
+    const errorHTML = `
+      <!DOCTYPE html>
+      <html>
+      <body>
+        <h1>Error generating CV preview</h1>
+        <p>${error instanceof Error ? error.message : 'Unknown error'}</p>
+      </body>
+      </html>
+    `;
+    return new NextResponse(errorHTML, { 
+      headers: { 'Content-Type': 'text/html' }, 
+      status: 500 
+    });
   }
 }
 
@@ -154,9 +182,20 @@ function generatePreviewHTML(cvData: any, templateId: string): string {
             line-height: 1.6;
             color: #333;
             background: white;
+            width: 794px;  /* A4 width exactly */
+            height: auto;  /* Allow height to grow */
             padding: 40px;
-            max-width: 800px;
-            margin: 0 auto;
+            margin: 0;     /* Remove auto centering */
+            overflow-x: visible;
+            overflow-y: visible;
+        }
+
+        @media print {
+            body {
+                width: 794px !important;
+                margin: 0 !important;
+                padding: 40px !important;
+            }
         }
 
         .header {

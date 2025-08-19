@@ -70,11 +70,20 @@ export async function POST(
     // Generate file
     try {
       const cvData = cv.cv_data as unknown as CVData;
+      console.log('Generating file for CV:', cv.id, 'format:', format);
+      
       const fileBuffer = await FileGenerationService.generateFile({
         format: format as 'pdf' | 'docx',
         cvData,
         templateId: cv.templateId || undefined, // Template ID əlavə edildi
       });
+
+      console.log('File buffer generated, size:', fileBuffer?.length || 0);
+
+      // Validate fileBuffer
+      if (!fileBuffer || fileBuffer.length === 0) {
+        throw new Error('Empty file buffer generated');
+      }
 
       // Update job status to done (without storing the file content)
       await prisma.fileGenerationJob.update({
@@ -88,28 +97,63 @@ export async function POST(
       await incrementDailyUsage(decoded.userId, format as 'pdf' | 'docx');
 
       const mimeType = format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-      const filename = `${cv.title}.${format}`;
+      
+      // Sanitize filename to avoid non-ASCII characters in headers
+      const sanitizedTitle = cv.title
+        .replace(/[^\x00-\x7F]/g, "") // Remove non-ASCII characters
+        .replace(/[^a-zA-Z0-9\s\-_]/g, '') // Remove special characters except spaces, hyphens, underscores
+        .trim()
+        .replace(/\s+/g, '_') // Replace spaces with underscores
+        .substring(0, 50); // Limit length
+        
+      const filename = `${sanitizedTitle || 'cv'}.${format}`;
 
-      // Convert Buffer to Uint8Array to make it compatible with NextResponse
-      const responseBuffer = new Uint8Array(fileBuffer);
+      console.log('Sanitized filename:', filename);
 
-      return new NextResponse(responseBuffer, {
+      // Create stream response for better memory handling
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(new Uint8Array(fileBuffer));
+          controller.close();
+        },
+      });
+
+      return new Response(stream, {
+        status: 200,
         headers: {
           'Content-Type': mimeType,
           'Content-Disposition': `attachment; filename="${filename}"`,
+          'Content-Length': fileBuffer.length.toString(),
         },
       });
     } catch (error) {
       console.error('File generation error:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+      console.error('Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        cvId: cv?.id,
+        format,
+        templateId: cv?.templateId
+      });
       
       // Update job status to failed
-      await prisma.fileGenerationJob.update({
-        where: { id: job.id },
-        data: { status: 'failed' },
-      });
+      if (job?.id) {
+        try {
+          await prisma.fileGenerationJob.update({
+            where: { id: job.id },
+            data: { status: 'failed' },
+          });
+        } catch (updateError) {
+          console.error('Failed to update job status:', updateError);
+        }
+      }
 
       return NextResponse.json(
-        { message: 'Fayl yaradılarkən xəta baş verdi' },
+        { 
+          message: 'Fayl yaradılarkən xəta baş verdi',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        },
         { status: 500 }
       );
     }
